@@ -80,8 +80,10 @@ export default function PaymentForm({
                 name="amount"
                 defaultValue={payment?.amount}
                 onChange={(event) => {
-                  event.target.form.elements.namedItem("amount_p").value =
-                    `${formatToKoreanNumber(event.target.value)}원`;
+                  const target = event.target as HTMLInputElement;
+                  // @ts-ignore
+                  target.form.elements.namedItem("amount_p").value =
+                    `${formatToKoreanNumber(Number(target.value))}원`;
                 }}
               />
               <Text>
@@ -99,6 +101,7 @@ export default function PaymentForm({
         </form>
       </DialogBody>
       <DialogActions>
+        {/* @ts-ignore */}
         <Button color="white" plain onClick={onClose} disabled={isPending}>
           닫기
         </Button>

@@ -105,7 +105,7 @@ export default function NewStudentModal({ onClose }: any) {
                         onChange={(event) => {
                           const dateArr = event.target.value.split("-");
 
-                          setGeneratorFields((prev) => {
+                          setGeneratorFields((prev: any) => {
                             const date = prev.date;
                             date.setFullYear(dateArr[0]);
                             date.setMonth(dateArr[1]);
@@ -123,7 +123,7 @@ export default function NewStudentModal({ onClose }: any) {
                         value={format(generatorFields.date, "HH:mm")}
                         onChange={(event) => {
                           const timeArr = event.target.value.split(":");
-                          setGeneratorFields((prev) => ({
+                          setGeneratorFields((prev: any) => ({
                             ...prev,
                             hour: timeArr[0],
                             minute: timeArr[1],
@@ -139,9 +139,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 0 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -153,9 +153,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 1 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -167,9 +167,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 2 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -181,9 +181,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 3 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -195,9 +195,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 4 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -209,9 +209,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 5 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -223,9 +223,9 @@ export default function NewStudentModal({ onClose }: any) {
                       <CheckboxField>
                         <Checkbox
                           onChange={(isChecked) => {
-                            setGeneratorFields((prev) => ({
+                            setGeneratorFields((prev: any) => ({
                               ...prev,
-                              day: prev.day.map((d, i) =>
+                              day: prev.day.map((d: number, i: number) =>
                                 i === 6 ? (isChecked ? 1 : 0) : d,
                               ),
                             }));
@@ -242,7 +242,7 @@ export default function NewStudentModal({ onClose }: any) {
                       type="number"
                       value={generatorFields.count}
                       onChange={(event) => {
-                        setGeneratorFields((prev) => ({
+                        setGeneratorFields((prev: any) => ({
                           ...prev,
                           count: event.target.value,
                         }));
@@ -262,7 +262,7 @@ export default function NewStudentModal({ onClose }: any) {
                           date.getTime() + 1000 * 60 * 60 * 24 * d,
                         );
 
-                        if (!generatorFields.day.some((d) => d === 1)) {
+                        if (!generatorFields.day.some((d: number) => d === 1)) {
                           alert("요일을 선택해주세요");
                           return;
                         }
@@ -294,6 +294,7 @@ export default function NewStudentModal({ onClose }: any) {
         </form>
       </DialogBody>
       <DialogActions>
+        {/* @ts-ignore */}
         <Button color="white" plain onClick={onClose}>
           닫기
         </Button>

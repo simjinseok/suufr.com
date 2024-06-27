@@ -12,7 +12,7 @@ import {
 } from "@/components/table";
 import { Button } from "@/components/button";
 
-export default function Lessons({ lessons }) {
+export default function Lessons({ lessons }: any) {
   console.log("gdgd", lessons);
   return (
     <Table>
@@ -25,7 +25,7 @@ export default function Lessons({ lessons }) {
         </TableRow>
       </TableHead>
       <TableBody>
-        {lessons.map((lesson) => (
+        {lessons.map((lesson: any) => (
           <TableRow key={`lesson-${lesson.id}`}>
             <TableCell>{format(lesson.lessonAt, "yyyy-MM-dd HH:mm")}</TableCell>
             <TableCell>{lesson.student.name}</TableCell>

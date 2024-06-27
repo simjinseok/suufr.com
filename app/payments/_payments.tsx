@@ -16,9 +16,9 @@ import {
 import PaymentForm from "@/components/payment-form";
 import {router} from "next/client";
 
-export default function Payments({ payments }) {
+export default function Payments({ payments }: any) {
   const router = useRouter();
-  const [editingPayment, setEditingPayment] = React.useState(null);
+  const [editingPayment, setEditingPayment] = React.useState<any>(null);
 
   return (
     <>
@@ -32,7 +32,7 @@ export default function Payments({ payments }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {payments.map((payment) => (
+          {payments.map((payment: any) => (
             <TableRow key={`payment-${payment.id}`}>
               <TableCell>
                 {format(new Date(payment.paidAt), "yyyy-MM-dd")}

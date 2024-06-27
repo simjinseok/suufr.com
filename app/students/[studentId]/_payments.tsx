@@ -10,7 +10,7 @@ import { Divider } from "@/components/divider";
 import PaymentForm from "@/components/payment-form";
 import { Text } from "@/components/text";
 
-export default function Payments({ student, payments }) {
+export default function Payments({ student, payments }: any) {
   const router = useRouter();
   const [isCreating, setIsCreating] = React.useState(false);
   const [editingPayment, setEditingPayment] = React.useState(null);

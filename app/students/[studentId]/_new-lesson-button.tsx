@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import NewLessonDialog from "./_new-lesson-dialog";
 
 const EditStudentDialog = dynamic(() => import("./_edit-dialog"));
-export default function NewLessonButton({ student }) {
+export default function NewLessonButton({ student }: any) {
   const [openEdit, setOpenEdit] = React.useState(false);
 
 

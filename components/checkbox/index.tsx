@@ -1,7 +1,11 @@
 import * as Headless from "@headlessui/react";
 import clsx from "clsx";
+import type React from "react";
 
-export function CheckboxGroup({ className, ...props }) {
+export function CheckboxGroup({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
       data-slot="control"
@@ -17,7 +21,10 @@ export function CheckboxGroup({ className, ...props }) {
   );
 }
 
-export function CheckboxField({ className, ...props }) {
+export function CheckboxField({
+  className,
+  ...props
+}: { className?: string } & Omit<Headless.FieldProps, "className">) {
   return (
     <Headless.Field
       data-slot="field"
@@ -108,7 +115,16 @@ const colors = {
   rose: "[--checkbox-check:theme(colors.white)] [--checkbox-checked-bg:theme(colors.rose.500)] [--checkbox-checked-border:theme(colors.rose.600/90%)]",
 };
 
-export function Checkbox({ color = "dark/zinc", className, ...props }) {
+type Color = keyof typeof colors;
+
+export function Checkbox({
+  color = "dark/zinc",
+  className,
+  ...props
+}: {
+  color?: Color;
+  className?: string;
+} & Omit<Headless.CheckboxProps, "className">) {
   return (
     <Headless.Checkbox
       data-slot="control"

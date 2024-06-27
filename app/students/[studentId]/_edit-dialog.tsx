@@ -12,7 +12,7 @@ import { Textarea } from "@/components/textarea";
 import { Button } from "@/components/button";
 import { SaveIcon, Trash2Icon, LoaderIcon } from "lucide-react";
 
-export default function EditDialog({ student, onClose }) {
+export default function EditDialog({ student, onClose }: any) {
   const [isPending, setIsPending] = React.useState(false);
   const onSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

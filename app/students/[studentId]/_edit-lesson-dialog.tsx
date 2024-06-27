@@ -69,6 +69,7 @@ export default function EditLessonDialog({ lesson, onClose }: any) {
             삭제
           </Button>
         </div>
+        {/* @ts-ignore */}
         <Button color="white" plain disabled={isPending} onClick={onClose}>
           닫기
         </Button>
