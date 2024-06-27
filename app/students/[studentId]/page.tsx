@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { Heading } from "@/components/heading";
 import Lessons from "./_lessons";
 import Payments from "./_payments";
-import {Text} from "@/components/text";
+import { Text } from "@/components/text";
 import React from "react";
-import {commaizeNumber} from "@toss/utils";
+import { commaizeNumber } from "@toss/utils";
 
 export default async function Page({
   params,
@@ -50,11 +50,11 @@ export default async function Page({
       feedback: {
         id: {
           gt: 0,
-        }
+        },
       },
     },
-  })
-  console.log('갯수', remainLessons);
+  });
+  console.log("갯수", remainLessons);
 
   const lessons = await prisma.lesson.findMany({
     include: {
@@ -87,7 +87,9 @@ export default async function Page({
         <div className="flex gap-5">
           <div className="text-center">
             <Text>남은 수업</Text>
-            <p className="font-bold text-lg">{commaizeNumber(remainLessons)}회</p>
+            <p className="font-bold text-lg">
+              {commaizeNumber(remainLessons)}회
+            </p>
           </div>
           <div className="text-center">
             <Text>완료한 수업</Text>
