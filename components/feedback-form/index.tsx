@@ -46,7 +46,7 @@ export default function FeedbackForm({ lesson, onSuccess, onClose }: any) {
       onSuccess();
       // console.log("gdgd", result);
     },
-    [lesson],
+    [lesson, onSuccess],
   );
 
   return (

@@ -47,7 +47,7 @@ export default function PaymentForm({
       onSuccess();
       // console.log("gdgd", result);
     },
-    [isEdit, payment],
+    [isEdit, payment, onSuccess],
   );
 
   return (
@@ -86,7 +86,7 @@ export default function PaymentForm({
               />
               <Text>
                 <output name="amount_p" htmlFor="amount">
-                    {payment ? `${formatToKoreanNumber(payment.amount)}원` : ''}
+                  {payment ? `${formatToKoreanNumber(payment.amount)}원` : ""}
                 </output>
               </Text>
             </Field>

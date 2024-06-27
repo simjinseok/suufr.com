@@ -12,7 +12,7 @@ import FeedbackForm from "@/components/feedback-form";
 
 const NewLessonDialog = dynamic(() => import("./_new-lesson-dialog"));
 const EditDialog = dynamic(() => import("./_edit-lesson-dialog"));
-export default function Lessons({ lessons }) {
+export default function Lessons({ lessons }: any) {
   const router = useRouter();
 
   const [openFeedback, setOpenFeedback] = React.useState(null);

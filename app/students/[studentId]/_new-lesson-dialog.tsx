@@ -14,7 +14,7 @@ import { CheckboxGroup, Checkbox, CheckboxField } from "@/components/checkbox";
 import { FieldGroup, Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
 
-export default function NewStudentModal({ onClose }) {
+export default function NewStudentModal({ onClose }: any) {
   const params = useParams();
   const [generatorFields, setGeneratorFields] = React.useState<any>({
     date: new Date(),

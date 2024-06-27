@@ -31,6 +31,7 @@ export default function RootLayout({
     <html lang="ko" style={{ height: "100%" }}>
       <body style={{ height: "100%" }}>
         <SidebarLayout
+          navbar={<>메뉴</>}
           sidebar={
             <Sidebar>
               <SidebarHeader>스프</SidebarHeader>
