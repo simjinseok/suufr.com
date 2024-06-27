@@ -6,8 +6,12 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/button";
 import NewStudent from "./_new-student";
 import { Heading } from "@/components/heading";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-export default async function Page() {
+const PAGE_SIZE = 20;
+export default async function Page({ searchParams }: any) {
+  const page = searchParams.page > 0 ? Number(searchParams.page) : 1;
+
   const prisma = new PrismaClient();
   const supabase = createClient();
   const {
@@ -19,6 +23,14 @@ export default async function Page() {
   }
 
   const students = await prisma.student.findMany({
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+    where: {
+      deletedAt: null,
+      userId: user.id,
+    },
+  });
+  const studentCount = await prisma.student.count({
     where: {
       deletedAt: null,
       userId: user.id,
@@ -52,6 +64,34 @@ export default async function Page() {
           </li>
         ))}
       </ul>
+      <div className="mt-5 flex justify-between">
+        {page > 1 && (
+          <Link
+            className="flex items-center"
+            href={{
+              query: {
+                page: page - 1,
+              },
+            }}
+          >
+            <ChevronLeftIcon />
+            이전 페이지
+          </Link>
+        )}
+        {studentCount > page * PAGE_SIZE && (
+          <Link
+            className="flex items-center"
+            href={{
+              query: {
+                page: page + 1,
+              },
+            }}
+          >
+            다음 페이지
+            <ChevronRightIcon />
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

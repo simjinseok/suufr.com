@@ -45,6 +45,12 @@ export default function Lessons({ lessons }: any) {
                 <p>{lesson.notes}</p>
               </div>
               <div>
+                  {lesson.feedback && (
+                      <div>
+                          <p>피드백 존재</p>
+                      <p>{lesson.feedback.notes}</p>
+                  </div>
+                  )}
                 <Button onClick={setOpenFeedback.bind(null, lesson)}>
                   피드백
                 </Button>

@@ -15,7 +15,6 @@ export default function Payments({ student, payments }: any) {
   const [isCreating, setIsCreating] = React.useState(false);
   const [editingPayment, setEditingPayment] = React.useState(null);
 
-  console.log("gdgd", payments);
   return (
     <div className="mt-10">
       <div className="flex items-end justify-between">

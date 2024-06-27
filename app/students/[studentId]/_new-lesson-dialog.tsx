@@ -39,7 +39,6 @@ export default function NewStudentModal({ onClose }: any) {
               method: "POST",
               body: new FormData(event.target as HTMLFormElement),
             }).then((response) => {
-              console.log(response);
               if (response.status === 201) {
                 alert("수업이 추가되었습니다.");
                 location.reload();
