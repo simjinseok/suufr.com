@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase";
 import { PrismaClient } from "@prisma/client";
+import PaymentSchema from "@/schemas/payment";
 
 export async function PUT(
   request: Request,
@@ -37,18 +38,17 @@ export async function PUT(
   }
 
   const formData = await request.formData();
-  console.log("여길 안와?");
-  for (const field of formData.entries()) {
-    console.log("???", field[1]);
-  }
+  const schemaData = PaymentSchema.parse(formData);
 
   const result = await prisma.payment.update({
     where: {
       id: payment.id,
     },
     data: {
-      amount: Number(formData.get("amount")),
-      notes: formData.get("notes") as string,
+      paidAt: new Date(schemaData.paidAt),
+      amount: schemaData.amount,
+      notes: schemaData.notes,
+      updatedAt: new Date(),
     },
   });
 

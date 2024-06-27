@@ -1,18 +1,22 @@
 "use client";
+import type { TLesson } from "@/types/index";
+
 import { format } from "date-fns/format";
 
 import React from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Heading } from "@/components/heading";
-import { useParams } from "next/navigation";
 import { Divider } from "@/components/divider";
 import { Button } from "@/components/button";
 import FeedbackForm from "@/components/feedback-form";
 
 const NewLessonDialog = dynamic(() => import("./_new-lesson-dialog"));
 const EditDialog = dynamic(() => import("./_edit-lesson-dialog"));
-export default function Lessons({ lessons }: any) {
+type Props = {
+  lessons: TLesson[];
+};
+export default function Lessons({ lessons }: Props) {
   const router = useRouter();
 
   const [openFeedback, setOpenFeedback] = React.useState(null);
@@ -39,18 +43,18 @@ export default function Lessons({ lessons }: any) {
               className="flex py-3 justify-between"
             >
               <div>
-                <p className="font-mono">
+                <p>
                   {format(new Date(lesson.lessonAt), "yyyy-MM-dd")}
                 </p>
                 <p>{lesson.notes}</p>
               </div>
               <div>
-                  {lesson.feedback && (
-                      <div>
-                          <p>피드백 존재</p>
-                      <p>{lesson.feedback.notes}</p>
+                {lesson.feedback && (
+                  <div>
+                    <p>피드백 존재</p>
+                    <p>{lesson.feedback.notes}</p>
                   </div>
-                  )}
+                )}
                 <Button onClick={setOpenFeedback.bind(null, lesson)}>
                   피드백
                 </Button>

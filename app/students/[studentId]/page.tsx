@@ -1,3 +1,5 @@
+import type { TStudent } from "@/types/index";
+
 import { createClient } from "@/utils/supabase";
 import { PrismaClient } from "@prisma/client";
 
@@ -23,61 +25,54 @@ export default async function Page({
     return redirect("/login");
   }
 
-  const student = await prisma.student.findUnique({
-    where: {
-      id: studentId,
-      deletedAt: null,
-      userId: user.id,
-    },
-  });
+  const students: TStudent[] = await prisma.$queryRaw`
+      SELECT students.id                                                     AS id,
+             students.name                                                   AS name,
+             students.notes                                                  AS notes,
+             CAST(COUNT(*) FILTER (WHERE lessons.lesson_at > CURRENT_DATE) AS INT) as "upcomingLessonsCount"
+      FROM students
+        LEFT JOIN lessons ON lessons.student_id = students.id
+      WHERE students.id = ${studentId}
+        AND students.deleted_at IS NULL
+        AND students.user_id = ${user.id}::uuid
+      GROUP BY students.id, students.name, students.notes;
+  `;
+  const student = students[0];
 
   if (!student) {
     return { notFound: true };
   }
-
-  const remainLessons = await prisma.lesson.count({
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-      feedback: null,
-    },
-  });
-
-  const doneLessons = await prisma.lesson.count({
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-      feedback: {
-        id: {
-          gt: 0,
-        },
+  const [lessons, payments] = await prisma.$transaction([
+    prisma.lesson.findMany({
+      take: 10,
+      include: {
+        feedback: true,
       },
-    },
-  });
-
-  const lessons = await prisma.lesson.findMany({
-    include: {
-      feedback: true,
-      student: true,
-    },
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      lessonAt: "desc",
-    },
-  });
-
-  const payments = await prisma.payment.findMany({
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      paidAt: "desc",
-    },
-  });
+      where: {
+        studentId: student.id,
+        deletedAt: null,
+      },
+      orderBy: {
+        lessonAt: "desc",
+      },
+    }),
+    prisma.payment.findMany({
+      take: 10,
+      where: {
+        studentId: student.id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        paidAt: true,
+        amount: true,
+        notes: true,
+      },
+      orderBy: {
+        paidAt: "desc",
+      },
+    }),
+  ]);
 
   return (
     <div>
@@ -87,16 +82,12 @@ export default async function Page({
           <div className="text-center">
             <Text>남은 수업</Text>
             <p className="font-bold text-lg">
-              {commaizeNumber(remainLessons)}회
+              {commaizeNumber(Number(student.upcomingLessonsCount))}회
             </p>
-          </div>
-          <div className="text-center">
-            <Text>완료한 수업</Text>
-            <p className="font-bold text-lg">{commaizeNumber(doneLessons)}회</p>
           </div>
         </div>
       </div>
-      <Text>{student.notes}</Text>
+      <Text className="whitespace-pre-wrapii">{student.notes}</Text>
       <Lessons lessons={lessons} />
       <Payments student={student} payments={payments} />
     </div>

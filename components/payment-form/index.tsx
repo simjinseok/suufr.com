@@ -15,14 +15,7 @@ import { Input } from "@/components/input";
 import { Text } from "@/components/text";
 import { Textarea } from "@/components/textarea";
 
-export default function PaymentForm({
-  student,
-  payment,
-  onSuccess,
-  onClose,
-}: any) {
-  const isEdit = !!payment;
-
+export default function PaymentForm({ student, payment, onSuccess, onClose }: any) {
   const [isPending, setIsPending] = React.useState(false);
 
   const onSubmit = React.useCallback(
@@ -32,7 +25,7 @@ export default function PaymentForm({
       const formData = new FormData(event.target as HTMLFormElement);
 
       setIsPending(true);
-      let response = isEdit
+      const response = payment
         ? await fetch(`/api/payments/${payment.id}`, {
             method: "PUT",
             body: formData,
@@ -42,12 +35,12 @@ export default function PaymentForm({
             body: formData,
           });
 
-      const result = await response.json();
+      // const result = await response.json();
       setIsPending(false);
       onSuccess();
       // console.log("gdgd", result);
     },
-    [isEdit, payment, onSuccess],
+    [payment, onSuccess],
   );
 
   return (
