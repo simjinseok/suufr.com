@@ -19,7 +19,7 @@ type Props = {
 export default function Lessons({ lessons }: Props) {
   const router = useRouter();
 
-  const [openFeedback, setOpenFeedback] = React.useState(null);
+  const [openFeedback, setOpenFeedback] = React.useState<TLesson | null>(null);
   const [openNewLesson, setOpenNewLesson] = React.useState(false);
   const [editLesson, setEditLesson] = React.useState<any>(null);
 
