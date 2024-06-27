@@ -7,6 +7,7 @@ import { Input } from "@/components/input";
 
 export default function Page() {
   const [state, action, isPending] = useFormState<any, any>(login, {});
+
   return (
     <form action={action}>
       <FieldGroup>
@@ -21,6 +22,7 @@ export default function Page() {
         </Field>
         <Button type="submit">로그인</Button>
       </FieldGroup>
+      <Button className="mt-5" href="/signup">회원가입</Button>
     </form>
   );
 }
