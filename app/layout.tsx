@@ -20,8 +20,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
-  title: "Suufr",
-  description: "스케쥴 프랜드",
+  title: "스프",
+  description: "과외 일정 관리 서비스",
 };
 
 export default function RootLayout({
