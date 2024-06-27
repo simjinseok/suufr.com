@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id        Int       @id @default(autoincrement())
+  name      String
+  notes     String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  old_id    Int?
+
+  userId String @map("user_id") @db.Uuid
+
+  lessons  Lesson[]
+  payments Payment[]
+
+  @@index([userId, name, deletedAt])
+  @@map("students")
+}
+
+model Lesson {
+  id        Int       @id @default(autoincrement())
+  notes     String
+  lessonAt  DateTime  @map("lesson_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  old_id    Int?
+
+  studentId Int       @map("student_id")
+  student   Student   @relation(fields: [studentId], references: [id])
+  feedback  Feedback?
+
+  @@index([lessonAt, deletedAt, studentId])
+  @@map("lessons")
+}
+
+model Feedback {
+  id        Int       @id @default(autoincrement())
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  lessonId Int    @unique @map("lesson_id")
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+
+  @@index([lessonId, deletedAt])
+  @@map("feedback")
+}
+
+model Payment {
+  id        Int       @id @default(autoincrement())
+  amount    Int
+  notes     String?
+  paidAt    DateTime  @map("paid_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  studentId Int     @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@index([paidAt, deletedAt, studentId])
+  @@map("payments")
+}
+
+model Meeting {
+  id        Int       @id @default(autoincrement())
+  name      String
+  notes     String?
+  userId    String    @map("user_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([userId, name, deletedAt])
+  @@map("meetings")
+}

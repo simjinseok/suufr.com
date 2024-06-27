@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "target": "ES2023",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -18,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/components/*": ["./components/*"],
+      "@/schemas/*": ["./schemas/*"],
+      "@/utils/*": ["./utils/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
