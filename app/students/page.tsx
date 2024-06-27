@@ -29,6 +29,9 @@ export default async function Page({ searchParams }: any) {
       deletedAt: null,
       userId: user.id,
     },
+    orderBy: {
+      name: "asc",
+    },
   });
   const studentCount = await prisma.student.count({
     where: {
