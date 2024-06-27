@@ -16,6 +16,8 @@ import {
   ReceiptIcon,
   UserRoundCheckIcon,
 } from "lucide-react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Suufr",
@@ -83,6 +85,8 @@ export default function RootLayout({
         >
           {children}
         </SidebarLayout>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
