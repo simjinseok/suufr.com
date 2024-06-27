@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/button";
 
 export default function Lessons({ lessons }: any) {
-  console.log("gdgd", lessons);
   return (
     <Table>
       <TableHead>

@@ -54,7 +54,6 @@ export default async function Page({
       },
     },
   });
-  console.log("갯수", remainLessons);
 
   const lessons = await prisma.lesson.findMany({
     include: {
