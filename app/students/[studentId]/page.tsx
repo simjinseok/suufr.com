@@ -61,7 +61,10 @@ export default async function Page({
       },
     },
     where: {
-      studentId: student.id,
+      student: {
+        id: student.id,
+        userId: user.id,
+      },
       deletedAt: null,
     },
     orderBy: {
