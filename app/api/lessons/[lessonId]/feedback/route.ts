@@ -25,8 +25,10 @@ export async function POST(
     where: {
       id: lessonId,
       deletedAt: null,
-      student: {
-        userId: user.id,
+      syllabus: {
+        student: {
+          userId: user.id,
+        },
       },
     },
   });
@@ -62,7 +64,7 @@ export async function POST(
     feedbackResult = await prisma.feedback.create({
       data: {
         lessonId: lesson.id,
-        notes: schemaData.notes || '',
+        notes: schemaData.notes || "",
       },
     });
   }

@@ -1,6 +1,6 @@
 "use client";
 import { format } from "date-fns/format";
-import { commaizeNumber } from "@toss/utils";
+import { formatToKoreanNumber } from "@toss/utils";
 
 import React from "react";
 import { useRouter } from "next/navigation";
@@ -13,8 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/table";
-import PaymentForm from "@/components/payment-form";
-import {router} from "next/client";
+import PaymentForm from "@/components/forms/payment-form";
 
 export default function Payments({ payments }: any) {
   const router = useRouter();
@@ -26,8 +25,10 @@ export default function Payments({ payments }: any) {
         <TableHead>
           <TableRow>
             <TableHeader>일자</TableHeader>
+            <TableHeader>결제수단</TableHeader>
             <TableHeader>금액</TableHeader>
             <TableHeader>학생명</TableHeader>
+            <TableHeader>메모</TableHeader>
             <TableHeader>수정</TableHeader>
           </TableRow>
         </TableHead>
@@ -37,11 +38,14 @@ export default function Payments({ payments }: any) {
               <TableCell>
                 {format(new Date(payment.paidAt), "yyyy-MM-dd")}
               </TableCell>
-              <TableCell>{commaizeNumber(payment.amount)}원</TableCell>
-              <TableCell>{payment.student.name}</TableCell>
+              <TableCell>{payment.paymentMethod}</TableCell>
+              <TableCell>{formatToKoreanNumber(payment.amount)}원</TableCell>
+              <TableCell>{payment.syllabus.student.name}</TableCell>
+              <TableCell>{payment.notes}</TableCell>
               <TableCell>
                 <Button
                   color="white"
+                  plain
                   onClick={setEditingPayment.bind(null, payment)}
                 >
                   수정
@@ -53,8 +57,12 @@ export default function Payments({ payments }: any) {
       </Table>
       {editingPayment && (
         <PaymentForm
-          student={editingPayment.student}
-          payment={editingPayment}
+          syllabus={{
+            ...editingPayment.syllabus,
+            payment: {
+              ...editingPayment,
+            }
+          }}
           onSuccess={() => {
             router.refresh();
             setEditingPayment(false);

@@ -18,34 +18,51 @@ model Student {
   id        Int       @id @default(autoincrement())
   name      String
   notes     String
+  status    String
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
-  old_id    Int?
 
   userId String @map("user_id") @db.Uuid
 
-  lessons  Lesson[]
-  payments Payment[]
+  syllabuses Syllabus[]
 
-  @@index([userId, name, deletedAt])
+  @@index([userId, name, status, deletedAt])
   @@map("students")
+}
+
+model Syllabus {
+  id        Int       @id @default(autoincrement())
+  title     String
+  notes     String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  studentId Int      @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id])
+  payment   Payment?
+  lessons   Lesson[]
+
+  @@index([studentId, deletedAt])
+  @@map("syllabuses")
 }
 
 model Lesson {
   id        Int       @id @default(autoincrement())
   notes     String
   lessonAt  DateTime  @map("lesson_at")
+  isDone    Boolean   @default(false) @map("is_done")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
-  old_id    Int?
 
-  studentId Int       @map("student_id")
-  student   Student   @relation(fields: [studentId], references: [id])
-  feedback  Feedback?
+  syllabusId Int      @map("syllabus_id")
+  syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
 
-  @@index([lessonAt, deletedAt, studentId])
+  Feedback Feedback?
+
+  @@index([syllabusId, lessonAt, deletedAt])
   @@map("lessons")
 }
 
@@ -64,18 +81,20 @@ model Feedback {
 }
 
 model Payment {
-  id        Int       @id @default(autoincrement())
-  amount    Int
-  notes     String?
-  paidAt    DateTime  @map("paid_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id            Int       @id @default(autoincrement())
+  amount        Int
+  paymentMethod String    @map("payment_method")
+  notes         String?
+  paidAt        DateTime  @map("paid_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
 
-  studentId Int     @map("student_id")
-  student   Student @relation(fields: [studentId], references: [id])
+  syllabusId Int      @map("syllabus_id")
+  syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
 
-  @@index([paidAt, deletedAt, studentId])
+  @@unique([syllabusId])
+  @@index([paidAt, deletedAt, syllabusId])
   @@map("payments")
 }
 

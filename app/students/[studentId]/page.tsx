@@ -2,14 +2,13 @@ import type { TStudent } from "@/types/index";
 
 import { createClient } from "@/utils/supabase";
 import { PrismaClient } from "@prisma/client";
+import { commaizeNumber } from "@toss/utils";
 
+import React from "react";
 import { redirect } from "next/navigation";
 import { Heading } from "@/components/heading";
-import Lessons from "./_lessons";
-import Payments from "./_payments";
 import { Text } from "@/components/text";
-import React from "react";
-import { commaizeNumber } from "@toss/utils";
+import Syllabuses from "./_syllabuses";
 
 export default async function Page({
   params,
@@ -26,12 +25,13 @@ export default async function Page({
   }
 
   const students: TStudent[] = await prisma.$queryRaw`
-      SELECT students.id                                                     AS id,
-             students.name                                                   AS name,
-             students.notes                                                  AS notes,
-             CAST(COUNT(*) FILTER (WHERE lessons.lesson_at > CURRENT_DATE) AS INT) as "upcomingLessonsCount"
+      SELECT students.id                                                 AS id,
+             students.name                                               AS name,
+             students.notes                                              AS notes,
+             CAST(COUNT(*) FILTER (WHERE lessons.is_done = false) AS INT) AS "upcomingLessonsCount"
       FROM students
-        LEFT JOIN lessons ON lessons.student_id = students.id
+               LEFT JOIN syllabuses ON syllabuses.student_id = students.id
+               LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
       WHERE students.id = ${studentId}
         AND students.deleted_at IS NULL
         AND students.user_id = ${user.id}::uuid
@@ -42,37 +42,32 @@ export default async function Page({
   if (!student) {
     return { notFound: true };
   }
-  const [lessons, payments] = await prisma.$transaction([
-    prisma.lesson.findMany({
-      take: 10,
-      include: {
-        feedback: true,
+
+  const syllabuses = await prisma.syllabus.findMany({
+    take: 5,
+    include: {
+      payment: {
+        where: {
+          deletedAt: null,
+        },
       },
-      where: {
-        studentId: student.id,
-        deletedAt: null,
+      lessons: {
+        where: {
+          deletedAt: null,
+        },
+        orderBy: {
+          lessonAt: "asc",
+        },
       },
-      orderBy: {
-        lessonAt: "desc",
-      },
-    }),
-    prisma.payment.findMany({
-      take: 10,
-      where: {
-        studentId: student.id,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        paidAt: true,
-        amount: true,
-        notes: true,
-      },
-      orderBy: {
-        paidAt: "desc",
-      },
-    }),
-  ]);
+    },
+    where: {
+      studentId: student.id,
+      deletedAt: null,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
   return (
     <div>
@@ -88,8 +83,7 @@ export default async function Page({
         </div>
       </div>
       <Text className="whitespace-pre-wrapii">{student.notes}</Text>
-      <Lessons lessons={lessons} />
-      <Payments student={student} payments={payments} />
+      <Syllabuses syllabuses={syllabuses} student={student} />
     </div>
   );
 }

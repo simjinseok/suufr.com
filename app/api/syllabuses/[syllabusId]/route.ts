@@ -3,9 +3,9 @@ import { createClient } from "@/utils/supabase";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { lessonId: string } },
+  { params }: { params: { syllabusId: string } },
 ) {
-  const lessonId = Number(params.lessonId);
+  const syllabusId = Number(params.syllabusId);
 
   const prisma = new PrismaClient();
   const supabase = createClient();
@@ -20,34 +20,31 @@ export async function PUT(
     });
   }
 
-  const lesson = await prisma.lesson.findUnique({
+  const syllabus = await prisma.syllabus.findUnique({
     where: {
-      id: lessonId,
+      id: syllabusId,
       deletedAt: null,
-      syllabus: {
-        student: {
-          userId: user.id,
-        },
+      student: {
+        userId: user.id,
       },
     },
   });
 
-  if (!lesson) {
+  if (!syllabus) {
     return new Response("", {
       status: 404,
     });
   }
 
   const formData = await request.formData();
-  const lessonAt = new Date(`${formData.get("lessonAt")}:00+09:00`);
 
-  const result = await prisma.lesson.update({
+  const result = await prisma.syllabus.update({
     where: {
-      id: lesson.id,
+      id: syllabus.id,
     },
     data: {
+      title: formData.get("title") as string,
       notes: formData.get("notes") as string,
-      lessonAt,
       updatedAt: new Date(),
     },
   });
@@ -55,8 +52,6 @@ export async function PUT(
   return Response.json(
     {
       id: result.id,
-      lessonAt: result.lessonAt,
-      notes: result.notes,
     },
     {
       status: 200,

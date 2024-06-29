@@ -55,13 +55,13 @@ export default function RootLayout({
                     <span className="truncate">수강생</span>
                   </SidebarItem>
 
-                  <SidebarItem href="/lessons">
-                    <CalendarDaysIcon
-                      data-slot="icon"
-                      style={{ fill: "transparent" }}
-                    />
-                    <span>일정</span>
-                  </SidebarItem>
+                  {/*<SidebarItem href="/lessons">*/}
+                  {/*  <CalendarDaysIcon*/}
+                  {/*    data-slot="icon"*/}
+                  {/*    style={{ fill: "transparent" }}*/}
+                  {/*  />*/}
+                  {/*  <span>일정</span>*/}
+                  {/*</SidebarItem>*/}
 
                   <SidebarItem href="/payments">
                     <ReceiptIcon

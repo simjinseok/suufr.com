@@ -11,7 +11,7 @@ import {
 } from "@/components/dialog";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
-import { Save as SaveIcon, Trash2 as Trash2Icon } from "lucide-react";
+import { Select } from "@/components/select";
 
 export default function NewStudentModal({
   student,
@@ -19,7 +19,7 @@ export default function NewStudentModal({
   onSuccess,
   onClose,
 }: any) {
-    const formId = React.useId();
+  const formId = React.useId();
   const [isPending, setIsPending] = React.useState(false);
 
   const onSubmit = React.useCallback(
@@ -49,6 +49,14 @@ export default function NewStudentModal({
               <Input name="name" defaultValue={student?.name} required />
             </Field>
             <Field>
+              <Label>상태</Label>
+              <Select name="status">
+                <option value="active">수강중</option>
+                <option value="paused">일시정지</option>
+                <option value="dropped">그만둠</option>
+              </Select>
+            </Field>
+            <Field>
               <Label>참고사항</Label>
               <Textarea name="notes" defaultValue={student?.notes} rows={5} />
             </Field>
@@ -60,7 +68,6 @@ export default function NewStudentModal({
           닫기
         </Button>
         <Button type="submit" form={formId} disabled={isPending}>
-          <SaveIcon width={16} height={16} />
           저장
         </Button>
       </DialogActions>

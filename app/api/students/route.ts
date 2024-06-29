@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     data: {
       userId: user.id,
       name: formData.get("name") as string,
+      status: formData.get("status") as string,
       notes: formData.get("notes") as string,
     },
   });

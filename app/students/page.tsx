@@ -36,9 +36,11 @@ export default async function Page({ searchParams }: PageProps) {
       SELECT students.id    AS id,
              students.name  AS name,
              students.notes AS notes,
-             CAST(COUNT(*) FILTER (WHERE lessons.lesson_at > CURRENT_DATE) AS INT) as "upcomingLessonsCount"
+             CAST(COUNT(*) FILTER (WHERE lessons.is_done = false) AS INT) AS "upcomingLessonsCount"
       FROM students
-               LEFT JOIN lessons ON lessons.student_id = students.id
+        LEFT JOIN syllabuses ON syllabuses.student_id = students.id
+               LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
+        
       GROUP BY students.id, students.name, students.notes
       ORDER BY students.name ASC
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};

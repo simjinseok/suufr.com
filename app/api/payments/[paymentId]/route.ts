@@ -25,8 +25,10 @@ export async function PUT(
     where: {
       id: paymentId,
       deletedAt: null,
-      student: {
-        userId: user.id,
+      syllabus: {
+        student: {
+          userId: user.id,
+        },
       },
     },
   });
@@ -48,6 +50,7 @@ export async function PUT(
       paidAt: new Date(schemaData.paidAt),
       amount: schemaData.amount,
       notes: schemaData.notes,
+      paymentMethod: schemaData.paymentMethod,
       updatedAt: new Date(),
     },
   });

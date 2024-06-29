@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { createClient } from "@/utils/supabase";
+import { PrismaClient } from "@prisma/client";
 
 export async function PUT(
   request: Request,
@@ -38,16 +38,12 @@ export async function PUT(
     });
   }
 
-  const formData = await request.formData();
-  const lessonAt = new Date(`${formData.get("lessonAt")}:00+09:00`);
-
   const result = await prisma.lesson.update({
     where: {
       id: lesson.id,
     },
     data: {
-      notes: formData.get("notes") as string,
-      lessonAt,
+      isDone: !lesson.isDone,
       updatedAt: new Date(),
     },
   });
@@ -55,8 +51,6 @@ export async function PUT(
   return Response.json(
     {
       id: result.id,
-      lessonAt: result.lessonAt,
-      notes: result.notes,
     },
     {
       status: 200,
