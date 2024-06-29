@@ -44,7 +44,7 @@ model Syllabus {
   payment   Payment?
   lessons   Lesson[]
 
-  @@index([studentId, deletedAt])
+  @@index([studentId, createdAt, deletedAt])
   @@map("syllabuses")
 }
 

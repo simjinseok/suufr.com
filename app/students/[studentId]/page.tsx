@@ -8,6 +8,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
+import EditStudentButton from "./_edit-student-button";
 import Syllabuses from "./_syllabuses";
 
 export default async function Page({
@@ -25,9 +26,10 @@ export default async function Page({
   }
 
   const students: TStudent[] = await prisma.$queryRaw`
-      SELECT students.id                                                 AS id,
-             students.name                                               AS name,
-             students.notes                                              AS notes,
+      SELECT students.id                                                  AS id,
+             students.name                                                AS name,
+             students.status                                              AS status,
+             students.notes                                               AS notes,
              CAST(COUNT(*) FILTER (WHERE lessons.is_done = false) AS INT) AS "upcomingLessonsCount"
       FROM students
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id
@@ -75,7 +77,7 @@ export default async function Page({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <Heading>{student.name}</Heading>
+        <Heading>{student.name} ({student.status})</Heading>
         <div className="flex gap-5">
           <div className="text-center">
             <Text>남은 수업</Text>
@@ -83,6 +85,7 @@ export default async function Page({
               {commaizeNumber(Number(student.upcomingLessonsCount))}회
             </p>
           </div>
+          <EditStudentButton student={student} />
         </div>
       </div>
       <Text className="whitespace-pre-wrap">{student.notes}</Text>
