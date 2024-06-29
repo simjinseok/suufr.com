@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: PageProps) {
       FROM students
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id
                LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
-      WHERE (${status} = '' OR students.status = ${status})
+      WHERE (${status} = '' OR students.status = ${status}) AND students.user_id = user.id
       GROUP BY students.id, students.name, students.notes
       ORDER BY students.name ASC
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
