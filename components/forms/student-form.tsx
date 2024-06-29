@@ -6,12 +6,12 @@ import {
   Dialog,
   DialogActions,
   DialogBody,
-  DialogDescription,
   DialogTitle,
 } from "@/components/dialog";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
+import { LoaderIcon } from "lucide-react";
 
 export default function NewStudentModal({
   student,
@@ -27,15 +27,21 @@ export default function NewStudentModal({
       event.preventDefault();
 
       setIsPending(true);
-      const response = await fetch("/api/students", {
-        method: "POST",
-        body: new FormData(event.target as HTMLFormElement),
-      });
+      const formData = new FormData(event.target as HTMLFormElement);
+      const response = student
+        ? await fetch(`/api/students/${student.id}`, {
+            method: "PUT",
+            body: formData,
+          })
+        : await fetch("/api/students", {
+            method: "POST",
+            body: formData,
+          });
       const result = await response.json();
       setIsPending(false);
       onSuccess();
     },
-    [onSuccess],
+    [student, onSuccess],
   );
 
   return (
@@ -69,6 +75,11 @@ export default function NewStudentModal({
         </Button>
         <Button type="submit" form={formId} disabled={isPending}>
           저장
+          {isPending && (
+            <div className="absolute inset-0 bg-[inherit] rounded-[inherit] flex items-center justify-center">
+              <LoaderIcon className="animate-spin" />
+            </div>
+          )}
         </Button>
       </DialogActions>
     </Dialog>

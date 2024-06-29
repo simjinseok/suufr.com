@@ -2,7 +2,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/button";
-import StudentForm from "@/components/student-form";
+import StudentForm from "@/components/forms/student-form";
 
 export default function NewStudentModal() {
   const router = useRouter();

@@ -35,10 +35,6 @@ export async function PUT(
   }
 
   const formData = await request.formData();
-  console.log("여길 안와?");
-  for (const field of formData.entries()) {
-    console.log("???", field[1]);
-  }
 
   const result = await prisma.student.update({
     where: {
@@ -46,6 +42,7 @@ export async function PUT(
     },
     data: {
       name: formData.get("name") as string,
+      status: formData.get("status") as string,
       notes: formData.get("notes") as string,
     },
   });
