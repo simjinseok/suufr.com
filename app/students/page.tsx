@@ -10,11 +10,10 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
 import ConditionForm from "./_condition-form";
 import NewStudent from "./_new-student";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 type PageProps = {
   searchParams: {
     page: number;
@@ -92,7 +91,6 @@ export default async function Page({ searchParams }: PageProps) {
                       : "그만둠"}
                 </Badge>
               </p>
-              <Text className="whitespace-pre-wrap">{student.notes}</Text>
             </div>
             <div className="shrink-0 flex items-start gap-3">
               <div className="shrink-0 text-center">
@@ -127,6 +125,7 @@ export default async function Page({ searchParams }: PageProps) {
             href={{
               query: {
                 page: page - 1,
+                status: status,
               },
             }}
           >
@@ -140,6 +139,7 @@ export default async function Page({ searchParams }: PageProps) {
             href={{
               query: {
                 page: page + 1,
+                status: status,
               },
             }}
           >
