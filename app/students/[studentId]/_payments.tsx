@@ -25,7 +25,7 @@ type Props = {
 export default function Payments({ student, payments }: Props) {
   const router = useRouter();
   const [isCreating, setIsCreating] = React.useState(false);
-  const [editingPayment, setEditingPayment] = React.useState(null);
+  const [editingPayment, setEditingPayment] = React.useState<TPayment | null>(null);
 
   return (
     <div className="mt-10">

@@ -25,9 +25,11 @@ export async function PUT(
     where: {
       id: feedbackId,
       lesson: {
-        student: {
-          userId: user.id,
-        },
+        syllabus: {
+          student: {
+            userId: user.id,
+          },
+        }
       },
       deletedAt: null,
     },

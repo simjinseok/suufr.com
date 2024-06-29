@@ -4,7 +4,8 @@ import { z } from "zod";
 import { zfd } from "zod-form-data";
 
 const schema = zfd.formData({
-  studentId: zfd.numeric(z.number().min(1)),
+  studentId: zfd.numeric(z.number().min(0)),
+  paymentMethod: zfd.text(z.string()),
   amount: zfd.numeric(
     z
       .number({ message: "금액을 입력해주세요." })
@@ -49,7 +50,8 @@ export async function POST(req: Request) {
 
   const result = await prisma.payment.create({
     data: {
-      studentId: student.id,
+      syllabusId: student.id,
+      paymentMethod: schemaResult.paymentMethod,
       paidAt: `${schemaResult.paidAt}T00:00:00+09:00`,
       amount: schemaResult.amount,
       notes: schemaResult.notes || null,

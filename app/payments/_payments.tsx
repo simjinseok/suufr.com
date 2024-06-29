@@ -44,7 +44,6 @@ export default function Payments({ payments }: any) {
               <TableCell>{payment.notes}</TableCell>
               <TableCell>
                 <Button
-                  color="white"
                   plain
                   onClick={setEditingPayment.bind(null, payment)}
                 >

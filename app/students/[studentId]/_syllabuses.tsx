@@ -46,7 +46,7 @@ export default function Syllabuses({ student, syllabuses }: Props) {
   const [editingPayment, setEditingPayment] = React.useState<TSyllabus | null>(
     null,
   );
-  const [editingLesson, setEditingLesson] = React.useState(null);
+  const [editingLesson, setEditingLesson] = React.useState<TLesson | null>(null);
 
   const onDoneClick = React.useCallback(
     (lesson: TLesson) => {
@@ -160,6 +160,8 @@ export default function Syllabuses({ student, syllabuses }: Props) {
                 {syllabus.payment ? (
                   <div className="flex gap-3">
                     <p>{format(syllabus.payment.paidAt, "yyyy-MM-dd")}</p>
+                    {/*
+                    // @ts-ignore */}
                     <p>{PAYMENT_METHODS[syllabus.payment.paymentMethod]}</p>
                     <p>{formatToKoreanNumber(syllabus.payment.amount)}원</p>
                   </div>

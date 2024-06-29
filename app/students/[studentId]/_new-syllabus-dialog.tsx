@@ -12,7 +12,7 @@ import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { format } from "date-fns/format";
 
-export default function NewSyllabusDialog({ student, onSuccess, onClose }) {
+export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) {
   const formId = React.useId();
   const [lessonsDate, setLessonsDate] = React.useState<any[]>([]);
   const [isPending, setIsPending] = React.useState(false);
