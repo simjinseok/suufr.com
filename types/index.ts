@@ -2,6 +2,7 @@ export type TStudent = {
   id: number;
   name: string;
   notes: string;
+  status: string;
   upcomingLessonsCount?: number; // 남은 수업 횟수
   lessons?: TLesson[];
   payments?: TPayment[];

@@ -82,7 +82,7 @@ export default async function Page({
           </div>
         </div>
       </div>
-      <Text className="whitespace-pre-wrapii">{student.notes}</Text>
+      <Text className="whitespace-pre-wrap">{student.notes}</Text>
       {/*
       // @ts-ignore */}
       <Syllabuses syllabuses={syllabuses} student={student} />
