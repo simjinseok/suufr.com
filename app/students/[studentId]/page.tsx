@@ -15,11 +15,12 @@ import Syllabuses from "./_syllabuses";
 export default async function Page({
   params,
 }: { params: { studentId: string } }) {
-  console.timeLog('page start')
+  console.time('')
+  console.timeLog('')
   const prisma = new PrismaClient();
   const studentId = Number(params.studentId);
   const supabase = createClient();
-  console.timeLog('instance generator')
+  console.timeLog('', 'instance')
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -28,7 +29,7 @@ export default async function Page({
     return redirect("/login");
   }
 
-  console.timeLog('get User')
+  console.timeLog('', 'check User')
   const students: TStudent[] = await prisma.$queryRaw`
       SELECT students.id                                                  AS id,
              students.name                                                AS name,
@@ -45,7 +46,7 @@ export default async function Page({
   `;
   const student = students[0];
 
-  console.timeLog('get student')
+  console.timeLog('', 'student')
   if (!student) {
     return notFound();
   }
@@ -95,7 +96,7 @@ export default async function Page({
     },
   });
 
-  console.timeLog('get syllabuses')
+  console.timeEnd('')
   return (
     <div>
       <div className="flex items-center justify-between">
