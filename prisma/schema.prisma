@@ -60,7 +60,7 @@ model Lesson {
   syllabusId Int      @map("syllabus_id")
   syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
 
-  Feedback Feedback?
+  feedback Feedback?
 
   @@index([syllabusId, lessonAt, deletedAt])
   @@map("lessons")
