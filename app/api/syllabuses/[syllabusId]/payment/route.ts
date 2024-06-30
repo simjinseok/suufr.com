@@ -53,7 +53,7 @@ export async function PUT(
       },
       data: {
         amount: schemaData.amount,
-        paidAt: new Date(schemaData.paidAt),
+        paidAt: `${schemaData.paidAt}T00:00:00+09:00`,
         paymentMethod: schemaData.paymentMethod,
         notes: schemaData.notes,
         deletedAt: null,
@@ -64,15 +64,13 @@ export async function PUT(
     payment = await prisma.payment.create({
       data: {
         amount: schemaData.amount,
-        paidAt: new Date(schemaData.paidAt),
+        paidAt: `${schemaData.paidAt}T00:00:00+09:00`,
         notes: schemaData.notes,
         paymentMethod: schemaData.paymentMethod,
         syllabusId: syllabus.id,
       },
     });
   }
-
-  console.log("payment", payment);
 
   return Response.json(
     {

@@ -34,7 +34,7 @@ export default async function Page({
     where: {
       deletedAt: null,
       paidAt: {
-        gt: new Date(date.getFullYear(), date.getMonth(), 1),
+        gte: new Date(date.getFullYear(), date.getMonth(), 1),
         lt: new Date(date.getFullYear(), date.getMonth() + 1, 1),
       },
       syllabus: {

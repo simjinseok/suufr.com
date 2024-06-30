@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     const results = [];
     const syllabus = await tx.syllabus.create({
       data: {
-        title: formData.get("title") as string || '',
-        notes: formData.get("notes") as string || '',
+        title: (formData.get("title") as string) || "",
+        notes: (formData.get("notes") as string) || "",
         studentId: student.id,
       },
     });
@@ -56,8 +56,6 @@ export async function POST(req: Request) {
 
     return results;
   });
-
-  console.log("fefe", result);
 
   return new Response("", {
     status: 201,
