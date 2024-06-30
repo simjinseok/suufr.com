@@ -1,10 +1,12 @@
 "use client";
+import type { TStudent } from "@/types/index";
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/button";
 import StudentForm from "@/components/forms/student-form";
 
-export default function EditStudentButton({ student }: any) {
+export default function EditStudentButton({ student }: { student: TStudent }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = React.useState(false);
 

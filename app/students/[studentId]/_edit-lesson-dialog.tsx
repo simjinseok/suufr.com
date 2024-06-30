@@ -1,4 +1,6 @@
 "use client";
+import type { TLesson } from "@/types/index";
+
 import { format } from "date-fns/format";
 
 import React from "react";
@@ -13,7 +15,10 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 
-export default function EditLessonDialog({ lesson, onClose }: any) {
+export default function EditLessonDialog({
+  lesson,
+  onClose,
+}: { lesson: TLesson; onClose: () => void }) {
   const [isPending, setIsPending] = React.useState(false);
 
   const onSubmit = React.useCallback(

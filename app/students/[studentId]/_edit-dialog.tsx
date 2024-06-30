@@ -1,4 +1,6 @@
 "use client";
+import type { TStudent } from "@/types/index";
+
 import React from "react";
 import {
   Dialog,
@@ -12,20 +14,26 @@ import { Textarea } from "@/components/textarea";
 import { Button } from "@/components/button";
 import { SaveIcon, Trash2Icon, LoaderIcon } from "lucide-react";
 
-export default function EditDialog({ student, onClose }: any) {
+export default function EditDialog({
+  student,
+  onClose,
+}: { student: TStudent; onClose: () => void }) {
   const [isPending, setIsPending] = React.useState(false);
-  const onSubmit = React.useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    setIsPending(true);
-    const response = await fetch(`/api/students/${student.id}`, {
-      method: 'PUT',
-      body: new FormData(event.target as HTMLFormElement),
-    });
+      setIsPending(true);
+      const response = await fetch(`/api/students/${student.id}`, {
+        method: "PUT",
+        body: new FormData(event.target as HTMLFormElement),
+      });
 
-    setIsPending(false);
-    alert('수정이 완료되었습니다');
-  }, [student]);
+      setIsPending(false);
+      alert("수정이 완료되었습니다");
+    },
+    [student],
+  );
 
   return (
     <Dialog open onClose={onClose}>
@@ -35,11 +43,20 @@ export default function EditDialog({ student, onClose }: any) {
           <FieldGroup>
             <Field>
               <Label>이름</Label>
-              <Input name="name" form="student-edit-form" defaultValue={student.name} />
+              <Input
+                name="name"
+                form="student-edit-form"
+                defaultValue={student.name}
+              />
             </Field>
             <Field>
               <Label>참고사항</Label>
-              <Textarea name="notes" form="student-edit-form" defaultValue={student.notes} rows={5} />
+              <Textarea
+                name="notes"
+                form="student-edit-form"
+                defaultValue={student.notes}
+                rows={5}
+              />
             </Field>
           </FieldGroup>
         </form>
@@ -59,9 +76,9 @@ export default function EditDialog({ student, onClose }: any) {
           <SaveIcon width={16} height={16} />
           저장
           {isPending && (
-              <div className="absolute inset-0 bg-[inherit] rounded-[inherit] flex items-center justify-center">
-                <LoaderIcon className="animate-spin" />
-              </div>
+            <div className="absolute inset-0 bg-[inherit] rounded-[inherit] flex items-center justify-center">
+              <LoaderIcon className="animate-spin" />
+            </div>
           )}
         </Button>
       </DialogActions>
