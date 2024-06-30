@@ -19,9 +19,9 @@ model Student {
   name      String
   notes     String
   status    String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   userId String @map("user_id") @db.Uuid
 
@@ -35,9 +35,9 @@ model Syllabus {
   id        Int       @id @default(autoincrement())
   title     String
   notes     String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   studentId Int      @map("student_id")
   student   Student  @relation(fields: [studentId], references: [id])
@@ -51,11 +51,11 @@ model Syllabus {
 model Lesson {
   id        Int       @id @default(autoincrement())
   notes     String
-  lessonAt  DateTime  @map("lesson_at")
+  lessonAt  DateTime  @map("lesson_at") @db.Timestamptz(0)
   isDone    Boolean   @default(false) @map("is_done")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   syllabusId Int      @map("syllabus_id")
   syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
@@ -69,9 +69,9 @@ model Lesson {
 model Feedback {
   id        Int       @id @default(autoincrement())
   notes     String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   lessonId Int    @unique @map("lesson_id")
   lesson   Lesson @relation(fields: [lessonId], references: [id])
@@ -85,10 +85,10 @@ model Payment {
   amount        Int
   paymentMethod String    @map("payment_method")
   notes         String?
-  paidAt        DateTime  @map("paid_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  paidAt        DateTime  @map("paid_at") @db.Timestamptz(0)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   syllabusId Int      @map("syllabus_id")
   syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
@@ -103,9 +103,9 @@ model Meeting {
   name      String
   notes     String?
   userId    String    @map("user_id") @db.Uuid
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   @@index([userId, name, deletedAt])
   @@map("meetings")
