@@ -26,6 +26,7 @@ import { Text } from "@/components/text";
 import { Divider } from "@/components/divider";
 import SyllabusForm from "@/components/forms/syllabus-form";
 import PaymentForm from "@/components/forms/payment-form";
+import FeedbackForm from "@/components/forms/feedback-form";
 import NewSyllabusDialog from "./_new-syllabus-dialog";
 
 const PAYMENT_METHODS = {
@@ -46,7 +47,10 @@ export default function Syllabuses({ student, syllabuses }: Props) {
   const [editingPayment, setEditingPayment] = React.useState<TSyllabus | null>(
     null,
   );
-  const [editingLesson, setEditingLesson] = React.useState<TLesson | null>(null);
+  const [editingLesson, setEditingLesson] = React.useState<TLesson | null>(
+    null,
+  );
+  const [openFeedback, setOpenFeedback] = React.useState<any>(null);
 
   const onDoneClick = React.useCallback(
     (lesson: TLesson) => {
@@ -138,14 +142,27 @@ export default function Syllabuses({ student, syllabuses }: Props) {
                           <Text className="whitespace-pre-wrap">
                             {lesson.notes}
                           </Text>
+                          {lesson.feedback && (
+                            <Text>피드백: {lesson.feedback.notes}</Text>
+                          )}
                         </div>
-                        <div>
-                          <Button
-                            plain
-                            onClick={setEditingLesson.bind(null, lesson)}
-                          >
-                            수정
-                          </Button>
+                        <div className="flex gap-3">
+                          {lesson.isDone && (
+                            <Button
+                              color="light"
+                              onClick={setOpenFeedback.bind(null, lesson)}
+                            >
+                              피드백
+                            </Button>
+                          )}
+                          <div>
+                            <Button
+                              plain
+                              onClick={setEditingLesson.bind(null, lesson)}
+                            >
+                              수정
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -218,6 +235,18 @@ export default function Syllabuses({ student, syllabuses }: Props) {
             setEditingPayment(null);
           }}
           onClose={setEditingPayment.bind(null, null)}
+        />
+      )}
+
+      {openFeedback && (
+        <FeedbackForm
+          lesson={openFeedback}
+          onSuccess={() => {
+            router.refresh();
+            alert('피드백이 수정되었습니다');
+            setOpenFeedback(null);
+          }}
+          onClose={setOpenFeedback.bind(null, null)}
         />
       )}
     </div>

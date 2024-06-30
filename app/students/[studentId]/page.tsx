@@ -8,7 +8,7 @@ import React from "react";
 import { redirect, notFound } from "next/navigation";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
-import StatusBadge from '@/components/status-badge';
+import StatusBadge from "@/components/status-badge";
 import EditStudentButton from "./_edit-student-button";
 import Syllabuses from "./_syllabuses";
 
@@ -70,6 +70,12 @@ export default async function Page({
           notes: true,
           lessonAt: true,
           isDone: true,
+          feedback: {
+            select: {
+              id: true,
+              notes: true,
+            },
+          },
         },
         where: {
           deletedAt: null,
@@ -95,7 +101,8 @@ export default async function Page({
     <div>
       <div className="flex items-center justify-between">
         <Heading>
-          {student.name}&nbsp;&nbsp;<StatusBadge status={student.status} />
+          {student.name}&nbsp;&nbsp;
+          <StatusBadge status={student.status} />
         </Heading>
         <div className="flex gap-5">
           <div className="text-center">
