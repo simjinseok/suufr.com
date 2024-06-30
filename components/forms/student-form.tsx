@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { EllipsisVerticalIcon, LoaderIcon } from "lucide-react";
 import { Button } from "@/components/button";
 import { FieldGroup, Field, Label } from "@/components/fieldset";
 import {
@@ -11,7 +12,12 @@ import {
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
-import { LoaderIcon } from "lucide-react";
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownMenu,
+} from "@/components/dropdown";
 
 export default function NewStudentModal({
   student,
@@ -44,19 +50,60 @@ export default function NewStudentModal({
     [student, onSuccess],
   );
 
+  const onDelete = React.useCallback(() => {
+    if (!confirm("정말 삭제하시겠습니까?")) {
+      return;
+    }
+
+    setIsPending(true);
+    fetch(`/api/students/${student.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.status === 204) {
+          alert("삭제되었습니다");
+          location.pathname = "/students";
+        }
+      })
+      .finally(() => {
+        setIsPending(false);
+      });
+  }, [student]);
+
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <DialogTitle>수강생 추가</DialogTitle>
+      <div className="flex justify-between">
+        <DialogTitle>수강생</DialogTitle>
+        <Dropdown>
+          <DropdownButton plain disabled={isPending}>
+            <EllipsisVerticalIcon />
+          </DropdownButton>
+          <DropdownMenu>
+            <DropdownItem className="text-red-500 font-bold" onClick={onDelete}>
+              삭제
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
       <DialogBody>
         <form id={formId} onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
               <Label>이름</Label>
-              <Input name="name" defaultValue={student?.name} required />
+              <Input
+                name="name"
+                defaultValue={student?.name}
+                readOnly={isPending}
+                required
+              />
             </Field>
             <Field>
               <Label>상태</Label>
-              <Select name="status" defaultValue={student?.status || "active"}>
+              <Select
+                name="status"
+                defaultValue={student?.status || "active"}
+                disabled={isPending}
+              >
                 <option value="active">수강중</option>
                 <option value="paused">일시정지</option>
                 <option value="dropped">그만둠</option>

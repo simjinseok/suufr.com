@@ -10,6 +10,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Heading } from "@/components/heading";
+import StatusBadge from "@/components/status-badge";
 import ConditionForm from "./_condition-form";
 import NewStudent from "./_new-student";
 
@@ -43,7 +44,8 @@ export default async function Page({ searchParams }: PageProps) {
       FROM students
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id
                LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
-      WHERE (${status} = '' OR students.status = ${status}) AND students.user_id = ${user.id}::uuid
+      WHERE (${status} = '' OR students.status = ${status})
+        AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL
       GROUP BY students.id, students.name, students.notes
       ORDER BY students.name ASC
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
@@ -75,21 +77,7 @@ export default async function Page({ searchParams }: PageProps) {
             <div className="grow">
               <p className="text-xl font-bold">
                 {student.name}
-                <Badge
-                  color={
-                    student.status === "active"
-                      ? "green"
-                      : student.status === "paused"
-                        ? "yellow"
-                        : "red"
-                  }
-                >
-                  {student.status === "active"
-                    ? "수강중"
-                    : student.status === "paused"
-                      ? "일시정지"
-                      : "그만둠"}
-                </Badge>
+                <StatusBadge status={student.status} />
               </p>
             </div>
             <div className="shrink-0 flex items-start gap-3">
@@ -133,7 +121,7 @@ export default async function Page({ searchParams }: PageProps) {
             이전 페이지
           </Link>
         )}
-        {studentCount > page * PAGE_SIZE && (
+        {(studentCount > (page * PAGE_SIZE)) && (
           <Link
             className="flex items-center"
             href={{

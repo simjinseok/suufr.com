@@ -13,6 +13,7 @@ import {
   HouseIcon,
   BookUserIcon,
   CalendarDaysIcon,
+  NotebookTextIcon,
   ReceiptIcon,
   UserRoundCheckIcon,
 } from "lucide-react";
@@ -53,6 +54,14 @@ export default function RootLayout({
                       style={{ fill: "transparent" }}
                     />
                     <span className="truncate">수강생</span>
+                  </SidebarItem>
+
+                  <SidebarItem href="/syllabuses">
+                    <NotebookTextIcon
+                        data-slot="icon"
+                        style={{ fill: "transparent" }}
+                    />
+                    <span>계획</span>
                   </SidebarItem>
 
                   {/*<SidebarItem href="/lessons">*/}

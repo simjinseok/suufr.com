@@ -5,9 +5,10 @@ import { PrismaClient } from "@prisma/client";
 import { commaizeNumber } from "@toss/utils";
 
 import React from "react";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
+import StatusBadge from '@/components/status-badge';
 import EditStudentButton from "./_edit-student-button";
 import Syllabuses from "./_syllabuses";
 
@@ -42,18 +43,34 @@ export default async function Page({
   const student = students[0];
 
   if (!student) {
-    return { notFound: true };
+    return notFound();
   }
 
   const syllabuses = await prisma.syllabus.findMany({
     take: 5,
-    include: {
+    select: {
+      id: true,
+      title: true,
+      notes: true,
       payment: {
+        select: {
+          id: true,
+          amount: true,
+          notes: true,
+          paymentMethod: true,
+          paidAt: true,
+        },
         where: {
           deletedAt: null,
         },
       },
       lessons: {
+        select: {
+          id: true,
+          notes: true,
+          lessonAt: true,
+          isDone: true,
+        },
         where: {
           deletedAt: null,
         },
@@ -77,7 +94,9 @@ export default async function Page({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <Heading>{student.name} ({student.status})</Heading>
+        <Heading>
+          {student.name}&nbsp;&nbsp;<StatusBadge status={student.status} />
+        </Heading>
         <div className="flex gap-5">
           <div className="text-center">
             <Text>남은 수업</Text>

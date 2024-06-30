@@ -58,3 +58,50 @@ export async function PUT(
     },
   );
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { studentId: string } },
+) {
+  const studentId = Number(params.studentId);
+
+  const prisma = new PrismaClient();
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response("", {
+      status: 401,
+    });
+  }
+
+  const student = await prisma.student.findUnique({
+    where: {
+      id: studentId,
+      userId: user.id,
+      deletedAt: null,
+    },
+  });
+
+  if (!student) {
+    return new Response("", {
+      status: 404,
+    });
+  }
+
+  await prisma.student.update({
+    where: {
+      id: student.id,
+    },
+    data: {
+      deletedAt: new Date(),
+    },
+  });
+
+  return new Response(null, {
+    status: 204,
+  });
+}
