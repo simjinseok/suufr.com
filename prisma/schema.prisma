@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_URL_NON_POOLING")
+  url       = env("POSTGRES_PRISMA_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
@@ -102,6 +102,7 @@ model Meeting {
   id        Int       @id @default(autoincrement())
   name      String
   notes     String?
+  meetingAt DateTime  @map("meeting_at") @db.Timestamptz(0)
   userId    String    @map("user_id") @db.Uuid
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
