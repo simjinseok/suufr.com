@@ -12,7 +12,11 @@ import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { format } from "date-fns/format";
 
-export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) {
+export default function NewSyllabusDialog({
+  student,
+  onSuccess,
+  onClose,
+}: any) {
   const formId = React.useId();
   const [lessonsDate, setLessonsDate] = React.useState<any[]>([]);
   const [isPending, setIsPending] = React.useState(false);
@@ -82,26 +86,29 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
     setLessonsDate(arr);
   }, []);
 
-  const onSubmit = React.useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = React.useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    const formData = new FormData(event.target as HTMLFormElement)
+      const formData = new FormData(event.target as HTMLFormElement);
 
-    setIsPending(true);
-    fetch('/api/syllabuses', {
-      method: 'POST',
-      body: formData,
-    })
+      setIsPending(true);
+      fetch("/api/syllabuses", {
+        method: "POST",
+        body: formData,
+      })
         .then((response) => {
           if (response.status === 201) {
-            alert('일정이 추가되었습니다');
+            alert("일정이 추가되었습니다");
             onSuccess();
           }
         })
         .finally(() => {
           setIsPending(false);
-        })
-  }, [onSuccess]);
+        });
+    },
+    [onSuccess],
+  );
 
   return (
     <Dialog open onClose={onClose}>
@@ -127,18 +134,18 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
                 <label>기준 날짜</label>
                 <div className="flex gap-3">
                   <Input
-                      type="date"
-                      name="lesson_date"
-                      defaultValue={format(new Date(), "yyyy-MM-dd")}
-                      className="w-fit"
-                      onChange={onChange}
+                    type="date"
+                    name="lesson_date"
+                    defaultValue={format(new Date(), "yyyy-MM-dd")}
+                    className="w-fit"
+                    onChange={onChange}
                   />
                   <Input
-                      type="time"
-                      name="lesson_time"
-                      className="w-fit"
-                      defaultValue={format(new Date(), "HH:mm")}
-                      onChange={onChange}
+                    type="time"
+                    name="lesson_time"
+                    className="w-fit"
+                    defaultValue={format(new Date(), "HH:mm")}
+                    onChange={onChange}
                   />
                 </div>
               </div>
@@ -146,12 +153,12 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
                 <label>횟수</label>
                 <div>
                   <Input
-                      type="number"
-                      name="lesson_count"
-                      min={1}
-                      defaultValue={4}
-                      onChange={onChange}
-                      className="w-fit"
+                    type="number"
+                    name="lesson_count"
+                    min={1}
+                    defaultValue={4}
+                    onChange={onChange}
+                    className="w-fit"
                   />
                 </div>
               </div>
@@ -161,62 +168,62 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
                 <div className="flex justify-between">
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_sunday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_sunday"
+                      onChange={onChange}
                     />
                     일요일
                   </label>
 
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_monday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_monday"
+                      onChange={onChange}
                     />
                     월요일
                   </label>
 
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_tuesday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_tuesday"
+                      onChange={onChange}
                     />
                     화요일
                   </label>
 
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_wednesday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_wednesday"
+                      onChange={onChange}
                     />
                     수요일
                   </label>
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_thursday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_thursday"
+                      onChange={onChange}
                     />
                     목요일
                   </label>
 
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_friday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_friday"
+                      onChange={onChange}
                     />
                     금요일
                   </label>
 
                   <label className="flex flex-col">
                     <input
-                        type="checkbox"
-                        name="lesson_saturday"
-                        onChange={onChange}
+                      type="checkbox"
+                      name="lesson_saturday"
+                      onChange={onChange}
                     />
                     토요일
                   </label>
@@ -224,25 +231,25 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
               </Field>
 
               {lessonsDate.map((date, idx) => (
-                  <Field key={date}>
-                    <Label>{idx + 1}회차</Label>
-                    <Input
-                        name="lesson_at"
-                        type="datetime-local"
-                        value={format(date, "yyyy-MM-dd HH:mm")}
-                        readOnly
-                    />
-                  </Field>
+                <Field key={date}>
+                  <Label>{idx + 1}회차</Label>
+                  <Input
+                    name="lesson_at"
+                    type="datetime-local"
+                    value={format(date, "yyyy-MM-dd HH:mm")}
+                    readOnly
+                  />
+                </Field>
               ))}
             </FieldGroup>
           </div>
         </form>
       </DialogBody>
       <DialogActions>
-        <Button plain onClick={onClose}>
+        <Button plain onClick={onClose} disabled={isPending}>
           닫기
         </Button>
-        <Button type="submit" form={formId}>
+        <Button type="submit" disabled={isPending} form={formId}>
           저장
         </Button>
       </DialogActions>
