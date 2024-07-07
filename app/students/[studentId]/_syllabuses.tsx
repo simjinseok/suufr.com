@@ -32,6 +32,7 @@ import NewSyllabusDialog from "./_new-syllabus-dialog";
 
 const PAYMENT_METHODS = {
   card: "카드",
+  transfer: "계좌이체",
   cash: "현금",
   none: "미지정",
 };
