@@ -8,7 +8,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
 import { Heading } from "@/components/heading";
 import StatusBadge from "@/components/status-badge";
 import ConditionForm from "./_condition-form";
@@ -23,7 +22,7 @@ type PageProps = {
 };
 export default async function Page({ searchParams }: PageProps) {
   const page = searchParams.page > 0 ? Number(searchParams.page) : 1;
-  const status = searchParams.status || "";
+  const status = typeof searchParams.status === 'string' ? searchParams.status : "active";
 
   const prisma = new PrismaClient();
   const supabase = createClient();
@@ -62,7 +61,7 @@ export default async function Page({ searchParams }: PageProps) {
     <div className="mt-3">
       <Heading className="text-2xl font-bold">수강생 목록</Heading>
       <div className="mt-5 flex justify-between">
-        <ConditionForm />
+        <ConditionForm currentStatus={status} />
 
         <div>
           <NewStudent />
