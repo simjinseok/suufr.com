@@ -123,5 +123,6 @@ async function SyllabusList({ user, student }: any) {
     },
   });
 
+  // @ts-ignore
   return <Syllabuses syllabuses={syllabuses} student={student} />;
 }
