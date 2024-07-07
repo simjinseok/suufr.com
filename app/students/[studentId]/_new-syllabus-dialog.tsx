@@ -62,7 +62,7 @@ export default function NewSyllabusDialog({ student, onSuccess, onClose }: any) 
 
     for (let d = 1; cnt > 0; d++) {
       const currentDate = new Date(
-        baseDate.getTime() + 1000 * 60 * 60 * 24 * d,
+        baseDate.getTime() + 1000 * 60 * 60 * 24 * (d - 1),
       );
 
       if (day[currentDate.getDay()]) {
