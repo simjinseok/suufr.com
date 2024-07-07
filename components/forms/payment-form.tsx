@@ -49,7 +49,7 @@ export default function PaymentForm({ syllabus, onSuccess, onClose }: any) {
     }
 
     setIsPending(false);
-  }, [syllabus]);
+  }, [syllabus, onSuccess]);
 
   const onSubmit = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
