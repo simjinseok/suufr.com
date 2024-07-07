@@ -9,9 +9,6 @@ export default function Edit({ meeting }: { meeting: TMeeting }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  if (!meeting) {
-    return null;
-  }
 
   const onClose = React.useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -20,6 +17,10 @@ export default function Edit({ meeting }: { meeting: TMeeting }) {
     params.toString();
     router.push(`${pathname}?${params.toString()}`);
   }, [pathname, router, searchParams]);
+
+  if (!meeting) {
+    return null;
+  }
 
   return (
     <MeetingForm
