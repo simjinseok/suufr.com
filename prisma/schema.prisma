@@ -102,12 +102,14 @@ model Meeting {
   id        Int       @id @default(autoincrement())
   name      String
   notes     String?
+  phone     String?
+  isDone    Boolean   @default(false) @map("is_done")
   meetingAt DateTime  @map("meeting_at") @db.Timestamptz(0)
   userId    String    @map("user_id") @db.Uuid
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  @@index([userId, name, deletedAt])
+  @@index([userId, name, isDone, deletedAt])
   @@map("meetings")
 }

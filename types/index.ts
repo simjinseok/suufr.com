@@ -40,3 +40,12 @@ export type TPayment = {
   paymentMethod: string;
   paidAt: Date;
 };
+
+export type TMeeting = {
+  id: number;
+  name: string;
+  phone: string | null;
+  notes: string | null;
+  isDone: boolean;
+  meetingAt: Date;
+}
