@@ -191,7 +191,7 @@ export default function Syllabuses({ student, syllabuses }: Props) {
                     <p>{formatToKoreanNumber(syllabus.payment.amount)}원</p>
                   </div>
                 ) : (
-                  <p>입금 필요</p>
+                  <p>미입금</p>
                 )}
               </div>
             </li>

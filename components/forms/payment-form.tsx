@@ -3,7 +3,7 @@ import { format } from "date-fns/format";
 import { formatToKoreanNumber } from "@toss/utils";
 
 import React from "react";
-import { BanknoteIcon, BookDashedIcon, CreditCardIcon } from "lucide-react";
+import {BanknoteIcon, BookDashedIcon, CreditCardIcon, LandmarkIcon} from "lucide-react";
 import { Button } from "@/components/button";
 import {
   Dialog,
@@ -89,6 +89,10 @@ export default function PaymentForm({
                 <ListboxOption value="card">
                   <CreditCardIcon width={20} height={20} strokeWidth={1.5} />
                   <ListboxLabel>카드</ListboxLabel>
+                </ListboxOption>
+                <ListboxOption value="transfer">
+                  <LandmarkIcon width={20} height={20} strokeWidth={1.5} />
+                  <ListboxLabel>계좌이체</ListboxLabel>
                 </ListboxOption>
                 <ListboxOption value="cash">
                   <BanknoteIcon width={20} height={20} strokeWidth={1.5} />
