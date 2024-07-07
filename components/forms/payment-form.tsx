@@ -3,7 +3,13 @@ import { format } from "date-fns/format";
 import { formatToKoreanNumber } from "@toss/utils";
 
 import React from "react";
-import {BanknoteIcon, BookDashedIcon, CreditCardIcon, LandmarkIcon} from "lucide-react";
+import {
+  BanknoteIcon,
+  BookDashedIcon,
+  CreditCardIcon,
+  EllipsisVerticalIcon,
+  LandmarkIcon,
+} from "lucide-react";
 import { Button } from "@/components/button";
 import {
   Dialog,
@@ -16,15 +22,35 @@ import { Input } from "@/components/input";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
 import { Text } from "@/components/text";
 import { Textarea } from "@/components/textarea";
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownDescription,
+  DropdownHeading,
+  DropdownItem,
+  DropdownLabel,
+  DropdownMenu,
+  DropdownSection,
+} from "@/components/dropdown";
 
-export default function PaymentForm({
-  syllabus,
-  onSuccess,
-  onClose,
-}: any) {
+export default function PaymentForm({ syllabus, onSuccess, onClose }: any) {
   const [isPending, setIsPending] = React.useState(false);
 
   const payment = syllabus?.payment;
+
+  const onDelete = React.useCallback(async () => {
+    setIsPending(true);
+    const response = await fetch(`/api/syllabuses/${syllabus.id}/payment`, {
+      method: "DELETE",
+    });
+
+    if (response.status === 204) {
+      onSuccess();
+    }
+
+    setIsPending(false);
+  }, [syllabus]);
+
   const onSubmit = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -47,7 +73,36 @@ export default function PaymentForm({
 
   return (
     <Dialog open onClose={onClose}>
-      <DialogTitle>입금내역</DialogTitle>
+      <div className="flex items-center justify-between">
+        <DialogTitle>입금내역</DialogTitle>
+        {payment && (
+          <Dropdown>
+            <DropdownButton plain disabled={isPending}>
+              <EllipsisVerticalIcon />
+            </DropdownButton>
+            <DropdownMenu>
+              <DropdownSection>
+                <DropdownHeading>삭제</DropdownHeading>
+                <DropdownItem
+                  className="data-[focus]:bg-red-300"
+                  onClick={() => {
+                    if (confirm("결제 이력을 삭제합니다")) {
+                      onDelete();
+                    }
+                  }}
+                >
+                  <DropdownLabel className="text-red-600">
+                    입금 내역 삭제
+                  </DropdownLabel>
+                  <DropdownDescription>
+                    입금 내역을 삭제합니다
+                  </DropdownDescription>
+                </DropdownItem>
+              </DropdownSection>
+            </DropdownMenu>
+          </Dropdown>
+        )}
+      </div>
       <DialogBody>
         <form id="payment-form" onSubmit={onSubmit}>
           <FieldGroup>
@@ -85,7 +140,10 @@ export default function PaymentForm({
 
             <Field>
               <Label>결제수단</Label>
-              <Listbox name="paymentMethod" defaultValue={payment?.paymentMethod || 'card'}>
+              <Listbox
+                name="paymentMethod"
+                defaultValue={payment?.paymentMethod || "card"}
+              >
                 <ListboxOption value="card">
                   <CreditCardIcon width={20} height={20} strokeWidth={1.5} />
                   <ListboxLabel>카드</ListboxLabel>

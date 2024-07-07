@@ -81,3 +81,61 @@ export async function PUT(
     },
   );
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { syllabusId: string } },
+) {
+  const syllabusId = Number(params.syllabusId);
+
+  const prisma = new PrismaClient();
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response("", {
+      status: 401,
+    });
+  }
+
+  const syllabus = await prisma.syllabus.findUnique({
+    where: {
+      id: syllabusId,
+      deletedAt: null,
+      student: {
+        userId: user.id,
+      },
+    },
+  });
+
+  if (!syllabus) {
+    return new Response("", {
+      status: 404,
+    });
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: {
+      syllabusId: syllabus.id,
+    },
+  });
+
+  if (!payment) {
+    return new Response("", { status: 404 });
+  }
+
+  const result = await prisma.payment.update({
+    where: {
+      id: payment.id,
+    },
+    data: {
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  return new Response(null, { status: 204 });
+}
