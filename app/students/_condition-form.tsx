@@ -1,17 +1,15 @@
 "use client";
-import { Input } from "@/components/input";
-import { useSearchParams } from "next/navigation";
 import { Select } from "@/components/select";
 
-export default function ConditionForm() {
-  const searchParams = useSearchParams();
-  const status = searchParams.get("status") || "";
+export default function ConditionForm({
+  currentStatus,
+}: { currentStatus: string }) {
   return (
     <form method="get" className="flex">
       {/*<Input name="name" /> 검색 지원 예정*/}
       <Select
         name="status"
-        defaultValue={status}
+        defaultValue={currentStatus}
         onChange={(e) => (e.target.form as HTMLFormElement).submit()}
       >
         <option value="">전체</option>
