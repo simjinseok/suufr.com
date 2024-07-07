@@ -50,7 +50,6 @@ export default async function Page() {
       },
     },
   });
-  console.log(notCheckedLessons);
 
   const remainLessonsCount = await prisma.lesson.count({
     where: {

@@ -54,7 +54,5 @@ export default async function Page({
     return notFound();
   }
 
-  console.log(syllabus);
-
   return <div>ff</div>;
 }

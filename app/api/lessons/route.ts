@@ -77,7 +77,6 @@ export async function POST(request: Request) {
     },
   });
 
-  console.log(syllabusId);
   if (!syllabus) {
     return new Response("", {
       status: 404,
