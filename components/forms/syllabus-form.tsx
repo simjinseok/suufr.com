@@ -51,7 +51,7 @@ export default function SyllabusForm({ syllabus, onSuccess, onClose }: Props) {
               <input type="hidden" name="studentId" value={syllabus.id} />
             )}
             <Field>
-              <Label>날짜</Label>
+              <Label>제목</Label>
               <Input name="title" defaultValue={syllabus.title} />
             </Field>
 

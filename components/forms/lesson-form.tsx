@@ -127,8 +127,7 @@ export default function LessonForm({
         </form>
       </DialogBody>
       <DialogActions>
-        {/* @ts-ignore */}
-        <Button color="white" plain onClick={onClose} disabled={isPending}>
+        <Button plain onClick={onClose} disabled={isPending}>
           닫기
         </Button>
         <Button
