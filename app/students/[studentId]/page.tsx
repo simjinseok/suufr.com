@@ -12,10 +12,10 @@ import StatusBadge from "@/components/status-badge";
 import EditStudentButton from "./_edit-student-button";
 import Syllabuses from "./_syllabuses";
 
+const prisma = new PrismaClient();
 export default async function Page({
   params,
 }: { params: { studentId: string } }) {
-  const prisma = new PrismaClient();
   const studentId = Number(params.studentId);
   const supabase = createClient();
   const {
@@ -46,6 +46,32 @@ export default async function Page({
     return notFound();
   }
 
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <Heading>
+          {student.name}&nbsp;&nbsp;
+          <StatusBadge status={student.status} />
+        </Heading>
+        <div className="flex gap-5">
+          <div className="text-center">
+            <Text>남은 수업</Text>
+            <p className="font-bold text-lg">
+              {commaizeNumber(Number(student.upcomingLessonsCount))}회
+            </p>
+          </div>
+          <EditStudentButton student={student} />
+        </div>
+      </div>
+      <Text className="whitespace-pre-wrap">{student.notes}</Text>
+      <React.Suspense>
+        <SyllabusList user={user} student={student} />
+      </React.Suspense>
+    </div>
+  );
+}
+
+async function SyllabusList({ user, student }: any) {
   const syllabuses = await prisma.syllabus.findMany({
     take: 5,
     select: {
@@ -97,27 +123,5 @@ export default async function Page({
     },
   });
 
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <Heading>
-          {student.name}&nbsp;&nbsp;
-          <StatusBadge status={student.status} />
-        </Heading>
-        <div className="flex gap-5">
-          <div className="text-center">
-            <Text>남은 수업</Text>
-            <p className="font-bold text-lg">
-              {commaizeNumber(Number(student.upcomingLessonsCount))}회
-            </p>
-          </div>
-          <EditStudentButton student={student} />
-        </div>
-      </div>
-      <Text className="whitespace-pre-wrap">{student.notes}</Text>
-      {/*
-      // @ts-ignore */}
-      <Syllabuses syllabuses={syllabuses} student={student} />
-    </div>
-  );
+  return <Syllabuses syllabuses={syllabuses} student={student} />;
 }
