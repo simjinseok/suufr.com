@@ -12,6 +12,17 @@ import {
 import { FieldGroup, Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownHeading,
+  DropdownItem,
+  DropdownLabel,
+  DropdownDescription,
+  DropdownMenu,
+  DropdownSection,
+} from "@/components/dropdown";
+import { EllipsisVerticalIcon } from "lucide-react";
 
 export default function LessonForm({
   syllabus,
@@ -20,6 +31,18 @@ export default function LessonForm({
   onClose,
 }: any) {
   const [isPending, setIsPending] = React.useState(false);
+
+  const onDelete = React.useCallback(async () => {
+    setIsPending(true);
+    const response = await fetch(`/api/lessons/${lesson.id}`, {
+      method: "DELETE",
+    });
+
+    setIsPending(false);
+    if (response.status === 204) {
+      onSuccess();
+    }
+  }, [lesson, onSuccess]);
 
   const onSubmit = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -48,12 +71,41 @@ export default function LessonForm({
 
   return (
     <Dialog open onClose={onClose}>
-      <DialogTitle>레슨정보 수정</DialogTitle>
+      <div className="flex items-center justify-between">
+        <DialogTitle>{lesson ? "레슨 정보 수정" : "레슨 추가"}</DialogTitle>
+        {lesson && (
+          <Dropdown>
+            <DropdownButton plain disabled={isPending}>
+              <EllipsisVerticalIcon />
+            </DropdownButton>
+            <DropdownMenu>
+              <DropdownSection>
+                <DropdownHeading>삭제</DropdownHeading>
+                <DropdownItem
+                  className="data-[focus]:bg-red-300"
+                  onClick={() => {
+                    if (confirm("수업을 삭제합니다")) {
+                      onDelete();
+                    }
+                  }}
+                >
+                  <DropdownLabel className="text-red-600">
+                    수업 삭제
+                  </DropdownLabel>
+                  <DropdownDescription>
+                    해당 수업을 삭제합니다.
+                  </DropdownDescription>
+                </DropdownItem>
+              </DropdownSection>
+            </DropdownMenu>
+          </Dropdown>
+        )}
+      </div>
       <DialogBody>
         <form id="payment-form" onSubmit={onSubmit}>
           <FieldGroup>
             {syllabus && (
-              <input type="hidden" name="studentId" value={syllabus.id} />
+              <input type="hidden" name="syllabusId" value={syllabus.id} />
             )}
             <Field>
               <Label>날짜</Label>

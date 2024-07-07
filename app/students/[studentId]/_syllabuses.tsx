@@ -18,6 +18,7 @@ import {
   DropdownDivider,
   DropdownHeading,
   DropdownItem,
+  DropdownLabel,
   DropdownMenu,
   DropdownSection,
 } from "@/components/dropdown";
@@ -42,6 +43,8 @@ type Props = {
 export default function Syllabuses({ student, syllabuses }: Props) {
   const router = useRouter();
   const [isCreating, setIsCreating] = React.useState(false);
+  const [isLessonCreating, setIsLessonCreating] =
+    React.useState<TSyllabus | null>(null);
   const [editingSyllabus, setEditingSyllabus] =
     React.useState<TSyllabus | null>(null);
   const [editingPayment, setEditingPayment] = React.useState<TSyllabus | null>(
@@ -95,7 +98,11 @@ export default function Syllabuses({ student, syllabuses }: Props) {
                       <DropdownDivider />
                       <DropdownSection>
                         <DropdownHeading>수업</DropdownHeading>
-                        <DropdownItem>수업 추가</DropdownItem>
+                        <DropdownItem
+                          onClick={setIsLessonCreating.bind(null, syllabus)}
+                        >
+                          <DropdownLabel>수업 추가</DropdownLabel>
+                        </DropdownItem>
                       </DropdownSection>
                       <DropdownDivider />
                       <DropdownSection>
@@ -226,6 +233,18 @@ export default function Syllabuses({ student, syllabuses }: Props) {
         />
       )}
 
+      {isLessonCreating && (
+        <LessonForm
+          syllabus={isLessonCreating}
+          onSuccess={() => {
+            router.refresh();
+            alert("추가되었습니다.");
+            setIsLessonCreating(null);
+          }}
+          onClose={setIsLessonCreating.bind(null, null)}
+        />
+      )}
+
       {editingPayment && (
         <PaymentForm
           syllabus={editingPayment}
@@ -243,7 +262,7 @@ export default function Syllabuses({ student, syllabuses }: Props) {
           lesson={openFeedback}
           onSuccess={() => {
             router.refresh();
-            alert('피드백이 수정되었습니다');
+            alert("피드백이 수정되었습니다");
             setOpenFeedback(null);
           }}
           onClose={setOpenFeedback.bind(null, null)}
