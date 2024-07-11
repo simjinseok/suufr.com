@@ -73,7 +73,7 @@ export default async function Page({
 
 async function SyllabusList({ user, student }: any) {
   const syllabuses = await prisma.syllabus.findMany({
-    take: 5,
+    take: 15,
     select: {
       id: true,
       title: true,
