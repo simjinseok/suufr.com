@@ -15,7 +15,7 @@ export default function Page() {
 
   React.useEffect(() => {
     const hash = window.location.hash.replace("#", "").split("&");
-    const  obj = {};
+    const  obj: any = {};
     for (const h of hash) {
         const [key, value] = h.split("=");
         obj[key] = value;
