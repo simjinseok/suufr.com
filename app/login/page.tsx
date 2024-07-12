@@ -20,9 +20,13 @@ export default function Page() {
           <Label>비밀번호</Label>
           <Input type="password" name="password" />
         </Field>
-        <Button type="submit">로그인</Button>
+
       </FieldGroup>
-      <Button className="mt-5" href="/signup">회원가입</Button>
+      {state?.error && <p className="mt-3 text-red-500">{state.error}</p>}
+      <Button type="submit" disabled={isPending}>로그인</Button>
+      <Button className="mt-5" href="/signup">
+        회원가입
+      </Button>
     </form>
   );
 }
