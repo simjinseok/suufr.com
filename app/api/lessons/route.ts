@@ -83,15 +83,34 @@ export async function POST(request: Request) {
     });
   }
 
-  const lessonAt = new Date(`${formData.get("lessonAt")}:00+09:00`);
 
-  const lesson = await prisma.lesson.create({
-    data: {
-      syllabusId: syllabus.id,
-      notes: formData.get("notes") as string,
-      lessonAt,
-    },
-  });
+  const dates = formData.getAll("lessonAt");
+  if (dates.length === 1) {
+    const lessonAt = new Date(`${dates[0]}:00+09:00`);
 
-  return Response.json(lesson, { status: 201 });
+    const lesson = await prisma.lesson.create({
+      data: {
+        syllabusId: syllabus.id,
+        notes: formData.get("notes") as string,
+        lessonAt,
+      },
+    });
+
+    return Response.json(lesson, { status: 201 });
+  }
+
+  if (dates.length > 1) {
+    const dates = formData.getAll("lessonAt");
+    const results = await prisma.lesson.createMany({
+      data: dates.map((date) => {
+          return {
+              syllabusId: syllabus.id,
+              notes: '',
+              lessonAt: `${date}:00+09:00`,
+          }
+      }),
+    });
+
+    return Response.json(results, { status: 201});
+  }
 }

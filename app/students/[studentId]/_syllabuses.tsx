@@ -28,7 +28,7 @@ import { Divider } from "@/components/divider";
 import SyllabusForm from "@/components/forms/syllabus-form";
 import PaymentForm from "@/components/forms/payment-form";
 import FeedbackForm from "@/components/forms/feedback-form";
-import NewSyllabusDialog from "./_new-syllabus-dialog";
+import BulkLessonDialog from "./_bulk-lesson-dialog";
 
 const PAYMENT_METHODS = {
   card: "카드",
@@ -54,6 +54,7 @@ export default function Syllabuses({ student, syllabuses }: Props) {
   const [editingLesson, setEditingLesson] = React.useState<TLesson | null>(
     null,
   );
+  const [openBulkLesson, setOpenBulkLesson] = React.useState<TSyllabus | null>(null);
   const [openFeedback, setOpenFeedback] = React.useState<any>(null);
 
   const onDoneClick = React.useCallback(
@@ -177,7 +178,10 @@ export default function Syllabuses({ student, syllabuses }: Props) {
                   ))}
                 </ul>
               ) : (
-                <p>레슨없음</p>
+                <div className="py-5 flex flex-col gap-3 items-center justify-center">
+                    <p>설정된 레슨이 없습니다</p>
+                    <Button onClick={setOpenBulkLesson.bind(null, syllabus)}>레슨 추가</Button>
+                </div>
               )}
               <Divider className="my-3" />
               <div className="flex items-center justify-between">
@@ -201,7 +205,7 @@ export default function Syllabuses({ student, syllabuses }: Props) {
         <p>일정이 없습니다.</p>
       )}
       {isCreating && (
-        <NewSyllabusDialog
+        <SyllabusForm
           student={student}
           onSuccess={() => {
             setIsCreating(false);
@@ -268,6 +272,18 @@ export default function Syllabuses({ student, syllabuses }: Props) {
           }}
           onClose={setOpenFeedback.bind(null, null)}
         />
+      )}
+
+      {openBulkLesson && (
+          <BulkLessonDialog
+              syllabus={openBulkLesson}
+              onSuccess={() => {
+                  router.refresh();
+                  alert("레슨이 추가되었습니다.");
+                  setOpenBulkLesson(null);
+              }}
+              onClose={setOpenBulkLesson.bind(null, null)}
+          />
       )}
     </div>
   );

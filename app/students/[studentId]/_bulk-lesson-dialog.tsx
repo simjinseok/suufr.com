@@ -1,19 +1,18 @@
-"use clinet";
 import React from "react";
-import { Button } from "@/components/button";
 import {
   Dialog,
-  DialogTitle,
-  DialogBody,
   DialogActions,
+  DialogBody,
+  DialogTitle,
 } from "@/components/dialog";
-import { FieldGroup, Field, Label } from "@/components/fieldset";
+import { Field, FieldGroup, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { format } from "date-fns/format";
+import { Button } from "@/components/button";
 
-export default function NewSyllabusDialog({
-  student,
+export default function BulkLessonDialog({
+  syllabus,
   onSuccess,
   onClose,
 }: any) {
@@ -93,7 +92,7 @@ export default function NewSyllabusDialog({
       const formData = new FormData(event.target as HTMLFormElement);
 
       setIsPending(true);
-      fetch("/api/syllabuses", {
+      fetch("/api/lessons", {
         method: "POST",
         body: formData,
       })
@@ -109,24 +108,12 @@ export default function NewSyllabusDialog({
     },
     [onSuccess],
   );
-
   return (
     <Dialog open onClose={onClose}>
-      <DialogTitle>일정 추가</DialogTitle>
+      <DialogTitle>여러개의 일정 추가</DialogTitle>
       <DialogBody>
         <form id={formId} onSubmit={onSubmit}>
-          <input type="hidden" name="studentId" value={student.id} />
-          <FieldGroup>
-            <Field>
-              <Label>제목</Label>
-              <Input name="title" />
-            </Field>
-
-            <Field>
-              <Label>메모</Label>
-              <Textarea name="notes" />
-            </Field>
-          </FieldGroup>
+          <input type="hidden" name="syllabusId" value={syllabus.id} />
           <div className="mt-5 border rounded p-5">
             <p>수업</p>
             <div className="flex items-start gap-3">
@@ -234,7 +221,7 @@ export default function NewSyllabusDialog({
                 <Field key={date}>
                   <Label>{idx + 1}회차</Label>
                   <Input
-                    name="lesson_at"
+                    name="lessonAt"
                     type="datetime-local"
                     value={format(date, "yyyy-MM-dd HH:mm")}
                     readOnly
