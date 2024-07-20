@@ -41,7 +41,7 @@ type Props = {
     student: TStudent;
     syllabuses: TSyllabus[];
 };
-export default function Syllabuses({ student, syllabuses }: Props) {
+export default function Syllabuses({ student, syllabuses }: any) {
     const router = useRouter();
     const [isCreating, setIsCreating] = React.useState(false);
     const [isLessonCreating, setIsLessonCreating] =
