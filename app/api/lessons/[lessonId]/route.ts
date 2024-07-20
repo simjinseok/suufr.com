@@ -46,6 +46,7 @@ export async function PUT(
       id: lesson.id,
     },
     data: {
+      isDone: formData.get('isDone') === 'on',
       notes: formData.get("notes") as string,
       lessonAt,
       updatedAt: new Date(),

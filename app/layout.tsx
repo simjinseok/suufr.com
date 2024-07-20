@@ -64,13 +64,13 @@ export default function RootLayout({
                     <span>계획</span>
                   </SidebarItem>
 
-                  {/*<SidebarItem href="/lessons">*/}
-                  {/*  <CalendarDaysIcon*/}
-                  {/*    data-slot="icon"*/}
-                  {/*    style={{ fill: "transparent" }}*/}
-                  {/*  />*/}
-                  {/*  <span>일정</span>*/}
-                  {/*</SidebarItem>*/}
+                  <SidebarItem href="/lessons">
+                    <CalendarDaysIcon
+                      data-slot="icon"
+                      style={{ fill: "transparent" }}
+                    />
+                    <span>수업</span>
+                  </SidebarItem>
 
                   <SidebarItem href="/payments">
                     <ReceiptIcon
