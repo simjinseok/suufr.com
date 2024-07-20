@@ -12,12 +12,17 @@ import { Heading } from "@/components/heading";
 import StatusBadge from "@/components/status-badge";
 import ConditionForm from "./_condition-form";
 import NewStudent from "./_new-student";
+import Edit from './_edit';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/table";
+import React from "react";
+import {TextLink} from "@/components/text";
 
 const PAGE_SIZE = 20;
 type PageProps = {
   searchParams: {
     page: number;
     status: string;
+    edit: string;
   };
 };
 export default async function Page({ searchParams }: PageProps) {
@@ -57,6 +62,10 @@ export default async function Page({ searchParams }: PageProps) {
     },
   });
 
+  const editingStudent = searchParams.edit
+    ? students.find((m) => m.id === Number(searchParams.edit))
+    : null;
+
   return (
     <div className="mt-3">
       <Heading className="text-2xl font-bold">수강생 목록</Heading>
@@ -67,44 +76,70 @@ export default async function Page({ searchParams }: PageProps) {
           <NewStudent />
         </div>
       </div>
-      <ul className="mt-3 divide-y">
-        {students.map((student) => (
-          <li
-            key={`student-${student.id}`}
-            className="flex justify-between py-5"
-          >
-            <div className="grow">
-              <p className="text-xl font-bold">
-                {student.name}
-                <StatusBadge status={student.status} />
-              </p>
-            </div>
-            <div className="shrink-0 flex items-start gap-3">
-              <div className="shrink-0 text-center">
-                <p>남은 수업</p>
-                <p
-                  className={clsx(
-                    "text-lg font-bold",
-                    (student.upcomingLessonsCount as number) > 0
-                      ? "text-green-500"
-                      : "",
-                  )}
-                >
-                  {student.upcomingLessonsCount}회
-                </p>
-              </div>
-              <Link
-                className="shrink-0"
-                href={{
-                  pathname: `/students/${student.id}`,
-                }}
-              >
-                <Button color="zinc">상세보기</Button>
-              </Link>
-            </div>
-          </li>
-        ))}
-      </ul>
+        <Table className="mt-5">
+            <TableHead>
+                <TableRow>
+                    <TableHeader>이름</TableHeader>
+                    <TableHeader>상태</TableHeader>
+                    <TableHeader>노트</TableHeader>
+                    <TableHeader>남은수업</TableHeader>
+                    <TableHeader>계획</TableHeader>
+                    <TableHeader>수업</TableHeader>
+                    <TableHeader>수정</TableHeader>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {students.length > 0 ? (
+                    <>
+                        {students.map((student: any) => (
+                            <TableRow key={`student-${student.id}`}>
+                                <TableCell>
+                                    {student.name}
+                                </TableCell>
+                                <TableCell><StatusBadge status={student.status} /></TableCell>
+                                <TableCell className="whitespace-pre-wrap">
+                                    {student.notes}
+                                </TableCell>
+                                <TableCell className={clsx(
+                                    "text-lg font-bold",
+                                    (student.upcomingLessonsCount as number) > 0
+                                        ? "text-green-500"
+                                        : "",
+                                )}>{student.upcomingLessonsCount}회</TableCell>
+                                <TableCell>
+                                    <Link href={`/syllabuses?student=${student.id}`}>
+                                        <Button>계획 목록</Button>
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Link href={`/lessons?student=${student.id}`}>
+                                        <Button>수업 목록</Button>
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Link
+                                        href={{
+                                            query: {
+                                                ...searchParams,
+                                                edit: student.id,
+                                            },
+                                        }}
+                                    >
+                                        <Button plain>수정</Button>
+                                    </Link>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </>
+                ) : (
+                    <TableRow>
+                        <TableCell className="text-center" colSpan={6}>
+                            수강생이 없어요
+                        </TableCell>
+                    </TableRow>
+                )}
+            </TableBody>
+        </Table>
       <div className="mt-5 flex justify-between">
         {page > 1 && (
           <Link
@@ -135,6 +170,11 @@ export default async function Page({ searchParams }: PageProps) {
           </Link>
         )}
       </div>
+        {editingStudent && (
+            <Edit
+                student={editingStudent}
+            />
+        )}
     </div>
   );
 }
