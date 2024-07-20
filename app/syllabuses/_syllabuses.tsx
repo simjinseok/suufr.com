@@ -132,7 +132,7 @@ export default function Syllabuses({ student, syllabuses }: any) {
                             <Divider className="my-3" />
                             {syllabus.lessons.length > 0 ? (
                                 <ul>
-                                    {syllabus.lessons.map((lesson) => (
+                                    {syllabus.lessons.map((lesson: TLesson) => (
                                         <li
                                             key={`lesson-${lesson.id}`}
                                             className="py-2 flex items-center"
