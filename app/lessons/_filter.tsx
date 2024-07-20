@@ -12,7 +12,7 @@ export default function Filter() {
     console.log(searchParams)
     return (
         <form id={formId} method="GET" onInput={(event) => {
-            event.target.form.submit();
+            (event.target as HTMLInputElement).form!.submit();
         }} className="flex justify-end gap-3">
             <Field>
                 <Label>시작날짜</Label>
