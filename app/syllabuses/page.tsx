@@ -41,6 +41,7 @@ export default async function Page({
         lessons: {
           select: {
             id: true,
+            notes: true,
             lessonAt: true,
             isDone: true,
           }
