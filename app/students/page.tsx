@@ -81,7 +81,6 @@ export default async function Page({ searchParams }: PageProps) {
                 <TableRow>
                     <TableHeader>이름</TableHeader>
                     <TableHeader>상태</TableHeader>
-                    <TableHeader>노트</TableHeader>
                     <TableHeader>남은수업</TableHeader>
                     <TableHeader>계획</TableHeader>
                     <TableHeader>수업</TableHeader>
@@ -97,9 +96,6 @@ export default async function Page({ searchParams }: PageProps) {
                                     {student.name}
                                 </TableCell>
                                 <TableCell><StatusBadge status={student.status} /></TableCell>
-                                <TableCell>
-                                    <p className="line-clamp-1">{student.notes}</p>
-                                </TableCell>
                                 <TableCell className={clsx(
                                     "text-lg font-bold",
                                     (student.upcomingLessonsCount as number) > 0
