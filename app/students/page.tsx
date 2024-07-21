@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: PageProps) {
              students.name                                                AS name,
              students.notes                                               AS notes,
              students.status                                              AS status,
-             CAST(COUNT(*) FILTER (WHERE lessons.is_done = false AND delete_at IS NULL) AS INT) AS "upcomingLessonsCount"
+             CAST(COUNT(*) FILTER (WHERE lessons.is_done = false AND lessons.delete_at IS NULL) AS INT) AS "upcomingLessonsCount"
       FROM students
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id
                LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
