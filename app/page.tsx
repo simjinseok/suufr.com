@@ -40,6 +40,7 @@ export default async function Page() {
     }),
     prisma.lesson.count({
         where: {
+            isDone: false,
             syllabus: {
                 student: {
                     userId: user.id,
