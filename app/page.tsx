@@ -31,22 +31,22 @@ export default async function Page() {
     remainLessonsCount,
     notPaidSyllabusesCount,
   ] = await Promise.all([
-    prisma.lesson.count({
-      where: {
-        syllabus: {
-          student: {
-            userId: user.id,
-          },
-        },
-        deletedAt: null,
-      },
-    }),
     prisma.student.count({
       where: {
         userId: user.id,
         deletedAt: null,
         status: "active",
       },
+    }),
+    prisma.lesson.count({
+        where: {
+            syllabus: {
+                student: {
+                    userId: user.id,
+                },
+            },
+            deletedAt: null,
+        },
     }),
     prisma.syllabus.count({
       where: {
