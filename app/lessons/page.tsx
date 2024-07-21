@@ -23,8 +23,6 @@ import {
 
 import EditLesson from './_edit';
 import {Button} from "@/components/button";
-import {Input} from "@/components/input";
-import {Field, Label} from "@/components/fieldset";
 import Filter from "./_filter";
 
 const PAGE_SIZE = 30;
@@ -90,7 +88,7 @@ export default async function Page({
 
     const lessonsCount = await prisma.lesson.count({
         where,
-    })
+    });
 
     const editingLesson = searchParams.edit
         ? lessons.find((l) => l.id === Number(searchParams.edit))
@@ -100,7 +98,7 @@ export default async function Page({
         <div>
             <Heading level={1}>수업</Heading>
             <div className="mt-6">
-                <Filter />
+                <Filter/>
             </div>
             {lessons.length > 0 && (
                 <div className="mt-3">
