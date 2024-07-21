@@ -44,6 +44,9 @@ export default async function Page({
             notes: true,
             lessonAt: true,
             isDone: true,
+          },
+          where: {
+            deletedAt: null,
           }
         },
         payment: {
@@ -52,6 +55,9 @@ export default async function Page({
             amount: true,
             paymentMethod: true,
             paidAt: true,
+          },
+          where: {
+            deletedAt: null,
           }
         },
       },
