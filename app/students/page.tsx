@@ -97,8 +97,8 @@ export default async function Page({ searchParams }: PageProps) {
                                     {student.name}
                                 </TableCell>
                                 <TableCell><StatusBadge status={student.status} /></TableCell>
-                                <TableCell className="line-clamp-1">
-                                    {student.notes}
+                                <TableCell>
+                                    <p className="line-clamp-1">{student.notes}</p>
                                 </TableCell>
                                 <TableCell className={clsx(
                                     "text-lg font-bold",
