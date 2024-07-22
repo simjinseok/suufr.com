@@ -44,6 +44,15 @@ export default async function Page({
             notes: true,
             lessonAt: true,
             isDone: true,
+            feedback: {
+              select: {
+                id: true,
+                notes: true,
+              },
+              where: {
+                deletedAt: null,
+              }
+            },
           },
           where: {
             deletedAt: null,
