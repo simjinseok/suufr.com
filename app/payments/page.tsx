@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { format } from "date-fns/format";
 import { formatToKoreanNumber } from "@toss/utils";
 
+import React from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -11,7 +12,6 @@ import {
   DescriptionList,
   DescriptionTerm,
 } from "@/components/description-list";
-import Payments from "./_edit";
 import { Heading } from "@/components/heading";
 import {
   Table,
@@ -21,12 +21,21 @@ import {
   TableCell,
   TableRow,
 } from "@/components/table";
-import React from "react";
 import { Button } from "@/components/button";
+import Filter from './_filter';
+import Payments from "./_edit";
 
-export default async function Page({
-  searchParams,
-}: { searchParams: { date: string; edit: string } }) {
+const PAGE_SIZE = 20;
+type Props = {
+  searchParams: {
+    page: string;
+    edit: string;
+    student: string;
+    from: string;
+    to: string;
+  };
+};
+export default async function Page({ searchParams }: Props) {
   const date = new Date(searchParams.date || Date.now());
 
   const prisma = new PrismaClient();
@@ -39,7 +48,13 @@ export default async function Page({
     return redirect("/login");
   }
 
+  const page = Number(searchParams.page) > 0 ? Number(searchParams.page) : 1;
+  const studentId = Number(searchParams.student);
+  const from = searchParams.from ? new Date(searchParams.from) : new Date(0);
+  const to = searchParams.to ? new Date(searchParams.to) : new Date(2040, 1, 1);
   const payments = await prisma.payment.findMany({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
     include: {
       syllabus: {
         include: {
@@ -49,12 +64,15 @@ export default async function Page({
     },
     where: {
       deletedAt: null,
-      paidAt: {
-        gte: new Date(date.getFullYear(), date.getMonth(), 1),
-        lt: new Date(date.getFullYear(), date.getMonth() + 1, 1),
-      },
+      ...(from ? {
+        paidAt: {
+          gte: from,
+          lte: to,
+        },
+      } : {}),
       syllabus: {
         student: {
+          ...(studentId ? { id: studentId } :{}),
           userId: user.id,
         },
       },
@@ -68,36 +86,8 @@ export default async function Page({
     ? payments.find((m) => m.id === Number(searchParams.edit))
     : null;
 
-    console.log(editingPayment);
   return (
     <div>
-      <div className="flex items-center justify-center gap-3">
-        <Link
-          href={{
-            query: {
-              date: format(
-                new Date(date.getFullYear(), date.getMonth() - 1),
-                "yyyy-MM",
-              ),
-            },
-          }}
-        >
-          <ChevronLeftIcon width={20} height={20} strokeWidth={1.5} />
-        </Link>
-        <p className="text-lg font-bold">{format(date, "yyyy-MM")}</p>
-        <Link
-          href={{
-            query: {
-              date: format(
-                new Date(date.getFullYear(), date.getMonth() + 1),
-                "yyyy-MM",
-              ),
-            },
-          }}
-        >
-          <ChevronRightIcon width={20} height={20} strokeWidth={1.5} />
-        </Link>
-      </div>
       {payments.length > 0 && (
         <div className="mt-3">
           <Heading level={3}>요약</Heading>
@@ -113,6 +103,7 @@ export default async function Page({
           </DescriptionList>
         </div>
       )}
+      <Filter />
       <Table className="mt-5">
         <TableHead>
           <TableRow>

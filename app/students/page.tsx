@@ -15,7 +15,6 @@ import NewStudent from "./_new-student";
 import Edit from './_edit';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/table";
 import React from "react";
-import {TextLink} from "@/components/text";
 
 const PAGE_SIZE = 20;
 type PageProps = {
@@ -84,6 +83,7 @@ export default async function Page({ searchParams }: PageProps) {
                     <TableHeader>남은수업</TableHeader>
                     <TableHeader>계획</TableHeader>
                     <TableHeader>수업</TableHeader>
+                    <TableHeader>입금내역</TableHeader>
                     <TableHeader>수정</TableHeader>
                 </TableRow>
             </TableHead>
@@ -110,6 +110,11 @@ export default async function Page({ searchParams }: PageProps) {
                                 <TableCell>
                                     <Link href={`/lessons?student=${student.id}`}>
                                         <Button>수업 목록</Button>
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Link href={`/payments?student=${student.id}`}>
+                                        <Button>입금내역</Button>
                                     </Link>
                                 </TableCell>
                                 <TableCell>

@@ -4,7 +4,6 @@ import {Field, Label} from "@/components/fieldset";
 import {Input} from "@/components/input";
 import {useSearchParams} from "next/navigation";
 
-
 export default function Filter() {
     const searchParams = useSearchParams();
     const formId = React.useId();
