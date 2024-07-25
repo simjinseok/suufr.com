@@ -36,8 +36,6 @@ type Props = {
   };
 };
 export default async function Page({ searchParams }: Props) {
-  const date = new Date(searchParams.date || Date.now());
-
   const prisma = new PrismaClient();
   const supabase = createClient();
   const {
