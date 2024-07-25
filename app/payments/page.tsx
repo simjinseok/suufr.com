@@ -1,18 +1,18 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import { format } from "date-fns/format";
-import { formatToKoreanNumber } from "@toss/utils";
+import {createClient} from "@/utils/supabase";
+import {PrismaClient} from "@prisma/client";
+import {format} from "date-fns/format";
+import {formatToKoreanNumber} from "@toss/utils";
 
 import React from "react";
-import { redirect } from "next/navigation";
+import {redirect} from "next/navigation";
 import Link from "next/link";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
 import {
   DescriptionDetails,
   DescriptionList,
   DescriptionTerm,
 } from "@/components/description-list";
-import { Heading } from "@/components/heading";
+import {Heading} from "@/components/heading";
 import {
   Table,
   TableHead,
@@ -21,7 +21,7 @@ import {
   TableCell,
   TableRow,
 } from "@/components/table";
-import { Button } from "@/components/button";
+import {Button} from "@/components/button";
 import Filter from './_filter';
 import Payments from "./_edit";
 
@@ -35,11 +35,11 @@ type Props = {
     to: string;
   };
 };
-export default async function Page({ searchParams }: Props) {
+export default async function Page({searchParams}: Props) {
   const prisma = new PrismaClient();
   const supabase = createClient();
   const {
-    data: { user },
+    data: {user},
   } = await supabase.auth.getUser();
 
   if (!user) {
@@ -50,6 +50,21 @@ export default async function Page({ searchParams }: Props) {
   const studentId = Number(searchParams.student);
   const from = searchParams.from ? new Date(searchParams.from) : new Date(0);
   const to = searchParams.to ? new Date(searchParams.to) : new Date(2040, 1, 1);
+  const where = {
+    deletedAt: null,
+    ...(from ? {
+      paidAt: {
+        gte: from,
+        lte: to,
+      },
+    } : {}),
+    syllabus: {
+      student: {
+        ...(studentId ? {id: studentId} : {}),
+        userId: user.id,
+      },
+    },
+  }
   const payments = await prisma.payment.findMany({
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
@@ -60,25 +75,14 @@ export default async function Page({ searchParams }: Props) {
         },
       },
     },
-    where: {
-      deletedAt: null,
-      ...(from ? {
-        paidAt: {
-          gte: from,
-          lte: to,
-        },
-      } : {}),
-      syllabus: {
-        student: {
-          ...(studentId ? { id: studentId } :{}),
-          userId: user.id,
-        },
-      },
-    },
+    where,
     orderBy: {
       paidAt: "desc",
     },
   });
+  const paymentsCount = await prisma.payment.count({
+    where
+  })
 
   const editingPayment = searchParams.edit
     ? payments.find((m) => m.id === Number(searchParams.edit))
@@ -101,7 +105,7 @@ export default async function Page({ searchParams }: Props) {
           </DescriptionList>
         </div>
       )}
-      <Filter />
+      <Filter/>
       <Table className="mt-5">
         <TableHead>
           <TableRow>
@@ -151,7 +155,41 @@ export default async function Page({ searchParams }: Props) {
           )}
         </TableBody>
       </Table>
-      <Payments payment={editingPayment} />
+      <div className="mt-10 flex justify-between">
+        <div>
+          {page > 1 && (
+            <Link
+              className="flex items-center"
+              href={{
+                query: {
+                  ...searchParams,
+                  page: page - 1,
+                },
+              }}
+            >
+              <ChevronLeftIcon/>
+              이전 페이지
+            </Link>
+          )}
+        </div>
+        <div>
+          {paymentsCount > page * PAGE_SIZE && (
+            <Link
+              className="flex items-center"
+              href={{
+                query: {
+                  ...searchParams,
+                  page: page + 1,
+                },
+              }}
+            >
+              다음 페이지
+              <ChevronRightIcon/>
+            </Link>
+          )}
+        </div>
+      </div>
+      <Payments payment={editingPayment}/>
     </div>
   );
 }
