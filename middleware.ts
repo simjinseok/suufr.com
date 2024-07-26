@@ -1,5 +1,5 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import {createServerClient, type CookieOptions} from "@supabase/ssr";
+import {NextResponse, type NextRequest} from "next/server";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -15,13 +15,13 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          for (const { name, value } of cookiesToSet) {
+          for (const {name, value} of cookiesToSet) {
             request.cookies.set(name, value);
           }
           supabaseResponse = NextResponse.next({
             request,
           });
-          for (const { name, value, options } of cookiesToSet) {
+          for (const {name, value, options} of cookiesToSet) {
             supabaseResponse.cookies.set(name, value, options);
           }
         },
@@ -34,14 +34,15 @@ export async function middleware(request: NextRequest) {
   // issues with users being randomly logged out.
 
   const {
-    data: { user },
+    data: {user},
   } = await supabase.auth.getUser();
 
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/reset-password")
+    !request.nextUrl.pathname.startsWith("/reset-password") &&
+    !request.nextUrl.pathname.startsWith('/signup')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
