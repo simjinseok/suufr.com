@@ -1,23 +1,23 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import {createClient} from "@/utils/supabase";
+import {PrismaClient} from "@prisma/client";
 
-import { redirect } from "next/navigation";
-import { Heading } from "@/components/heading";
+import {redirect} from "next/navigation";
+import {Heading} from "@/components/heading";
 import Link from "next/link";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
 import React from "react";
 import Syllabuses from './_syllabuses';
 
 const PAGE_SIZE = 20;
 export default async function Page({
-  searchParams,
-}: { searchParams: { page: number; student: string } }) {
+                                     searchParams,
+                                   }: { searchParams: { page: number; student: string } }) {
   const page = searchParams.page > 0 ? Number(searchParams.page) : 1;
 
   const prisma = new PrismaClient();
   const supabase = createClient();
   const {
-    data: { user },
+    data: {user},
   } = await supabase.auth.getUser();
 
   if (!user) {
@@ -28,52 +28,52 @@ export default async function Page({
   const syllabuses = await prisma.syllabus.findMany({
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
-      select: {
-        id: true,
-        title: true,
-        notes: true,
-        student: {
-          select: {
-            id: true,
-            name: true,
-          }
-        },
-        lessons: {
-          select: {
-            id: true,
-            notes: true,
-            lessonAt: true,
-            isDone: true,
-            feedback: {
-              select: {
-                id: true,
-                notes: true,
-              },
-              where: {
-                deletedAt: null,
-              }
-            },
-          },
-          where: {
-            deletedAt: null,
-          }
-        },
-        payment: {
-          select: {
-            id: true,
-            amount: true,
-            paymentMethod: true,
-            paidAt: true,
-          },
-          where: {
-            deletedAt: null,
-          }
-        },
+    select: {
+      id: true,
+      title: true,
+      notes: true,
+      student: {
+        select: {
+          id: true,
+          name: true,
+        }
       },
+      lessons: {
+        select: {
+          id: true,
+          notes: true,
+          lessonAt: true,
+          isDone: true,
+          feedback: {
+            select: {
+              id: true,
+              notes: true,
+            },
+            where: {
+              deletedAt: null,
+            }
+          },
+        },
+        where: {
+          deletedAt: null,
+        }
+      },
+      payment: {
+        select: {
+          id: true,
+          amount: true,
+          paymentMethod: true,
+          paidAt: true,
+        },
+        where: {
+          deletedAt: null,
+        }
+      },
+    },
     where: {
       deletedAt: null,
       student: {
-        ...(studentId ? { id: studentId } : {}),
+        ...(studentId ? {id: studentId} : {}),
         userId: user.id,
       },
     },
@@ -102,7 +102,13 @@ export default async function Page({
   return (
     <div>
       <Heading>계획</Heading>
-      <Syllabuses student={student} syllabuses={syllabuses} />
+      {student && (
+        <div className="mt-5 p-3 border rounded">
+          <p className="text-base font-bold">{student.name}</p>
+          <p className="whitespace-pre">{student.notes}</p>
+        </div>
+      )}
+      <Syllabuses student={student} syllabuses={syllabuses}/>
       <div className="mt-5 flex justify-between">
         {page > 1 && (
           <Link
@@ -114,7 +120,7 @@ export default async function Page({
               },
             }}
           >
-            <ChevronLeftIcon />
+            <ChevronLeftIcon/>
             이전 페이지
           </Link>
         )}
@@ -129,7 +135,7 @@ export default async function Page({
             }}
           >
             다음 페이지
-            <ChevronRightIcon />
+            <ChevronRightIcon/>
           </Link>
         )}
       </div>
