@@ -62,6 +62,7 @@ export default async function Page({searchParams}: Props) {
       student: {
         ...(studentId ? {id: studentId} : {}),
         userId: user.id,
+        deletedAt: null,
       },
     },
   }
