@@ -1,12 +1,12 @@
-import type { TMeeting } from "@/types/index";
+import type { TMeeting } from '@/types/index';
 
-import { PrismaClient } from "@prisma/client";
-import { createClient } from "@/utils/supabase";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
-import React from "react";
-import { Heading } from "@/components/heading";
-import Link from "next/link";
-import NewMeeting from "./_new-meeting";
+import React from 'react';
+import { Heading } from '@/components/heading';
+import Link from 'next/link';
+import NewMeeting from './_new-meeting';
 import {
   Table,
   TableBody,
@@ -14,30 +14,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/table";
-import { format } from "date-fns/format";
-import { Button } from "@/components/button";
+} from '@/components/table';
+import { format } from 'date-fns/format';
+import { Button } from '@/components/button';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleCheckBigIcon,
   CircleIcon,
-} from "lucide-react";
-import Edit from "./_edit";
+} from 'lucide-react';
+import Edit from './_edit';
 
+export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
 export default async function Page({ searchParams }: any) {
-  const page = searchParams.page > 0 ? Number(searchParams.page) : 1;
+  const { page: _page, edit: _edit } = await searchParams;
+  const page = _page > 0 ? Number(_page) : 1;
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -58,7 +59,7 @@ export default async function Page({ searchParams }: any) {
       deletedAt: null,
     },
     orderBy: {
-      meetingAt: "desc",
+      meetingAt: 'desc',
     },
   });
   const meetingsCount = await prisma.meeting.count({
@@ -68,8 +69,8 @@ export default async function Page({ searchParams }: any) {
     },
   });
 
-  const editingMeeting = searchParams.edit
-    ? meetings.find((m) => m.id === Number(searchParams.edit))
+  const editingMeeting = _edit
+    ? meetings.find(m => m.id === Number(_edit))
     : null;
 
   return (
@@ -88,28 +89,30 @@ export default async function Page({ searchParams }: any) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {meetings.map((meeting) => (
+          {meetings.map(meeting => (
             <TableRow key={`payment-${meeting.id}`}>
               <TableCell>
-                {meeting.isDone ? (
-                  <Button plain>
-                    <CircleCheckBigIcon
-                      width={20}
-                      height={20}
-                      className="text-green-600"
-                    />
-                  </Button>
-                ) : (
-                  <Button plain>
-                    <CircleIcon
-                      width={20}
-                      height={20}
-                      className="text-amber-500"
-                    />
-                  </Button>
-                )}
+                {meeting.isDone
+                  ? (
+                      <Button plain>
+                        <CircleCheckBigIcon
+                          width={20}
+                          height={20}
+                          className="text-green-600"
+                        />
+                      </Button>
+                    )
+                  : (
+                      <Button plain>
+                        <CircleIcon
+                          width={20}
+                          height={20}
+                          className="text-amber-500"
+                        />
+                      </Button>
+                    )}
               </TableCell>
-              <TableCell>{format(meeting.meetingAt, "yyyy-MM-dd")}</TableCell>
+              <TableCell>{format(meeting.meetingAt, 'yyyy-MM-dd')}</TableCell>
               <TableCell>{meeting.name}</TableCell>
               <TableCell>{meeting.phone}</TableCell>
               <TableCell className="whitespace-pre">{meeting.notes}</TableCell>

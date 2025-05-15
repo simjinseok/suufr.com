@@ -1,16 +1,15 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
 export async function POST(req: Request) {
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -20,9 +19,9 @@ export async function POST(req: Request) {
   const result = await prisma.student.create({
     data: {
       userId: user.id,
-      name: formData.get("name") as string,
-      status: formData.get("status") as string,
-      notes: formData.get("notes") as string,
+      name: formData.get('name') as string,
+      status: formData.get('status') as string,
+      notes: formData.get('notes') as string,
     },
   });
 

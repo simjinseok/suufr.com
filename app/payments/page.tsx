@@ -1,18 +1,19 @@
-import {createClient} from "@/utils/supabase";
-import {PrismaClient} from "@prisma/client";
-import {format} from "date-fns/format";
-import {formatToKoreanNumber} from "@toss/utils";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import { format } from 'date-fns/format';
+import { formatToKoreanNumber } from '@toss/utils';
 
-import React from "react";
-import {redirect} from "next/navigation";
-import Link from "next/link";
-import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
+import React from 'react';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { Card } from '@heroui/react';
 import {
   DescriptionDetails,
   DescriptionList,
   DescriptionTerm,
-} from "@/components/description-list";
-import {Heading} from "@/components/heading";
+} from '@/components/description-list';
+import { Heading } from '@/components/heading';
 import {
   Table,
   TableHead,
@@ -20,11 +21,12 @@ import {
   TableBody,
   TableCell,
   TableRow,
-} from "@/components/table";
-import {Button} from "@/components/button";
+} from '@/components/table';
+import { Button } from '@/components/button';
 import Filter from './_filter';
-import Payments from "./_edit";
+import Payments from './_edit';
 
+export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
 type Props = {
   searchParams: {
@@ -35,37 +37,39 @@ type Props = {
     to: string;
   };
 };
-export default async function Page({searchParams}: Props) {
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+export default async function Page({ searchParams }: Props) {
+  const { page: _page, student: _student, from: _from, to: _to, edit: _edit } = await searchParams;
+  const supabase = await createClient();
   const {
-    data: {user},
+    data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
-  const page = Number(searchParams.page) > 0 ? Number(searchParams.page) : 1;
-  const studentId = Number(searchParams.student);
-  const from = searchParams.from ? new Date(searchParams.from) : new Date(0);
-  const to = searchParams.to ? new Date(searchParams.to) : new Date(2040, 1, 1);
+  const page = Number(_page) > 0 ? Number(_page) : 1;
+  const studentId = Number(_student);
+  const from = _from ? new Date(_from) : new Date(0);
+  const to = _to ? new Date(_to) : new Date(2040, 1, 1);
   const where = {
     deletedAt: null,
-    ...(from ? {
-      paidAt: {
-        gte: from,
-        lte: to,
-      },
-    } : {}),
+    ...(from
+      ? {
+          paidAt: {
+            gte: from,
+            lte: to,
+          },
+        }
+      : {}),
     syllabus: {
       student: {
-        ...(studentId ? {id: studentId} : {}),
+        ...(studentId ? { id: studentId } : {}),
         userId: user.id,
         deletedAt: null,
       },
     },
-  }
+  };
   const payments = await prisma.payment.findMany({
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
@@ -78,15 +82,15 @@ export default async function Page({searchParams}: Props) {
     },
     where,
     orderBy: {
-      paidAt: "desc",
+      paidAt: 'desc',
     },
   });
   const paymentsCount = await prisma.payment.count({
-    where
-  })
+    where,
+  });
 
-  const editingPayment = searchParams.edit
-    ? payments.find((m) => m.id === Number(searchParams.edit))
+  const editingPayment = _edit
+    ? payments.find(m => m.id === Number(_edit))
     : null;
 
   return (
@@ -96,7 +100,10 @@ export default async function Page({searchParams}: Props) {
           <Heading level={3}>요약</Heading>
           <DescriptionList>
             <DescriptionTerm>결제 건수</DescriptionTerm>
-            <DescriptionDetails>{payments.length}건</DescriptionDetails>
+            <DescriptionDetails>
+              {payments.length}
+              건
+            </DescriptionDetails>
 
             <DescriptionTerm>결제 금액</DescriptionTerm>
             <DescriptionDetails>
@@ -106,7 +113,7 @@ export default async function Page({searchParams}: Props) {
           </DescriptionList>
         </div>
       )}
-      <Filter/>
+      <Filter />
       <Table className="mt-5">
         <TableHead>
           <TableRow>
@@ -119,41 +126,47 @@ export default async function Page({searchParams}: Props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {payments.length > 0 ? (
-            <>
-              {payments.map((payment: any) => (
-                <TableRow key={`payment-${payment.id}`}>
-                  <TableCell>
-                    {format(new Date(payment.paidAt), "yyyy-MM-dd")}
-                  </TableCell>
-                  <TableCell>{payment.paymentMethod}</TableCell>
-                  <TableCell>
-                    {formatToKoreanNumber(payment.amount)}원
-                  </TableCell>
-                  <TableCell>{payment.syllabus.student.name}</TableCell>
-                  <TableCell>{payment.notes}</TableCell>
-                  <TableCell>
-                    <Link
-                      href={{
-                        query: {
-                          ...searchParams,
-                          edit: payment.id,
-                        },
-                      }}
-                    >
-                      <Button plain>수정</Button>
-                    </Link>
+          {payments.length > 0
+            ? (
+                <>
+                  {payments.map((payment: any) => (
+                    <TableRow key={`payment-${payment.id}`}>
+                      <TableCell>
+                        {format(new Date(payment.paidAt), 'yyyy-MM-dd')}
+                      </TableCell>
+                      <TableCell>{payment.paymentMethod}</TableCell>
+                      <TableCell>
+                        {formatToKoreanNumber(payment.amount)}
+                        원
+                      </TableCell>
+                      <TableCell>{payment.syllabus.student.name}</TableCell>
+                      <TableCell>{payment.notes}</TableCell>
+                      <TableCell>
+                        <Link
+                          href={{
+                            query: {
+                              page: _page,
+                              student: _student,
+                              from: _from,
+                              to: _to,
+                              edit: payment.id,
+                            },
+                          }}
+                        >
+                          <Button plain>수정</Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              )
+            : (
+                <TableRow>
+                  <TableCell className="text-center" colSpan={6}>
+                    입금 내역이 없어요
                   </TableCell>
                 </TableRow>
-              ))}
-            </>
-          ) : (
-            <TableRow>
-              <TableCell className="text-center" colSpan={6}>
-                입금 내역이 없어요
-              </TableCell>
-            </TableRow>
-          )}
+              )}
         </TableBody>
       </Table>
       <div className="mt-10 flex justify-between">
@@ -163,12 +176,14 @@ export default async function Page({searchParams}: Props) {
               className="flex items-center"
               href={{
                 query: {
-                  ...searchParams,
+                  student: _student,
+                  from: _from,
+                  to: _to,
                   page: page - 1,
                 },
               }}
             >
-              <ChevronLeftIcon/>
+              <ChevronLeftIcon />
               이전 페이지
             </Link>
           )}
@@ -179,18 +194,20 @@ export default async function Page({searchParams}: Props) {
               className="flex items-center"
               href={{
                 query: {
-                  ...searchParams,
+                  student: _student,
+                  from: _from,
+                  to: _to,
                   page: page + 1,
                 },
               }}
             >
               다음 페이지
-              <ChevronRightIcon/>
+              <ChevronRightIcon />
             </Link>
           )}
         </div>
       </div>
-      <Payments payment={editingPayment}/>
+      <Payments payment={editingPayment} />
     </div>
   );
 }

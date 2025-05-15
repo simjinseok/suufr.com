@@ -1,22 +1,29 @@
-"use client";
-import { Select } from "@/components/select";
+'use client';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Form, Select, SelectItem } from '@heroui/react';
 
 export default function ConditionForm({
   currentStatus,
 }: { currentStatus: string }) {
+  const router = useRouter();
   return (
-    <form method="get" className="flex">
-      {/*<Input name="name" /> 검색 지원 예정*/}
+    <Form method="get" className="flex">
+      {/* <Input name="name" /> 검색 지원 예정 */}
       <Select
+        className="w-28"
         name="status"
-        defaultValue={currentStatus}
-        onChange={(e) => (e.target.form as HTMLFormElement).submit()}
+        aria-label="상태"
+        defaultSelectedKeys={[currentStatus]}
+        onSelectionChange={(keys) => {
+          router.push(`/students?status=${keys.currentKey}`);
+        }}
       >
-        <option value="">전체</option>
-        <option value="active">수강중</option>
-        <option value="paused">중단</option>
-        <option value="leave">그만둠</option>
+        <SelectItem key="">전체</SelectItem>
+        <SelectItem key="active">수강중</SelectItem>
+        <SelectItem key="paused">중단</SelectItem>
+        <SelectItem key="leave">그만둠</SelectItem>
       </Select>
-    </form>
+    </Form>
   );
 }

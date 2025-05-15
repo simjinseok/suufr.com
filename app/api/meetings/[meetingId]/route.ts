@@ -1,6 +1,6 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import MeetingSchema from "@/schemas/meeting";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import MeetingSchema from '@/schemas/meeting';
 
 export async function PUT(
   request: Request,
@@ -8,15 +8,14 @@ export async function PUT(
 ) {
   const meetingId = Number(params.meetingId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -30,7 +29,7 @@ export async function PUT(
   });
 
   if (!meeting) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -66,15 +65,14 @@ export async function DELETE(
 ) {
   const meetingId = Number(params.meetingId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -88,7 +86,7 @@ export async function DELETE(
   });
 
   if (!meeting) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }

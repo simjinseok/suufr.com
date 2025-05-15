@@ -1,5 +1,5 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
 export async function PUT(
   request: Request,
@@ -7,15 +7,14 @@ export async function PUT(
 ) {
   const studentId = Number(params.studentId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -29,7 +28,7 @@ export async function PUT(
   });
 
   if (!student) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -41,9 +40,9 @@ export async function PUT(
       id: student.id,
     },
     data: {
-      name: formData.get("name") as string,
-      status: formData.get("status") as string,
-      notes: formData.get("notes") as string,
+      name: formData.get('name') as string,
+      status: formData.get('status') as string,
+      notes: formData.get('notes') as string,
     },
   });
 
@@ -65,15 +64,14 @@ export async function DELETE(
 ) {
   const studentId = Number(params.studentId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -87,7 +85,7 @@ export async function DELETE(
   });
 
   if (!student) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }

@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { createClient } from "@/utils/supabase";
+import { prisma } from '@/utils/prisma';
+import { createClient } from '@/utils/supabase';
 
 export async function PUT(
   request: Request,
@@ -7,15 +7,14 @@ export async function PUT(
 ) {
   const syllabusId = Number(params.syllabusId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -31,7 +30,7 @@ export async function PUT(
   });
 
   if (!syllabus) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -43,8 +42,8 @@ export async function PUT(
       id: syllabus.id,
     },
     data: {
-      title: formData.get("title") as string,
-      notes: formData.get("notes") as string,
+      title: formData.get('title') as string,
+      notes: formData.get('notes') as string,
       updatedAt: new Date(),
     },
   });
@@ -60,20 +59,19 @@ export async function PUT(
 }
 
 export async function DELETE(
-    request: Request,
-    { params }: { params: { syllabusId: string } },
+  request: Request,
+  { params }: { params: { syllabusId: string } },
 ) {
   const syllabusId = Number(params.syllabusId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -83,7 +81,7 @@ export async function DELETE(
       lessons: {
         where: {
           deletedAt: null,
-        }
+        },
       },
     },
     where: {
@@ -97,26 +95,26 @@ export async function DELETE(
   console.log('이게 없다고?', syllabus);
 
   if (!syllabus) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
 
   if (syllabus.lessons.length > 0) {
-      return Response.json({
-        message: '모든 레슨을 삭제 후 다시 시도해주세요.'
-      }, {
-          status: 400,
-      });
+    return Response.json({
+      message: '모든 레슨을 삭제 후 다시 시도해주세요.',
+    }, {
+      status: 400,
+    });
   }
 
   const result = await prisma.syllabus.update({
-      where: {
-          id: syllabus.id,
-      },
-      data: {
-          deletedAt: new Date(),
-      },
+    where: {
+      id: syllabus.id,
+    },
+    data: {
+      deletedAt: new Date(),
+    },
   });
   console.log(result);
 

@@ -1,14 +1,14 @@
 import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/utils/prisma';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { lessonId: string } },
+  { params }: { params: Promise<{ lessonId: string }> },
 ) {
-  const lessonId = Number(params.lessonId);
+  const { lessonId: _lessonId } = await params;
+  const lessonId = Number(_lessonId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

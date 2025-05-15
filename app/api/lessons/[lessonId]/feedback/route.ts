@@ -1,6 +1,6 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import FeedbackSchema from "@/schemas/feedback";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import FeedbackSchema from '@/schemas/feedback';
 
 export async function POST(
   request: Request,
@@ -8,15 +8,14 @@ export async function POST(
 ) {
   const lessonId = Number(params.lessonId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -34,7 +33,7 @@ export async function POST(
   });
 
   if (!lesson) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -60,11 +59,12 @@ export async function POST(
         deletedAt: null,
       },
     });
-  } else {
+  }
+  else {
     feedbackResult = await prisma.feedback.create({
       data: {
         lessonId: lesson.id,
-        notes: schemaData.notes || "",
+        notes: schemaData.notes || '',
       },
     });
   }

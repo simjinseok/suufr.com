@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { createClient } from "@/utils/supabase";
-import PaymentSchema from "@/schemas/payment";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import PaymentSchema from '@/schemas/payment';
 
 export async function PUT(
   request: Request,
@@ -8,15 +8,14 @@ export async function PUT(
 ) {
   const syllabusId = Number(params.syllabusId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -32,7 +31,7 @@ export async function PUT(
   });
 
   if (!syllabus) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -60,7 +59,8 @@ export async function PUT(
         updatedAt: new Date(),
       },
     });
-  } else {
+  }
+  else {
     payment = await prisma.payment.create({
       data: {
         amount: schemaData.amount,
@@ -88,15 +88,14 @@ export async function DELETE(
 ) {
   const syllabusId = Number(params.syllabusId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -112,7 +111,7 @@ export async function DELETE(
   });
 
   if (!syllabus) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -124,7 +123,7 @@ export async function DELETE(
   });
 
   if (!payment) {
-    return new Response("", { status: 404 });
+    return new Response('', { status: 404 });
   }
 
   const result = await prisma.payment.update({

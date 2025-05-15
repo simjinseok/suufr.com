@@ -1,21 +1,20 @@
-import { PrismaClient } from "@prisma/client";
-import { createClient } from "@/utils/supabase";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
 export async function PUT(
   request: Request,
   { params }: { params: { lessonId: string } },
 ) {
-  const lessonId = Number(params.lessonId);
+  const lessonId = Number(await params.lessonId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -33,13 +32,13 @@ export async function PUT(
   });
 
   if (!lesson) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
 
   const formData = await request.formData();
-  const lessonAt = new Date(`${formData.get("lessonAt")}:00+09:00`);
+  const lessonAt = new Date(`${formData.get('lessonAt')}:00+09:00`);
 
   const result = await prisma.lesson.update({
     where: {
@@ -47,7 +46,7 @@ export async function PUT(
     },
     data: {
       isDone: formData.get('isDone') === 'on',
-      notes: formData.get("notes") as string,
+      notes: formData.get('notes') as string,
       lessonAt,
       updatedAt: new Date(),
     },
@@ -69,17 +68,16 @@ export async function DELETE(
   request: Request,
   { params }: { params: { lessonId: string } },
 ) {
-  const lessonId = Number(params.lessonId);
+  const lessonId = Number(await params.lessonId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -97,7 +95,7 @@ export async function DELETE(
   });
 
   if (!lesson) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }

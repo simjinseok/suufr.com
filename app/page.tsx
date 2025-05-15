@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/utils/prisma';
 import { redirect } from "next/navigation";
 import { Heading } from "@/components/heading";
 import { Divider } from "@/components/divider";
@@ -14,9 +14,8 @@ import {
 import React from "react";
 import { format } from "date-fns/format";
 
-const prisma = new PrismaClient();
 export default async function Page() {
-  const supabase = createClient();
+  const supabase  = await createClient();
 
   const {
     data: { user },

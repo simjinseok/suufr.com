@@ -1,10 +1,9 @@
 import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/utils/prisma";
 import MeetingSchema from "@/schemas/meeting";
 
 export async function POST(req: Request) {
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

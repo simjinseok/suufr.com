@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { createClient } from "@/utils/supabase";
-import FeedbackSchema from "@/schemas/feedback";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import FeedbackSchema from '@/schemas/feedback';
 
 export async function PUT(
   request: Request,
@@ -8,15 +8,14 @@ export async function PUT(
 ) {
   const feedbackId = Number(params.feedbackId);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -29,14 +28,14 @@ export async function PUT(
           student: {
             userId: user.id,
           },
-        }
+        },
       },
       deletedAt: null,
     },
   });
 
   if (!feedback) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -48,7 +47,7 @@ export async function PUT(
       id: feedback.id,
     },
     data: {
-      notes: formData.get("notes") as string,
+      notes: formData.get('notes') as string,
     },
   });
 

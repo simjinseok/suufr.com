@@ -1,19 +1,18 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const studentId = Number(searchParams.get("studentId"));
+  const studentId = Number(searchParams.get('studentId'));
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
@@ -27,7 +26,7 @@ export async function GET(request: Request) {
   });
 
   if (!student) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
@@ -41,7 +40,7 @@ export async function GET(request: Request) {
     },
     orderBy: [
       {
-        lessonAt: "desc",
+        lessonAt: 'desc',
       },
     ],
   });
@@ -52,21 +51,20 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
 
   const formData = await request.formData();
-  const syllabusId = Number(formData.get("syllabusId"));
+  const syllabusId = Number(formData.get('syllabusId'));
   const syllabus = await prisma.syllabus.findUnique({
     where: {
       id: syllabusId,
@@ -78,20 +76,19 @@ export async function POST(request: Request) {
   });
 
   if (!syllabus) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
 
-
-  const dates = formData.getAll("lessonAt");
+  const dates = formData.getAll('lessonAt');
   if (dates.length === 1) {
     const lessonAt = new Date(`${dates[0]}:00+09:00`);
 
     const lesson = await prisma.lesson.create({
       data: {
         syllabusId: syllabus.id,
-        notes: formData.get("notes") as string,
+        notes: formData.get('notes') as string,
         lessonAt,
       },
     });
@@ -100,17 +97,17 @@ export async function POST(request: Request) {
   }
 
   if (dates.length > 1) {
-    const dates = formData.getAll("lessonAt");
+    const dates = formData.getAll('lessonAt');
     const results = await prisma.lesson.createMany({
       data: dates.map((date) => {
-          return {
-              syllabusId: syllabus.id,
-              notes: '',
-              lessonAt: `${date}:00+09:00`,
-          }
+        return {
+          syllabusId: syllabus.id,
+          notes: '',
+          lessonAt: `${date}:00+09:00`,
+        };
       }),
     });
 
-    return Response.json(results, { status: 201});
+    return Response.json(results, { status: 201 });
   }
 }

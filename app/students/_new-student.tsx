@@ -1,8 +1,10 @@
-"use client";
-import React from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/button";
-import StudentForm from "@/components/forms/student-form";
+'use client';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@heroui/react';
+import StudentModal from '@/components/student-modal';
+
+import { createStudent } from './actions';
 
 export default function NewStudentModal() {
   const router = useRouter();
@@ -11,19 +13,16 @@ export default function NewStudentModal() {
   return (
     <>
       <Button
-        color="emerald"
-        onClick={setIsOpen.bind(null, true)}
+        color="secondary"
+        onPress={setIsOpen.bind(null, true)}
         disabled={isOpen}
       >
         수강생 등록
       </Button>
-      <StudentForm
+      <StudentModal
         isOpen={isOpen}
-        onSuccess={() => {
-          setIsOpen(false);
-          router.refresh();
-        }}
         onClose={setIsOpen.bind(null, false)}
+        action={createStudent}
       />
     </>
   );

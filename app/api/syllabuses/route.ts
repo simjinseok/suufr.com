@@ -1,22 +1,21 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
 export async function POST(req: Request) {
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return new Response("", {
+    return new Response('', {
       status: 401,
     });
   }
 
   const formData = await req.formData();
-  const studentId = Number(formData.get("studentId"));
+  const studentId = Number(formData.get('studentId'));
   const student = await prisma.student.findUnique({
     where: {
       id: studentId,
@@ -26,21 +25,20 @@ export async function POST(req: Request) {
   });
 
   if (!student) {
-    return new Response("", {
+    return new Response('', {
       status: 404,
     });
   }
 
   const result = await prisma.syllabus.create({
     data: {
-      title: (formData.get("title") as string) || "",
-      notes: (formData.get("notes") as string) || "",
+      title: (formData.get('title') as string) || '',
+      notes: (formData.get('notes') as string) || '',
       studentId: student.id,
     },
-  })
+  });
 
-
-  return new Response("", {
+  return new Response('', {
     status: 201,
   });
 }

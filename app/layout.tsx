@@ -20,6 +20,8 @@ import {
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
+import {Providers} from "./providers";
+
 export const metadata: Metadata = {
   title: "스프",
   description: "과외 일정 관리 서비스",
@@ -32,7 +34,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" style={{ height: "100%" }}>
+
       <body style={{ height: "100%" }}>
+      <Providers>
         <SidebarLayout
           navbar={<>메뉴</>}
           sidebar={
@@ -96,7 +100,9 @@ export default function RootLayout({
         </SidebarLayout>
         <Analytics />
         <SpeedInsights />
+      </Providers>
       </body>
+
     </html>
   );
 }

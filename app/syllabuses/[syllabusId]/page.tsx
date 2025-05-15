@@ -1,25 +1,26 @@
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import { notFound, redirect } from "next/navigation";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
+import { notFound, redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
 export default async function Page({
   params,
 }: { params: { syllabusId: string } }) {
-  const syllabusId = Number(params.syllabusId);
+  const { syllabusId: _syllabusId } = await params;
+  const syllabusId = Number(_syllabusId);
   if (Number.isNaN(syllabusId)) {
     return notFound();
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
-  const prisma = new PrismaClient();
   const syllabus = await prisma.syllabus.findUnique({
     select: {
       id: true,
@@ -39,8 +40,8 @@ export default async function Page({
           paymentMethod: true,
           notes: true,
           paidAt: true,
-        }
-      }
+        },
+      },
     },
     where: {
       id: syllabusId,

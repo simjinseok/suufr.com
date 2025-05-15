@@ -1,21 +1,20 @@
-import type { TStudent } from "@/types/index";
+import type { TStudent } from '@/types/index';
 
-import { createClient } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import { clsx } from "clsx";
+import { createClient } from '@/utils/supabase';
+import { prisma } from '@/utils/prisma';
 
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { Button } from "@/components/button";
-import { Heading } from "@/components/heading";
-import StatusBadge from "@/components/status-badge";
-import ConditionForm from "./_condition-form";
-import NewStudent from "./_new-student";
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import React from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+
+import { Heading } from '@/components/heading';
+import ConditionForm from './_condition-form';
+import NewStudent from './_new-student';
 import Edit from './_edit';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/table";
-import React from "react";
+import Students from './_students';
 
+export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
 type PageProps = {
   searchParams: {
@@ -25,17 +24,17 @@ type PageProps = {
   };
 };
 export default async function Page({ searchParams }: PageProps) {
-  const page = searchParams.page > 0 ? Number(searchParams.page) : 1;
-  const status = typeof searchParams.status === 'string' ? searchParams.status : "active";
+  const { page: _page, status: _status, edit: _edit } = await searchParams;
+  const page = _page > 0 ? Number(_page) : 1;
+  const status = typeof _status === 'string' ? _status : 'active';
 
-  const prisma = new PrismaClient();
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
   const students: TStudent[] = await prisma.$queryRaw`
@@ -61,8 +60,8 @@ export default async function Page({ searchParams }: PageProps) {
     },
   });
 
-  const editingStudent = searchParams.edit
-    ? students.find((m) => m.id === Number(searchParams.edit))
+  const editingStudent = _edit
+    ? students.find(m => m.id === Number(_edit))
     : null;
 
   return (
@@ -70,77 +69,11 @@ export default async function Page({ searchParams }: PageProps) {
       <Heading className="text-2xl font-bold">수강생 목록</Heading>
       <div className="mt-5 flex justify-between">
         <ConditionForm currentStatus={status} />
-
         <div>
           <NewStudent />
         </div>
       </div>
-        <Table className="mt-5">
-            <TableHead>
-                <TableRow>
-                    <TableHeader>이름</TableHeader>
-                    <TableHeader>상태</TableHeader>
-                    <TableHeader>남은수업</TableHeader>
-                    <TableHeader>계획</TableHeader>
-                    <TableHeader>수업</TableHeader>
-                    <TableHeader>입금내역</TableHeader>
-                    <TableHeader>수정</TableHeader>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {students.length > 0 ? (
-                    <>
-                        {students.map((student: any) => (
-                            <TableRow key={`student-${student.id}`}>
-                                <TableCell>
-                                    {student.name}
-                                </TableCell>
-                                <TableCell><StatusBadge status={student.status} /></TableCell>
-                                <TableCell className={clsx(
-                                    "text-lg font-bold",
-                                    (student.upcomingLessonsCount as number) > 0
-                                        ? "text-green-500"
-                                        : "",
-                                )}>{student.upcomingLessonsCount}회</TableCell>
-                                <TableCell>
-                                    <Link href={`/syllabuses?student=${student.id}`}>
-                                        <Button>계획 목록</Button>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Link href={`/lessons?student=${student.id}`}>
-                                        <Button>수업 목록</Button>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Link href={`/payments?student=${student.id}`}>
-                                        <Button>입금내역</Button>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Link
-                                        href={{
-                                            query: {
-                                                ...searchParams,
-                                                edit: student.id,
-                                            },
-                                        }}
-                                    >
-                                        <Button plain>수정</Button>
-                                    </Link>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </>
-                ) : (
-                    <TableRow>
-                        <TableCell className="text-center" colSpan={6}>
-                            수강생이 없어요
-                        </TableCell>
-                    </TableRow>
-                )}
-            </TableBody>
-        </Table>
+      <Students students={students} />
       <div className="mt-5 flex justify-between">
         {page > 1 && (
           <Link
@@ -171,11 +104,11 @@ export default async function Page({ searchParams }: PageProps) {
           </Link>
         )}
       </div>
-        {editingStudent && (
-            <Edit
-                student={editingStudent}
-            />
-        )}
+      {editingStudent && (
+        <Edit
+          student={editingStudent}
+        />
+      )}
     </div>
   );
 }
