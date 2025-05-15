@@ -66,7 +66,9 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <div className="mt-3">
-      <Heading className="text-2xl font-bold">수강생 목록</Heading>
+      <div className="flex flex-col">
+        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">수강생 목록</h1>
+      </div>
       <div className="mt-5 flex justify-between">
         <ConditionForm currentStatus={status} />
         <div>

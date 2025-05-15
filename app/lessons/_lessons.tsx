@@ -78,7 +78,7 @@ export default function Lessons({ lessons }) {
       </Table>
       <LessonModal
         isOpen={editingLesson !== null}
-        setIsOpen={() => { setEditingLesson(null); }}
+        onClose={() => { setEditingLesson(null); }}
         lesson={editingLesson}
       />
     </React.Fragment>
