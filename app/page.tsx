@@ -14,7 +14,8 @@ import {
 } from '@/components/table';
 import React from 'react';
 import { format } from 'date-fns/format';
-import {BanknoteXIcon, ShapesIcon, UsersRoundIcon} from "lucide-react";
+import { BanknoteXIcon, ShapesIcon, UsersRoundIcon } from 'lucide-react';
+import Calendar from './_calendar';
 
 export default async function Page() {
   const supabase = await createClient();
@@ -31,6 +32,7 @@ export default async function Page() {
     currentActiveStudentCount,
     remainLessonsCount,
     notPaidSyllabusesCount,
+    lessons,
   ] = await Promise.all([
     prisma.student.count({
       where: {
@@ -59,10 +61,36 @@ export default async function Page() {
         payment: null,
       },
     }),
+    prisma.lesson.findMany({
+      select: {
+        id: true,
+        isDone: true,
+        lessonAt: true,
+        notes: true,
+        syllabus: {
+          select: {
+            student: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        deletedAt: null,
+        syllabus: {
+          student: {
+            userId: user.id,
+          },
+        },
+      },
+    }),
   ]);
 
   return (
     <div>
+      <Calendar lessons={lessons} />
       <div className="mt-3 grid grid-cols-4 gap-x-3">
         <Card className="border border-transparent dark:border-default-100">
           <div className="flex p-4">

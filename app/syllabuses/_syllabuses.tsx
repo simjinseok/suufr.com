@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import {
   CircleIcon,
   CircleCheckBigIcon,
-  EllipsisVerticalIcon, TrashIcon,
+  EllipsisVerticalIcon,
 } from 'lucide-react';
 import {
   Button,
@@ -24,12 +24,11 @@ import {
 
 import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
-import SyllabusForm from '@/components/forms/syllabus-form';
-import PaymentForm from '@/components/forms/payment-form';
 import FeedbackForm from '@/components/forms/feedback-form';
 import BulkLessonDialog from './_bulk-lesson-dialog';
 import LessonModal from '@/components/lesson-modal';
-import PaymentModal from "@/components/payment-modal";
+import PaymentModal from '@/components/payment-modal';
+import SyllabusModal from '@/components/syllabus-modal';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -229,23 +228,17 @@ export default function Syllabuses({ student, syllabuses }: any) {
         <p>일정이 없습니다.</p>
       )}
       {isCreating && (
-        <SyllabusForm
+        <SyllabusModal
+          isOpen={isCreating}
           student={student}
-          onSuccess={() => {
-            setIsCreating(false);
-            router.refresh();
-          }}
           onClose={setIsCreating.bind(null, false)}
         />
       )}
 
       {editingSyllabus && (
-        <SyllabusForm
+        <SyllabusModal
+          isOpen={editingSyllabus !== null}
           syllabus={editingSyllabus}
-          onSuccess={() => {
-            router.refresh();
-            setEditingSyllabus(null);
-          }}
           onClose={setEditingSyllabus.bind(null, null)}
         />
       )}
