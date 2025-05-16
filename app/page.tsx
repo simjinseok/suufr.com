@@ -1,8 +1,9 @@
-import { createClient } from "@/utils/supabase";
+import { createClient } from '@/utils/supabase';
 import { prisma } from '@/utils/prisma';
-import { redirect } from "next/navigation";
-import { Heading } from "@/components/heading";
-import { Divider } from "@/components/divider";
+import { redirect } from 'next/navigation';
+
+import { Card } from '@heroui/react';
+import { Heading } from '@/components/heading';
 import {
   Table,
   TableBody,
@@ -10,19 +11,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/table";
-import React from "react";
-import { format } from "date-fns/format";
+} from '@/components/table';
+import React from 'react';
+import { format } from 'date-fns/format';
+import {BanknoteXIcon, ShapesIcon, UsersRoundIcon} from "lucide-react";
 
 export default async function Page() {
-  const supabase  = await createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
   const [
@@ -34,19 +36,19 @@ export default async function Page() {
       where: {
         userId: user.id,
         deletedAt: null,
-        status: "active",
+        status: 'active',
       },
     }),
     prisma.lesson.count({
-        where: {
-            isDone: false,
-            syllabus: {
-                student: {
-                    userId: user.id,
-                },
-            },
-            deletedAt: null,
+      where: {
+        isDone: false,
+        syllabus: {
+          student: {
+            userId: user.id,
+          },
         },
+        deletedAt: null,
+      },
     }),
     prisma.syllabus.count({
       where: {
@@ -61,28 +63,51 @@ export default async function Page() {
 
   return (
     <div>
-      <Heading>홈</Heading>
-      <Divider className="mt-5" />
-      <div className="mt-12">
-        <Heading level={2}>요약</Heading>
-        <div className="mt-5 grid grid-cols-4 gap-x-3">
-          <div className="pt-7 border-t">
-            <Heading level={3}>수강중인 학생수</Heading>
-            <p className="text-green-500 font-bold text-2xl">
-              {currentActiveStudentCount}명
-            </p>
+      <div className="mt-3 grid grid-cols-4 gap-x-3">
+        <Card className="border border-transparent dark:border-default-100">
+          <div className="flex p-4">
+            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-50">
+              <UsersRoundIcon className="text-success" width={20} height={20} />
+            </div>
+            <div className="flex flex-col gap-y-2">
+              <dt className="mx-4 text-small font-medium text-default-500">수강중인 학생</dt>
+              <dd className="px-4 text-2xl font-semibold text-default-700">
+                {currentActiveStudentCount}
+                명
+              </dd>
+            </div>
           </div>
+        </Card>
 
-          <div className="pt-7 border-t">
-            <Heading level={3}>남은 수업</Heading>
-            <p className="font-bold text-2xl">{remainLessonsCount}건</p>
+        <Card className="border border-transparent dark:border-default-100">
+          <div className="flex p-4">
+            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-primary-50">
+              <ShapesIcon className="text-primary" width={20} height={20} />
+            </div>
+            <div className="flex flex-col gap-y-2">
+              <dt className="mx-4 text-small font-medium text-default-500">남은 수업</dt>
+              <dd className="px-4 text-2xl font-semibold text-default-700">
+                {remainLessonsCount}
+                회
+              </dd>
+            </div>
           </div>
+        </Card>
 
-          <div className="pt-7 border-t">
-            <Heading level={3}>미입금</Heading>
-            <p className="font-bold text-2xl">{notPaidSyllabusesCount}건</p>
+        <Card className="border border-transparent dark:border-default-100">
+          <div className="flex p-4">
+            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50">
+              <BanknoteXIcon className="text-danger" width={20} height={20} />
+            </div>
+            <div className="flex flex-col gap-y-2">
+              <dt className="mx-4 text-small font-medium text-default-500">미입금</dt>
+              <dd className="px-4 text-2xl font-semibold text-default-700">
+                {notPaidSyllabusesCount}
+                건
+              </dd>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       <React.Suspense>
@@ -109,7 +134,7 @@ async function NotPaidSyllabuses({ user }: any) {
       },
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
   });
 
@@ -128,7 +153,7 @@ async function NotPaidSyllabuses({ user }: any) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {syllabuses.map((syllabus) => (
+          {syllabuses.map(syllabus => (
             <TableRow key={`syllabus-${syllabus.id}`}>
               <TableCell>{syllabus.student.name}</TableCell>
               <TableCell>{syllabus.title}</TableCell>
@@ -148,7 +173,7 @@ async function NotCheckedMeetings({ user }: any) {
       userId: user.id,
     },
     orderBy: {
-      meetingAt: "asc",
+      meetingAt: 'asc',
     },
   });
 
@@ -169,9 +194,9 @@ async function NotCheckedMeetings({ user }: any) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {meetings.map((meeting) => (
+          {meetings.map(meeting => (
             <TableRow key={`meeting-${meeting.id}`}>
-              <TableCell>{format(meeting.meetingAt, "yyyy-MM-dd")}</TableCell>
+              <TableCell>{format(meeting.meetingAt, 'yyyy-MM-dd')}</TableCell>
               <TableCell>{meeting.name}</TableCell>
               <TableCell>{meeting.phone}</TableCell>
               <TableCell className="whitespace-pre-wrap">

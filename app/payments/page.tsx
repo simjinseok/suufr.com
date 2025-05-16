@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase';
 import { prisma } from '@/utils/prisma';
-import { format } from 'date-fns/format';
 import { formatToKoreanNumber } from '@toss/utils';
 
 import React from 'react';
@@ -8,23 +7,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Card } from '@heroui/react';
-import {
-  DescriptionDetails,
-  DescriptionList,
-  DescriptionTerm,
-} from '@/components/description-list';
-import { Heading } from '@/components/heading';
-import {
-  Table,
-  TableHead,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@/components/table';
-import { Button } from '@/components/button';
 import Filter from './_filter';
-import Payments from './_edit';
+import Payments from './_payments';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -38,7 +22,7 @@ type Props = {
   };
 };
 export default async function Page({ searchParams }: Props) {
-  const { page: _page, student: _student, from: _from, to: _to, edit: _edit } = await searchParams;
+  const { page: _page, student: _student, from: _from, to: _to } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -89,86 +73,86 @@ export default async function Page({ searchParams }: Props) {
     where,
   });
 
-  const editingPayment = _edit
-    ? payments.find(m => m.id === Number(_edit))
-    : null;
+  const syllabuses = await prisma.syllabus.findMany({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    select: {
+      id: true,
+      payment: {
+        select: {
+          id: true,
+          amount: true,
+          paymentMethod: true,
+          notes: true,
+          paidAt: true,
+        },
+      },
+      student: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    where: {
+      NOT: {
+        payment: null,
+      },
+      payment: {
+        deletedAt: null,
+      },
+      student: {
+        userId: user.id,
+        deletedAt: null,
+      },
+    },
+    orderBy: {
+      payment: {
+        paidAt: 'desc',
+      },
+    },
+  });
 
   return (
     <div>
+      <div className="flex flex-col">
+        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">입금 내역</h1>
+      </div>
       {payments.length > 0 && (
-        <div className="mt-3">
-          <Heading level={3}>요약</Heading>
-          <DescriptionList>
-            <DescriptionTerm>결제 건수</DescriptionTerm>
-            <DescriptionDetails>
-              {payments.length}
-              건
-            </DescriptionDetails>
+        <div className="mt-6">
+          <div className="grid grid-cols-4 gap-x-4">
+            <Card className=" border border-transparent dark:border-default-100">
+              <div className="flex p-4">
+                <div className="flex flex-col gap-y-2">
+                  <dt className="text-small font-medium text-default-500">결제 건수</dt>
+                  <dd className="text-2xl font-semibold text-default-700">
+                    {payments.length}
+                    건
+                  </dd>
+                </div>
+              </div>
+            </Card>
 
-            <DescriptionTerm>결제 금액</DescriptionTerm>
-            <DescriptionDetails>
-              {formatToKoreanNumber(payments.reduce((t, p) => t + p.amount, 0))}
-              원
-            </DescriptionDetails>
-          </DescriptionList>
+            <Card className=" border border-transparent dark:border-default-100">
+              <div className="flex p-4">
+                <div className="flex flex-col gap-y-2">
+                  <dt className="text-small font-medium text-default-500">결제 금액</dt>
+                  <dd className="text-2xl font-semibold text-default-700">
+                    {formatToKoreanNumber(payments.reduce((t, p) => t + p.amount, 0))}
+                    원
+                  </dd>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
       <Filter />
-      <Table className="mt-5">
-        <TableHead>
-          <TableRow>
-            <TableHeader>일자</TableHeader>
-            <TableHeader>결제수단</TableHeader>
-            <TableHeader>금액</TableHeader>
-            <TableHeader>학생명</TableHeader>
-            <TableHeader>메모</TableHeader>
-            <TableHeader>수정</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {payments.length > 0
-            ? (
-                <>
-                  {payments.map((payment: any) => (
-                    <TableRow key={`payment-${payment.id}`}>
-                      <TableCell>
-                        {format(new Date(payment.paidAt), 'yyyy-MM-dd')}
-                      </TableCell>
-                      <TableCell>{payment.paymentMethod}</TableCell>
-                      <TableCell>
-                        {formatToKoreanNumber(payment.amount)}
-                        원
-                      </TableCell>
-                      <TableCell>{payment.syllabus.student.name}</TableCell>
-                      <TableCell>{payment.notes}</TableCell>
-                      <TableCell>
-                        <Link
-                          href={{
-                            query: {
-                              page: _page,
-                              student: _student,
-                              from: _from,
-                              to: _to,
-                              edit: payment.id,
-                            },
-                          }}
-                        >
-                          <Button plain>수정</Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </>
-              )
-            : (
-                <TableRow>
-                  <TableCell className="text-center" colSpan={6}>
-                    입금 내역이 없어요
-                  </TableCell>
-                </TableRow>
-              )}
-        </TableBody>
-      </Table>
+
+      <Payments
+        syllabuses={syllabuses}
+      />
+
       <div className="mt-10 flex justify-between">
         <div>
           {page > 1 && (
@@ -207,7 +191,6 @@ export default async function Page({ searchParams }: Props) {
           )}
         </div>
       </div>
-      <Payments payment={editingPayment} />
     </div>
   );
 }

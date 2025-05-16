@@ -29,6 +29,7 @@ import PaymentForm from '@/components/forms/payment-form';
 import FeedbackForm from '@/components/forms/feedback-form';
 import BulkLessonDialog from './_bulk-lesson-dialog';
 import LessonModal from '@/components/lesson-modal';
+import PaymentModal from "@/components/payment-modal";
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -252,33 +253,19 @@ export default function Syllabuses({ student, syllabuses }: any) {
       <LessonModal
         isOpen={editingLesson !== null}
         lesson={editingLesson}
-        // onSuccess={() => {
-        //   router.refresh();
-        //   alert('수정되었습니다.');
-        //   setEditingLesson(null);
-        // }}
         onClose={() => setEditingLesson(null)}
       />
 
       <LessonModal
         isOpen={isLessonCreating !== null}
         syllabus={isLessonCreating}
-        // onSuccess={() => {
-        //   router.refresh();
-        //   alert('추가되었습니다.');
-        //   setIsLessonCreating(null);
-        // }}
         onClose={() => setIsLessonCreating(null)}
       />
 
       {editingPayment && (
-        <PaymentForm
+        <PaymentModal
+          isOpen={editingPayment !== null}
           syllabus={editingPayment}
-          onSuccess={() => {
-            router.refresh();
-            alert('수정이 완료되었습니다.');
-            setEditingPayment(null);
-          }}
           onClose={setEditingPayment.bind(null, null)}
         />
       )}
