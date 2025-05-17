@@ -12,7 +12,6 @@ import {
 } from '@/components/description-list';
 import { Heading } from '@/components/heading';
 
-import EditLesson from './_edit';
 import Filter from './_filter';
 import Lessons from './_lessons';
 
@@ -86,10 +85,6 @@ export default async function Page({
     where,
   });
 
-  const editingLesson = _edit
-    ? lessons.find(l => l.id === Number(_edit))
-    : null;
-
   return (
     <div>
       <Heading level={1}>수업</Heading>
@@ -110,11 +105,6 @@ export default async function Page({
         </div>
       )}
       <Lessons lessons={lessons} />
-      {editingLesson && (
-        <EditLesson
-          lesson={editingLesson}
-        />
-      )}
       <div className="mt-10 flex justify-between">
         <div>
           {page > 1 && (

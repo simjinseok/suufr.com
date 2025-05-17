@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { cn, Listbox, ListboxItem, useDisclosure } from '@heroui/react';
+import { Button, cn, Listbox, ListboxItem, Spacer, useDisclosure } from '@heroui/react';
 import SidebarDrawer from './sidebar-drawer';
 import {
   BookUserIcon,
@@ -9,8 +9,9 @@ import {
   HomeIcon,
   NotebookTextIcon,
   ReceiptIcon,
-  UserRoundCheckIcon
+  UserRoundCheckIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Layout({ children }) {
   const router = useRouter();
@@ -38,7 +39,6 @@ export default function Layout({ children }) {
         variant="flat"
         onSelectionChange={(keys) => {
           const key = Array.from(keys)[0];
-          console.log('gdgd?', key);
           router.push(`/${key}`);
 
           // setSelected(key as React.Key);
@@ -88,6 +88,20 @@ export default function Layout({ children }) {
           }}
         />
       </Listbox>
+      <Spacer y={8} />
+      <div className="mt-auto">
+        <div className="flex flex-col">
+          <Button
+            as={Link}
+            href="/calendar"
+            className="justify-start text-default-500 data-[hover=true]:text-foreground"
+            startContent={<CalendarDaysIcon />}
+            variant="light"
+          >
+            캘린더
+          </Button>
+        </div>
+      </div>
     </div>
   );
   return (

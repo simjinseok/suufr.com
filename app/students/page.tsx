@@ -8,10 +8,8 @@ import { redirect } from 'next/navigation';
 import React from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
-import { Heading } from '@/components/heading';
 import ConditionForm from './_condition-form';
 import NewStudent from './_new-student';
-import Edit from './_edit';
 import Students from './_students';
 
 export const dynamic = 'force-dynamic';
@@ -60,10 +58,7 @@ export default async function Page({ searchParams }: PageProps) {
     },
   });
 
-  const editingStudent = _edit
-    ? students.find(m => m.id === Number(_edit))
-    : null;
-
+  console.log(students);
   return (
     <div className="mt-3">
       <div className="flex flex-col">
@@ -106,11 +101,6 @@ export default async function Page({ searchParams }: PageProps) {
           </Link>
         )}
       </div>
-      {editingStudent && (
-        <Edit
-          student={editingStudent}
-        />
-      )}
     </div>
   );
 }

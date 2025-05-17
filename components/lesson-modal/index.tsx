@@ -29,7 +29,6 @@ export default function LessonModal({ isOpen, onClose, lesson, syllabus }: Props
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const result = lesson ? await updateLesson(formData) : await createLesson(formData);
-    console.log(result);
   }, [lesson]);
 
   return (
