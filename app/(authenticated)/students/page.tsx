@@ -58,7 +58,6 @@ export default async function Page({ searchParams }: PageProps) {
     },
   });
 
-  console.log(students);
   return (
     <div className="mt-3">
       <div className="flex flex-col">

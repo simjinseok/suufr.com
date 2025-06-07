@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import React from 'react';
 import Syllabuses from './_syllabuses';
+import SearchForm from "./_search-form";
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -104,6 +105,7 @@ export default async function Page({
   return (
     <div>
       <Heading>계획</Heading>
+      <SearchForm />
       {student && (
         <div className="mt-5 p-3 border rounded">
           <p className="text-base font-bold">{student.name}</p>

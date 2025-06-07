@@ -37,7 +37,9 @@ export default function Students({ students }) {
                   {students.map((student: any) => (
                     <TableRow key={`student-${student.id}`}>
                       <TableCell>
-                        {student.name}
+                        <Link href={`/students/${student.id}`}>
+                          {student.name}
+                        </Link>
                       </TableCell>
                       <TableCell><StatusBadge status={student.status} /></TableCell>
                       <TableCell className={clsx(

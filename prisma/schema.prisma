@@ -26,6 +26,7 @@ model Student {
   userId String @map("user_id") @db.Uuid
 
   syllabuses Syllabus[]
+  comments   StudentComment[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
@@ -112,4 +113,18 @@ model Meeting {
 
   @@index([userId, name, isDone, deletedAt])
   @@map("meetings")
+}
+
+model StudentComment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+
+  studentId Int     @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, createdAt, deletedAt])
+  @@map("student_comments")
 }
