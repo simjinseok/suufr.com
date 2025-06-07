@@ -114,7 +114,7 @@ export default function Layout({ children }) {
         {content}
       </SidebarDrawer>
       <div className="w-full flex-1 flex-col p-4">
-        <main className="mt-4 h-full w-full overflow-visible">
+        <main className="mt-4 h-full w-full overflow-auto">
           {children}
         </main>
       </div>

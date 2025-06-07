@@ -5,7 +5,6 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 
 import { Providers } from './providers';
-import Layout from '@/components/layout';
 
 export const metadata: Metadata = {
   title: '스프',
@@ -21,7 +20,7 @@ export default function RootLayout({
     <html lang="ko" style={{ height: '100%' }}>
       <body style={{ height: '100%' }}>
         <Providers>
-          <Layout>{children}</Layout>
+          {children}
           <Analytics />
           <SpeedInsights />
         </Providers>
