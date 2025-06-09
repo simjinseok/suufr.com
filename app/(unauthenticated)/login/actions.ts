@@ -11,7 +11,6 @@ export async function login(prevState: any, formData: FormData) {
   };
 
   const { error } = await supabase.auth.signInWithPassword(data);
-
   if (error) {
     return {
       error: '이메일 혹은 비밀번호가 올바르지 않습니다.',

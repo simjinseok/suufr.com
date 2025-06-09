@@ -10,6 +10,12 @@ import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownSection, Dropdown
 import { CircleCheckBigIcon, CircleIcon, EllipsisVerticalIcon } from 'lucide-react';
 import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
+import SyllabusFormModal from '@/components/syllabus/form-modal';
+import SyllabusModal from '@/components/syllabus-modal';
+import LessonModal from '@/components/lesson-modal';
+import PaymentModal from '@/components/payment-modal';
+import FeedbackForm from '@/components/forms/feedback-form';
+import BulkLessonDialog from '../../app/(authenticated)/syllabuses/_bulk-lesson-dialog';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -20,11 +26,12 @@ const PAYMENT_METHODS = {
 
 export default function Syllabus({ studentName, syllabus }) {
   const router = useRouter();
+  const [isCreating, setIsCreating] = React.useState(false);
   const [editingSyllabus, setEditingSyllabus] = React.useState(false);
   const [isLessonCreating, setIsLessonCreating] = React.useState(false);
   const [editingPayment, setEditingPayment] = React.useState(false);
-  const [editingLesson, setEditingLesson] = React.useState(false);
-  const [openBulkLesson, setOpenBulkLesson] = React.useState(false);
+  const [editingLesson, setEditingLesson] = React.useState(null);
+  const [openBulkLesson, setOpenBulkLesson] = React.useState(null);
   const [openFeedback, setOpenFeedback] = React.useState(false);
 
   const onDoneClick = React.useCallback(
@@ -174,6 +181,67 @@ export default function Syllabus({ studentName, syllabus }) {
           <p>미입금</p>
         )}
       </div>
+      {/* {isCreating && ( */}
+      {/*  <SyllabusModal */}
+      {/*    isOpen={isCreating} */}
+      {/*    student={student} */}
+      {/*    onClose={setIsCreating.bind(null, false)} */}
+      {/*  /> */}
+      {/* )} */}
+
+      {editingSyllabus && (
+        <SyllabusFormModal
+          isOpen={editingSyllabus !== null}
+          syllabus={editingSyllabus}
+          onSave={(result) => {
+            console.log('fefe', result);
+          }}
+          onClose={setEditingSyllabus.bind(null, null)}
+        />
+      )}
+
+      <LessonModal
+        isOpen={editingLesson}
+        lesson={editingLesson}
+        onClose={() => setEditingLesson(null)}
+      />
+
+      {/* <LessonModal */}
+      {/*  isOpen={isLessonCreating !== null} */}
+      {/*  syllabus={isLessonCreating} */}
+      {/*  onClose={() => setIsLessonCreating(null)} */}
+      {/* /> */}
+
+      {editingPayment && (
+        <PaymentModal
+          isOpen={editingPayment !== null}
+          syllabus={editingPayment}
+          onClose={setEditingPayment.bind(null, null)}
+        />
+      )}
+
+      {openFeedback && (
+        <FeedbackForm
+          lesson={openFeedback}
+          onSuccess={() => {
+            router.refresh();
+            alert('피드백이 수정되었습니다');
+            setOpenFeedback(null);
+          }}
+          onClose={setOpenFeedback.bind(null, null)}
+        />
+      )}
+
+      {openBulkLesson && (
+        <BulkLessonDialog
+          syllabus={openBulkLesson}
+          onSuccess={() => {
+            router.refresh();
+            setOpenBulkLesson(null);
+          }}
+          onClose={setOpenBulkLesson.bind(null, null)}
+        />
+      )}
     </React.Fragment>
   );
 }

@@ -41,6 +41,7 @@ export default async function Page({ params }) {
 
   const syllabus = await prisma.syllabus.findFirst({
     select: {
+      id: true,
       title: true,
       notes: true,
       payment: {
@@ -72,7 +73,7 @@ export default async function Page({ params }) {
       studentId: student.id,
     },
     orderBy: {
-      createdAt: 'asc',
+      createdAt: 'desc',
     },
   });
 
