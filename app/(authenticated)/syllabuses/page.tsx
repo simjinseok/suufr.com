@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import React from 'react';
 import Syllabuses from './_syllabuses';
-import SearchForm from "./_search-form";
+import SearchForm from './_search-form';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -58,6 +58,9 @@ export default async function Page({
         },
         where: {
           deletedAt: null,
+        },
+        orderBy: {
+          lessonAt: 'asc',
         },
       },
       payment: {

@@ -65,7 +65,7 @@ export default async function Page({ params }) {
           },
         },
         orderBy: {
-          lessonAt: 'desc',
+          lessonAt: 'asc',
         },
       },
     },
