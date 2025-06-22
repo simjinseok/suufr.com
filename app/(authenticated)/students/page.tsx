@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: PageProps) {
       FROM students
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id
                LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
-      WHERE (${status} = '' OR students.status = ${status})
+      WHERE (${status} = '' OR students.status = ${status}::"StudentStatus")
         AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL
       GROUP BY students.id, students.name, students.notes
       ORDER BY students.name ASC

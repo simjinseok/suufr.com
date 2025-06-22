@@ -97,18 +97,20 @@ export default function NewStudentModal({
                 required
               />
             </Field>
-            <Field>
-              <Label>상태</Label>
-              <Select
-                name="status"
-                defaultValue={student?.status || "active"}
-                disabled={isPending}
-              >
-                <option value="active">수강중</option>
-                <option value="paused">일시정지</option>
-                <option value="dropped">그만둠</option>
-              </Select>
-            </Field>
+            {!student && (
+              <Field>
+                <Label>상태</Label>
+                <Select
+                  name="status"
+                  defaultValue={student?.status || "active"}
+                  disabled={isPending}
+                >
+                  <option value="active">수강중</option>
+                  <option value="paused">일시정지</option>
+                  <option value="leave">그만둠</option>
+                </Select>
+              </Field>
+            )}
             <Field>
               <Label>참고사항</Label>
               <Textarea name="notes" defaultValue={student?.notes} rows={5} />

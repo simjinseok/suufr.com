@@ -10,7 +10,6 @@ import {revalidatePath} from "next/cache";
 
 const schema = z.object({
   name: z.string().min(1),
-  status: z.string(),
   notes: z.string(),
 });
 export async function updateStudent(formData: FormData) {
@@ -54,7 +53,10 @@ export async function updateStudent(formData: FormData) {
         where: {
           id: student.id,
         },
-        data: validationResult.data,
+        data: {
+          ...validationResult.data,
+          updatedAt: new Date(),
+        },
       });
 
       revalidatePath('/students', 'page');

@@ -92,15 +92,29 @@ export default async function Page({ params }) {
     },
   });
 
-  console.log(comments);
+  const statusHistories = await prisma.studentStatusHistory.findMany({
+    select: {
+      id: true,
+      changedAt: true,
+      status: true,
+      notes: true,
+    },
+    where: {
+      studentId: student.id,
+      deletedAt: null,
+    },
+    orderBy: {
+      changedAt: 'desc',
+    },
+  });
 
   return (
 
     <div>
       <Breadcrumbs studentName={student.name} />
 
-      <div className="grid grid-cols-3 gap-x-6">
-        <div className="col-span-2 flex flex-col gap-6">
+      <div className="grid grid-cols-5 gap-x-6">
+        <div className="col-span-3 flex flex-col gap-6">
           <div>
             <Card>
               <CardHeader className="justify-between">
@@ -108,13 +122,15 @@ export default async function Page({ params }) {
                 <Link href={`/syllabuses?student=${student.id}`}>전체 계획 보기</Link>
               </CardHeader>
               <CardBody>
-                {syllabus ? (
-                  <Syllabus
-                    syllabus={syllabus}
-                  />
-                ) : (
-                  <p>생성한 계획이 없습니다</p>
-                )}
+                {syllabus
+                  ? (
+                      <Syllabus
+                        syllabus={syllabus}
+                      />
+                    )
+                  : (
+                      <p>생성한 계획이 없습니다</p>
+                    )}
               </CardBody>
             </Card>
           </div>
@@ -124,8 +140,8 @@ export default async function Page({ params }) {
           />
         </div>
 
-        <div className="col-span-1">
-          <Student student={student} />
+        <div className="col-span-2">
+          <Student student={student} statusHistories={statusHistories} />
         </div>
       </div>
     </div>

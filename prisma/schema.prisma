@@ -14,19 +14,27 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+enum StudentStatus {
+  pending
+  active
+  paused
+  leave
+}
+
 model Student {
-  id        Int       @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   name      String
   notes     String
-  status    String
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  status    StudentStatus @default(pending)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(0)
 
   userId String @map("user_id") @db.Uuid
 
-  syllabuses Syllabus[]
-  comments   StudentComment[]
+  syllabuses      Syllabus[]
+  comments        StudentComment[]
+  statusHistories StudentStatusHistory[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
@@ -127,4 +135,20 @@ model StudentComment {
 
   @@index([studentId, createdAt, deletedAt])
   @@map("student_comments")
+}
+
+model StudentStatusHistory {
+  id        Int           @id @default(autoincrement())
+  status    StudentStatus
+  notes     String?
+  changedAt DateTime      @default(now()) @map("changed_at") @db.Timestamptz(0)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(0)
+
+  studentId Int     @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, changedAt, deletedAt])
+  @@map("student_status_histories")
 }

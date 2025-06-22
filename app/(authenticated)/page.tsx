@@ -22,7 +22,6 @@ export default async function Page() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) {
     return redirect('/login');
   }
@@ -60,7 +59,6 @@ export default async function Page() {
       },
     }),
   ]);
-
   return (
     <div>
       <div className="mt-3 grid grid-cols-4 gap-x-3">

@@ -53,16 +53,19 @@ export default function StudentModal({ isOpen, onClose, student }) {
                   readOnly={isPending}
                   isRequired
                 />
-                <Select
-                  name="status"
-                  label="상태"
-                  defaultSelectedKeys={[student?.status || 'active']}
-                  disabled={isPending}
-                >
-                  <SelectItem key="active">수강중</SelectItem>
-                  <SelectItem key="paused">일시정지</SelectItem>
-                  <SelectItem key="dropped">그만둠</SelectItem>
-                </Select>
+                {!student && (
+                  <Select
+                    name="status"
+                    label="상태"
+                    defaultSelectedKeys={[student?.status || 'active']}
+                    disabled={isPending}
+                  >
+                    <SelectItem key="pending">대기중</SelectItem>
+                    <SelectItem key="active">수강중</SelectItem>
+                    <SelectItem key="paused">일시정지</SelectItem>
+                    <SelectItem key="leave">그만둠</SelectItem>
+                  </Select>
+                )}
                 <Textarea
                   className="mt-4"
                   name="notes"
