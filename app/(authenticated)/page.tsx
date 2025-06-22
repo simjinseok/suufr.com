@@ -1,8 +1,11 @@
 import { createClient } from '@/utils/supabase';
 import { prisma } from '@/utils/prisma';
-import { redirect } from 'next/navigation';
+import { format } from 'date-fns/format';
 
+import * as React from 'react';
+import { redirect } from 'next/navigation';
 import { Card } from '@heroui/react';
+import { BanknoteXIcon, ShapesIcon, UserRoundCheckIcon, UserRoundMinusIcon } from 'lucide-react';
 import { Heading } from '@/components/heading';
 import {
   Table,
@@ -12,9 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/table';
-import React from 'react';
-import { format } from 'date-fns/format';
-import { BanknoteXIcon, ShapesIcon, UsersRoundIcon } from 'lucide-react';
 
 export default async function Page() {
   const supabase = await createClient();
@@ -26,27 +26,17 @@ export default async function Page() {
     return redirect('/login');
   }
 
+  const currentDate = new Date();
   const [
     currentActiveStudentCount,
-    remainLessonsCount,
     notPaidSyllabusesCount,
+    leftStudentsCount,
   ] = await Promise.all([
     prisma.student.count({
       where: {
         userId: user.id,
         deletedAt: null,
         status: 'active',
-      },
-    }),
-    prisma.lesson.count({
-      where: {
-        isDone: false,
-        syllabus: {
-          student: {
-            userId: user.id,
-          },
-        },
-        deletedAt: null,
       },
     }),
     prisma.syllabus.count({
@@ -58,14 +48,27 @@ export default async function Page() {
         payment: null,
       },
     }),
+    prisma.studentStatusHistory.count({
+      where: {
+        student: {
+          userId: user.id,
+          deletedAt: null,
+        },
+        status: 'leave',
+        changedAt: {
+          gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+          lt: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
+        },
+      },
+    }),
   ]);
   return (
     <div>
-      <div className="mt-3 grid grid-cols-4 gap-x-3">
+      <div className="mt-3 grid grid-cols-3 gap-x-3">
         <Card className="border border-transparent dark:border-default-100">
           <div className="flex p-4">
             <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-50">
-              <UsersRoundIcon className="text-success" width={20} height={20} />
+              <UserRoundCheckIcon className="text-success" width={20} height={20} />
             </div>
             <div className="flex flex-col gap-y-2">
               <dt className="mx-4 text-small font-medium text-default-500">수강중인 학생</dt>
@@ -79,14 +82,14 @@ export default async function Page() {
 
         <Card className="border border-transparent dark:border-default-100">
           <div className="flex p-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-primary-50">
-              <ShapesIcon className="text-primary" width={20} height={20} />
+            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50">
+              <UserRoundMinusIcon className="text-danger" width={20} height={20} />
             </div>
             <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">남은 수업</dt>
+              <dt className="mx-4 text-small font-medium text-default-500">그만둔 수강생</dt>
               <dd className="px-4 text-2xl font-semibold text-default-700">
-                {remainLessonsCount}
-                회
+                {leftStudentsCount}
+                명
               </dd>
             </div>
           </div>
