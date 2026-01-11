@@ -6,12 +6,15 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   devIndicators: false,
+  serverExternalPackages: [
+    'require-in-the-middle',
+    'import-in-the-middle',
+  ],
 };
 
 export default withSentryConfig(nextConfig, {
 // For all available options, see:
 // https://github.com/getsentry/sentry-webpack-plugin#options
-
   org: 'jssim',
   project: 'suufr',
 
