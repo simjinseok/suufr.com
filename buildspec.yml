@@ -20,12 +20,14 @@ phases:
 
   post_build:
     commands:
+      - cp -r .next/static .next/standalone/.next/static
       - echo "Build completed on $(date)"
 
 artifacts:
   files:
     - .next/standalone/**/*
     - .platform/**/*
+    - .ebextensions/*
     - Procfile
   discard-paths: no
 
