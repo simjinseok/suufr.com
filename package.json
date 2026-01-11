@@ -37,6 +37,7 @@
     "dotenv": "^17.2.3",
     "es-hangul": "^2.3.8",
     "framer-motion": "^12.25.0",
+    "import-in-the-middle": "^2.0.1",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "nuqs": "^2.8.6",
@@ -45,6 +46,7 @@
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.70.0",
     "recharts": "^3.6.0",
+    "require-in-the-middle": "^8.0.1",
     "zod": "^4.3.5",
     "zod-form-data": "^3.0.1"
   },
