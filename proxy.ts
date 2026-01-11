@@ -5,10 +5,11 @@ import { cookies } from 'next/headers';
 
 export async function proxy(request: NextRequest) {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get('access_token');
+  const accessToken = cookieStore.get('access_token')?.value;
 
   if (!accessToken) {
-    return NextResponse.redirect(new URL('/auth/cognito', request.url));
+    // request.nextUrl을 사용하여 URL을 안전하게 구성
+    return NextResponse.redirect(`${request.nextUrl.origin}/auth/cognito`);
   }
   return NextResponse.next();
 }
