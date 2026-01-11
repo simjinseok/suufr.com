@@ -1,9 +1,14 @@
-export type TStudent = {
+export type Student = {
   id: number;
   name: string;
   notes: string;
   status: string;
-  upcomingLessonsCount?: number; // 남은 수업 횟수
+  createdAt?: Date;
+  completedSessionsCount?: number;
+  sessionsCount?: number;
+  lastLessonDate?: Date | null;
+  nextLessonDate?: Date | null;
+  hasUnpaidLesson?: boolean;
   lessons?: TLesson[];
   payments?: TPayment[];
 };
@@ -48,4 +53,37 @@ export type TMeeting = {
   notes: string | null;
   isDone: boolean;
   meetingAt: Date;
-}
+};
+
+export type ServerActionState<T> = {
+  success?: boolean;
+  message?: string;
+  fields?: T;
+  fieldErrors?: Record<string, string | string[]>;
+  timestamp?: number;
+};
+
+export type PaymentView = 'monthly' | 'yearly';
+
+export type StudentPaymentStats = {
+  id: number;
+  name: string;
+  count: number;
+  totalAmount: number;
+};
+
+export type MonthlyPaymentStats = {
+  year: number;
+  month: number;
+  count: number;
+  totalAmount: number;
+  students: StudentPaymentStats[];
+};
+
+export type YearlyPaymentStats = {
+  year: number;
+  count: number;
+  totalAmount: number;
+  months: MonthlyPaymentStats[];
+  students: StudentPaymentStats[];
+};

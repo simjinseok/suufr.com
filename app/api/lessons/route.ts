@@ -1,34 +1,26 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const studentId = Number(searchParams.get('studentId'));
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       id: studentId,
-      userId: user.id,
+      userId: session.user.id,
       deletedAt: null,
     },
   });
 
   if (!student) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const lessons = await prisma.lesson.findMany({
@@ -49,18 +41,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const session = await getSession();
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const formData = await request.formData();
@@ -70,15 +54,13 @@ export async function POST(request: Request) {
       id: syllabusId,
       deletedAt: null,
       student: {
-        userId: user.id,
+        userId: session.user.id,
       },
     },
   });
 
   if (!syllabus) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const dates = formData.getAll('lessonAt');
@@ -97,7 +79,6 @@ export async function POST(request: Request) {
   }
 
   if (dates.length > 1) {
-    const dates = formData.getAll('lessonAt');
     const results = await prisma.lesson.createMany({
       data: dates.map((date) => {
         return {

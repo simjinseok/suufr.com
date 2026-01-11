@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { parseZonedDateTime } from '@internationalized/date';
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 
 export async function updateLesson(formData: FormData) {
   return await Sentry.withServerActionInstrumentation(

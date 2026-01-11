@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 import {revalidatePath} from "next/cache";
 
 export default async function removeStudent(formData: FormData) {

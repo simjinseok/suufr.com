@@ -1,25 +1,37 @@
 'use client';
-import React from "react";
-import {Field, Label} from "@/components/fieldset";
-import {Input} from "@/components/input";
-import {useSearchParams} from "next/navigation";
+import React from 'react';
+import { Form } from '@heroui/react';
+import { StudentComboBox } from '@/components/student/student-combobox';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function Filter() {
-    const searchParams = useSearchParams();
-    const formId = React.useId();
+type Props = {
+  student: { id: number; name: string } | null;
+};
 
-    return (
-        <form id={formId} method="GET" onInput={(event) => {
-            (event.target as HTMLInputElement).form!.submit();
-        }} className="flex justify-end gap-3">
-            <Field>
-                <Label>시작날짜</Label>
-                <Input type="date" name="from" defaultValue={searchParams.get("from") || ''}/>
-            </Field>
-            <Field>
-                <Label>종료날짜</Label>
-                <Input type="date" name="to" defaultValue={searchParams.get("to") || ''}/>
-            </Field>
-        </form>
-    )
+export default function Filter({ student }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleStudentSelect = (studentId: number | '') => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (studentId) {
+      params.set('student', String(studentId));
+    } else {
+      params.delete('student');
+    }
+    router.push(`/payments?${params.toString()}`);
+  };
+
+  return (
+    <Form className="flex items-end gap-3">
+      <StudentComboBox
+        label="수강생"
+        name="student"
+        placeholder="전체"
+        defaultInputValue={student?.name}
+        defaultSelectedKey={student?.id}
+        onSelect={handleStudentSelect}
+      />
+    </Form>
+  );
 }

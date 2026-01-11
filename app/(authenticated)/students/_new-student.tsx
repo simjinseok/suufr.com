@@ -2,9 +2,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/react';
-import StudentModal from '@/components/student-modal';
-
-import { createStudent } from './actions';
+import CreateStudentModal from './_create-student-modal';
 
 export default function NewStudentModal() {
   const router = useRouter();
@@ -13,17 +11,18 @@ export default function NewStudentModal() {
   return (
     <>
       <Button
-        color="secondary"
+        variant="primary"
         onPress={setIsOpen.bind(null, true)}
-        disabled={isOpen}
+        isDisabled={isOpen}
       >
         수강생 등록
       </Button>
-      <StudentModal
-        isOpen={isOpen}
-        onClose={setIsOpen.bind(null, false)}
-        action={createStudent}
-      />
+      {isOpen && (
+        <CreateStudentModal
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+        />
+      )}
     </>
   );
 }

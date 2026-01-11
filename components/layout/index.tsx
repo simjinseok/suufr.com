@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, cn, Listbox, ListboxItem, Spacer, useDisclosure } from '@heroui/react';
+import { Button, ListBox, Surface } from '@heroui/react';
 import SidebarDrawer from './sidebar-drawer';
 import {
   BookUserIcon,
@@ -17,26 +17,16 @@ export default function Layout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [isOpen, onOpenChange] = React.useState(false);
 
   const content = (
-    <div className="relative flex h-full w-72 flex-1 flex-col p-6">
-      <Listbox
-        hideSelectedIcon
-        as="nav"
-        label="메인메뉴"
+    <Surface className="relative flex h-full w-72 flex-1 flex-col p-6">
+      <ListBox
+        aria-label="메인메뉴"
         className="list-none"
-        classNames={{
-          list: 'items-center',
-        }}
-        itemClasses={{
-          base: 'px-3 min-h-11 rounded-large h-[44px] data-[selected=true]:bg-default-100',
-          title: 'text-small font-medium text-default-500 group-data-[selected=true]:text-foreground',
-        }}
-        color="default"
+        disallowEmptySelection
         selectedKeys={[pathname.split('/')[1]]}
         selectionMode="single"
-        variant="flat"
         onSelectionChange={(keys) => {
           const key = Array.from(keys)[0];
           router.push(`/${key}`);
@@ -45,74 +35,49 @@ export default function Layout({ children }) {
           // onSelect?.(key as string);
         }}
       >
-        <ListboxItem
-          key=""
-          title="메인"
-          startContent={<HomeIcon />}
-        />
-        <ListboxItem
-          key="students"
-          title="수강생"
-          startContent={<BookUserIcon />}
-        />
-        <ListboxItem
-          key="syllabuses"
-          title="계획"
-          startContent={<NotebookTextIcon />}
-          classNames={{
-            title: 'text-small font-medium text-default-500 group-data-[selected=true]:text-foreground',
-          }}
-        />
-        <ListboxItem
-          key="lessons"
-          title="수업"
-          startContent={<CalendarDaysIcon />}
-          classNames={{
-            title: 'text-small font-medium text-default-500 group-data-[selected=true]:text-foreground',
-          }}
-        />
-        <ListboxItem
-          key="payments"
-          title="입금내역"
-          startContent={<ReceiptIcon />}
-          classNames={{
-            title: 'text-small font-medium text-default-500 group-data-[selected=true]:text-foreground',
-          }}
-        />
-        <ListboxItem
-          key="meetings"
-          title="상담"
-          startContent={<UserRoundCheckIcon />}
-          classNames={{
-            title: 'text-small font-medium text-default-500 group-data-[selected=true]:text-foreground',
-          }}
-        />
-      </Listbox>
-      <Spacer y={8} />
-      <div className="mt-auto">
-        <div className="flex flex-col">
-          <Button
-            as={Link}
-            href="/calendar"
-            className="justify-start text-default-500 data-[hover=true]:text-foreground"
-            startContent={<CalendarDaysIcon />}
-            variant="light"
-          >
-            캘린더
-          </Button>
-        </div>
-      </div>
-    </div>
+        <ListBox.Item id="">
+          <HomeIcon />
+          메인
+        </ListBox.Item>
+        <ListBox.Item id="students" textValue="student">
+          <BookUserIcon />
+          수강생
+        </ListBox.Item>
+        <ListBox.Item id="lessons">
+          <NotebookTextIcon />
+          레슨
+        </ListBox.Item>
+        <ListBox.Item id="sessions">
+          <CalendarDaysIcon />
+          수업
+        </ListBox.Item>
+        <ListBox.Item id="payments">
+          <ReceiptIcon />
+          입금내역
+        </ListBox.Item>
+        <ListBox.Item id="meetings">
+          <UserRoundCheckIcon />
+          상담
+        </ListBox.Item>
+        <ListBox.Item id="calendar">
+          <CalendarDaysIcon />
+          캘린더
+        </ListBox.Item>
+      </ListBox>
+    </Surface>
   );
   return (
     <div className="flex h-dvh w-full">
-      <SidebarDrawer
-        className=" !border-r-small border-divider"
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-      >
+      {/* <SidebarDrawer */}
+      {/*  className=" !border-r-small border-divider" */}
+      {/*  isOpen={isOpen} */}
+      {/*  onOpenChange={onOpenChange} */}
+      {/* > */}
+      {/*  {content} */}
+      {/* </SidebarDrawer> */}
+      <div>
         {content}
-      </SidebarDrawer>
+      </div>
       <div className="w-full flex-1 flex-col p-4 overflow-auto">
         <main className="mt-4 mx-auto h-full w-full max-w-3xl">
           {children}

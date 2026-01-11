@@ -5,13 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "./generated"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  provider = "postgresql"
 }
 
 enum StudentStatus {
@@ -32,7 +31,7 @@ model Student {
 
   userId String @map("user_id") @db.Uuid
 
-  syllabuses      Syllabus[]
+  lessons         Lesson[]
   comments        StudentComment[]
   statusHistories StudentStatusHistory[]
 
@@ -40,7 +39,7 @@ model Student {
   @@map("students")
 }
 
-model Syllabus {
+model Lesson {
   id        Int       @id @default(autoincrement())
   title     String
   notes     String
@@ -48,16 +47,16 @@ model Syllabus {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  studentId Int      @map("student_id")
-  student   Student  @relation(fields: [studentId], references: [id])
+  studentId Int       @map("student_id")
+  student   Student   @relation(fields: [studentId], references: [id])
   payment   Payment?
-  lessons   Lesson[]
+  sessions  Session[]
 
   @@index([studentId, createdAt, deletedAt])
-  @@map("syllabuses")
+  @@map("lessons")
 }
 
-model Lesson {
+model Session {
   id        Int       @id @default(autoincrement())
   notes     String
   lessonAt  DateTime  @map("lesson_at") @db.Timestamptz(0)
@@ -66,13 +65,13 @@ model Lesson {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  syllabusId Int      @map("syllabus_id")
-  syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
+  lessonId Int    @map("lesson_id")
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
 
   feedback Feedback?
 
-  @@index([syllabusId, lessonAt, deletedAt])
-  @@map("lessons")
+  @@index([lessonId, lessonAt, deletedAt])
+  @@map("sessions")
 }
 
 model Feedback {
@@ -82,10 +81,10 @@ model Feedback {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  lessonId Int    @unique @map("lesson_id")
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  sessionId Int     @unique @map("session_id")
+  session   Session @relation(fields: [sessionId], references: [id])
 
-  @@index([lessonId, deletedAt])
+  @@index([sessionId, deletedAt])
   @@map("feedback")
 }
 
@@ -99,11 +98,11 @@ model Payment {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  syllabusId Int      @map("syllabus_id")
-  syllabus   Syllabus @relation(fields: [syllabusId], references: [id])
+  lessonId Int    @map("lesson_id")
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
 
-  @@unique([syllabusId])
-  @@index([paidAt, deletedAt, syllabusId])
+  @@unique([lessonId])
+  @@index([paidAt, deletedAt, lessonId])
   @@map("payments")
 }
 

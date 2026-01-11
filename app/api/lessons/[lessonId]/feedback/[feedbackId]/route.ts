@@ -1,23 +1,17 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
-import FeedbackSchema from '@/schemas/feedback';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { lessonId: string; feedbackId: string } },
+  { params }: { params: Promise<{ lessonId: string; feedbackId: string }> },
 ) {
-  const feedbackId = Number(params.feedbackId);
+  const { feedbackId: _feedbackId } = await params;
+  const feedbackId = Number(_feedbackId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const feedback = await prisma.feedback.findUnique({
@@ -26,7 +20,7 @@ export async function PUT(
       lesson: {
         syllabus: {
           student: {
-            userId: user.id,
+            userId: session.user.id,
           },
         },
       },
@@ -35,9 +29,7 @@ export async function PUT(
   });
 
   if (!feedback) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const formData = await request.formData();
@@ -51,7 +43,5 @@ export async function PUT(
     },
   });
 
-  return Response.json(result, {
-    status: 200,
-  });
+  return Response.json(result, { status: 200 });
 }

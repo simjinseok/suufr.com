@@ -1,26 +1,19 @@
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
+import { notFound, redirect } from 'next/navigation';
+import { Tabs } from '@heroui/react';
+import * as React from 'react';
 
 import Student from './_student';
+import StatsCards from './_stats-cards';
+import Timeline from './_timeline';
+import LessonsTable from './_lessons-table';
+import PaymentsTable from './_payments-table';
+import { getSession } from '@/utils/auth';
 
-import { notFound, redirect } from 'next/navigation';
-import Link from 'next/link';
-import Breadcrumbs from './_breadcrumbs';
-import { Card, CardBody, CardHeader } from '@heroui/react';
-import Syllabus from '@/components/syllabus';
-import { UserIcon } from 'lucide-react';
-import Comments from './_comments';
-
-export default async function Page({ params }) {
+export default async function Page({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect('/login');
-  }
+  const { user } = await getSession();
 
   const student = await prisma.student.findUnique({
     select: {
@@ -39,43 +32,40 @@ export default async function Page({ params }) {
     return notFound();
   }
 
-  const syllabus = await prisma.syllabus.findFirst({
+  const lessons = await prisma.lesson.findMany({
     select: {
       id: true,
-      title: true,
+      lessonAt: true,
+      isDone: true,
       notes: true,
-      payment: {
-        select: {
-          amount: true,
-          paymentMethod: true,
-          notes: true,
-          paidAt: true,
-        },
-      },
-      lessons: {
+      feedback: {
         select: {
           id: true,
-          isDone: true,
-          lessonAt: true,
           notes: true,
-          feedback: {
-            select: {
-              notes: true,
-            },
-          },
         },
-        orderBy: {
-          lessonAt: 'asc',
+      },
+      syllabus: {
+        select: {
+          title: true,
         },
       },
     },
     where: {
-      studentId: student.id,
+      syllabus: {
+        studentId: student.id,
+      },
+      deletedAt: null,
     },
     orderBy: {
-      createdAt: 'desc',
+      lessonAt: 'desc',
     },
   });
+
+  const stats = {
+    totalLessons: lessons.length,
+    completedLessons: lessons.filter(l => l.isDone).length,
+    upcomingLessons: lessons.filter(l => !l.isDone).length,
+  };
 
   const comments = await prisma.studentComment.findMany({
     select: {
@@ -108,42 +98,66 @@ export default async function Page({ params }) {
     },
   });
 
+  const payments = await prisma.payment.findMany({
+    select: {
+      id: true,
+      amount: true,
+      paymentMethod: true,
+      paidAt: true,
+      notes: true,
+      syllabus: {
+        select: {
+          title: true,
+        },
+      },
+    },
+    where: {
+      syllabus: {
+        studentId: student.id,
+      },
+      deletedAt: null,
+    },
+    orderBy: {
+      paidAt: 'desc',
+    },
+  });
+
   return (
-
     <div>
-      <Breadcrumbs studentName={student.name} />
+      <Student student={student} />
 
-      <div className="grid grid-cols-5 gap-x-6">
-        <div className="col-span-3 flex flex-col gap-6">
-          <div>
-            <Card>
-              <CardHeader className="justify-between">
-                <h3 className="text-lg font-bold">최근 계획</h3>
-                <Link href={`/syllabuses?student=${student.id}`}>전체 계획 보기</Link>
-              </CardHeader>
-              <CardBody>
-                {syllabus
-                  ? (
-                      <Syllabus
-                        syllabus={syllabus}
-                      />
-                    )
-                  : (
-                      <p>생성한 계획이 없습니다</p>
-                    )}
-              </CardBody>
-            </Card>
-          </div>
+      <StatsCards stats={stats} />
 
-          <Comments
-            comments={comments}
-          />
-        </div>
+      <Tabs>
+        <Tabs.ListContainer>
+          <Tabs.List>
+            <Tabs.Tab id="timeline">
+              타임라인
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="lessons">
+              수업내역
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="payments">
+              입금내역
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
 
-        <div className="col-span-2">
-          <Student student={student} statusHistories={statusHistories} />
-        </div>
-      </div>
+        <Tabs.Panel id="timeline">
+          <Timeline comments={comments} statusHistories={statusHistories} />
+        </Tabs.Panel>
+
+        <Tabs.Panel id="lessons">
+          <LessonsTable lessons={lessons} />
+        </Tabs.Panel>
+
+        <Tabs.Panel id="payments">
+          <PaymentsTable payments={payments} />
+        </Tabs.Panel>
+      </Tabs>
     </div>
   );
 }

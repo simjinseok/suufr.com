@@ -1,23 +1,18 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
 import FeedbackSchema from '@/schemas/feedback';
 
 export async function POST(
   request: Request,
-  { params }: { params: { lessonId: string } },
+  { params }: { params: Promise<{ lessonId: string }> },
 ) {
-  const lessonId = Number(params.lessonId);
+  const { lessonId: _lessonId } = await params;
+  const lessonId = Number(_lessonId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const lesson = await prisma.lesson.findUnique({
@@ -26,29 +21,26 @@ export async function POST(
       deletedAt: null,
       syllabus: {
         student: {
-          userId: user.id,
+          userId: session.user.id,
         },
       },
     },
   });
 
   if (!lesson) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const formData = await request.formData();
   const schemaData = FeedbackSchema.parse(formData);
 
-  // 피드백이 deletedAt이면 찾아서 null로 바꿔주어야함
   const feedback = await prisma.feedback.findUnique({
     where: {
       lessonId: lesson.id,
     },
   });
 
-  let feedbackResult: any;
+  let feedbackResult;
   if (feedback) {
     feedbackResult = await prisma.feedback.update({
       where: {

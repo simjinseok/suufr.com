@@ -4,14 +4,12 @@ import {
   Button,
   Form,
   Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Input,
   Select,
-  SelectItem,
-  Textarea,
+  TextArea,
+  ListBox,
+  TextField,
+  Label,
 } from '@heroui/react';
 import { createStudent } from '../../actions/create-student';
 import removeStudent from '../../actions/remove-student';
@@ -35,83 +33,105 @@ export default function StudentModal({ isOpen, onClose, student }) {
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
-      <ModalContent>
-        {onClose => (
-          <React.Fragment>
-            <ModalHeader>{student ? '수강생 정보 수정' : '수강생 추가'}</ModalHeader>
-            <ModalBody>
-              <Form
-                id={formId}
-                onSubmit={onSubmit}
-              >
-                {student && (<input type="hidden" name="studentId" value={student.id} />)}
-                <Input
-                  className="mt-4 mb-4"
-                  name="name"
-                  label="이름"
-                  defaultValue={student?.name}
-                  readOnly={isPending}
-                  isRequired
-                />
-                {!student && (
-                  <Select
-                    name="status"
-                    label="상태"
-                    defaultSelectedKeys={[student?.status || 'active']}
-                    disabled={isPending}
-                  >
-                    <SelectItem key="pending">대기중</SelectItem>
-                    <SelectItem key="active">수강중</SelectItem>
-                    <SelectItem key="paused">일시정지</SelectItem>
-                    <SelectItem key="leave">그만둠</SelectItem>
-                  </Select>
-                )}
-                <Textarea
-                  className="mt-4"
-                  name="notes"
-                  label="참고사항"
-                  defaultValue={student?.notes}
-                  rows={5}
-                />
-              </Form>
-            </ModalBody>
-            <ModalFooter>
-              {student && (
-                <Button
-                  color="danger"
-                  variant="light"
-                  onPress={() => {
-                    if (confirm('수강생을 삭제합니다')) {
-                      const formData = new FormData();
-                      formData.set('studentId', student.id);
-                      startTransition(async () => {
-                        const result = await removeStudent(formData);
-                        if (result.success) {
-                          onClose();
-                        }
-                      });
-                    }
-                  }}
+      <Modal.Container>
+        <Modal.Dialog className="min-w-[320px]">
+          {({ close }) => (
+            <React.Fragment>
+              <Modal.Header>
+                <Modal.Heading>{student ? '수강생 정보 수정' : '수강생 추가'}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <Form
+                  id={formId}
+                  onSubmit={onSubmit}
                 >
-                  삭제
+                  {student && (<input type="hidden" name="studentId" value={student.id} />)}
+                  <TextField
+                    name="name"
+                    defaultValue={student?.name}
+                    isRequired
+                  >
+                    <Label>이름</Label>
+                    <Input
+                      readOnly={isPending}
+                    />
+                  </TextField>
+                  {!student && (
+                    <Select
+                      className="mt-4"
+                      name="status"
+                      value={student?.status || 'active'}
+                      isDisabled={isPending}
+                    >
+                      <Label>상태</Label>
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          <ListBox.Item id="pending">
+                            대기중
+                          </ListBox.Item>
+                          <ListBox.Item id="active">
+                            수강중
+                          </ListBox.Item>
+                          <ListBox.Item id="paused">
+                            일시정지
+                          </ListBox.Item>
+                          <ListBox.Item id="leave">
+                            그만둠
+                          </ListBox.Item>
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  )}
+                  <TextField className="mt-4" name="notes">
+                    <Label>참고사항</Label>
+                    <TextArea
+                      defaultValue={student?.notes}
+                      rows={5}
+                    />
+                  </TextField>
+                </Form>
+              </Modal.Body>
+              <Modal.Footer>
+                {student && (
+                  <Button
+                    variant="danger"
+                    onPress={() => {
+                      if (confirm('수강생을 삭제합니다')) {
+                        const formData = new FormData();
+                        formData.set('studentId', student.id);
+                        startTransition(async () => {
+                          const result = await removeStudent(formData);
+                          if (result.success) {
+                            close();
+                          }
+                        });
+                      }
+                    }}
+                  >
+                    삭제
+                  </Button>
+                )}
+                <div className="grow" />
+                <Button variant="ghost" isDisabled={isPending} onPress={onClose}>
+                  닫기
                 </Button>
-              )}
-              <div className="grow" />
-              <Button variant="light" disabled={isPending} onPress={onClose}>
-                닫기
-              </Button>
-              <Button
-                form={formId}
-                color="primary"
-                type="submit"
-                isLoading={isPending}
-              >
-                저장
-              </Button>
-            </ModalFooter>
-          </React.Fragment>
-        )}
-      </ModalContent>
+                <Button
+                  form={formId}
+                  variant="primary"
+                  type="submit"
+                  isPending={isPending}
+                >
+                  저장
+                </Button>
+              </Modal.Footer>
+            </React.Fragment>
+          )}
+        </Modal.Dialog>
+      </Modal.Container>
     </Modal>
   );
 }

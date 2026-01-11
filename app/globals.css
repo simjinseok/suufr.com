@@ -1,9 +1,12 @@
 @import "tailwindcss";
-@config "../tailwind.config.mjs";
-@custom-variant dark (&:is(.dark *));
+@import "@heroui/styles";
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@theme {
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

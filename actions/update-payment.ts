@@ -1,13 +1,43 @@
 'use server';
+import type { ServerActionState } from '@/types/index';
+
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
-import { parseZonedDateTime } from '@internationalized/date';
+import prisma from '@/utils/prisma';
+import { parseDate } from '@internationalized/date';
+import { z } from 'zod';
+import {getSession} from "@/utils/auth";
 
-export async function updatePayment(formData: FormData) {
+const updateScheme = z.object({
+  amount: z.coerce.number().min(0),
+  paymentMethod: z.enum(['card', 'transfer', 'cash', 'none']),
+  paidAt: z.string().transform((val, ctx) => {
+    console.log('머몬', val);
+    try {
+      return parseDate(val).toDate('Asia/Seoul');
+    }
+    catch {
+      ctx.addIssue({
+        format: 'date',
+        code: 'invalid_format',
+        message: '유효하지 않은 날짜입니다',
+      });
+
+      return false;
+    }
+  }),
+  notes: z.string(),
+});
+type UpdatePaymentState = ServerActionState<{
+  amount: number;
+  paidAt: string;
+  paymentMethod: string;
+  notes: string;
+}>;
+export async function updatePayment(prevState: UpdatePaymentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updatePayment',
     {
@@ -16,21 +46,36 @@ export async function updatePayment(formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const syllabusId = Number(formData.get('syllabusId'));
+      const { syllabusId, ...data } = Object.fromEntries(formData.entries());
 
-      const supabase = await createClient();
+      const state: UpdatePaymentState = {
+        success: false,
+        fields: {
+          amount: Number(data.amount as string),
+          paidAt: data.paidAt as string,
+          paymentMethod: data.paymentMethod as string,
+          notes: data.notes as string,
+        },
+        timestamp: Date.now(),
+      };
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const validationResult = updateScheme.safeParse(data);
+
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
+      const { user } = await getSession();
 
       if (!user) {
-        return { success: false };
+        state.message = '로그인이 필요합니다';
+        return state;
       }
 
       const syllabus = await prisma.syllabus.findUnique({
         where: {
-          id: syllabusId,
+          id: Number(syllabusId),
           deletedAt: null,
           student: {
             userId: user.id,
@@ -39,7 +84,8 @@ export async function updatePayment(formData: FormData) {
       });
 
       if (!syllabus) {
-        return { success: false };
+        state.message = '존재하지 않는 레슨입니다.';
+        return state;
       }
 
       let payment = await prisma.payment.findUnique({
@@ -54,10 +100,7 @@ export async function updatePayment(formData: FormData) {
             id: payment.id,
           },
           data: {
-            amount: Number(formData.get('amount').replaceAll(',', '')),
-            paidAt: parseZonedDateTime(formData.get('paidAt') as string).toDate(),
-            paymentMethod: formData.get('paymentMethod'),
-            notes: formData.get('notes'),
+            ...validationResult.data,
             deletedAt: null,
             updatedAt: new Date(),
           },
@@ -66,11 +109,8 @@ export async function updatePayment(formData: FormData) {
       else {
         payment = await prisma.payment.create({
           data: {
-            amount: Number(formData.get('amount').replaceAll(',', '')),
-            paidAt: parseZonedDateTime(formData.get('paidAt') as string).toDate(),
-            paymentMethod: formData.get('paymentMethod'),
-            notes: formData.get('notes'),
             syllabusId: syllabus.id,
+            ...validationResult.data,
           },
         });
       }

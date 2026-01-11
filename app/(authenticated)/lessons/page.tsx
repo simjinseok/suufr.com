@@ -1,150 +1,139 @@
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
-import { redirect } from 'next/navigation';
+import prisma from '@/utils/prisma';
+import { createLoader, parseAsInteger, parseAsString } from 'nuqs/server';
 
-import React from 'react';
 import Link from 'next/link';
-import { ChevronLeftIcon, ChevronRightIcon, CircleCheckBigIcon, CircleIcon } from 'lucide-react';
-import {
-  DescriptionDetails,
-  DescriptionList,
-  DescriptionTerm,
-} from '@/components/description-list';
-import { Heading } from '@/components/heading';
-
-import Filter from './_filter';
-import Lessons from './_lessons';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import React from 'react';
+import Syllabuses from './_syllabuses';
+import SearchForm from './_search-form';
+import Header from './_header';
+import { getSession } from '@/utils/auth';
 
 export const dynamic = 'force-dynamic';
+const PAGE_SIZE = 20;
+const coordinatesSearchParams = createLoader({
+  page: parseAsInteger.withDefault(1),
+  studentId: parseAsInteger,
+});
+export default async function Page(props: PageProps<'/lessons'>) {
+  const { page, studentId } = coordinatesSearchParams(await props.searchParams);
 
-const PAGE_SIZE = 30;
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: { student: string; from: string; to: string; edit: string; page: string };
-}) {
-  const { student: _student, from: _from, to: _to, edit: _edit, page: _page } = await searchParams;
-  const supabase = await createClient();
+  const { user } = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect('/login');
-  }
-
-  const page = Number(_page) > 0 ? Number(_page) : 1;
-  const studentId = Number(_student);
-  const from = _from ? new Date(_from) : new Date(0);
-  const to = _to ? new Date(_to) : new Date(2040, 1, 1);
-  const where = {
-    deletedAt: null,
-    ...(from
-      ? {
-          lessonAt: {
-            gte: from,
-            lte: to,
+  const syllabuses = await prisma.syllabus.findMany({
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+    select: {
+      id: true,
+      title: true,
+      notes: true,
+      student: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      lessons: {
+        select: {
+          id: true,
+          notes: true,
+          lessonAt: true,
+          isDone: true,
+          feedback: {
+            select: {
+              id: true,
+              notes: true,
+            },
+            where: {
+              deletedAt: null,
+            },
           },
-        }
-      : {}),
-    syllabus: {
+        },
+        where: {
+          deletedAt: null,
+        },
+        orderBy: {
+          lessonAt: 'asc',
+        },
+      },
+      payment: {
+        select: {
+          id: true,
+          amount: true,
+          paymentMethod: true,
+          paidAt: true,
+        },
+        where: {
+          deletedAt: null,
+        },
+      },
+    },
+    where: {
+      deletedAt: null,
       student: {
         ...(studentId ? { id: studentId } : {}),
         userId: user.id,
       },
     },
-  };
-  const lessons = await prisma.lesson.findMany({
-    take: PAGE_SIZE,
-    skip: (page - 1) * PAGE_SIZE,
-    select: {
-      id: true,
-      lessonAt: true,
-      notes: true,
-      isDone: true,
-      syllabus: {
-        select: {
-          student: {
-            select: {
-              id: true,
-              name: true,
-              notes: true,
-            },
-          },
-        },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  const syllabusCount: number = await prisma.syllabus.count({
+    where: {
+      deletedAt: null,
+      student: {
+        userId: user.id,
       },
     },
-    where,
-    orderBy: {
-      lessonAt: 'desc',
-    },
   });
 
-  const lessonsCount = await prisma.lesson.count({
-    where,
-  });
+  const student = studentId
+    ? await prisma.student.findUnique({
+        where: {
+          id: studentId,
+          deletedAt: null,
+          userId: user.id,
+        },
+      })
+    : null;
 
   return (
-    <div>
-      <Heading level={1}>수업</Heading>
-      <div className="mt-6">
-        <Filter />
-      </div>
-      {lessons.length > 0 && (
-        <div className="mt-3">
-          <Heading level={3}>요약</Heading>
-          <DescriptionList>
-            <DescriptionTerm>결제 건수</DescriptionTerm>
-            <DescriptionDetails>건</DescriptionDetails>
+    <React.Fragment>
+      <Header />
+      <SearchForm student={student} />
 
-            <DescriptionTerm>결제 금액</DescriptionTerm>
-            <DescriptionDetails>
-            </DescriptionDetails>
-          </DescriptionList>
-        </div>
-      )}
-      <Lessons lessons={lessons} />
-      <div className="mt-10 flex justify-between">
-        <div>
-          {page > 1 && (
-            <Link
-              className="flex items-center"
-              href={{
-                query: {
-                  student: _student,
-                  from: _from,
-                  to: _to,
-                  edit: _edit,
-                  page: page - 1,
-                },
-              }}
-            >
-              <ChevronLeftIcon />
-              이전 페이지
-            </Link>
-          )}
-        </div>
-        <div>
-          {lessonsCount > page * PAGE_SIZE && (
-            <Link
-              className="flex items-center"
-              href={{
-                query: {
-                  student: _student,
-                  from: _from,
-                  to: _to,
-                  edit: _edit,
-                  page: page + 1,
-                },
-              }}
-            >
-              다음 페이지
-              <ChevronRightIcon />
-            </Link>
-          )}
-        </div>
+      <Syllabuses syllabuses={syllabuses} />
+      <div className="mt-5 flex justify-between">
+        {page > 1 && (
+          <Link
+            className="flex items-center"
+            href={{
+              query: {
+                page: page - 1,
+              },
+            }}
+          >
+            <ChevronLeftIcon />
+            이전 페이지
+          </Link>
+        )}
+        {syllabusCount > page * PAGE_SIZE && (
+          <Link
+            className="flex items-center"
+            href={{
+              query: {
+                page: page + 1,
+              },
+            }}
+          >
+            다음 페이지
+            <ChevronRightIcon />
+          </Link>
+        )}
       </div>
-    </div>
+    </React.Fragment>
   );
 }

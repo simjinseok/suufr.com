@@ -1,196 +1,135 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
-import { formatToKoreanNumber } from '@toss/utils';
+import type { PaymentView } from '@/types/index';
+
+import prisma from '@/utils/prisma';
+
+import { getSession } from '@/utils/auth';
 
 import React from 'react';
-import { redirect } from 'next/navigation';
+
+import Filter from './_filter';
+import ViewTabs from './_view-tabs';
+import MonthlyView from './_monthly-view';
+import YearlyView from './_yearly-view';
+import {
+  groupPaymentsByMonth,
+  groupPaymentsByYear,
+  getMonthRange,
+  getYearRange,
+  getPrevMonth,
+  getNextMonth, getPrevYear, getNextYear,
+} from '@/utils/payment-stats';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { Card } from '@heroui/react';
-import Filter from './_filter';
-import Payments from './_payments';
 
 export const dynamic = 'force-dynamic';
-const PAGE_SIZE = 20;
+
 type Props = {
-  searchParams: {
-    page: string;
-    edit: string;
+  searchParams: Promise<{
+    view: string;
+    date: string;
     student: string;
-    from: string;
-    to: string;
-  };
+  }>;
 };
+
 export default async function Page({ searchParams }: Props) {
-  const { page: _page, student: _student, from: _from, to: _to } = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { view: _view, date: _date, student: _student } = await searchParams;
 
-  if (!user) {
-    return redirect('/login');
-  }
+  const { user } = await getSession();
 
-  const page = Number(_page) > 0 ? Number(_page) : 1;
-  const studentId = Number(_student);
-  const from = _from ? new Date(_from) : new Date(0);
-  const to = _to ? new Date(_to) : new Date(2040, 1, 1);
+  const view: PaymentView = _view === 'yearly' ? 'yearly' : 'monthly';
+
+  const { from, to } = view === 'monthly'
+    ? getMonthRange(_date)
+    : getYearRange(_date);
+
   const where = {
     deletedAt: null,
-    ...(from
-      ? {
-          paidAt: {
-            gte: from,
-            lte: to,
-          },
-        }
-      : {}),
+    paidAt: {
+      gte: from,
+      lte: to,
+    },
     syllabus: {
       student: {
-        ...(studentId ? { id: studentId } : {}),
         userId: user.id,
         deletedAt: null,
       },
     },
   };
+
   const payments = await prisma.payment.findMany({
-    take: PAGE_SIZE,
-    skip: (page - 1) * PAGE_SIZE,
+    where,
     include: {
       syllabus: {
         include: {
-          student: true,
+          student: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },
-    where,
     orderBy: {
       paidAt: 'desc',
     },
   });
-  const paymentsCount = await prisma.payment.count({
-    where,
-  });
 
-  const syllabuses = await prisma.syllabus.findMany({
-    take: PAGE_SIZE,
-    skip: (page - 1) * PAGE_SIZE,
-    select: {
-      id: true,
-      payment: {
-        select: {
-          id: true,
-          amount: true,
-          paymentMethod: true,
-          notes: true,
-          paidAt: true,
-        },
-      },
-      student: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-    where: {
-      NOT: {
-        payment: null,
-      },
-      payment: {
-        deletedAt: null,
-      },
-      student: {
-        userId: user.id,
-        deletedAt: null,
-      },
-    },
-    orderBy: {
-      payment: {
-        paidAt: 'desc',
-      },
-    },
-  });
+  const monthlyStats = groupPaymentsByMonth(payments);
+  const yearlyStats = groupPaymentsByYear(payments);
+
+  const currentMonthStats = monthlyStats.length > 0 ? monthlyStats[0] : null;
+  const currentYearStats = yearlyStats.length > 0 ? yearlyStats[0] : null;
+
+  const buildNavUrl = (newDate: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('date', newDate);
+    return `/payments?${params.toString()}`;
+  };
+
+  const prevDate = view === 'monthly' ? getPrevMonth(_date) : getPrevYear(_date);
+  const nextDate = view === 'monthly' ? getNextMonth(_date) : getNextYear(_date);
+
+  const displayDate = view === 'monthly'
+    ? `${from.getFullYear()}년 ${from.getMonth() + 1}월`
+    : `${from.getFullYear()}년`;
 
   return (
     <div>
-      <div className="flex flex-col">
+      <div className="flex justify-between">
         <h1 className="text-xl font-bold text-default-900 lg:text-3xl">입금 내역</h1>
+        <ViewTabs view={view} date={_date} />
       </div>
-      {payments.length > 0 && (
-        <div className="mt-6">
-          <div className="grid grid-cols-4 gap-x-4">
-            <Card className=" border border-transparent dark:border-default-100">
-              <div className="flex p-4">
-                <div className="flex flex-col gap-y-2">
-                  <dt className="text-small font-medium text-default-500">결제 건수</dt>
-                  <dd className="text-2xl font-semibold text-default-700">
-                    {payments.length}
-                    건
-                  </dd>
-                </div>
-              </div>
-            </Card>
 
-            <Card className=" border border-transparent dark:border-default-100">
-              <div className="flex p-4">
-                <div className="flex flex-col gap-y-2">
-                  <dt className="text-small font-medium text-default-500">결제 금액</dt>
-                  <dd className="text-2xl font-semibold text-default-700">
-                    {formatToKoreanNumber(payments.reduce((t, p) => t + p.amount, 0))}
-                    원
-                  </dd>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
-      <Filter />
+      <div className="mt-4 flex items-center justify-between">
+        <Link
+          href={buildNavUrl(prevDate)}
+          className="flex items-center gap-1 text-default-600 hover:text-default-900 transition-colors"
+        >
+          <ChevronLeftIcon className="size-5" />
+          <span>{view === 'monthly' ? '이전 월' : '이전 연도'}</span>
+        </Link>
 
-      <Payments
-        syllabuses={syllabuses}
-      />
+        <h2 className="text-xl font-bold text-default-900">
+          {displayDate}
+        </h2>
 
-      <div className="mt-10 flex justify-between">
-        <div>
-          {page > 1 && (
-            <Link
-              className="flex items-center"
-              href={{
-                query: {
-                  student: _student,
-                  from: _from,
-                  to: _to,
-                  page: page - 1,
-                },
-              }}
-            >
-              <ChevronLeftIcon />
-              이전 페이지
-            </Link>
-          )}
-        </div>
-        <div>
-          {paymentsCount > page * PAGE_SIZE && (
-            <Link
-              className="flex items-center"
-              href={{
-                query: {
-                  student: _student,
-                  from: _from,
-                  to: _to,
-                  page: page + 1,
-                },
-              }}
-            >
-              다음 페이지
-              <ChevronRightIcon />
-            </Link>
-          )}
-        </div>
+        <Link
+          href={buildNavUrl(nextDate)}
+          className="flex items-center gap-1 text-default-600 hover:text-default-900 transition-colors"
+        >
+          <span>{view === 'monthly' ? '다음 월' : '다음 연도'}</span>
+          <ChevronRightIcon className="size-5" />
+        </Link>
       </div>
+
+      {view === 'monthly'
+        ? (
+            <MonthlyView stats={currentMonthStats} />
+          )
+        : (
+            <YearlyView stats={currentYearStats} />
+          )}
     </div>
   );
 }

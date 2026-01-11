@@ -1,7 +1,7 @@
 import type { TMeeting } from '@/types/index';
 
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
 
 import React from 'react';
 import { Heading } from '@/components/heading';
@@ -31,17 +31,7 @@ export default async function Page({ searchParams }: any) {
   const { page: _page, edit: _edit } = await searchParams;
   const page = _page > 0 ? Number(_page) : 1;
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
-  }
+  const { user } = await getSession();
 
   const meetings: TMeeting[] = await prisma.meeting.findMany({
     skip: (page - 1) * PAGE_SIZE,

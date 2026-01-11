@@ -2,11 +2,11 @@
 import { format } from 'date-fns/format';
 
 import * as React from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, Divider } from '@heroui/react';
-import { CircleCheckBigIcon, CircleIcon, EditIcon, PlusIcon } from 'lucide-react';
-import StudentModal from '@/components/student-modal';
-import StudentStatusModal from '@/components/student-status-modal';
+import { Avatar, Button, Card } from '@heroui/react';
+import { EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
+import EditStudentModal from './_edit-student-modal';
+import ChangeStatusModal from './_change-status-modal';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -14,30 +14,40 @@ const PAYMENT_METHODS = {
   cash: '현금',
   none: '미지정',
 };
-export default function Student({ student, statusHistories }) {
+export default function Student({ student }) {
   const [isEditing, setIsEditing] = React.useState(false);
+  const [isEditingStatus, setIsEditingStatus] = React.useState(false);
 
   return (
-    <div className="flex flex-col gap-5">
-      <Card>
-        <CardHeader className="justify-between">
-          <h3 className="text-xl font-bold lg:text-xl">기본정보</h3>
-          <Button isIconOnly variant="light" onPress={() => setIsEditing(true)}>
-            <EditIcon width={14} height={14} />
-          </Button>
-        </CardHeader>
-        <CardBody>
-          <div>
-            <StatusBadge status={student.status} />
+    <div className="mb-3 min-h-20 flex justify-between">
+      <div className="flex gap-3">
+        <Avatar>
+          <Avatar.Fallback>{student.name}</Avatar.Fallback>
+        </Avatar>
+        <div>
+          <StatusBadge status={student.status} />
+          <div className="flex items-center gap-1">
+            <h2 className="text-lg font-bold">
+              {student.name}
+            </h2>
+
           </div>
-          <p className="mt-1 font-bold">{student.name}</p>
-          <p className="mt-3 text-[12px] whitespace-pre-wrap">{student.notes}</p>
-        </CardBody>
-      </Card>
-      <StatusHistories student={student} statusHistories={statusHistories} />
-      <StudentModal
-        isOpen={isEditing}
-        onClose={() => { setIsEditing(false); }}
+          <p className="text-sm text-gray-600 font-medium whitespace-pre-wrap">{student.notes}</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="danger-soft" onClick={() => setIsEditingStatus(true)}>상태변경</Button>
+        <Button variant="secondary" onClick={() => setIsEditing(true)}>
+          <EditIcon />
+          수정
+        </Button>
+      </div>
+      {isEditing && (
+        <EditStudentModal isOpen={isEditing} onOpenChange={setIsEditing} student={student} />
+      )}
+      <ChangeStatusModal
+        isOpen={isEditingStatus}
+        onOpenChange={setIsEditingStatus}
         student={student}
       />
     </div>
@@ -50,13 +60,13 @@ function StatusHistories({ student, statusHistories }) {
   return (
     <React.Fragment>
       <Card>
-        <CardHeader className="justify-between">
+        <Card.Header className="justify-between">
           <h3 className="text-xl font-bold lg:text-xl">상태 변경 이력</h3>
           <Button isIconOnly variant="light" onPress={() => setEditingHistory({})}>
             <EditIcon width={14} height={14} />
           </Button>
-        </CardHeader>
-        <CardBody>
+        </Card.Header>
+        <Card.Content>
           <ol className="flex flex-col gap-3">
             {statusHistories.map(statusHistory => (
               <li key={`status-history-${statusHistory.id}`}>
@@ -72,14 +82,9 @@ function StatusHistories({ student, statusHistories }) {
               </li>
             ))}
           </ol>
-        </CardBody>
+        </Card.Content>
       </Card>
-      <StudentStatusModal
-        isOpen={editingHistory !== null}
-        onClose={() => { setEditingHistory(null); }}
-        student={student}
-        statusHistory={statusHistories.find(statusHistory => statusHistory.id === editingHistory?.id)}
-      />
+
     </React.Fragment>
   );
 }

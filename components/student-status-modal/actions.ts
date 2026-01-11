@@ -6,7 +6,7 @@ import { parseZonedDateTime } from '@internationalized/date';
 
 import { z } from 'zod';
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 const createSchema = z.object({
   studentId: z.coerce.number(),
   changedAt: z.string().transform((val, ctx) => {
@@ -92,24 +92,10 @@ export async function createStudentStatusHistory(formData: FormData) {
 }
 
 const updateSchema = z.object({
-  studentStatusHistoryId: z.coerce.number(),
-  changedAt: z.string().transform((val, ctx) => {
-    try {
-      const parsed = parseZonedDateTime(val);
-      return parsed.toDate();
-    }
-    catch (error) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '유효하지 않은 날짜 형식입니다',
-      });
-      return z.NEVER;
-    }
-  }),
-  notes: z.string(),
+  notes: z.string().trim(),
 });
 
-export async function updateStudentStatusHistory(formData: FormData) {
+export async function updateStudentStatusHistory(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentStatusHistory',
     {
@@ -120,6 +106,10 @@ export async function updateStudentStatusHistory(formData: FormData) {
     async () => {
       const supabase = await createClient();
 
+      const state = {
+        success: false,
+        timestamp: Date.now(),
+      };
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -133,18 +123,20 @@ export async function updateStudentStatusHistory(formData: FormData) {
         return { success: false, errors: validationResult.error.flatten().fieldErrors };
       }
 
+      const historyId = Number(formData.get('studentStatusHistoryId'));
+
       const updatedStatusHistory = await prisma.studentStatusHistory.update({
         where: {
-          id: validationResult.data.studentStatusHistoryId,
+          id: historyId,
         },
         data: {
-          changedAt: validationResult.data.changedAt,
           notes: validationResult.data.notes,
         },
       });
 
       revalidatePath('/students/[studentId]', 'page');
-      return { success: true, studentStatusHistory: updatedStatusHistory };
+      state.success = true;
+      return state;
     },
   );
 }

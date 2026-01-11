@@ -1,37 +1,30 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
 import MeetingSchema from '@/schemas/meeting';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { meetingId: string } },
+  { params }: { params: Promise<{ meetingId: string }> },
 ) {
-  const meetingId = Number(params.meetingId);
+  const { meetingId: _meetingId } = await params;
+  const meetingId = Number(_meetingId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: meetingId,
-      userId: user.id,
+      userId: session.user.id,
       deletedAt: null,
     },
   });
 
   if (!meeting) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const formData = await request.formData();
@@ -50,45 +43,34 @@ export async function PUT(
   });
 
   return Response.json(
-    {
-      id: result.id,
-    },
-    {
-      status: 200,
-    },
+    { id: result.id },
+    { status: 200 },
   );
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { meetingId: string } },
+  { params }: { params: Promise<{ meetingId: string }> },
 ) {
-  const meetingId = Number(params.meetingId);
+  const { meetingId: _meetingId } = await params;
+  const meetingId = Number(_meetingId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: meetingId,
-      userId: user.id,
+      userId: session.user.id,
       deletedAt: null,
     },
   });
 
   if (!meeting) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   await prisma.meeting.update({
@@ -100,7 +82,5 @@ export async function DELETE(
     },
   });
 
-  return new Response(null, {
-    status: 204,
-  });
+  return new Response(null, { status: 204 });
 }

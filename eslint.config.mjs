@@ -41,4 +41,9 @@ export default [
     indent: 2,
     jsx: true,
   }),
+  {
+    rules: {
+      '@stlyistic/arrow-parens': 'off',
+    },
+  },
 ];

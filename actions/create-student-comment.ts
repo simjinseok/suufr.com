@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 import { createClient } from '@/utils/supabase';
 import { revalidatePath } from 'next/cache';
 import * as Sentry from '@sentry/nextjs';

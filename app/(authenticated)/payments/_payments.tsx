@@ -1,17 +1,11 @@
 'use client';
 import { format } from 'date-fns/format';
-import { formatToKoreanNumber } from '@toss/utils';
+import { numberToHangulMixed } from 'es-hangul';
 
 import React from 'react';
 
 import {
   Button,
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
 } from '@heroui/react';
 import PaymentModal from '@/components/payment-modal';
 
@@ -20,57 +14,57 @@ export default function Payments({ syllabuses }) {
 
   return (
     <React.Fragment>
-      <Table className="mt-5" aria-label="입금내역">
-        <TableHeader>
-          <TableColumn>일자</TableColumn>
-          <TableColumn>결제수단</TableColumn>
-          <TableColumn>금액</TableColumn>
-          <TableColumn>수강생</TableColumn>
-          <TableColumn>메모</TableColumn>
-          <TableColumn>수정</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {syllabuses.length > 0
-            ? (
-                <>
-                  {syllabuses.map((syllabus: any) => (
-                    <TableRow key={`syllabus-${syllabus.id}`}>
-                      <TableCell className="tablur-nums">
-                        {format(syllabus.payment.paidAt, 'yyyy-MM-dd')}
-                      </TableCell>
-                      <TableCell>{syllabus.payment.paymentMethod}</TableCell>
-                      <TableCell className="tablur-nums text-right">
-                        {formatToKoreanNumber(syllabus.payment.amount)}
-                        원
-                      </TableCell>
-                      <TableCell>{syllabus.student.name}</TableCell>
-                      <TableCell>{syllabus.payment.notes}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="light"
-                          onPress={() => setEditingSyllabus(syllabus)}
-                        >
-                          수정
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </>
-              )
-            : (
-                <TableRow>
-                  <TableCell className="text-center" colSpan={6}>
-                    입금 내역이 없어요
-                  </TableCell>
-                </TableRow>
-              )}
-        </TableBody>
-      </Table>
-      <PaymentModal
-        isOpen={editingSyllabus !== null}
-        syllabus={editingSyllabus}
-        onClose={() => { setEditingSyllabus(null); }}
-      />
+      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <table className="w-full">
+          <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+            <tr>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6">일자</th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6">결제수단</th>
+              <th className="text-right text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6">금액</th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6">수강생</th>
+              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6">메모</th>
+              <th className="text-right text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-6"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {syllabuses.map(syllabus => (
+              <tr
+                key={`syllabus-${syllabus.id}`}
+                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
+              >
+                <td className="py-4 px-6 text-sm tabular-nums text-zinc-900 dark:text-white">
+                  {format(syllabus.payment.paidAt, 'yyyy-MM-dd')}
+                </td>
+                <td className="py-4 px-6">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {syllabus.payment.paymentMethod}
+                  </span>
+                </td>
+                <td className="py-4 px-6 text-sm tabular-nums text-right font-medium text-zinc-900 dark:text-white">
+                  {numberToHangulMixed(syllabus.payment.amount)}
+                  원
+                </td>
+                <td className="py-4 px-6 text-sm text-zinc-700 dark:text-zinc-300">
+                  {syllabus.student.name}
+                </td>
+                <td className="py-4 px-6 text-sm text-zinc-500 dark:text-zinc-400 max-w-xs truncate">
+                  {syllabus.payment.notes || '—'}
+                </td>
+                <td className="py-4 px-6 text-right">
+                  <Button size="sm" variant="light" onPress={() => setEditingSyllabus(syllabus)}>
+                    수정
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* <PaymentModal */}
+      {/*  isOpen={editingSyllabus !== null} */}
+      {/*  syllabus={editingSyllabus} */}
+      {/*  onClose={() => { setEditingSyllabus(null); }} */}
+      {/* /> */}
     </React.Fragment>
   );
 }

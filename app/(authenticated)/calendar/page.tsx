@@ -1,22 +1,14 @@
-import { prisma } from '@/utils/prisma';
-import { createClient } from '@/utils/supabase';
+import prisma from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
 import { startOfWeek } from 'date-fns/startOfWeek';
 import { startOfMonth } from 'date-fns/startOfMonth';
 import { addWeeks } from 'date-fns/addWeeks';
 
 import React from 'react';
-import { redirect } from 'next/navigation';
 import Calendar from './_calendar';
 
 export default async function Page({ searchParams }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect('/login');
-  }
+  const { user } = await getSession();
 
   const { start, end } = await searchParams;
   const calendarStart = start ? new Date(start) : startOfWeek(startOfMonth(new Date()), { weekStartsOn: 0 });

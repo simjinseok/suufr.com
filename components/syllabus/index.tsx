@@ -2,7 +2,7 @@
 import type { TLesson } from '@/types/index';
 
 import { format } from 'date-fns/format';
-import { formatToKoreanNumber } from '@toss/utils';
+import { numberToHangulMixed } from 'es-hangul';
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ import SyllabusModal from '@/components/syllabus-modal';
 import LessonModal from '@/components/lesson-modal';
 import PaymentModal from '@/components/payment-modal';
 import FeedbackForm from '@/components/forms/feedback-form';
-import BulkLessonDialog from '../../app/(authenticated)/syllabuses/_bulk-lesson-dialog';
+import BulkLessonDialog from '../../app/(authenticated)/lessons/_bulk-lesson-dialog';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -173,7 +173,7 @@ export default function Syllabus({ studentName, syllabus }) {
                     // @ts-ignore */}
             <p>{PAYMENT_METHODS[syllabus.payment.paymentMethod]}</p>
             <p>
-              {formatToKoreanNumber(syllabus.payment.amount)}
+              {numberToHangulMixed(syllabus.payment.amount)}
               원
             </p>
           </div>

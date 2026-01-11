@@ -5,9 +5,9 @@ import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 
-export async function updateSyllabus(formData: FormData) {
+export async function updateSyllabus(state, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateSyllabus',
     {

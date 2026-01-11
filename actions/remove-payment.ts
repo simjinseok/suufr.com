@@ -4,10 +4,10 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
-import { parseZonedDateTime } from '@internationalized/date';
+import prisma from '@/utils/prisma';
+import {getSession} from "@/utils/auth";
 
-export async function removePayment(formData: FormData) {
+export async function removePayment(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removePayment',
     {
@@ -16,13 +16,11 @@ export async function removePayment(formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const syllabusId = Number(formData.get('syllabusId'));
+      const syllabusId = Number(formData.get('lessonId'));
 
       const supabase = await createClient();
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { user } = await getSession();
 
       if (!user) {
         return { success: false };
@@ -55,6 +53,11 @@ export async function removePayment(formData: FormData) {
       const result = await prisma.payment.update({
         where: {
           id: payment.id,
+          syllabus: {
+            student: {
+              userId: user.id,
+            },
+          },
         },
         data: {
           deletedAt: new Date(),
@@ -64,7 +67,7 @@ export async function removePayment(formData: FormData) {
 
       revalidatePath('/syllabuses', 'page');
       revalidatePath('/payments', 'page');
-      return { success: true };
+      return { success: true, timestamp: Date.now() };
     },
   );
 }

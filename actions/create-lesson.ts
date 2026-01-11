@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 import { parseZonedDateTime } from '@internationalized/date';
 
 const createSchema = z.object({

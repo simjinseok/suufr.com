@@ -1,36 +1,30 @@
-import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
+import type { StudentStatus } from '@/prisma/generated/enums';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { studentId: string } },
+  { params }: { params: Promise<{ studentId: string }> },
 ) {
-  const studentId = Number(params.studentId);
+  const { studentId: _studentId } = await params;
+  const studentId = Number(_studentId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       id: studentId,
-      userId: user.id,
+      userId: session.user.id,
       deletedAt: null,
     },
   });
 
   if (!student) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const formData = await request.formData();
@@ -41,7 +35,7 @@ export async function PUT(
     },
     data: {
       name: formData.get('name') as string,
-      status: formData.get('status') as string,
+      status: formData.get('status') as StudentStatus,
       notes: formData.get('notes') as string,
     },
   });
@@ -52,42 +46,33 @@ export async function PUT(
       name: result.name,
       notes: result.notes,
     },
-    {
-      status: 200,
-    },
+    { status: 200 },
   );
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { studentId: string } },
+  { params }: { params: Promise<{ studentId: string }> },
 ) {
-  const studentId = Number(params.studentId);
+  const { studentId: _studentId } = await params;
+  const studentId = Number(_studentId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response('', {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       id: studentId,
-      userId: user.id,
+      userId: session.user.id,
       deletedAt: null,
     },
   });
 
   if (!student) {
-    return new Response('', {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   await prisma.student.update({
@@ -99,7 +84,5 @@ export async function DELETE(
     },
   });
 
-  return new Response(null, {
-    status: 204,
-  });
+  return new Response(null, { status: 204 });
 }

@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase';
-import { prisma } from '@/utils/prisma';
+import prisma from '@/utils/prisma';
 import { format } from 'date-fns/format';
 
 import * as React from 'react';
@@ -15,16 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/table';
+import { getSession } from '@/utils/auth';
 
 export default async function Page() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return redirect('/login');
-  }
+  const { user } = await getSession();
 
   const currentDate = new Date();
   const [
@@ -64,52 +58,52 @@ export default async function Page() {
   ]);
   return (
     <div>
-      <div className="mt-3 grid grid-cols-3 gap-x-3">
-        <Card className="border border-transparent dark:border-default-100">
-          <div className="flex p-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-50">
-              <UserRoundCheckIcon className="text-success" width={20} height={20} />
-            </div>
-            <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">수강중인 학생</dt>
-              <dd className="px-4 text-2xl font-semibold text-default-700">
-                {currentActiveStudentCount}
-                명
-              </dd>
-            </div>
-          </div>
-        </Card>
+      {/* <div className="mt-3 grid grid-cols-3 gap-x-3"> */}
+      {/*  <Card className="border border-transparent dark:border-default-100"> */}
+      {/*    <div className="flex p-4"> */}
+      {/*      <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-50"> */}
+      {/*        <UserRoundCheckIcon className="text-success" width={20} height={20} /> */}
+      {/*      </div> */}
+      {/*      <div className="flex flex-col gap-y-2"> */}
+      {/*        <dt className="mx-4 text-small font-medium text-default-500">수강중인 학생</dt> */}
+      {/*        <dd className="px-4 text-2xl font-semibold text-default-700"> */}
+      {/*          {currentActiveStudentCount} */}
+      {/*          명 */}
+      {/*        </dd> */}
+      {/*      </div> */}
+      {/*    </div> */}
+      {/*  </Card> */}
 
-        <Card className="border border-transparent dark:border-default-100">
-          <div className="flex p-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50">
-              <UserRoundMinusIcon className="text-danger" width={20} height={20} />
-            </div>
-            <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">그만둔 수강생</dt>
-              <dd className="px-4 text-2xl font-semibold text-default-700">
-                {leftStudentsCount}
-                명
-              </dd>
-            </div>
-          </div>
-        </Card>
+      {/*  <Card className="border border-transparent dark:border-default-100"> */}
+      {/*    <div className="flex p-4"> */}
+      {/*      <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50"> */}
+      {/*        <UserRoundMinusIcon className="text-danger" width={20} height={20} /> */}
+      {/*      </div> */}
+      {/*      <div className="flex flex-col gap-y-2"> */}
+      {/*        <dt className="mx-4 text-small font-medium text-default-500">그만둔 수강생</dt> */}
+      {/*        <dd className="px-4 text-2xl font-semibold text-default-700"> */}
+      {/*          {leftStudentsCount} */}
+      {/*          명 */}
+      {/*        </dd> */}
+      {/*      </div> */}
+      {/*    </div> */}
+      {/*  </Card> */}
 
-        <Card className="border border-transparent dark:border-default-100">
-          <div className="flex p-4">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50">
-              <BanknoteXIcon className="text-danger" width={20} height={20} />
-            </div>
-            <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">미입금</dt>
-              <dd className="px-4 text-2xl font-semibold text-default-700">
-                {notPaidSyllabusesCount}
-                건
-              </dd>
-            </div>
-          </div>
-        </Card>
-      </div>
+      {/*  <Card className="border border-transparent dark:border-default-100"> */}
+      {/*    <div className="flex p-4"> */}
+      {/*      <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-50"> */}
+      {/*        <BanknoteXIcon className="text-danger" width={20} height={20} /> */}
+      {/*      </div> */}
+      {/*      <div className="flex flex-col gap-y-2"> */}
+      {/*        <dt className="mx-4 text-small font-medium text-default-500">미입금</dt> */}
+      {/*        <dd className="px-4 text-2xl font-semibold text-default-700"> */}
+      {/*          {notPaidSyllabusesCount} */}
+      {/*          건 */}
+      {/*        </dd> */}
+      {/*      </div> */}
+      {/*    </div> */}
+      {/*  </Card> */}
+      {/* </div> */}
 
       <React.Suspense>
         <NotPaidSyllabuses user={user} />

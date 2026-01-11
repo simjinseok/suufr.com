@@ -1,5 +1,5 @@
-import { createClient } from "@/utils/supabase";
-import { prisma } from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
 
 export async function PUT(
   request: Request,
@@ -8,16 +8,10 @@ export async function PUT(
   const { lessonId: _lessonId } = await params;
   const lessonId = Number(_lessonId);
 
-  const supabase = await createClient();
+  const session = await getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return new Response("", {
-      status: 401,
-    });
+  if (!session?.user) {
+    return new Response('', { status: 401 });
   }
 
   const lesson = await prisma.lesson.findUnique({
@@ -26,16 +20,14 @@ export async function PUT(
       deletedAt: null,
       syllabus: {
         student: {
-          userId: user.id,
+          userId: session.user.id,
         },
       },
     },
   });
 
   if (!lesson) {
-    return new Response("", {
-      status: 404,
-    });
+    return new Response('', { status: 404 });
   }
 
   const result = await prisma.lesson.update({
@@ -49,11 +41,7 @@ export async function PUT(
   });
 
   return Response.json(
-    {
-      id: result.id,
-    },
-    {
-      status: 200,
-    },
+    { id: result.id },
+    { status: 200 },
   );
 }

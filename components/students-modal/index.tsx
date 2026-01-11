@@ -1,14 +1,16 @@
 'use client';
 import * as React from 'react';
-import {Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader} from '@heroui/react';
+import { Button, Modal } from '@heroui/react';
 import getUsers from './action';
 
-export default function StudentsModal({isOpen, onClose}) {
+export default function StudentsModal({ isOpen, onClose }) {
   return (
-    <Modal isOpen={isOpen} onOpenChange={onClose}>
-      <Content/>
-    </Modal>
-  )
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
+      <Modal.Container>
+        <Content />
+      </Modal.Container>
+    </Modal.Backdrop>
+  );
 }
 
 function Content({ title }) {
@@ -19,22 +21,22 @@ function Content({ title }) {
     startTransition(async () => {
       const result = await getUsers();
       console.log('???', result);
-    })
+    });
   }, []);
   return (
-    <ModalContent>
+    <Modal.Dialog>
       {onClose => (
         <React.Fragment>
-          <ModalHeader>{title || '수강생 목록'}</ModalHeader>
-          <ModalBody>
+          <Modal.Header>{title || '수강생 목록'}</Modal.Header>
+          <Modal.Body>
             fd
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>닫기</Button>
-            <Button color="primary">선택</Button>
-          </ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="ghost" onClick={onClose}>닫기</Button>
+            <Button variant="primary">선택</Button>
+          </Modal.Footer>
         </React.Fragment>
       )}
-    </ModalContent>
+    </Modal.Dialog>
   );
 }
