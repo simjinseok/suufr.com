@@ -28,6 +28,7 @@ phases:
       - cp -r prisma .next/standalone/
       - cp Procfile .next/standalone/
       - cp prisma.config.mjs .next/standalone/
+      - cp .npmrc .next/standalone/
 #      # Prisma CLI 복사 (migrate deploy 실행용)
 #      - cp -r node_modules/prisma .next/standalone/node_modules/
 #      - cp -r node_modules/@prisma .next/standalone/node_modules/
