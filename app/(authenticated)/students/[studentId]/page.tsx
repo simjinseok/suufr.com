@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
 import { notFound, redirect } from 'next/navigation';
-import { Tabs } from '@heroui/react';
+// import { Tabs } from '@heroui/react';
 import * as React from 'react';
 
 import Student from './_student';
@@ -128,36 +128,36 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
 
       <StatsCards stats={stats} />
 
-      <Tabs>
-        <Tabs.ListContainer>
-          <Tabs.List>
-            <Tabs.Tab id="timeline">
-              타임라인
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab id="lessons">
-              수업내역
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab id="payments">
-              입금내역
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
+      {/*<Tabs>*/}
+      {/*  <Tabs.ListContainer>*/}
+      {/*    <Tabs.List>*/}
+      {/*      <Tabs.Tab id="timeline">*/}
+      {/*        타임라인*/}
+      {/*        <Tabs.Indicator />*/}
+      {/*      </Tabs.Tab>*/}
+      {/*      <Tabs.Tab id="lessons">*/}
+      {/*        수업내역*/}
+      {/*        <Tabs.Indicator />*/}
+      {/*      </Tabs.Tab>*/}
+      {/*      <Tabs.Tab id="payments">*/}
+      {/*        입금내역*/}
+      {/*        <Tabs.Indicator />*/}
+      {/*      </Tabs.Tab>*/}
+      {/*    </Tabs.List>*/}
+      {/*  </Tabs.ListContainer>*/}
 
-        <Tabs.Panel id="timeline">
-          <Timeline comments={comments} statusHistories={statusHistories} />
-        </Tabs.Panel>
+      {/*  <Tabs.Panel id="timeline">*/}
+      {/*    <Timeline comments={comments} statusHistories={statusHistories} />*/}
+      {/*  </Tabs.Panel>*/}
 
-        <Tabs.Panel id="lessons">
-          <LessonsTable lessons={lessons} />
-        </Tabs.Panel>
+      {/*  <Tabs.Panel id="lessons">*/}
+      {/*    <LessonsTable lessons={lessons} />*/}
+      {/*  </Tabs.Panel>*/}
 
-        <Tabs.Panel id="payments">
-          <PaymentsTable payments={payments} />
-        </Tabs.Panel>
-      </Tabs>
+      {/*  <Tabs.Panel id="payments">*/}
+      {/*    <PaymentsTable payments={payments} />*/}
+      {/*  </Tabs.Panel>*/}
+      {/*</Tabs>*/}
     </div>
   );
 }
