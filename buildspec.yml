@@ -21,13 +21,25 @@ phases:
   post_build:
     commands:
       - cp -r .next/static .next/standalone/.next/static
+      # 배포 관련 파일들을 standalone 폴더로 복사
+      - cp -r .ebextensions .next/standalone/
+      - mkdir -p .next/standalone/.platform
+      - cp -r .platform/. .next/standalone/.platform/ 2>/dev/null || true
+      - cp -r prisma .next/standalone/
+      - cp Procfile .next/standalone/
+#      # Prisma CLI 복사 (migrate deploy 실행용)
+#      - cp -r node_modules/prisma .next/standalone/node_modules/
+#      - cp -r node_modules/@prisma .next/standalone/node_modules/
       - echo "Build completed on $(date)"
 
 artifacts:
+  base-directory: .next/standalone
   files:
-    - .next/standalone/**/*
+    - .next/**/*
     - .platform/**/*
     - .ebextensions/*
+    - server.js
+    - package.json
     - Procfile
   discard-paths: no
 
