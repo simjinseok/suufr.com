@@ -9,6 +9,7 @@ const nextConfig = {
   serverExternalPackages: [
     'require-in-the-middle',
     'import-in-the-middle',
+    '@opentelemetry/instrumentation',
   ],
 };
 
