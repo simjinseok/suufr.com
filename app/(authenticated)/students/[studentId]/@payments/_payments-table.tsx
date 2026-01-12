@@ -46,23 +46,23 @@ export default function PaymentsTable({ syllabuses }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-zinc-500">총 결제액</span>
-          <span className="text-xl font-bold text-zinc-900 dark:text-white">
-            {numberToHangulMixed(totalAmount)}원
-          </span>
-        </div>
-        <div className="mt-1 text-sm text-zinc-500">
-          결제 {paidSyllabuses.length}건
-          {unpaidSyllabuses.length > 0 && (
-            <span className="text-warning-600 dark:text-warning-400">
-              {' '}
-              · 미결제 {unpaidSyllabuses.length}건
-            </span>
-          )}
-        </div>
-      </div>
+      {/*<div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">*/}
+      {/*  <div className="flex justify-between items-center">*/}
+      {/*    <span className="text-sm font-medium text-zinc-500">총 결제액</span>*/}
+      {/*    <span className="text-xl font-bold text-zinc-900 dark:text-white">*/}
+      {/*      {numberToHangulMixed(totalAmount)}원*/}
+      {/*    </span>*/}
+      {/*  </div>*/}
+      {/*  <div className="mt-1 text-sm text-zinc-500">*/}
+      {/*    결제 {paidSyllabuses.length}건*/}
+      {/*    {unpaidSyllabuses.length > 0 && (*/}
+      {/*      <span className="text-warning-600 dark:text-warning-400">*/}
+      {/*        {' '}*/}
+      {/*        · 미결제 {unpaidSyllabuses.length}건*/}
+      {/*      </span>*/}
+      {/*    )}*/}
+      {/*  </div>*/}
+      {/*</div>*/}
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
         <table className="w-full">
