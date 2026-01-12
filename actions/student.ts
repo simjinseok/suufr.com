@@ -1,13 +1,12 @@
 'use server';
+import type { ServerActionState } from '@/types/index';
+
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { parseDate } from '@internationalized/date';
-
 import { z } from 'zod';
-import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
-import { ServerActionState } from '@/types/index';
 import { getSession } from '@/utils/auth';
 
 const updateStudentSchema = z.object({
@@ -76,7 +75,6 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
 }
 
 const createSchema = z.object({
-  studentId: z.coerce.number(),
   changedAt: z.string().transform((val, ctx) => {
     try {
       const parsed = parseDate(val);
@@ -108,28 +106,25 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
       recordResponse: true,
     },
     async () => {
-      const supabase = await createClient();
+      const { user } = await getSession();
+      const { studentId, ...data } = Object.fromEntries(formData.entries());
 
       const state: CreateStudentStatusHistoryState = {
         success: false,
         timestamp: Date.now(),
       };
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       if (!user) {
         return state;
       }
 
-      const data = Object.fromEntries(formData);
-      console.log('data', data);
       const validationResult = createSchema.safeParse(data);
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
+      console.log('아니 왜? data', data);
+      console.log('result', validationResult.data);
 
       const student = await prisma.student.findFirst({
         select: {
@@ -137,7 +132,7 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
           status: true,
         },
         where: {
-          id: validationResult.data.studentId,
+          id: Number(studentId),
           userId: user.id,
           deletedAt: null,
         },
@@ -151,6 +146,7 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
       const studentStatusHistory = await prisma.$transaction(async (tx) => {
         const statusHistory = await tx.studentStatusHistory.create({
           data: {
+            studentId: student.id,
             ...validationResult.data,
           },
         });
@@ -203,11 +199,7 @@ export async function updateStudentStatusHistory(formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const supabase = await createClient();
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { user } = await getSession();
 
       if (!user) {
         return { success: false };

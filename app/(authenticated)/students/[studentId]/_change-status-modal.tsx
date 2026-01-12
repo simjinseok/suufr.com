@@ -15,7 +15,6 @@ import dayjs from 'dayjs';
 export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
   const formId = React.useId();
 
-  console.log(student);
   const { control } = useForm({
     values: {
       changedAt: dayjs().format('YYYY-MM-DD'),
@@ -25,7 +24,15 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
   });
   const [state, formAction, isPending] = React.useActionState(createStudentStatusHistory, {});
 
-  console.log(state);
+  React.useEffect(() => {
+    if (!state.timestamp) return;
+
+    if (state.success) {
+      alert(state.message);
+      onOpenChange?.(false);
+    }
+  }, [state.timestamp, state.success, state.message]);
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
