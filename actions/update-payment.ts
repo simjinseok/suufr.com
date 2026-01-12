@@ -1,15 +1,14 @@
 'use server';
 import type { ServerActionState } from '@/types/index';
 
+import { parseDate } from '@internationalized/date';
+import { z } from 'zod';
+import { getSession } from '@/utils/auth';
+import prisma from '@/utils/prisma';
+
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-
-import { createClient } from '@/utils/supabase';
-import prisma from '@/utils/prisma';
-import { parseDate } from '@internationalized/date';
-import { z } from 'zod';
-import {getSession} from "@/utils/auth";
 
 const updateScheme = z.object({
   amount: z.coerce.number().min(0),
@@ -29,7 +28,7 @@ const updateScheme = z.object({
       return false;
     }
   }),
-  notes: z.string(),
+  notes: z.string().trim(),
 });
 type UpdatePaymentState = ServerActionState<{
   amount: number;
@@ -115,9 +114,11 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         });
       }
 
-      revalidatePath('/syllabuses', 'page');
+      revalidatePath('/lessons', 'page');
       revalidatePath('/payments', 'page');
-      return { success: true };
+      state.success = true;
+      state.message = '입금내역을 수정하였습니다.';
+      return state;
     },
   );
 }

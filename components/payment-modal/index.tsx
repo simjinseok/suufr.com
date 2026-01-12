@@ -16,7 +16,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { updatePayment } from '../../actions/update-payment';
 import { removePayment } from '../../actions/remove-payment';
-import {fromDate, getLocalTimeZone, parseDate, toCalendarDate, today} from '@internationalized/date';
+import { fromDate, getLocalTimeZone, parseDate, toCalendarDate, today } from '@internationalized/date';
 
 export default function PaymentModal({ isOpen, onClose, syllabus }) {
   return (
@@ -38,7 +38,6 @@ export default function PaymentModal({ isOpen, onClose, syllabus }) {
 function Content({ close, syllabus }) {
   const formId = React.useId();
 
-  console.log(syllabus);
   const { control } = useForm({
     values: {
       paidAt: syllabus?.payment ? toCalendarDate(fromDate(syllabus.payment.paidAt, 'Asia/Seoul')) : today(getLocalTimeZone()),
@@ -52,6 +51,15 @@ function Content({ close, syllabus }) {
   const payment = React.useMemo(() => {
     return syllabus.payment;
   }, [syllabus]);
+
+  React.useEffect(() => {
+    if (!state.timestamp) return;
+
+    if (state.success) {
+      alert(state.message);
+      close();
+    }
+  }, [state.success, state.timestamp, state.message])
 
   return (
     <React.Fragment>

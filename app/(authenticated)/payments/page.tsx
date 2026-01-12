@@ -32,7 +32,7 @@ type Props = {
 };
 
 export default async function Page({ searchParams }: Props) {
-  const { view: _view, date: _date, student: _student } = await searchParams;
+  const { view: _view, date: _date } = await searchParams;
 
   const { user } = await getSession();
 
@@ -82,7 +82,8 @@ export default async function Page({ searchParams }: Props) {
   const currentYearStats = yearlyStats.length > 0 ? yearlyStats[0] : null;
 
   const buildNavUrl = (newDate: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
+    params.set('view', view);
     params.set('date', newDate);
     return `/payments?${params.toString()}`;
   };
@@ -125,10 +126,10 @@ export default async function Page({ searchParams }: Props) {
 
       {view === 'monthly'
         ? (
-            <MonthlyView stats={currentMonthStats} />
+            <MonthlyView stats={currentMonthStats} payments={payments} />
           )
         : (
-            <YearlyView stats={currentYearStats} />
+            <YearlyView stats={currentYearStats} payments={payments} />
           )}
     </div>
   );

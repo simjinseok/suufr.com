@@ -63,6 +63,7 @@ export default async function Page(props: PageProps<'/lessons'>) {
           amount: true,
           paymentMethod: true,
           paidAt: true,
+          notes: true,
         },
         where: {
           deletedAt: null,

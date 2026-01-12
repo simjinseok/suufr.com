@@ -33,7 +33,7 @@ export default function ViewTabs({ view, date }: Props) {
 
   return (
     <Tabs selectedKey={view}>
-      <Tabs.ListContainer>
+      <Tabs.ListContainer className="whitespace-nowrap">
         <Tabs.List>
           <Tabs.Tab
             id="monthly"
