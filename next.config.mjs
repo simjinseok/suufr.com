@@ -14,10 +14,6 @@ const nextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-// For all available options, see:
-// https://github.com/getsentry/sentry-webpack-plugin#options
-  org: 'jssim',
-  project: 'suufr',
   telemetry: false,
 
   // Only print logs for uploading source maps in CI
