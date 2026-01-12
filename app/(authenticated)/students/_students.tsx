@@ -4,8 +4,8 @@ import type { Student } from '@/types/index';
 import { format } from 'date-fns';
 
 import React from 'react';
-import Link from 'next/link';
-import { Chip } from '@heroui/react';
+import { Chip, Link } from '@heroui/react';
+import { ArrowUpRightFromSquareIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 
 export default function Students({ students }: { students: Student[] }) {
@@ -25,6 +25,9 @@ export default function Students({ students }: { students: Student[] }) {
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               다음 수업
+            </th>
+            <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
+              링크
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               결제
@@ -78,6 +81,15 @@ export default function Students({ students }: { students: Student[] }) {
                         : (
                             <span className="text-zinc-400">-</span>
                           )}
+                    </td>
+
+                    <td className="py-3 px-4 text-center">
+                      <Link href={`/lessons?studentId=${student.id}`}>
+                        레슨 목록
+                        <Link.Icon className="ml-1.5 size-3">
+                          <ArrowUpRightFromSquareIcon />
+                        </Link.Icon>
+                      </Link>
                     </td>
 
                     <td className="py-3 px-4 text-center">
