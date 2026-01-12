@@ -35,8 +35,7 @@ export default async function Page({ searchParams }: PageProps) {
              students.notes AS notes,
              students.status AS status,
              students.created_at AS "createdAt",
-             CAST(COUNT(DISTINCT lessons.id) FILTER (WHERE lessons.is_done = true AND lessons.deleted_at IS NULL) AS INT) AS "completedSessionsCount",
-             CAST(COUNT(DISTINCT lessons.id) FILTER (WHERE lessons.deleted_at IS NULL) AS INT) AS "sessionsCount",
+             CAST(COUNT(DISTINCT lessons.id) FILTER (WHERE lessons.is_done = false AND lessons.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
              MAX(lessons.lesson_at) FILTER (WHERE lessons.is_done = true AND lessons.deleted_at IS NULL) AS "lastLessonDate",
              MIN(lessons.lesson_at) FILTER (WHERE lessons.is_done = false AND lessons.lesson_at >= NOW() AND lessons.deleted_at IS NULL) AS "nextLessonDate",
              BOOL_OR(syllabuses.id IS NOT NULL AND syllabuses.deleted_at IS NULL AND NOT EXISTS (

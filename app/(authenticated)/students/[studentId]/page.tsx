@@ -1,163 +1,74 @@
-import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
-import { notFound, redirect } from 'next/navigation';
-// import { Tabs } from '@heroui/react';
-import * as React from 'react';
+import { notFound } from 'next/navigation';
 
 import Student from './_student';
 import StatsCards from './_stats-cards';
-import Timeline from './_timeline';
-import LessonsTable from './_lessons-table';
-import PaymentsTable from './_payments-table';
 import { getSession } from '@/utils/auth';
+import { StudentStatus } from '@prisma/client';
+
+type StudentWithStats = {
+  id: number;
+  name: string;
+  status: StudentStatus;
+  notes: string;
+  remainingLessonsCount: number;
+  completedSyllabusCount: number;
+  unpaidSyllabusCount: number;
+};
 
 export default async function Page({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params;
   const { user } = await getSession();
 
-  const student = await prisma.student.findUnique({
-    select: {
-      id: true,
-      name: true,
-      status: true,
-      notes: true,
-    },
-    where: {
-      id: Number(studentId),
-      userId: user.id,
-    },
-  });
+  const [student] = await prisma.$queryRaw<StudentWithStats[]>`
+    SELECT
+      s.id,
+      s.name,
+      s.status,
+      s.notes,
+      CAST(COUNT(l.id) FILTER (
+        WHERE l.is_done = false AND l.deleted_at IS NULL
+      ) AS INT) AS "remainingLessonsCount",
+      CAST(COUNT(DISTINCT syl.id) FILTER (
+        WHERE syl.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM lessons l2
+          WHERE l2.syllabus_id = syl.id
+          AND l2.deleted_at IS NULL
+          AND l2.is_done = false
+        )
+      ) AS INT) AS "completedSyllabusCount",
+      CAST(COUNT(DISTINCT syl.id) FILTER (
+        WHERE syl.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM payments p
+          WHERE p.syllabus_id = syl.id
+          AND p.deleted_at IS NULL
+        )
+      ) AS INT) AS "unpaidSyllabusCount"
+    FROM students s
+    LEFT JOIN syllabuses syl ON syl.student_id = s.id
+    LEFT JOIN lessons l ON l.syllabus_id = syl.id
+    WHERE s.id = ${Number(studentId)}
+      AND s.user_id = ${user.id}::uuid
+      AND s.deleted_at IS NULL
+    GROUP BY s.id, s.name, s.status, s.notes
+  `;
 
   if (!student) {
     return notFound();
   }
 
-  const lessons = await prisma.lesson.findMany({
-    select: {
-      id: true,
-      lessonAt: true,
-      isDone: true,
-      notes: true,
-      feedback: {
-        select: {
-          id: true,
-          notes: true,
-        },
-      },
-      syllabus: {
-        select: {
-          title: true,
-        },
-      },
-    },
-    where: {
-      syllabus: {
-        studentId: student.id,
-      },
-      deletedAt: null,
-    },
-    orderBy: {
-      lessonAt: 'desc',
-    },
-  });
-
   const stats = {
-    totalLessons: lessons.length,
-    completedLessons: lessons.filter(l => l.isDone).length,
-    upcomingLessons: lessons.filter(l => !l.isDone).length,
+    remainingLessonsCount: student.remainingLessonsCount,
+    completedSyllabusCount: student.completedSyllabusCount,
+    unpaidSyllabusCount: student.unpaidSyllabusCount,
   };
 
-  const comments = await prisma.studentComment.findMany({
-    select: {
-      id: true,
-      content: true,
-      createdAt: true,
-    },
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  const statusHistories = await prisma.studentStatusHistory.findMany({
-    select: {
-      id: true,
-      changedAt: true,
-      status: true,
-      notes: true,
-    },
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      changedAt: 'desc',
-    },
-  });
-
-  const payments = await prisma.payment.findMany({
-    select: {
-      id: true,
-      amount: true,
-      paymentMethod: true,
-      paidAt: true,
-      notes: true,
-      syllabus: {
-        select: {
-          title: true,
-        },
-      },
-    },
-    where: {
-      syllabus: {
-        studentId: student.id,
-      },
-      deletedAt: null,
-    },
-    orderBy: {
-      paidAt: 'desc',
-    },
-  });
-
   return (
-    <div>
+    <>
       <Student student={student} />
-
       <StatsCards stats={stats} />
-
-      {/*<Tabs>*/}
-      {/*  <Tabs.ListContainer>*/}
-      {/*    <Tabs.List>*/}
-      {/*      <Tabs.Tab id="timeline">*/}
-      {/*        타임라인*/}
-      {/*        <Tabs.Indicator />*/}
-      {/*      </Tabs.Tab>*/}
-      {/*      <Tabs.Tab id="lessons">*/}
-      {/*        수업내역*/}
-      {/*        <Tabs.Indicator />*/}
-      {/*      </Tabs.Tab>*/}
-      {/*      <Tabs.Tab id="payments">*/}
-      {/*        입금내역*/}
-      {/*        <Tabs.Indicator />*/}
-      {/*      </Tabs.Tab>*/}
-      {/*    </Tabs.List>*/}
-      {/*  </Tabs.ListContainer>*/}
-
-      {/*  <Tabs.Panel id="timeline">*/}
-      {/*    <Timeline comments={comments} statusHistories={statusHistories} />*/}
-      {/*  </Tabs.Panel>*/}
-
-      {/*  <Tabs.Panel id="lessons">*/}
-      {/*    <LessonsTable lessons={lessons} />*/}
-      {/*  </Tabs.Panel>*/}
-
-      {/*  <Tabs.Panel id="payments">*/}
-      {/*    <PaymentsTable payments={payments} />*/}
-      {/*  </Tabs.Panel>*/}
-      {/*</Tabs>*/}
-    </div>
+    </>
   );
 }

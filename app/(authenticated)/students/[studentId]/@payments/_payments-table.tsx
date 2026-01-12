@@ -1,21 +1,24 @@
 'use client';
 
+import { Chip } from '@heroui/react';
 import { format } from 'date-fns';
 import { numberToHangulMixed } from 'es-hangul';
 
-type Payment = {
+type Syllabus = {
   id: number;
-  amount: number;
-  paymentMethod: string;
-  paidAt: Date;
-  notes: string | null;
-  syllabus: {
-    title: string;
-  };
+  title: string;
+  createdAt: Date;
+  payment: {
+    id: number;
+    amount: number;
+    paymentMethod: string;
+    paidAt: Date;
+    notes: string | null;
+  } | null;
 };
 
 type Props = {
-  payments: Payment[];
+  syllabuses: Syllabus[];
 };
 
 const PAYMENT_METHODS: Record<string, string> = {
@@ -25,16 +28,21 @@ const PAYMENT_METHODS: Record<string, string> = {
   none: '미지정',
 };
 
-export default function PaymentsTable({ payments }: Props) {
-  if (payments.length === 0) {
+export default function PaymentsTable({ syllabuses }: Props) {
+  if (syllabuses.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-500">
-        입금 내역이 없습니다
+        등록된 계획이 없습니다
       </div>
     );
   }
 
-  const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+  const paidSyllabuses = syllabuses.filter((s) => s.payment !== null);
+  const unpaidSyllabuses = syllabuses.filter((s) => s.payment === null);
+  const totalAmount = paidSyllabuses.reduce(
+    (sum, s) => sum + (s.payment?.amount ?? 0),
+    0
+  );
 
   return (
     <div className="space-y-4">
@@ -46,7 +54,13 @@ export default function PaymentsTable({ payments }: Props) {
           </span>
         </div>
         <div className="mt-1 text-sm text-zinc-500">
-          총 {payments.length}건
+          결제 {paidSyllabuses.length}건
+          {unpaidSyllabuses.length > 0 && (
+            <span className="text-warning-600 dark:text-warning-400">
+              {' '}
+              · 미결제 {unpaidSyllabuses.length}건
+            </span>
+          )}
         </div>
       </div>
 
@@ -72,29 +86,40 @@ export default function PaymentsTable({ payments }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {payments.map((payment) => (
+            {syllabuses.map((syllabus) => (
               <tr
-                key={payment.id}
+                key={syllabus.id}
                 className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
               >
                 <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
-                  {format(new Date(payment.paidAt), 'yyyy-MM-dd')}
+                  {syllabus.payment ? (
+                    format(new Date(syllabus.payment.paidAt), 'yyyy-MM-dd')
+                  ) : (
+                    <Chip size="sm" color="warning" variant="flat">
+                      결제필요
+                    </Chip>
+                  )}
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-900 dark:text-white">
-                  {payment.syllabus.title}
+                  {syllabus.title}
                 </td>
 
                 <td className="py-3 px-4 text-sm tabular-nums text-right font-semibold text-zinc-900 dark:text-white">
-                  {numberToHangulMixed(payment.amount)}원
+                  {syllabus.payment
+                    ? `${numberToHangulMixed(syllabus.payment.amount)}원`
+                    : '-'}
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {PAYMENT_METHODS[payment.paymentMethod] || payment.paymentMethod}
+                  {syllabus.payment
+                    ? PAYMENT_METHODS[syllabus.payment.paymentMethod] ||
+                      syllabus.payment.paymentMethod
+                    : '-'}
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-                  {payment.notes || '-'}
+                  {syllabus.payment?.notes || '-'}
                 </td>
               </tr>
             ))}
