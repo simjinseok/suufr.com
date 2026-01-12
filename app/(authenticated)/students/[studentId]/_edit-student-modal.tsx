@@ -17,7 +17,7 @@ import {
   Label,
 } from '@heroui/react';
 
-import { updateStudent } from '@/actions/update-student';
+import { updateStudent } from '@/actions/student';
 import { useForm, Controller } from 'react-hook-form';
 import { Student } from '@/types/index';
 
@@ -84,7 +84,7 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
                   action={formAction}
                   validationErrors={state?.errors}
                 >
-                  <input type="hidden" name="id" value={student.id} />
+                  <input type="hidden" name="studentId" value={student.id} />
                   <Controller
                     control={control}
                     name="name"

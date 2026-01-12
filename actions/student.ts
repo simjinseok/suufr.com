@@ -7,6 +7,74 @@ import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
 import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
+import { ServerActionState } from '@/types/index';
+import { getSession } from '@/utils/auth';
+
+const updateStudentSchema = z.object({
+  name: z.string().min(1),
+  notes: z.string(),
+});
+
+type UpdateStudentState = ServerActionState<{
+
+}>;
+export async function updateStudent(prevState: UpdateStudentState, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'createStudent',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const { user } = await getSession();
+      const { studentId, ...data } = Object.fromEntries(formData.entries());
+      const state: UpdateStudentState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
+      if (!user) {
+        return state;
+      }
+
+      const student = await prisma.student.findUnique({
+        where: {
+          id: Number(studentId),
+          userId: user.id,
+          deletedAt: null,
+        },
+      });
+
+      if (!student) {
+        return state;
+      }
+
+      const validationResult = updateStudentSchema.safeParse(data);
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
+      const result = await prisma.student.update({
+        where: {
+          id: student.id,
+        },
+        data: {
+          ...validationResult.data,
+          updatedAt: new Date(),
+        },
+      });
+
+      revalidatePath('/students', 'page');
+      revalidatePath('/students/[studentId]', 'page');
+      state.success = true;
+      state.message = '수강생 정보를 수정하였습니다.';
+      return state;
+    },
+  );
+}
+
 const createSchema = z.object({
   studentId: z.coerce.number(),
   changedAt: z.string().transform((val, ctx) => {
@@ -56,7 +124,7 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
       }
 
       const data = Object.fromEntries(formData);
-      console.log('data', data)
+      console.log('data', data);
       const validationResult = createSchema.safeParse(data);
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
