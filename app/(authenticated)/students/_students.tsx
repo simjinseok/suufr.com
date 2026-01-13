@@ -27,16 +27,10 @@ export default function Students({ students }: { students: Student[] }) {
               다음 수업
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-              링크
-            </th>
-            <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               결제
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               남은 수업
-            </th>
-            <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-              등록일
             </th>
           </tr>
         </thead>
@@ -84,15 +78,6 @@ export default function Students({ students }: { students: Student[] }) {
                     </td>
 
                     <td className="py-3 px-4 text-center">
-                      <Link href={`/lessons?studentId=${student.id}`}>
-                        레슨 목록
-                        <Link.Icon className="ml-1.5 size-3">
-                          <ArrowUpRightFromSquareIcon />
-                        </Link.Icon>
-                      </Link>
-                    </td>
-
-                    <td className="py-3 px-4 text-center">
                       {student.hasUnpaidLesson
                         ? (
                             <Chip variant="soft" color="danger" size="sm">
@@ -110,13 +95,6 @@ export default function Students({ students }: { students: Student[] }) {
                       {(student.remainingSessionsCount || 0)}
                       회
                     </td>
-
-                    <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
-                      {student.createdAt
-                        ? format(new Date(student.createdAt), 'yyyy-MM-dd')
-                        : '-'}
-                    </td>
-
                   </tr>
                 ))
               )
