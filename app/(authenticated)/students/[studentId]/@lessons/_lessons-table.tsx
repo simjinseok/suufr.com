@@ -1,8 +1,11 @@
 'use client';
 
 import { format } from 'date-fns';
-import { Chip } from '@heroui/react';
-import { CheckCircle, Circle, MessageSquare } from 'lucide-react';
+import { Button, Chip, Modal } from '@heroui/react';
+import { CheckCircle, Circle, CircleCheckBigIcon, CircleIcon, MessageSquare } from 'lucide-react';
+import React from 'react';
+import EditSessionModal from '@/components/sessions/edit-session-modal';
+import UpdateFeedbackModal from '@/components/sessions/update-feedback-modal';
 
 type Lesson = {
   id: number;
@@ -36,35 +39,54 @@ export default function LessonsTable({ lessons }: Props) {
       <table className="w-full">
         <thead className="bg-zinc-50 dark:bg-zinc-800/50">
           <tr>
+            <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">완료</th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               날짜
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-              계획
+              시간
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
               메모
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-              상태
+              피드백
             </th>
             <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-              피드백
+              수정
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-          {lessons.map((lesson) => (
+          {lessons.map(lesson => (
             <tr
               key={lesson.id}
               className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
             >
+              <td className="py-3 px-4">
+                {lesson.isDone
+                  ? (
+                      <CircleCheckBigIcon
+                        width={20}
+                        height={20}
+                        className="text-green-600"
+                      />
+                    )
+                  : (
+                      <CircleIcon
+                        width={20}
+                        height={20}
+                        className="text-amber-500"
+                      />
+                    )}
+              </td>
+
               <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
                 {format(new Date(lesson.lessonAt), 'yyyy-MM-dd')}
               </td>
 
-              <td className="py-3 px-4 text-sm font-medium text-zinc-900 dark:text-white">
-                {lesson.syllabus.title}
+              <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
+                {format(new Date(lesson.lessonAt), 'hh시 mm분')}
               </td>
 
               <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
@@ -73,27 +95,23 @@ export default function LessonsTable({ lessons }: Props) {
 
               <td className="py-3 px-4">
                 {lesson.isDone ? (
-                  <Chip variant="soft" color="success" size="sm">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    완료
-                  </Chip>
+                  <Modal>
+                    <Button variant={lesson.feedback ? 'primary' : 'secondary'}>
+                      {lesson.feedback ? '피드백 보기' : '피드백 작성'}
+                    </Button>
+                    <UpdateFeedbackModal lesson={lesson} />
+                  </Modal>
                 ) : (
-                  <Chip variant="soft" color="default" size="sm">
-                    <Circle className="w-3 h-3 mr-1" />
-                    예정
-                  </Chip>
+                  <span className="text-sm text-zinc-400">-</span>
                 )}
               </td>
-
-              <td className="py-3 px-4">
-                {lesson.feedback ? (
-                  <Chip variant="soft" color="accent" size="sm">
-                    <MessageSquare className="w-3 h-3 mr-1" />
-                    작성됨
-                  </Chip>
-                ) : (
-                  <span className="text-zinc-400 text-sm">-</span>
-                )}
+              <td>
+                <Modal>
+                  <Button variant="primary">수정</Button>
+                  <EditSessionModal
+                    session={lesson}
+                  />
+                </Modal>
               </td>
             </tr>
           ))}

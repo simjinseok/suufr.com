@@ -217,3 +217,85 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
     },
   );
 }
+
+type UpdateFeedbackState = {
+  success: boolean;
+  message?: string;
+  timestamp: number;
+};
+
+export async function updateFeedback(prevState: UpdateFeedbackState, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'updateFeedback',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const state: UpdateFeedbackState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
+      const session = await getSession();
+      if (!session?.user) {
+        return state;
+      }
+
+      const lessonId = Number(formData.get('lessonId'));
+      const notes = formData.get('notes') as string;
+      const shouldDelete = formData.get('delete') === 'true';
+
+      const lesson = await prisma.lesson.findUnique({
+        where: {
+          id: lessonId,
+          deletedAt: null,
+          syllabus: {
+            deletedAt: null,
+            student: {
+              userId: session.user.id,
+            },
+          },
+        },
+        include: {
+          feedback: true,
+        },
+      });
+
+      if (!lesson) {
+        state.message = '존재하지 않는 수업입니다.';
+        return state;
+      }
+
+      if (!lesson.isDone) {
+        state.message = '완료된 수업만 피드백을 작성할 수 있습니다.';
+        return state;
+      }
+
+      if (shouldDelete) {
+        if (lesson.feedback) {
+          await prisma.feedback.delete({
+            where: { id: lesson.feedback.id },
+          });
+        }
+        state.success = true;
+        state.message = '피드백을 삭제하였습니다.';
+      } else {
+        await prisma.feedback.upsert({
+          where: { lessonId },
+          create: { lessonId, notes },
+          update: { notes, updatedAt: new Date() },
+        });
+        state.success = true;
+        state.message = '피드백을 저장하였습니다.';
+      }
+
+      revalidatePath('/sessions', 'page');
+      revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'page');
+
+      return state;
+    },
+  );
+}

@@ -15,8 +15,14 @@ import { fromDate, toCalendarDateTime } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { updateSession, removeSession } from '@/actions/session';
+import {Session} from "node:inspector";
 
-export default function EditSessionModal({ isOpen, onOpenChange, session }) {
+interface Props {
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+  session: Session;
+}
+export default function EditSessionModal({ isOpen, onOpenChange, session }: Props) {
   const formId = React.useId();
   const { control } = useForm({
     values: {
