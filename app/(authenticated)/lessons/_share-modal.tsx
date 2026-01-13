@@ -83,12 +83,12 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
 
   // 클립보드 복사
   const handleCopy = React.useCallback(async () => {
-    if (shareState?.share?.url) {
-      await navigator.clipboard.writeText(shareState.share.url);
+    if (shareState) {
+      await navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_BASE_URL}/sl/${shareState.uuid}/`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [shareState?.share?.url]);
+  }, [shareState]);
 
   return (
     <Modal.Backdrop>
@@ -108,7 +108,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
 
                 {shareState ? (
                   // 활성 공유 링크가 있는 경우
-                  <div className="space-y-4">
+                  <div className="p-1 space-y-4">
                     <div className="p-3 rounded-lg bg-gray-50">
                       <Label className="text-xs text-gray-500">공유 링크</Label>
                       <div className="flex items-center gap-2 mt-1">
@@ -154,7 +154,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
                     <NumberField
                       value={expireDays}
                       minValue={1}
-                      maxValue={90}
+                      maxValue={120}
                       onChange={setExpireDays}
                     >
                       <Label>만료 기간 (일)</Label>
