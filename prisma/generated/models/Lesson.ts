@@ -244,8 +244,8 @@ export type LessonWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Lesson"> | Date | string | null
   syllabusId?: Prisma.IntFilter<"Lesson"> | number
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
   feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
+  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
 }
 
 export type LessonOrderByWithRelationInput = {
@@ -257,8 +257,8 @@ export type LessonOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
-  syllabus?: Prisma.SyllabusOrderByWithRelationInput
   feedback?: Prisma.FeedbackOrderByWithRelationInput
+  syllabus?: Prisma.SyllabusOrderByWithRelationInput
 }
 
 export type LessonWhereUniqueInput = Prisma.AtLeast<{
@@ -273,8 +273,8 @@ export type LessonWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Lesson"> | Date | string | null
   syllabusId?: Prisma.IntFilter<"Lesson"> | number
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
   feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
+  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
 }, "id">
 
 export type LessonOrderByWithAggregationInput = {
@@ -314,8 +314,8 @@ export type LessonCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
   feedback?: Prisma.FeedbackCreateNestedOneWithoutLessonInput
+  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
 }
 
 export type LessonUncheckedCreateInput = {
@@ -337,8 +337,8 @@ export type LessonUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
   feedback?: Prisma.FeedbackUpdateOneWithoutLessonNestedInput
+  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
 }
 
 export type LessonUncheckedUpdateInput = {
@@ -382,16 +382,6 @@ export type LessonUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
-export type LessonListRelationFilter = {
-  every?: Prisma.LessonWhereInput
-  some?: Prisma.LessonWhereInput
-  none?: Prisma.LessonWhereInput
-}
-
-export type LessonOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
 }
 
 export type LessonCountOrderByAggregateInput = {
@@ -442,6 +432,34 @@ export type LessonScalarRelationFilter = {
   isNot?: Prisma.LessonWhereInput
 }
 
+export type LessonListRelationFilter = {
+  every?: Prisma.LessonWhereInput
+  some?: Prisma.LessonWhereInput
+  none?: Prisma.LessonWhereInput
+}
+
+export type LessonOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type LessonCreateNestedOneWithoutFeedbackInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
+  connect?: Prisma.LessonWhereUniqueInput
+}
+
+export type LessonUpdateOneRequiredWithoutFeedbackNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
+  upsert?: Prisma.LessonUpsertWithoutFeedbackInput
+  connect?: Prisma.LessonWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutFeedbackInput, Prisma.LessonUpdateWithoutFeedbackInput>, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
+}
+
 export type LessonCreateNestedManyWithoutSyllabusInput = {
   create?: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput> | Prisma.LessonCreateWithoutSyllabusInput[] | Prisma.LessonUncheckedCreateWithoutSyllabusInput[]
   connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSyllabusInput | Prisma.LessonCreateOrConnectWithoutSyllabusInput[]
@@ -484,22 +502,62 @@ export type LessonUncheckedUpdateManyWithoutSyllabusNestedInput = {
   deleteMany?: Prisma.LessonScalarWhereInput | Prisma.LessonScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type LessonCreateWithoutFeedbackInput = {
+  notes: string
+  lessonAt: Date | string
+  isDone?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
 }
 
-export type LessonCreateNestedOneWithoutFeedbackInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
-  connect?: Prisma.LessonWhereUniqueInput
+export type LessonUncheckedCreateWithoutFeedbackInput = {
+  id?: number
+  notes: string
+  lessonAt: Date | string
+  isDone?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  syllabusId: number
 }
 
-export type LessonUpdateOneRequiredWithoutFeedbackNestedInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
-  upsert?: Prisma.LessonUpsertWithoutFeedbackInput
-  connect?: Prisma.LessonWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutFeedbackInput, Prisma.LessonUpdateWithoutFeedbackInput>, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
+export type LessonCreateOrConnectWithoutFeedbackInput = {
+  where: Prisma.LessonWhereUniqueInput
+  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
+}
+
+export type LessonUpsertWithoutFeedbackInput = {
+  update: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
+  where?: Prisma.LessonWhereInput
+}
+
+export type LessonUpdateToOneWithWhereWithoutFeedbackInput = {
+  where?: Prisma.LessonWhereInput
+  data: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
+}
+
+export type LessonUpdateWithoutFeedbackInput = {
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
+}
+
+export type LessonUncheckedUpdateWithoutFeedbackInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type LessonCreateWithoutSyllabusInput = {
@@ -563,64 +621,6 @@ export type LessonScalarWhereInput = {
   syllabusId?: Prisma.IntFilter<"Lesson"> | number
 }
 
-export type LessonCreateWithoutFeedbackInput = {
-  notes: string
-  lessonAt: Date | string
-  isDone?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
-}
-
-export type LessonUncheckedCreateWithoutFeedbackInput = {
-  id?: number
-  notes: string
-  lessonAt: Date | string
-  isDone?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  syllabusId: number
-}
-
-export type LessonCreateOrConnectWithoutFeedbackInput = {
-  where: Prisma.LessonWhereUniqueInput
-  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-}
-
-export type LessonUpsertWithoutFeedbackInput = {
-  update: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
-  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  where?: Prisma.LessonWhereInput
-}
-
-export type LessonUpdateToOneWithWhereWithoutFeedbackInput = {
-  where?: Prisma.LessonWhereInput
-  data: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
-}
-
-export type LessonUpdateWithoutFeedbackInput = {
-  notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
-}
-
-export type LessonUncheckedUpdateWithoutFeedbackInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
 export type LessonCreateManySyllabusInput = {
   id?: number
   notes: string
@@ -673,8 +673,8 @@ export type LessonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   updatedAt?: boolean
   deletedAt?: boolean
   syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
   feedback?: boolean | Prisma.Lesson$feedbackArgs<ExtArgs>
+  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lesson"]>
 
 export type LessonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -714,8 +714,8 @@ export type LessonSelectScalar = {
 
 export type LessonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "lessonAt" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "syllabusId", ExtArgs["result"]["lesson"]>
 export type LessonInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
   feedback?: boolean | Prisma.Lesson$feedbackArgs<ExtArgs>
+  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
 }
 export type LessonIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
@@ -727,8 +727,8 @@ export type LessonIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type $LessonPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Lesson"
   objects: {
-    syllabus: Prisma.$SyllabusPayload<ExtArgs>
     feedback: Prisma.$FeedbackPayload<ExtArgs> | null
+    syllabus: Prisma.$SyllabusPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1133,8 +1133,8 @@ readonly fields: LessonFieldRefs;
  */
 export interface Prisma__LessonClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  syllabus<T extends Prisma.SyllabusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SyllabusDefaultArgs<ExtArgs>>): Prisma.Prisma__SyllabusClient<runtime.Types.Result.GetResult<Prisma.$SyllabusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   feedback<T extends Prisma.Lesson$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lesson$feedbackArgs<ExtArgs>>): Prisma.Prisma__FeedbackClient<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  syllabus<T extends Prisma.SyllabusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SyllabusDefaultArgs<ExtArgs>>): Prisma.Prisma__SyllabusClient<runtime.Types.Result.GetResult<Prisma.$SyllabusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

@@ -236,9 +236,10 @@ export type SyllabusWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Syllabus"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Syllabus"> | Date | string | null
   studentId?: Prisma.IntFilter<"Syllabus"> | number
-  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
-  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  shares?: Prisma.LessonShareListRelationFilter
   lessons?: Prisma.LessonListRelationFilter
+  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
 }
 
 export type SyllabusOrderByWithRelationInput = {
@@ -249,9 +250,10 @@ export type SyllabusOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   studentId?: Prisma.SortOrder
-  student?: Prisma.StudentOrderByWithRelationInput
-  payment?: Prisma.PaymentOrderByWithRelationInput
+  shares?: Prisma.LessonShareOrderByRelationAggregateInput
   lessons?: Prisma.LessonOrderByRelationAggregateInput
+  payment?: Prisma.PaymentOrderByWithRelationInput
+  student?: Prisma.StudentOrderByWithRelationInput
 }
 
 export type SyllabusWhereUniqueInput = Prisma.AtLeast<{
@@ -265,9 +267,10 @@ export type SyllabusWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Syllabus"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Syllabus"> | Date | string | null
   studentId?: Prisma.IntFilter<"Syllabus"> | number
-  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
-  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  shares?: Prisma.LessonShareListRelationFilter
   lessons?: Prisma.LessonListRelationFilter
+  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
 }, "id">
 
 export type SyllabusOrderByWithAggregationInput = {
@@ -304,9 +307,10 @@ export type SyllabusCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
-  payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
+  shares?: Prisma.LessonShareCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
+  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
 }
 
 export type SyllabusUncheckedCreateInput = {
@@ -317,8 +321,9 @@ export type SyllabusUncheckedCreateInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   studentId: number
-  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
+  shares?: Prisma.LessonShareUncheckedCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
 }
 
 export type SyllabusUpdateInput = {
@@ -327,9 +332,10 @@ export type SyllabusUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
-  payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
+  shares?: Prisma.LessonShareUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
+  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
 }
 
 export type SyllabusUncheckedUpdateInput = {
@@ -340,8 +346,9 @@ export type SyllabusUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   studentId?: Prisma.IntFieldUpdateOperationsInput | number
-  payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
+  shares?: Prisma.LessonShareUncheckedUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUncheckedUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
 }
 
 export type SyllabusCreateManyInput = {
@@ -382,6 +389,11 @@ export type SyllabusOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type SyllabusScalarRelationFilter = {
+  is?: Prisma.SyllabusWhereInput
+  isNot?: Prisma.SyllabusWhereInput
+}
+
 export type SyllabusCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
@@ -420,11 +432,6 @@ export type SyllabusMinOrderByAggregateInput = {
 export type SyllabusSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   studentId?: Prisma.SortOrder
-}
-
-export type SyllabusScalarRelationFilter = {
-  is?: Prisma.SyllabusWhereInput
-  isNot?: Prisma.SyllabusWhereInput
 }
 
 export type SyllabusCreateNestedManyWithoutStudentInput = {
@@ -497,14 +504,29 @@ export type SyllabusUpdateOneRequiredWithoutPaymentNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SyllabusUpdateToOneWithWhereWithoutPaymentInput, Prisma.SyllabusUpdateWithoutPaymentInput>, Prisma.SyllabusUncheckedUpdateWithoutPaymentInput>
 }
 
+export type SyllabusCreateNestedOneWithoutSharesInput = {
+  create?: Prisma.XOR<Prisma.SyllabusCreateWithoutSharesInput, Prisma.SyllabusUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.SyllabusCreateOrConnectWithoutSharesInput
+  connect?: Prisma.SyllabusWhereUniqueInput
+}
+
+export type SyllabusUpdateOneRequiredWithoutSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.SyllabusCreateWithoutSharesInput, Prisma.SyllabusUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.SyllabusCreateOrConnectWithoutSharesInput
+  upsert?: Prisma.SyllabusUpsertWithoutSharesInput
+  connect?: Prisma.SyllabusWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SyllabusUpdateToOneWithWhereWithoutSharesInput, Prisma.SyllabusUpdateWithoutSharesInput>, Prisma.SyllabusUncheckedUpdateWithoutSharesInput>
+}
+
 export type SyllabusCreateWithoutStudentInput = {
   title: string
   notes: string
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
+  shares?: Prisma.LessonShareCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
 }
 
 export type SyllabusUncheckedCreateWithoutStudentInput = {
@@ -514,8 +536,9 @@ export type SyllabusUncheckedCreateWithoutStudentInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
+  shares?: Prisma.LessonShareUncheckedCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
 }
 
 export type SyllabusCreateOrConnectWithoutStudentInput = {
@@ -563,8 +586,9 @@ export type SyllabusCreateWithoutLessonsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
+  shares?: Prisma.LessonShareCreateNestedManyWithoutSyllabusInput
   payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
+  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
 }
 
 export type SyllabusUncheckedCreateWithoutLessonsInput = {
@@ -575,6 +599,7 @@ export type SyllabusUncheckedCreateWithoutLessonsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   studentId: number
+  shares?: Prisma.LessonShareUncheckedCreateNestedManyWithoutSyllabusInput
   payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
 }
 
@@ -600,8 +625,9 @@ export type SyllabusUpdateWithoutLessonsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
+  shares?: Prisma.LessonShareUpdateManyWithoutSyllabusNestedInput
   payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
+  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
 }
 
 export type SyllabusUncheckedUpdateWithoutLessonsInput = {
@@ -612,6 +638,7 @@ export type SyllabusUncheckedUpdateWithoutLessonsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  shares?: Prisma.LessonShareUncheckedUpdateManyWithoutSyllabusNestedInput
   payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
 }
 
@@ -621,8 +648,9 @@ export type SyllabusCreateWithoutPaymentInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
+  shares?: Prisma.LessonShareCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonCreateNestedManyWithoutSyllabusInput
+  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
 }
 
 export type SyllabusUncheckedCreateWithoutPaymentInput = {
@@ -633,6 +661,7 @@ export type SyllabusUncheckedCreateWithoutPaymentInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   studentId: number
+  shares?: Prisma.LessonShareUncheckedCreateNestedManyWithoutSyllabusInput
   lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutSyllabusInput
 }
 
@@ -658,8 +687,9 @@ export type SyllabusUpdateWithoutPaymentInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
+  shares?: Prisma.LessonShareUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUpdateManyWithoutSyllabusNestedInput
+  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
 }
 
 export type SyllabusUncheckedUpdateWithoutPaymentInput = {
@@ -670,7 +700,70 @@ export type SyllabusUncheckedUpdateWithoutPaymentInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  shares?: Prisma.LessonShareUncheckedUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUncheckedUpdateManyWithoutSyllabusNestedInput
+}
+
+export type SyllabusCreateWithoutSharesInput = {
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  lessons?: Prisma.LessonCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutSyllabusInput
+  student: Prisma.StudentCreateNestedOneWithoutSyllabusesInput
+}
+
+export type SyllabusUncheckedCreateWithoutSharesInput = {
+  id?: number
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  studentId: number
+  lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutSyllabusInput
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutSyllabusInput
+}
+
+export type SyllabusCreateOrConnectWithoutSharesInput = {
+  where: Prisma.SyllabusWhereUniqueInput
+  create: Prisma.XOR<Prisma.SyllabusCreateWithoutSharesInput, Prisma.SyllabusUncheckedCreateWithoutSharesInput>
+}
+
+export type SyllabusUpsertWithoutSharesInput = {
+  update: Prisma.XOR<Prisma.SyllabusUpdateWithoutSharesInput, Prisma.SyllabusUncheckedUpdateWithoutSharesInput>
+  create: Prisma.XOR<Prisma.SyllabusCreateWithoutSharesInput, Prisma.SyllabusUncheckedCreateWithoutSharesInput>
+  where?: Prisma.SyllabusWhereInput
+}
+
+export type SyllabusUpdateToOneWithWhereWithoutSharesInput = {
+  where?: Prisma.SyllabusWhereInput
+  data: Prisma.XOR<Prisma.SyllabusUpdateWithoutSharesInput, Prisma.SyllabusUncheckedUpdateWithoutSharesInput>
+}
+
+export type SyllabusUpdateWithoutSharesInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lessons?: Prisma.LessonUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
+  student?: Prisma.StudentUpdateOneRequiredWithoutSyllabusesNestedInput
+}
+
+export type SyllabusUncheckedUpdateWithoutSharesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  lessons?: Prisma.LessonUncheckedUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
 }
 
 export type SyllabusCreateManyStudentInput = {
@@ -688,8 +781,9 @@ export type SyllabusUpdateWithoutStudentInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
+  shares?: Prisma.LessonShareUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutSyllabusNestedInput
 }
 
 export type SyllabusUncheckedUpdateWithoutStudentInput = {
@@ -699,8 +793,9 @@ export type SyllabusUncheckedUpdateWithoutStudentInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
+  shares?: Prisma.LessonShareUncheckedUpdateManyWithoutSyllabusNestedInput
   lessons?: Prisma.LessonUncheckedUpdateManyWithoutSyllabusNestedInput
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutSyllabusNestedInput
 }
 
 export type SyllabusUncheckedUpdateManyWithoutStudentInput = {
@@ -718,10 +813,12 @@ export type SyllabusUncheckedUpdateManyWithoutStudentInput = {
  */
 
 export type SyllabusCountOutputType = {
+  shares: number
   lessons: number
 }
 
 export type SyllabusCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  shares?: boolean | SyllabusCountOutputTypeCountSharesArgs
   lessons?: boolean | SyllabusCountOutputTypeCountLessonsArgs
 }
 
@@ -733,6 +830,13 @@ export type SyllabusCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
    * Select specific fields to fetch from the SyllabusCountOutputType
    */
   select?: Prisma.SyllabusCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * SyllabusCountOutputType without action
+ */
+export type SyllabusCountOutputTypeCountSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LessonShareWhereInput
 }
 
 /**
@@ -751,9 +855,10 @@ export type SyllabusSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   updatedAt?: boolean
   deletedAt?: boolean
   studentId?: boolean
-  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
-  payment?: boolean | Prisma.Syllabus$paymentArgs<ExtArgs>
+  shares?: boolean | Prisma.Syllabus$sharesArgs<ExtArgs>
   lessons?: boolean | Prisma.Syllabus$lessonsArgs<ExtArgs>
+  payment?: boolean | Prisma.Syllabus$paymentArgs<ExtArgs>
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.SyllabusCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["syllabus"]>
 
@@ -791,9 +896,10 @@ export type SyllabusSelectScalar = {
 
 export type SyllabusOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["syllabus"]>
 export type SyllabusInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
-  payment?: boolean | Prisma.Syllabus$paymentArgs<ExtArgs>
+  shares?: boolean | Prisma.Syllabus$sharesArgs<ExtArgs>
   lessons?: boolean | Prisma.Syllabus$lessonsArgs<ExtArgs>
+  payment?: boolean | Prisma.Syllabus$paymentArgs<ExtArgs>
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.SyllabusCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SyllabusIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -806,9 +912,10 @@ export type SyllabusIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 export type $SyllabusPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Syllabus"
   objects: {
-    student: Prisma.$StudentPayload<ExtArgs>
-    payment: Prisma.$PaymentPayload<ExtArgs> | null
+    shares: Prisma.$LessonSharePayload<ExtArgs>[]
     lessons: Prisma.$LessonPayload<ExtArgs>[]
+    payment: Prisma.$PaymentPayload<ExtArgs> | null
+    student: Prisma.$StudentPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1212,9 +1319,10 @@ readonly fields: SyllabusFieldRefs;
  */
 export interface Prisma__SyllabusClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  student<T extends Prisma.StudentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StudentDefaultArgs<ExtArgs>>): Prisma.Prisma__StudentClient<runtime.Types.Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  payment<T extends Prisma.Syllabus$paymentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Syllabus$paymentArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  shares<T extends Prisma.Syllabus$sharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Syllabus$sharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LessonSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lessons<T extends Prisma.Syllabus$lessonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Syllabus$lessonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LessonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payment<T extends Prisma.Syllabus$paymentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Syllabus$paymentArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  student<T extends Prisma.StudentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StudentDefaultArgs<ExtArgs>>): Prisma.Prisma__StudentClient<runtime.Types.Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1647,22 +1755,27 @@ export type SyllabusDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * Syllabus.payment
+ * Syllabus.shares
  */
-export type Syllabus$paymentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Syllabus$sharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Payment
+   * Select specific fields to fetch from the LessonShare
    */
-  select?: Prisma.PaymentSelect<ExtArgs> | null
+  select?: Prisma.LessonShareSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Payment
+   * Omit specific fields from the LessonShare
    */
-  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  omit?: Prisma.LessonShareOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.PaymentInclude<ExtArgs> | null
-  where?: Prisma.PaymentWhereInput
+  include?: Prisma.LessonShareInclude<ExtArgs> | null
+  where?: Prisma.LessonShareWhereInput
+  orderBy?: Prisma.LessonShareOrderByWithRelationInput | Prisma.LessonShareOrderByWithRelationInput[]
+  cursor?: Prisma.LessonShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LessonShareScalarFieldEnum | Prisma.LessonShareScalarFieldEnum[]
 }
 
 /**
@@ -1687,6 +1800,25 @@ export type Syllabus$lessonsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.LessonScalarFieldEnum | Prisma.LessonScalarFieldEnum[]
+}
+
+/**
+ * Syllabus.payment
+ */
+export type Syllabus$paymentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Payment
+   */
+  select?: Prisma.PaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Payment
+   */
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
 }
 
 /**

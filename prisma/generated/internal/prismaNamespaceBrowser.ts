@@ -52,13 +52,14 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Student: 'Student',
-  Syllabus: 'Syllabus',
   Lesson: 'Lesson',
   Feedback: 'Feedback',
   Payment: 'Payment',
   Meeting: 'Meeting',
   StudentComment: 'StudentComment',
-  StudentStatusHistory: 'StudentStatusHistory'
+  StudentStatusHistory: 'StudentStatusHistory',
+  LessonShare: 'LessonShare',
+  Syllabus: 'Syllabus'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -89,19 +90,6 @@ export const StudentScalarFieldEnum = {
 } as const
 
 export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeof StudentScalarFieldEnum]
-
-
-export const SyllabusScalarFieldEnum = {
-  id: 'id',
-  title: 'title',
-  notes: 'notes',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  studentId: 'studentId'
-} as const
-
-export type SyllabusScalarFieldEnum = (typeof SyllabusScalarFieldEnum)[keyof typeof SyllabusScalarFieldEnum]
 
 
 export const LessonScalarFieldEnum = {
@@ -149,13 +137,13 @@ export const MeetingScalarFieldEnum = {
   id: 'id',
   name: 'name',
   notes: 'notes',
-  phone: 'phone',
-  isDone: 'isDone',
-  meetingAt: 'meetingAt',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  meetingAt: 'meetingAt',
+  isDone: 'isDone',
+  phone: 'phone'
 } as const
 
 export type MeetingScalarFieldEnum = (typeof MeetingScalarFieldEnum)[keyof typeof MeetingScalarFieldEnum]
@@ -185,6 +173,32 @@ export const StudentStatusHistoryScalarFieldEnum = {
 } as const
 
 export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistoryScalarFieldEnum)[keyof typeof StudentStatusHistoryScalarFieldEnum]
+
+
+export const LessonShareScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  syllabusId: 'syllabusId',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type LessonShareScalarFieldEnum = (typeof LessonShareScalarFieldEnum)[keyof typeof LessonShareScalarFieldEnum]
+
+
+export const SyllabusScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  studentId: 'studentId'
+} as const
+
+export type SyllabusScalarFieldEnum = (typeof SyllabusScalarFieldEnum)[keyof typeof SyllabusScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -69,6 +69,23 @@ export default async function Page(props: PageProps<'/lessons'>) {
           deletedAt: null,
         },
       },
+      shares: {
+        select: {
+          id: true,
+          uuid: true,
+          expiresAt: true,
+        },
+        where: {
+          deletedAt: null,
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
     },
     where: {
       deletedAt: null,

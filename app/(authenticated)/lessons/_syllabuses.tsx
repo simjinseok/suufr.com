@@ -11,12 +11,12 @@ import { useRouter } from 'next/navigation';
 import {
   CircleIcon,
   CircleCheckBigIcon,
-  EllipsisVerticalIcon, UserIcon, TicketCheckIcon,
+  EllipsisVerticalIcon, UserIcon, TicketCheckIcon, ShareIcon, GlobeIcon, LockIcon,
 } from 'lucide-react';
 import {
   Button,
   Dropdown,
-  Header, ListBox, Surface, Form, Chip, Tooltip,
+  Header, ListBox, Surface, Form, Chip, Tooltip, Modal,
 } from '@heroui/react';
 
 import { Text } from '@/components/text';
@@ -28,10 +28,11 @@ import PaymentModal from '@/components/payment-modal';
 import SyllabusModal from '@/components/syllabus-modal';
 import EditSyllabusModal from './_edit-syllabus-modal';
 import CreateSyllabusModal from '@/components/syllabus/create-syllabus-modal';
+import ShareModal from './_share-modal';
 import dayjs from 'dayjs';
 import { StudentComboBox } from '@/components/student/student-combobox';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
-import AddSessionModal from "@/components/sessions/add-session-modal";
+import AddSessionModal from '@/components/sessions/add-session-modal';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -61,6 +62,7 @@ export default function Syllabuses({ syllabuses }: any) {
   );
   const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
   const [openFeedback, setOpenFeedback] = React.useState<any>(null);
+  const [sharingSyllabus, setSharingSyllabus] = React.useState<TSyllabus | null>(null);
 
   const onDoneClick = React.useCallback(
     (lesson: TLesson) => {
@@ -110,6 +112,19 @@ export default function Syllabuses({ syllabuses }: any) {
                         <p className="mt-1 text-xl font-bold">{syllabus.title}</p>
                       </div>
                       <div className="flex gap-3">
+                        <Modal>
+                          <Button
+                            variant="primary"
+                          >
+                            {syllabus.shares?.length ? <GlobeIcon className="size-4" /> : <LockIcon className="size-4" />}
+                            {syllabus.shares?.length ? '공유중' : '공유'}
+                          </Button>
+                          <ShareModal
+                            isOpen={sharingSyllabus !== null}
+                            onOpenChange={() => setSharingSyllabus(null)}
+                            syllabus={syllabus}
+                          />
+                        </Modal>
                         <Dropdown>
                           <Button variant="tertiary">
                             <EllipsisVerticalIcon />
@@ -138,6 +153,16 @@ export default function Syllabuses({ syllabuses }: any) {
                                   onClick={setEditingPayment.bind(null, syllabus)}
                                 >
                                   입금 내역 수정
+                                </Dropdown.Item>
+                              </Dropdown.Section>
+                              <Dropdown.Section>
+                                <Header>공유</Header>
+                                <Dropdown.Item
+                                  key="share"
+                                  onClick={setSharingSyllabus.bind(null, syllabus)}
+                                >
+                                  <ShareIcon className="size-4 mr-2 inline-block" />
+                                  공유 링크 생성
                                 </Dropdown.Item>
                               </Dropdown.Section>
                             </Dropdown.Menu>

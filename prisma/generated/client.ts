@@ -45,11 +45,6 @@ export { Prisma }
  */
 export type Student = Prisma.StudentModel
 /**
- * Model Syllabus
- * 
- */
-export type Syllabus = Prisma.SyllabusModel
-/**
  * Model Lesson
  * 
  */
@@ -79,3 +74,13 @@ export type StudentComment = Prisma.StudentCommentModel
  * 
  */
 export type StudentStatusHistory = Prisma.StudentStatusHistoryModel
+/**
+ * Model LessonShare
+ * 
+ */
+export type LessonShare = Prisma.LessonShareModel
+/**
+ * Model Syllabus
+ * 
+ */
+export type Syllabus = Prisma.SyllabusModel

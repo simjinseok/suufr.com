@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "./generated"
@@ -13,65 +7,37 @@ datasource db {
   provider = "postgresql"
 }
 
-enum StudentStatus {
-  pending
-  active
-  paused
-  leave
-}
-
 model Student {
-  id        Int           @id @default(autoincrement())
-  name      String
-  notes     String
-  status    StudentStatus @default(pending)
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(0)
-
-  userId String @map("user_id") @db.Uuid
-
-  lessons         Lesson[]
+  id              Int                    @id @default(autoincrement())
+  name            String
+  notes           String
+  status          StudentStatus          @default(pending)
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(0)
+  userId          String                 @map("user_id") @db.Uuid
   comments        StudentComment[]
   statusHistories StudentStatusHistory[]
+  syllabuses      Syllabus[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
 }
 
 model Lesson {
-  id        Int       @id @default(autoincrement())
-  title     String
-  notes     String
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  id          Int       @id @default(autoincrement())
+  notes       String
+  lessonAt    DateTime  @map("lesson_at") @db.Timestamptz(0)
+  isDone      Boolean   @default(false) @map("is_done")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(0)
+  syllabusId  Int       @map("syllabus_id")
+  feedback    Feedback?
+  syllabus    Syllabus  @relation(fields: [syllabusId], references: [id])
 
-  studentId Int       @map("student_id")
-  student   Student   @relation(fields: [studentId], references: [id])
-  payment   Payment?
-  sessions  Session[]
-
-  @@index([studentId, createdAt, deletedAt])
+  @@index([syllabusId, lessonAt, deletedAt])
   @@map("lessons")
-}
-
-model Session {
-  id        Int       @id @default(autoincrement())
-  notes     String
-  lessonAt  DateTime  @map("lesson_at") @db.Timestamptz(0)
-  isDone    Boolean   @default(false) @map("is_done")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
-
-  lessonId Int    @map("lesson_id")
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
-
-  feedback Feedback?
-
-  @@index([lessonId, lessonAt, deletedAt])
-  @@map("sessions")
 }
 
 model Feedback {
@@ -80,11 +46,10 @@ model Feedback {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  lessonId  Int       @unique @map("lesson_id")
+  lesson    Lesson    @relation(fields: [lessonId], references: [id])
 
-  sessionId Int     @unique @map("session_id")
-  session   Session @relation(fields: [sessionId], references: [id])
-
-  @@index([sessionId, deletedAt])
+  @@index([lessonId, deletedAt])
   @@map("feedback")
 }
 
@@ -97,12 +62,10 @@ model Payment {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
+  syllabusId    Int       @unique @map("syllabus_id")
+  syllabus      Syllabus  @relation(fields: [syllabusId], references: [id])
 
-  lessonId Int    @map("lesson_id")
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
-
-  @@unique([lessonId])
-  @@index([paidAt, deletedAt, lessonId])
+  @@index([paidAt, deletedAt, syllabusId])
   @@map("payments")
 }
 
@@ -110,13 +73,13 @@ model Meeting {
   id        Int       @id @default(autoincrement())
   name      String
   notes     String?
-  phone     String?
-  isDone    Boolean   @default(false) @map("is_done")
-  meetingAt DateTime  @map("meeting_at") @db.Timestamptz(0)
   userId    String    @map("user_id") @db.Uuid
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  meetingAt DateTime  @map("meeting_at") @db.Timestamptz(0)
+  isDone    Boolean   @default(false) @map("is_done")
+  phone     String?
 
   @@index([userId, name, isDone, deletedAt])
   @@map("meetings")
@@ -128,9 +91,8 @@ model StudentComment {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
-
-  studentId Int     @map("student_id")
-  student   Student @relation(fields: [studentId], references: [id])
+  studentId Int       @map("student_id")
+  student   Student   @relation(fields: [studentId], references: [id])
 
   @@index([studentId, createdAt, deletedAt])
   @@map("student_comments")
@@ -144,10 +106,48 @@ model StudentStatusHistory {
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(0)
-
-  studentId Int     @map("student_id")
-  student   Student @relation(fields: [studentId], references: [id])
+  studentId Int           @map("student_id")
+  student   Student       @relation(fields: [studentId], references: [id])
 
   @@index([studentId, changedAt, deletedAt])
   @@map("student_status_histories")
+}
+
+model LessonShare {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  syllabusId  Int       @map("syllabus_id")
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(0)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(0)
+  syllabus    Syllabus  @relation(fields: [syllabusId], references: [id])
+
+  @@index([syllabusId, deletedAt])
+  @@index([uuid, expiresAt, deletedAt])
+  @@map("lesson_shares")
+}
+
+model Syllabus {
+  id          Int           @id @default(autoincrement())
+  title       String
+  notes       String
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(0)
+  studentId   Int           @map("student_id")
+  shares      LessonShare[]
+  lessons     Lesson[]
+  payment     Payment?
+  student     Student       @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, createdAt, deletedAt])
+  @@map("syllabuses")
+}
+
+enum StudentStatus {
+  pending
+  active
+  paused
+  leave
 }

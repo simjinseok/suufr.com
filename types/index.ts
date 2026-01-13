@@ -21,6 +21,7 @@ export type TSyllabus = {
   student?: TStudent;
   payment?: TPayment;
   lessons: TLesson[];
+  shares?: TLessonShare[];
 };
 
 export type TLesson = {
@@ -53,6 +54,14 @@ export type TMeeting = {
   notes: string | null;
   isDone: boolean;
   meetingAt: Date;
+};
+
+export type TLessonShare = {
+  id: number;
+  uuid: string;
+  syllabusId: number;
+  expiresAt: Date;
+  createdAt: Date;
 };
 
 export type ServerActionState<T> = {
