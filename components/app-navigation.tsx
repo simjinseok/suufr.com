@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { href: '/', label: '메인', icon: HomeIcon },
+  { href: '/dashboard', label: '메인', icon: HomeIcon },
   { href: '/students', label: '수강생', icon: BookUserIcon },
   { href: '/payments', label: '입금내역', icon: ReceiptIcon },
   { href: '/meetings', label: '상담', icon: UserRoundCheckIcon },
