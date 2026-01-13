@@ -1,5 +1,6 @@
 import { getSession } from '@/utils/auth';
 import prisma from '@/utils/prisma';
+import { generateShareId } from '@/utils/share-id';
 
 // 공유 링크 생성
 export async function POST(
@@ -50,6 +51,7 @@ export async function POST(
   // 새 공유 링크 생성
   const share = await prisma.lessonShare.create({
     data: {
+      shareId: generateShareId(syllabus.id),
       syllabusId: syllabus.id,
       expiresAt,
     },
@@ -57,7 +59,7 @@ export async function POST(
 
   return Response.json(
     {
-      uuid: share.uuid,
+      shareId: share.shareId,
       expiresAt: share.expiresAt,
     },
     { status: 201 },
@@ -112,9 +114,9 @@ export async function GET(
     hasActiveShare: !!activeShare,
     share: activeShare
       ? {
-          uuid: activeShare.uuid,
+          shareId: activeShare.shareId,
           expiresAt: activeShare.expiresAt,
-          url: `https://suufr.com/share/${activeShare.uuid}`,
+          url: `https://suufr.com/sl/${activeShare.shareId}`,
         }
       : null,
   });

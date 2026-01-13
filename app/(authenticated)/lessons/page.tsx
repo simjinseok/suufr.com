@@ -72,7 +72,7 @@ export default async function Page(props: PageProps<'/lessons'>) {
       shares: {
         select: {
           id: true,
-          uuid: true,
+          shareId: true,
           expiresAt: true,
         },
         where: {

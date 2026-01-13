@@ -21,7 +21,7 @@ type Props = {
 type ShareState = {
   hasActiveShare: boolean;
   share: {
-    uuid: string;
+    shareId: string;
     expiresAt: string;
     url: string;
   } | null;
@@ -30,7 +30,7 @@ type ShareState = {
 export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
   const [shareState, setShareState] = React.useState<ShareState | null>(syllabus?.shares?.[0]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [expireDays, setExpireDays] = React.useState(7);
+  const [expireDays, setExpireDays] = React.useState(60);
   const [copied, setCopied] = React.useState(false);
 
   // 현재 공유 상태 조회
@@ -47,6 +47,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
   //   }
   // }, [isOpen, syllabus?.id]);
 
+  console.log('shareState', shareState);
   // 공유 링크 생성
   const handleCreateShare = React.useCallback(async () => {
     setIsLoading(true);
@@ -80,7 +81,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
   // 클립보드 복사
   const handleCopy = React.useCallback(async () => {
     if (shareState) {
-      await navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_BASE_URL}/sl/${shareState.uuid}/`);
+      await navigator.clipboard.writeText(`https://suufr.com/sl/${shareState.shareId}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -106,13 +107,13 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
                   // 활성 공유 링크가 있는 경우
                   <div className="p-1 space-y-4">
                     <div className="p-3 rounded-lg bg-gray-50">
-                      <Label className="text-xs text-gray-500">공유 링크</Label>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-end gap-2 ">
                         <TextField className="flex-1">
+                          <Label className="text-xs text-gray-500">공유 링크</Label>
                           <Input
-                            value={`${process.env.NEXT_PUBLIC_BASE_URL}/sl/${shareState.uuid}/`}
+                            value={`https://suufr.com/sl/${shareState.shareId}`}
                             readOnly
-                            className="text-sm"
+                            className="mt-1"
                           />
                         </TextField>
                         <Button variant="secondary" onPress={handleCopy}>
@@ -146,7 +147,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
                   </div>
                 ) : (
                   // 활성 공유 링크가 없는 경우
-                  <div className="space-y-4">
+                  <div className="p-1 space-y-4">
                     <NumberField
                       value={expireDays}
                       minValue={1}

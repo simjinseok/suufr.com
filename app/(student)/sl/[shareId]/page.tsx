@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 export default async function SharedSyllabusPage({
   params,
 }: {
-  params: Promise<{ uuid: string }>;
+  params: Promise<{ shareId: string }>;
 }) {
-  const { uuid } = await params;
+  const { shareId } = await params;
 
   const share = await prisma.lessonShare.findUnique({
     where: {
-      uuid,
+      shareId,
       deletedAt: null,
       expiresAt: {
         gt: new Date(),

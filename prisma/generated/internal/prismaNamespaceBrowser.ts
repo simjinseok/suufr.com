@@ -177,7 +177,7 @@ export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistorySc
 
 export const LessonShareScalarFieldEnum = {
   id: 'id',
-  uuid: 'uuid',
+  shareId: 'shareId',
   syllabusId: 'syllabusId',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt',

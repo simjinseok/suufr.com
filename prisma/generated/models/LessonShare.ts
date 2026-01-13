@@ -38,7 +38,7 @@ export type LessonShareSumAggregateOutputType = {
 
 export type LessonShareMinAggregateOutputType = {
   id: number | null
-  uuid: string | null
+  shareId: string | null
   syllabusId: number | null
   expiresAt: Date | null
   createdAt: Date | null
@@ -48,7 +48,7 @@ export type LessonShareMinAggregateOutputType = {
 
 export type LessonShareMaxAggregateOutputType = {
   id: number | null
-  uuid: string | null
+  shareId: string | null
   syllabusId: number | null
   expiresAt: Date | null
   createdAt: Date | null
@@ -58,7 +58,7 @@ export type LessonShareMaxAggregateOutputType = {
 
 export type LessonShareCountAggregateOutputType = {
   id: number
-  uuid: number
+  shareId: number
   syllabusId: number
   expiresAt: number
   createdAt: number
@@ -80,7 +80,7 @@ export type LessonShareSumAggregateInputType = {
 
 export type LessonShareMinAggregateInputType = {
   id?: true
-  uuid?: true
+  shareId?: true
   syllabusId?: true
   expiresAt?: true
   createdAt?: true
@@ -90,7 +90,7 @@ export type LessonShareMinAggregateInputType = {
 
 export type LessonShareMaxAggregateInputType = {
   id?: true
-  uuid?: true
+  shareId?: true
   syllabusId?: true
   expiresAt?: true
   createdAt?: true
@@ -100,7 +100,7 @@ export type LessonShareMaxAggregateInputType = {
 
 export type LessonShareCountAggregateInputType = {
   id?: true
-  uuid?: true
+  shareId?: true
   syllabusId?: true
   expiresAt?: true
   createdAt?: true
@@ -197,7 +197,7 @@ export type LessonShareGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type LessonShareGroupByOutputType = {
   id: number
-  uuid: string
+  shareId: string
   syllabusId: number
   expiresAt: Date
   createdAt: Date
@@ -230,7 +230,7 @@ export type LessonShareWhereInput = {
   OR?: Prisma.LessonShareWhereInput[]
   NOT?: Prisma.LessonShareWhereInput | Prisma.LessonShareWhereInput[]
   id?: Prisma.IntFilter<"LessonShare"> | number
-  uuid?: Prisma.UuidFilter<"LessonShare"> | string
+  shareId?: Prisma.StringFilter<"LessonShare"> | string
   syllabusId?: Prisma.IntFilter<"LessonShare"> | number
   expiresAt?: Prisma.DateTimeFilter<"LessonShare"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"LessonShare"> | Date | string
@@ -241,7 +241,7 @@ export type LessonShareWhereInput = {
 
 export type LessonShareOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  uuid?: Prisma.SortOrder
+  shareId?: Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -252,7 +252,7 @@ export type LessonShareOrderByWithRelationInput = {
 
 export type LessonShareWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  uuid?: string
+  shareId?: string
   AND?: Prisma.LessonShareWhereInput | Prisma.LessonShareWhereInput[]
   OR?: Prisma.LessonShareWhereInput[]
   NOT?: Prisma.LessonShareWhereInput | Prisma.LessonShareWhereInput[]
@@ -262,11 +262,11 @@ export type LessonShareWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"LessonShare"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"LessonShare"> | Date | string | null
   syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
-}, "id" | "uuid">
+}, "id" | "shareId">
 
 export type LessonShareOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  uuid?: Prisma.SortOrder
+  shareId?: Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -284,7 +284,7 @@ export type LessonShareScalarWhereWithAggregatesInput = {
   OR?: Prisma.LessonShareScalarWhereWithAggregatesInput[]
   NOT?: Prisma.LessonShareScalarWhereWithAggregatesInput | Prisma.LessonShareScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"LessonShare"> | number
-  uuid?: Prisma.UuidWithAggregatesFilter<"LessonShare"> | string
+  shareId?: Prisma.StringWithAggregatesFilter<"LessonShare"> | string
   syllabusId?: Prisma.IntWithAggregatesFilter<"LessonShare"> | number
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"LessonShare"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LessonShare"> | Date | string
@@ -293,7 +293,7 @@ export type LessonShareScalarWhereWithAggregatesInput = {
 }
 
 export type LessonShareCreateInput = {
-  uuid?: string
+  shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -303,7 +303,7 @@ export type LessonShareCreateInput = {
 
 export type LessonShareUncheckedCreateInput = {
   id?: number
-  uuid?: string
+  shareId: string
   syllabusId: number
   expiresAt: Date | string
   createdAt?: Date | string
@@ -312,7 +312,7 @@ export type LessonShareUncheckedCreateInput = {
 }
 
 export type LessonShareUpdateInput = {
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -322,7 +322,7 @@ export type LessonShareUpdateInput = {
 
 export type LessonShareUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,7 +332,7 @@ export type LessonShareUncheckedUpdateInput = {
 
 export type LessonShareCreateManyInput = {
   id?: number
-  uuid?: string
+  shareId: string
   syllabusId: number
   expiresAt: Date | string
   createdAt?: Date | string
@@ -341,7 +341,7 @@ export type LessonShareCreateManyInput = {
 }
 
 export type LessonShareUpdateManyMutationInput = {
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -350,7 +350,7 @@ export type LessonShareUpdateManyMutationInput = {
 
 export type LessonShareUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -360,7 +360,7 @@ export type LessonShareUncheckedUpdateManyInput = {
 
 export type LessonShareCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  uuid?: Prisma.SortOrder
+  shareId?: Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -375,7 +375,7 @@ export type LessonShareAvgOrderByAggregateInput = {
 
 export type LessonShareMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  uuid?: Prisma.SortOrder
+  shareId?: Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -385,7 +385,7 @@ export type LessonShareMaxOrderByAggregateInput = {
 
 export type LessonShareMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  uuid?: Prisma.SortOrder
+  shareId?: Prisma.SortOrder
   syllabusId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -451,7 +451,7 @@ export type LessonShareUncheckedUpdateManyWithoutSyllabusNestedInput = {
 }
 
 export type LessonShareCreateWithoutSyllabusInput = {
-  uuid?: string
+  shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -460,7 +460,7 @@ export type LessonShareCreateWithoutSyllabusInput = {
 
 export type LessonShareUncheckedCreateWithoutSyllabusInput = {
   id?: number
-  uuid?: string
+  shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -498,7 +498,7 @@ export type LessonShareScalarWhereInput = {
   OR?: Prisma.LessonShareScalarWhereInput[]
   NOT?: Prisma.LessonShareScalarWhereInput | Prisma.LessonShareScalarWhereInput[]
   id?: Prisma.IntFilter<"LessonShare"> | number
-  uuid?: Prisma.UuidFilter<"LessonShare"> | string
+  shareId?: Prisma.StringFilter<"LessonShare"> | string
   syllabusId?: Prisma.IntFilter<"LessonShare"> | number
   expiresAt?: Prisma.DateTimeFilter<"LessonShare"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"LessonShare"> | Date | string
@@ -508,7 +508,7 @@ export type LessonShareScalarWhereInput = {
 
 export type LessonShareCreateManySyllabusInput = {
   id?: number
-  uuid?: string
+  shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -516,7 +516,7 @@ export type LessonShareCreateManySyllabusInput = {
 }
 
 export type LessonShareUpdateWithoutSyllabusInput = {
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -525,7 +525,7 @@ export type LessonShareUpdateWithoutSyllabusInput = {
 
 export type LessonShareUncheckedUpdateWithoutSyllabusInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -534,7 +534,7 @@ export type LessonShareUncheckedUpdateWithoutSyllabusInput = {
 
 export type LessonShareUncheckedUpdateManyWithoutSyllabusInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -545,7 +545,7 @@ export type LessonShareUncheckedUpdateManyWithoutSyllabusInput = {
 
 export type LessonShareSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  uuid?: boolean
+  shareId?: boolean
   syllabusId?: boolean
   expiresAt?: boolean
   createdAt?: boolean
@@ -556,7 +556,7 @@ export type LessonShareSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type LessonShareSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  uuid?: boolean
+  shareId?: boolean
   syllabusId?: boolean
   expiresAt?: boolean
   createdAt?: boolean
@@ -567,7 +567,7 @@ export type LessonShareSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 
 export type LessonShareSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  uuid?: boolean
+  shareId?: boolean
   syllabusId?: boolean
   expiresAt?: boolean
   createdAt?: boolean
@@ -578,7 +578,7 @@ export type LessonShareSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 
 export type LessonShareSelectScalar = {
   id?: boolean
-  uuid?: boolean
+  shareId?: boolean
   syllabusId?: boolean
   expiresAt?: boolean
   createdAt?: boolean
@@ -586,7 +586,7 @@ export type LessonShareSelectScalar = {
   deletedAt?: boolean
 }
 
-export type LessonShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "syllabusId" | "expiresAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["lessonShare"]>
+export type LessonShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shareId" | "syllabusId" | "expiresAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["lessonShare"]>
 export type LessonShareInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
 }
@@ -604,7 +604,7 @@ export type $LessonSharePayload<ExtArgs extends runtime.Types.Extensions.Interna
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    uuid: string
+    shareId: string
     syllabusId: number
     expiresAt: Date
     createdAt: Date
@@ -1035,7 +1035,7 @@ export interface Prisma__LessonShareClient<T, Null = never, ExtArgs extends runt
  */
 export interface LessonShareFieldRefs {
   readonly id: Prisma.FieldRef<"LessonShare", 'Int'>
-  readonly uuid: Prisma.FieldRef<"LessonShare", 'String'>
+  readonly shareId: Prisma.FieldRef<"LessonShare", 'String'>
   readonly syllabusId: Prisma.FieldRef<"LessonShare", 'Int'>
   readonly expiresAt: Prisma.FieldRef<"LessonShare", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"LessonShare", 'DateTime'>

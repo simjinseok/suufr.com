@@ -58,7 +58,7 @@ export type TMeeting = {
 
 export type TLessonShare = {
   id: number;
-  uuid: string;
+  shareId: string;
   syllabusId: number;
   expiresAt: Date;
   createdAt: Date;

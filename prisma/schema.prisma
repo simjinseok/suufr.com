@@ -115,7 +115,7 @@ model StudentStatusHistory {
 
 model LessonShare {
   id          Int       @id @default(autoincrement())
-  uuid        String    @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shareId     String    @unique @map("share_id") @db.VarChar(10)
   syllabusId  Int       @map("syllabus_id")
   expiresAt   DateTime  @map("expires_at") @db.Timestamptz(0)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
@@ -124,7 +124,7 @@ model LessonShare {
   syllabus    Syllabus  @relation(fields: [syllabusId], references: [id])
 
   @@index([syllabusId, deletedAt])
-  @@index([uuid, expiresAt, deletedAt])
+  @@index([shareId, expiresAt, deletedAt])
   @@map("lesson_shares")
 }
 
