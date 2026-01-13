@@ -12,7 +12,7 @@ import {
   CircleCheckBigIcon,
   CircleIcon, CreditCardIcon,
   GlobeIcon, LandmarkIcon,
-  LockIcon,
+  LockIcon, PlusIcon,
 } from 'lucide-react';
 import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
@@ -22,8 +22,12 @@ import EditSyllabusModal from '@/components/lesson/edit-lesson-modal';
 import AddSessionModal from '@/components/sessions/add-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
 import ShareModal from '@/components/lesson/share-modal';
+import CreateLessonModal from '@/components/lesson/create-lesson-modal';
+import { useParams } from 'next/navigation';
 
 export default function Lessons({ lessons }) {
+  const { studentId } = useParams();
+
   const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
   const [isLessonCreating, setIsLessonCreating]
     = React.useState<TSyllabus | null>(null);
@@ -32,7 +36,17 @@ export default function Lessons({ lessons }) {
 
   return (
     <React.Fragment>
-
+      <div className="flex justify-end">
+        <Modal>
+          <Button variant="secondary">
+            <PlusIcon />
+            레슨 추가
+          </Button>
+          <CreateLessonModal
+            studentId={Number(studentId)}
+          />
+        </Modal>
+      </div>
       {lessons.length > 0
         ? (
             <ul className="mt-5 flex flex-col gap-5">
@@ -45,28 +59,31 @@ export default function Lessons({ lessons }) {
                       </div>
                       <div className="flex gap-3">
                         <Modal>
-                          {syllabus.payment ? (
-                            <Button variant="secondary">
-                              {syllabus.payment.paymentMethod === 'card' && (
-                                <CreditCardIcon className="size-4" />
+                          {syllabus.payment
+                            ? (
+                                <Button variant="secondary">
+                                  {syllabus.payment.paymentMethod === 'card' && (
+                                    <CreditCardIcon className="size-4" />
+                                  )}
+                                  {syllabus.payment.paymentMethod === 'transfer' && (
+                                    <LandmarkIcon className="size-4" />
+                                  )}
+                                  {syllabus.payment.paymentMethod === 'cash' && (
+                                    <BanknoteIcon className="size-4" />
+                                  )}
+                                  {syllabus.payment.paymentMethod === 'none' && (
+                                    <BookDashedIcon className="size-4" />
+                                  )}
+                                  {numberToHangulMixed(syllabus.payment.amount)}
+                                  원
+                                </Button>
+                              )
+                            : (
+                                <Button variant="danger-soft">
+                                  <BanknoteXIcon className="size-4" />
+                                  결제필요
+                                </Button>
                               )}
-                              {syllabus.payment.paymentMethod === 'transfer' && (
-                                <LandmarkIcon className="size-4" />
-                              )}
-                              {syllabus.payment.paymentMethod === 'cash' && (
-                                <BanknoteIcon className="size-4" />
-                              )}
-                              {syllabus.payment.paymentMethod === 'none' && (
-                                <BookDashedIcon className="size-4" />
-                              )}
-                              {numberToHangulMixed(syllabus.payment.amount)}원
-                            </Button>
-                          ) : (
-                            <Button variant="danger-soft">
-                              <BanknoteXIcon className="size-4" />
-                              결제필요
-                            </Button>
-                          )}
                           <PaymentModal
                             syllabus={syllabus}
                           />
