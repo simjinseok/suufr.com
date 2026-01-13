@@ -28,7 +28,6 @@ type ShareState = {
 };
 
 export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
-  console.log(syllabus);
   const [shareState, setShareState] = React.useState<ShareState | null>(syllabus?.shares?.[0]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [expireDays, setExpireDays] = React.useState(7);
@@ -61,10 +60,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
 
     if (response.ok) {
       const data = await response.json();
-      setShareState({
-        hasActiveShare: true,
-        share: data,
-      });
+      setShareState(data);
     }
     setIsLoading(false);
   }, [syllabus.id, expireDays]);

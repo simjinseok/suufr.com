@@ -29,7 +29,6 @@ import SyllabusModal from '@/components/syllabus-modal';
 import EditSyllabusModal from './_edit-syllabus-modal';
 import CreateSyllabusModal from '@/components/syllabus/create-syllabus-modal';
 import ShareModal from './_share-modal';
-import dayjs from 'dayjs';
 import { StudentComboBox } from '@/components/student/student-combobox';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
 import AddSessionModal from '@/components/sessions/add-session-modal';
@@ -190,7 +189,7 @@ export default function Syllabuses({ syllabuses }: any) {
                                 )}
                           </div>
                           <div>
-                            <p className="tabular-nums">{dayjs(session.lessonAt).format('YYYY-MM-DD hh:mm')}</p>
+                            <p className="tabular-nums">{format(new Date(session.lessonAt), 'yyyy-MM-dd hh:mm')}</p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}
                             </Text>

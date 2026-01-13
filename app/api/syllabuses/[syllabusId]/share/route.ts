@@ -59,7 +59,6 @@ export async function POST(
     {
       uuid: share.uuid,
       expiresAt: share.expiresAt,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/share/${share.uuid}`,
     },
     { status: 201 },
   );
@@ -115,7 +114,7 @@ export async function GET(
       ? {
           uuid: activeShare.uuid,
           expiresAt: activeShare.expiresAt,
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/share/${activeShare.uuid}`,
+          url: `https://suufr.com/share/${activeShare.uuid}`,
         }
       : null,
   });
