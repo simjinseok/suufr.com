@@ -11,12 +11,12 @@ import { useRouter } from 'next/navigation';
 import {
   CircleIcon,
   CircleCheckBigIcon,
-  EllipsisVerticalIcon, UserIcon, TicketCheckIcon, ShareIcon, GlobeIcon, LockIcon,
+  EllipsisVerticalIcon, UserIcon, TicketCheckIcon, ShareIcon, GlobeIcon, LockIcon, ChevronDownIcon,
 } from 'lucide-react';
 import {
   Button,
   Dropdown,
-  Header, ListBox, Surface, Form, Chip, Tooltip, Modal,
+  Header, ListBox, Surface, Form, Chip, Tooltip, Modal, ButtonGroup,
 } from '@heroui/react';
 
 import { Text } from '@/components/text';
@@ -64,17 +64,6 @@ export default function Syllabuses({ syllabuses }: any) {
   const [openFeedback, setOpenFeedback] = React.useState<any>(null);
   const [sharingSyllabus, setSharingSyllabus] = React.useState<TSyllabus | null>(null);
 
-  const onDoneClick = React.useCallback(
-    (lesson: TLesson) => {
-      fetch(`/api/lessons/${lesson.id}/done`, {
-        method: 'PUT',
-      }).then((response) => {
-        router.refresh();
-      });
-    },
-    [router],
-  );
-
   return (
     <div className="mt-8">
       {Array.isArray(syllabuses) && syllabuses.length > 0
@@ -120,54 +109,43 @@ export default function Syllabuses({ syllabuses }: any) {
                             {syllabus.shares?.length ? '공유중' : '공유'}
                           </Button>
                           <ShareModal
-                            isOpen={sharingSyllabus !== null}
-                            onOpenChange={() => setSharingSyllabus(null)}
                             syllabus={syllabus}
                           />
                         </Modal>
-                        <Dropdown>
-                          <Button variant="tertiary">
-                            <EllipsisVerticalIcon />
+                        <ButtonGroup variant="secondary">
+                          <Button
+                            onClick={setEditingSyllabus.bind(null, syllabus)}
+                          >
+                            수정
                           </Button>
-                          <Dropdown.Popover placement="bottom end">
-                            <Dropdown.Menu>
-                              <Dropdown.Item
-                                key="edit-syllabus"
-                                onClick={setEditingSyllabus.bind(null, syllabus)}
-                              >
-                                수정
-                              </Dropdown.Item>
-                              <Dropdown.Section>
-                                <Header>수업</Header>
-                                <Dropdown.Item
-                                  key="create-syllabus"
-                                  onClick={setIsLessonCreating.bind(null, syllabus)}
-                                >
-                                  수업 추가
-                                </Dropdown.Item>
-                              </Dropdown.Section>
-                              <Dropdown.Section>
-                                <Header>입금내역</Header>
-                                <Dropdown.Item
-                                  key="edit-payment"
-                                  onClick={setEditingPayment.bind(null, syllabus)}
-                                >
-                                  입금 내역 수정
-                                </Dropdown.Item>
-                              </Dropdown.Section>
-                              <Dropdown.Section>
-                                <Header>공유</Header>
-                                <Dropdown.Item
-                                  key="share"
-                                  onClick={setSharingSyllabus.bind(null, syllabus)}
-                                >
-                                  <ShareIcon className="size-4 mr-2 inline-block" />
-                                  공유 링크 생성
-                                </Dropdown.Item>
-                              </Dropdown.Section>
-                            </Dropdown.Menu>
-                          </Dropdown.Popover>
-                        </Dropdown>
+                          <Dropdown>
+                            <Button>
+                              <ChevronDownIcon />
+                            </Button>
+                            <Dropdown.Popover placement="bottom end">
+                              <Dropdown.Menu>
+                                <Dropdown.Section>
+                                  <Header>수업</Header>
+                                  <Dropdown.Item
+                                    key="create-syllabus"
+                                    onClick={setIsLessonCreating.bind(null, syllabus)}
+                                  >
+                                    수업 추가
+                                  </Dropdown.Item>
+                                </Dropdown.Section>
+                                <Dropdown.Section>
+                                  <Header>입금내역</Header>
+                                  <Dropdown.Item
+                                    key="edit-payment"
+                                    onClick={setEditingPayment.bind(null, syllabus)}
+                                  >
+                                    입금 내역 수정
+                                  </Dropdown.Item>
+                                </Dropdown.Section>
+                              </Dropdown.Menu>
+                            </Dropdown.Popover>
+                          </Dropdown>
+                        </ButtonGroup>
                       </div>
                     </div>
                     <Text className="mt-1 whitespace-pre-wrap">{syllabus.notes}</Text>

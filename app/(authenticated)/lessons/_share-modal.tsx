@@ -98,7 +98,6 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
             <React.Fragment>
               <Modal.Header>
                 <Modal.Heading>
-                  <LinkIcon className="inline-block mr-2 size-5" />
                   레슨 공유
                 </Modal.Heading>
               </Modal.Header>
