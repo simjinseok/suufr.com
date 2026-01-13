@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Form, Input, ListBox, Select } from '@heroui/react';
+import { Form, InputGroup, ListBox, Select, TextField } from '@heroui/react';
 import { SearchIcon } from 'lucide-react';
 
 export default function ConditionForm({
@@ -16,7 +16,8 @@ export default function ConditionForm({
       const params = new URLSearchParams(searchParams.toString());
       if (searchValue) {
         params.set('q', searchValue);
-      } else {
+      }
+      else {
         params.delete('q');
       }
       params.delete('page');
@@ -28,15 +29,19 @@ export default function ConditionForm({
 
   return (
     <Form method="get" className="flex gap-2">
-      <Input
-        className="w-40"
+      <TextField
         name="q"
         aria-label="이름 검색"
-        placeholder="이름 검색"
         value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
-        startContent={<SearchIcon className="size-4 text-zinc-400" />}
-      />
+        onChange={e => setSearchValue(e.target.value)}
+      >
+        <InputGroup>
+          <InputGroup.Prefix>
+            <SearchIcon className="size-4 text-zinc-400" />
+          </InputGroup.Prefix>
+          <InputGroup.Input placeholder="이름 검색" />
+        </InputGroup>
+      </TextField>
       <Select
         className="w-28"
         name="status"

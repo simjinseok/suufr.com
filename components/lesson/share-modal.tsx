@@ -47,7 +47,6 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
   //   }
   // }, [isOpen, syllabus?.id]);
 
-  console.log('shareState', shareState);
   // 공유 링크 생성
   const handleCreateShare = React.useCallback(async () => {
     setIsLoading(true);
@@ -119,11 +118,11 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
                         <Button variant="secondary" onPress={handleCopy}>
                           {copied
                             ? (
-                                <CheckIcon className="size-4" />
-                              )
+                              <CheckIcon className="size-4" />
+                            )
                             : (
-                                <CopyIcon className="size-4" />
-                              )}
+                              <CopyIcon className="size-4" />
+                            )}
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">

@@ -15,8 +15,6 @@ import {
 const menuItems = [
   { href: '/', label: '메인', icon: HomeIcon },
   { href: '/students', label: '수강생', icon: BookUserIcon },
-  { href: '/lessons', label: '레슨', icon: NotebookTextIcon },
-  { href: '/sessions', label: '수업', icon: CalendarDaysIcon },
   { href: '/payments', label: '입금내역', icon: ReceiptIcon },
   { href: '/meetings', label: '상담', icon: UserRoundCheckIcon },
   { href: '/calendar', label: '캘린더', icon: CalendarIcon },

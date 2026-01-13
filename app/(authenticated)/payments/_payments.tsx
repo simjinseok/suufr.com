@@ -7,7 +7,7 @@ import React from 'react';
 import {
   Button,
 } from '@heroui/react';
-import PaymentModal from '@/components/payment-modal';
+import PaymentModal from '@/components/lesson/payment-modal';
 
 export default function Payments({ syllabuses }) {
   const [editingSyllabus, setEditingSyllabus] = React.useState(null);

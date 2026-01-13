@@ -1,41 +1,92 @@
 import prisma from '@/utils/prisma';
-import LessonsTable from './_lessons-table';
+import { getSession } from '@/utils/auth';
 
-export default async function LessonsPage({
-  params,
-}: {
-  params: Promise<{ studentId: string }>;
-}) {
-  const { studentId } = await params;
+import Lessons from './_lessons';
 
-  const lessons = await prisma.lesson.findMany({
+const PAGE_SIZE = 20;
+export default async function LessonsPage(props: PageProps<'/students/[studentId]'>) {
+  const { user } = await getSession();
+  const { studentId } = await props.params;
+
+  const page = 1;
+  const lessons = await prisma.syllabus.findMany({
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     select: {
       id: true,
-      lessonAt: true,
-      isDone: true,
+      title: true,
       notes: true,
-      feedback: {
+      student: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      lessons: {
         select: {
           id: true,
           notes: true,
+          lessonAt: true,
+          isDone: true,
+          feedback: {
+            select: {
+              id: true,
+              notes: true,
+            },
+            where: {
+              deletedAt: null,
+            },
+          },
+        },
+        where: {
+          deletedAt: null,
+        },
+        orderBy: {
+          lessonAt: 'asc',
         },
       },
-      syllabus: {
+      payment: {
         select: {
-          title: true,
+          id: true,
+          amount: true,
+          paymentMethod: true,
+          paidAt: true,
+          notes: true,
         },
+        where: {
+          deletedAt: null,
+        },
+      },
+      shares: {
+        select: {
+          id: true,
+          shareId: true,
+          expiresAt: true,
+        },
+        where: {
+          deletedAt: null,
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
       },
     },
     where: {
-      syllabus: {
-        studentId: Number(studentId),
-      },
       deletedAt: null,
+      student: {
+        id: Number(studentId),
+        userId: user.id,
+        deletedAt: null,
+      },
     },
     orderBy: {
-      lessonAt: 'desc',
+      createdAt: 'desc',
     },
   });
 
-  return <LessonsTable lessons={lessons} />;
+  return <Lessons lessons={lessons} />;
 }

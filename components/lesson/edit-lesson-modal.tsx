@@ -4,7 +4,7 @@ import { Form, Input, Modal, TextArea, Button, TextField, Label, AlertDialog, Da
 
 import { updateSyllabus, removeSyllabus } from '@/actions/lesson';
 
-export default function EditSyllabusModal({ syllabus, isOpen, onClose }) {
+export default function EditLessonModal({ syllabus, isOpen, onClose }) {
   const formId = React.useId();
 
   const [state, formAction, isPending] = React.useActionState(updateSyllabus, {});
