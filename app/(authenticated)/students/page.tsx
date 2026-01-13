@@ -20,12 +20,14 @@ type PageProps = {
     page: number;
     status: string;
     edit: string;
+    q: string;
   };
 };
 export default async function Page({ searchParams }: PageProps) {
-  const { page: _page, status: _status, edit: _edit } = await searchParams;
+  const { page: _page, status: _status, edit: _edit, q: _q } = await searchParams;
   const page = _page > 0 ? Number(_page) : 1;
   const status = typeof _status === 'string' ? _status : 'active';
+  const q = typeof _q === 'string' ? _q : '';
 
   const { user } = await getSession();
 
@@ -45,6 +47,7 @@ export default async function Page({ searchParams }: PageProps) {
                LEFT JOIN syllabuses ON syllabuses.student_id = students.id AND syllabuses.deleted_at IS NULL
                LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
       WHERE (${status} = '' OR students.status::text = ${status})
+        AND (${q} = '' OR students.name ILIKE ${'%' + q + '%'})
         AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL
       GROUP BY students.id, students.name, students.notes, students.created_at, students.status
       ORDER BY students.name ASC
@@ -55,6 +58,8 @@ export default async function Page({ searchParams }: PageProps) {
     where: {
       deletedAt: null,
       userId: user.id,
+      ...(status && { status }),
+      ...(q && { name: { contains: q, mode: 'insensitive' } }),
     },
   });
 
@@ -78,6 +83,7 @@ export default async function Page({ searchParams }: PageProps) {
               query: {
                 page: page - 1,
                 status: status,
+                ...(q && { q }),
               },
             }}
           >
@@ -92,6 +98,7 @@ export default async function Page({ searchParams }: PageProps) {
               query: {
                 page: page + 1,
                 status: status,
+                ...(q && { q }),
               },
             }}
           >

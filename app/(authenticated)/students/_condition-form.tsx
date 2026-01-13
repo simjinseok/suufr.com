@@ -1,15 +1,42 @@
 'use client';
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Form, ListBox, Select } from '@heroui/react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Form, Input, ListBox, Select } from '@heroui/react';
+import { SearchIcon } from 'lucide-react';
 
 export default function ConditionForm({
   currentStatus,
 }: { currentStatus: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchValue, setSearchValue] = useState(searchParams.get('q') || '');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchValue) {
+        params.set('q', searchValue);
+      } else {
+        params.delete('q');
+      }
+      params.delete('page');
+      router.push(`/students?${params.toString()}`);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchValue]);
+
   return (
-    <Form method="get" className="flex">
-      {/* <Input name="name" /> 검색 지원 예정 */}
+    <Form method="get" className="flex gap-2">
+      <Input
+        className="w-40"
+        name="q"
+        aria-label="이름 검색"
+        placeholder="이름 검색"
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        startContent={<SearchIcon className="size-4 text-zinc-400" />}
+      />
       <Select
         className="w-28"
         name="status"
