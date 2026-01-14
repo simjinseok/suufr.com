@@ -1,10 +1,12 @@
 'use client';
+import type { ModalProps } from '@heroui/react';
+
 import * as React from 'react';
 import {
   Button,
   Checkbox,
   DateField,
-  DateInputGroup,
+  DateInputGroup, Description,
   Form,
   Label,
   Modal,
@@ -15,24 +17,50 @@ import { fromDate, toCalendarDateTime } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { updateSession, removeSession } from '@/actions/session';
-import {Session} from "node:inspector";
+import { Session } from 'node:inspector';
 
 interface Props {
-  isOpen?: boolean;
-  onOpenChange?: (isOpen: boolean) => void;
+  isOpen: ModalProps['isOpen'];
+  onOpenChange: ModalProps['onOpenChange'];
   session: Session;
 }
 export default function EditSessionModal({ isOpen, onOpenChange, session }: Props) {
+  return (
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Modal.Container>
+        <Modal.Dialog>
+          {({ close }) => (
+            <Content session={session} close={close} />
+          )}
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
+  );
+}
+
+interface ContentProps {
+  session: Props['session'];
+  close: () => void;
+}
+function Content({ session, close }: ContentProps) {
   const formId = React.useId();
-  const { control } = useForm({
-    values: {
-      isDone: session.isDone,
-      lessonAt: toCalendarDateTime(fromDate(session.lessonAt, 'Asia/Seoul')),
-      notes: session.notes,
+
+  const [state, formAction, isPending] = React.useActionState(updateSession, {
+    fields: {
+      isDone: session?.isDone,
+      lessonAt: session.lessonAt,
+      notes: session?.notes,
+      feedback: session?.feedback?.notes,
     },
   });
-
-  const [state, formAction, isPending] = React.useActionState(updateSession, {});
+  const { control } = useForm({
+    values: {
+      isDone: state.fields?.isDone,
+      lessonAt: state.fields?.lessonAt,
+      notes: state.fields?.notes,
+      feedback: state.fields?.feedback,
+    },
+  });
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -42,90 +70,117 @@ export default function EditSessionModal({ isOpen, onOpenChange, session }: Prop
     }
 
     if (state.success) {
-      onOpenChange(false);
+      close();
     }
   }, [state.success, state.message, state.timestamp]);
 
   return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Container>
-        <Modal.Dialog>
-          {({ close }) => (
-            <React.Fragment>
-              <Modal.Header>
-                <Modal.Heading>세션 수정</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <Form id={formId} className="p-1 flex flex-col gap-4" action={formAction}>
-                  <input type="hidden" name="sessionId" value={session.id} />
-                  <Controller
-                    control={control}
-                    name="isDone"
-                    render={({ field: { name, value, onChange } }) => (
-                      <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Content>
-                          완료여부
-                        </Checkbox.Content>
-                      </Checkbox>
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="lessonAt"
-                    render={({ field: { name, value, onChange } }) => (
-                      <DateField
-                        name={name}
-                        granularity="minute"
-                        value={value}
-                        onChange={onChange}
-                        hideTimeZone
-                      >
-                        <Label>날짜</Label>
-                        <DateInputGroup>
-                          <DateInputGroup.Prefix>
-                            <CalendarIcon className="size-4" />
-                          </DateInputGroup.Prefix>
-                          <DateInputGroup.Input>
-                            {segment => <DateInputGroup.Segment segment={segment} />}
-                          </DateInputGroup.Input>
-                        </DateInputGroup>
-                      </DateField>
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="notes"
-                    render={({ field: { name, value, onChange } }) => (
-                      <TextField
-                        name={name}
-                        value={value}
-                        onChange={onChange}
-                      >
-                        <Label>메모</Label>
-                        <TextArea rows={5} className="resize-none" />
-                      </TextField>
-                    )}
-                  />
-                </Form>
-              </Modal.Body>
-              <Modal.Footer>
-                <RemoveButton sessionId={session.id} onSuccess={close} />
-                <div className="grow" />
-                <Button variant="ghost" isDisabled={isPending} onClick={close}>닫기</Button>
-                <Button type="submit" form={formId} variant="primary" isPending={isPending}>저장</Button>
-              </Modal.Footer>
-            </React.Fragment>
-          )}
-        </Modal.Dialog>
-      </Modal.Container>
-    </Modal.Backdrop>
+    <React.Fragment>
+      <Modal.Header>
+        <Modal.Heading>세션 수정</Modal.Heading>
+      </Modal.Header>
+      <Modal.Body>
+        <Form
+          id={formId}
+          className="p-1 flex flex-col gap-4"
+          action={formAction}
+          validationErrors={state.fieldErrors}
+        >
+          <input type="hidden" name="sessionId" value={session.id} />
+          <Controller
+            control={control}
+            name="isDone"
+            render={({ field: { name, value, onChange } }) => (
+              <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label>완료여부</Label>
+                </Checkbox.Content>
+              </Checkbox>
+            )}
+          />
+          <Controller
+            control={control}
+            name="lessonAt"
+            render={({ field: { name, value, onChange } }) => (
+              <DateField
+                name={name}
+                granularity="minute"
+                value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                onChange={(date) => {
+                  if (date) {
+                    onChange(date.toDate('Asia/Seoul'));
+                  }
+                }}
+                hideTimeZone
+                isRequired
+              >
+                <Label>날짜</Label>
+                <DateInputGroup>
+                  <DateInputGroup.Prefix>
+                    <CalendarIcon className="size-4" />
+                  </DateInputGroup.Prefix>
+                  <DateInputGroup.Input>
+                    {segment => <DateInputGroup.Segment segment={segment} />}
+                  </DateInputGroup.Input>
+                </DateInputGroup>
+              </DateField>
+            )}
+          />
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                name={name}
+                value={value}
+                onChange={onChange}
+              >
+                <Label>메모</Label>
+                <TextArea rows={5} className="resize-none" />
+                <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
+              </TextField>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="isDone"
+            render={({ field: { value } }) => (
+              <React.Activity mode={value ? 'visible' : 'hidden'}>
+                <Controller
+                  control={control}
+                  name="feedback"
+                  render={({ field: { name, value, onChange } }) => (
+                    <TextField name={name} value={value} onChange={onChange}>
+                      <Label>피드백</Label>
+                      <TextArea rows={5} className="resize-none" />
+                      <Description>수강생에게 보여줄 피드백입니다</Description>
+                    </TextField>
+                  )}
+                />
+              </React.Activity>
+            )}
+          />
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <RemoveButton sessionId={session.id} onSuccess={close} />
+        <div className="grow" />
+        <Button variant="ghost" isDisabled={isPending} onClick={close}>닫기</Button>
+        <Button type="submit" form={formId} variant="primary" isPending={isPending}>저장</Button>
+      </Modal.Footer>
+    </React.Fragment>
   );
 }
 
-function RemoveButton({ sessionId, onSuccess }: { onSuccess: () => void }) {
+interface RemoveButtonProps {
+  sessionId: Props['session']['id'];
+  onSuccess: () => void;
+}
+function RemoveButton({ sessionId, onSuccess }: RemoveButtonProps) {
   const [state, formAction, isPending] = React.useActionState(removeSession, {});
 
   React.useEffect(() => {

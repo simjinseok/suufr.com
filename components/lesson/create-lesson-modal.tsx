@@ -1,5 +1,6 @@
 'use client';
 import type { ZonedDateTime } from '@internationalized/date';
+import { Description, ModalProps, Tooltip } from '@heroui/react';
 
 import * as React from 'react';
 import {
@@ -16,15 +17,19 @@ import {
   TextArea,
   TextField,
 } from '@heroui/react';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, InfoIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { now } from '@internationalized/date';
 
 import { createLesson } from '@/actions/lesson';
 
-export default function CreateLessonModal({ isOpen, onOpenChange, studentId }) {
+interface Props {
+  isOpen: ModalProps['isOpen'];
+  onOpenChange: ModalProps['onOpenChange'];
+  studentId: string;
+}
+export default function CreateLessonModal({ isOpen, onOpenChange, studentId }: Props) {
   return (
-
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
@@ -37,10 +42,24 @@ export default function CreateLessonModal({ isOpen, onOpenChange, studentId }) {
   );
 }
 
-function Content({ close, studentId }) {
+interface ContentProps {
+  studentId: string;
+  close: () => void;
+}
+function Content({ close, studentId }: ContentProps) {
   const formId = React.useId();
-  const { control } = useForm();
-  const [state, formAction, isPending] = React.useActionState(createLesson, {});
+  const [state, formAction, isPending] = React.useActionState(createLesson, {
+    fields: {
+      title: '',
+      notes: '',
+    },
+  });
+  const { control } = useForm({
+    values: {
+      title: state.fields?.title,
+      notes: state.fields?.notes,
+    },
+  });
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -82,8 +101,11 @@ function Content({ close, studentId }) {
             name="notes"
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onInput={event => onChange(event.currentTarget.value)}>
-                <Label>내용</Label>
-                <TextArea />
+                <Label>
+                  내용
+                </Label>
+                <TextArea placeholder="레슨 내용" />
+                <Description>레슨 내용을 입력해보세요. 수강생에겐 보여지지 않습니다.</Description>
               </TextField>
             )}
           />
@@ -91,7 +113,7 @@ function Content({ close, studentId }) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="ghost" isDisabled={isPending} onClick={() => onOpenChange(false)}>닫기</Button>
+        <Button variant="ghost" isDisabled={isPending} onClick={close}>닫기</Button>
         <Button variant="primary" isPending={isPending} type="submit" form={formId}>저장</Button>
       </Modal.Footer>
     </React.Fragment>

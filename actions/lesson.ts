@@ -88,6 +88,10 @@ type UpdateLessonState = ServerActionState<{
   title: string;
   notes: string;
 }>;
+const updateLessonSchema = z.object({
+  title: z.string().min(1, { error: '제목을 입력해주세요' }),
+  notes: z.string(),
+});
 export async function updateSyllabus(state: UpdateLessonState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateSyllabus',
@@ -97,10 +101,14 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
       recordResponse: true,
     },
     async () => {
-      const syllabusId = Number(formData.get('syllabusId'));
+      const { syllabusId, ...data } = Object.fromEntries(formData.entries());
 
       const state: UpdateLessonState = {
         success: false,
+        fields: {
+          title: data.title as string,
+          notes: data.notes as string,
+        },
         timestamp: Date.now(),
       };
       const { user } = await getSession();
@@ -109,9 +117,15 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
         return state;
       }
 
+      const validationResult = updateLessonSchema.safeParse(data);
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
       const syllabus = await prisma.syllabus.findUnique({
         where: {
-          id: syllabusId,
+          id: Number(syllabusId),
           deletedAt: null,
           student: {
             userId: user.id,
@@ -126,14 +140,19 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
       const result = await prisma.syllabus.update({
         where: {
           id: syllabus.id,
+          deletedAt: null,
+          student: {
+            userId: user.id,
+          },
         },
         data: {
-          title: formData.get('title') as string,
-          notes: formData.get('notes') as string,
+          title: validationResult.data.title,
+          notes: validationResult.data.notes,
           updatedAt: new Date(),
         },
       });
 
+      console.log('?', result);
       revalidatePath('/lessons', 'page');
       state.success = true;
       return state;
@@ -141,6 +160,8 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
   );
 }
 
+type RemoveLessonState = ServerActionState<null>;
+export async function removeLesson(prevState: RemoveLessonState, formData: FormData) {}
 export async function removeSyllabus(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeSyllabus',
@@ -152,14 +173,14 @@ export async function removeSyllabus(prevState: any, formData: FormData) {
     async () => {
       const syllabusId = Number(formData.get('syllabusId'));
 
-      const supabase = await createClient();
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const state: RemoveLessonState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+      const { user } = await getSession();
 
       if (!user) {
-        return { success: false };
+        return state;
       }
 
       const syllabus = await prisma.syllabus.findUnique({
@@ -186,10 +207,11 @@ export async function removeSyllabus(prevState: any, formData: FormData) {
 
       // 활성화된 lesson이 있으면 삭제 불가
       if (syllabus.lessons.length > 0) {
-        return { success: false, error: 'ACTIVE_LESSONS_EXIST' };
+        state.message = '먼저 수업을 삭제해주세요';
+        return state;
       }
 
-      await prisma.syllabus.update({
+      const result = await prisma.syllabus.update({
         where: {
           id: syllabus.id,
         },
@@ -198,7 +220,13 @@ export async function removeSyllabus(prevState: any, formData: FormData) {
         },
       });
 
-      revalidatePath('/syllabuses', 'page');
-      return { success: true };
+      if (result) {
+        revalidatePath('/students/[studentId]/@lessons', 'page');
+        state.success = true;
+        state.message = '수업을 삭제하였습니다';
+        return state;
+      }
+
+      return state;
     });
 }

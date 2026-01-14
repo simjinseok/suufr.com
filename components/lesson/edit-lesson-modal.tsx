@@ -1,67 +1,36 @@
 'use client';
+import {Description, ModalProps} from '@heroui/react';
+import { TSyllabus } from '@/types/index';
+
 import React from 'react';
-import { Form, Input, Modal, TextArea, Button, TextField, Label, AlertDialog, DangerIcon } from '@heroui/react';
+import {
+  Form,
+  Input,
+  Modal,
+  TextArea,
+  Button,
+  TextField,
+  Label,
+  AlertDialog,
+  DangerIcon,
+  FieldError,
+} from '@heroui/react';
 
 import { updateSyllabus, removeSyllabus } from '@/actions/lesson';
+import { Controller, useForm } from 'react-hook-form';
 
-export default function EditLessonModal({ syllabus, isOpen, onClose }) {
-  const formId = React.useId();
-
-  const [state, formAction, isPending] = React.useActionState(updateSyllabus, {});
-
-  React.useEffect(() => {
-    if (state.success) {
-      alert('수업을 수정하였습니다.');
-      onClose();
-    }
-  }, [state]);
-
+interface Props {
+  isOpen: ModalProps['isOpen'];
+  onOpenChange: ModalProps['onOpenChange'];
+  lesson: TSyllabus;
+}
+export default function EditLessonModal({ lesson, isOpen, onOpenChange }: Props) {
   return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
-            <React.Fragment>
-              <Modal.Header>
-                <Modal.Heading>계획 수정</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <Form
-                  id={formId}
-                  className="p-1"
-                  action={formAction}
-                >
-                  <input type="hidden" name="syllabusId" value={syllabus.id} />
-                  <TextField name="title" defaultValue={syllabus?.title}>
-                    <Label>제목</Label>
-                    <Input />
-                  </TextField>
-                  <TextField
-                    className="mt-4"
-                    name="notes"
-                    defaultValue={syllabus?.notes}
-                  >
-                    <Label>메모</Label>
-                    <TextArea />
-                  </TextField>
-                </Form>
-              </Modal.Body>
-              <Modal.Footer>
-                <DeleteButton id={syllabus.id} />
-                <div className="grow" />
-                <Button variant="ghost" isDisabled={isPending} onPress={onClose}>
-                  닫기
-                </Button>
-                <Button
-                  form={formId}
-                  variant="primary"
-                  type="submit"
-                  isPending={isPending}
-                >
-                  저장
-                </Button>
-              </Modal.Footer>
-            </React.Fragment>
+            <Content lesson={lesson} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -69,10 +38,113 @@ export default function EditLessonModal({ syllabus, isOpen, onClose }) {
   );
 }
 
-function DeleteButton({ id }) {
+interface ContentProps {
+  lesson: Props['lesson'];
+  close: () => void;
+}
+function Content({ lesson, close }: ContentProps) {
+  const formId = React.useId();
+
+  const [state, formAction, isPending] = React.useActionState(updateSyllabus, {
+    fields: {
+      title: lesson?.title,
+      notes: lesson?.notes,
+    },
+  });
+
+  const { control } = useForm({
+    values: {
+      title: state.fields?.title || '',
+      notes: state.fields?.notes || '',
+    },
+  });
+
+  React.useEffect(() => {
+    if (!state.timestamp) return;
+
+    if (state.success) {
+      alert('수업을 수정하였습니다.');
+      close();
+    }
+  }, [state.timestamp, state.success, state.message]);
+
+  return (
+    <React.Fragment>
+      <Modal.Header>
+        <Modal.Heading>계획 수정</Modal.Heading>
+      </Modal.Header>
+      <Modal.Body>
+        <Form
+          id={formId}
+          className="p-1 flex flex-col gap-4"
+          action={formAction}
+          validationErrors={state.fieldErrors}
+        >
+          <input type="hidden" name="syllabusId" value={lesson.id} />
+          <Controller
+            control={control}
+            name="title"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField name={name} value={value} onChange={onChange}>
+                <Label>제목</Label>
+                <Input />
+                <FieldError />
+              </TextField>
+            )}
+          />
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField name={name} value={value} onChange={onChange}>
+                <Label>메모</Label>
+                <TextArea rows={5} className="resize-none" />
+                <Description>레슨 내용은 수강생에게 보여지지 않습니다.</Description>
+                <FieldError />
+              </TextField>
+            )}
+          />
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <DeleteButton id={lesson.id} />
+        <div className="grow" />
+        <Button variant="ghost" isDisabled={isPending} onClick={close}>
+          닫기
+        </Button>
+        <Button
+          form={formId}
+          variant="primary"
+          type="submit"
+          isPending={isPending}
+        >
+          저장
+        </Button>
+      </Modal.Footer>
+    </React.Fragment>
+  );
+}
+
+interface DeleteButtonProps {
+  id: number;
+  close: ContentProps['close'];
+}
+function DeleteButton({ id, close }: DeleteButtonProps) {
   const formId = React.useId();
   const [state, formAction, isPending] = React.useActionState(removeSyllabus, {});
-  // TODO: 삭제 후 어떻게 처리할지?
+
+  React.useEffect(() => {
+    if (!state.timestamp) return;
+
+    if (state.message) {
+      alert(state.message);
+    }
+
+    if (state.success) {
+      close();
+    }
+  }, [state.success, state.timestamp, state.message]);
+
   return (
     <AlertDialog>
       <Button
@@ -84,7 +156,6 @@ function DeleteButton({ id }) {
         <AlertDialog.Container>
           <AlertDialog.Dialog className="w-60">
             <AlertDialog.Header>
-
               <AlertDialog.Icon>
                 <DangerIcon />
               </AlertDialog.Icon>

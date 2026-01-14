@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache';
 import { parseDateTime } from '@internationalized/date';
 import { getSession } from '@/utils/auth';
 import prisma from '@/utils/prisma';
+import { ServerActionState } from '@/types/index';
+import { z } from 'zod';
 
 type CreateSessionState = {
   success: boolean;
@@ -75,12 +77,21 @@ export async function createSession(prevState: CreateSessionState, formData: For
   );
 }
 
-type UpdateSessionState = {
-  success?: boolean;
-  message?: string;
-  timestamp?: number;
-};
-
+type UpdateSessionState = ServerActionState<{
+  isDone: boolean;
+  lessonAt: string;
+  notes: string;
+  feedback: string;
+}>;
+const updateSessionSchema = z.object({
+  isDone: z.preprocess(val => val === 'on', z.boolean()),
+  lessonAt: z.string().transform(val => parseDateTime(val).toDate('Asia/Seoul')),
+  notes: z.string().trim(),
+  feedback: z.string().trim(),
+}).transform(data => ({
+  ...data,
+  feedback: data.isDone ? data.feedback : '',
+}));
 export async function updateSession(prevState: UpdateSessionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateSession',
@@ -92,15 +103,30 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
     async () => {
       const { sessionId, ...data } = Object.fromEntries(formData.entries());
 
+      const currentDate = new Date();
       const state: UpdateSessionState = {
         success: false,
-        timestamp: Date.now(),
+        fields: {
+          isDone: data.isDone === 'on',
+          lessonAt: data.lessonAt as string,
+          notes: data.notes as string,
+          feedback: data.feedback as string,
+        },
+        timestamp: currentDate.getTime(),
       };
 
       const session = await getSession();
       if (!session?.user) {
         return state;
       }
+
+      const validationResult = updateSessionSchema.safeParse(data);
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
+      const { isDone, lessonAt, notes, feedback } = validationResult.data;
 
       const lesson = await prisma.lesson.findUnique({
         where: {
@@ -110,6 +136,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
             deletedAt: null,
             student: {
               userId: session.user.id,
+              deletedAt: null,
             },
           },
         },
@@ -119,9 +146,6 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         state.message = '존재하지 않는 세션입니다.';
         return state;
       }
-
-      const lessonAt = parseDateTime(data.lessonAt as string).toDate('Asia/Seoul');
-      const isDone = data.isDone === 'on';
 
       await prisma.lesson.update({
         where: {
@@ -133,15 +157,31 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
           },
         },
         data: {
-          notes: data.notes as string,
+          notes,
           lessonAt,
           isDone,
-          updatedAt: new Date(),
+          updatedAt: currentDate,
         },
       });
 
+      // feedback 처리: isDone이고 내용이 있으면 upsert, 아니면 소프트 삭제
+      if (isDone && feedback) {
+        await prisma.feedback.upsert({
+          where: { lessonId: lesson.id },
+          create: { lessonId: lesson.id, notes: feedback },
+          update: { notes: feedback, deletedAt: null, updatedAt: currentDate },
+        });
+      }
+      else {
+        await prisma.feedback.updateMany({
+          where: { lessonId: lesson.id, deletedAt: null },
+          data: { deletedAt: currentDate },
+        });
+      }
+
       revalidatePath('/sessions', 'page');
       revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'page');
       state.success = true;
       state.message = '세션 정보를 수정하였습니다';
       return state;
@@ -281,7 +321,8 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
         }
         state.success = true;
         state.message = '피드백을 삭제하였습니다.';
-      } else {
+      }
+      else {
         await prisma.feedback.upsert({
           where: { lessonId },
           create: { lessonId, notes },

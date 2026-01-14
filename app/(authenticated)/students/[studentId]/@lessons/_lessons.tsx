@@ -3,6 +3,7 @@ import type { TSyllabus } from '@/types/index';
 
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
+import { tz } from '@date-fns/tz';
 
 import { Button, ButtonGroup, Dropdown, Header, ListBox, Modal, Surface } from '@heroui/react';
 import {
@@ -28,10 +29,8 @@ import { useParams } from 'next/navigation';
 export default function Lessons({ lessons }) {
   const { studentId } = useParams();
 
-  const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = React.useState<string | null>(null);
   const [isLessonCreating, setIsLessonCreating]
-    = React.useState<TSyllabus | null>(null);
-  const [editingSyllabus, setEditingSyllabus]
     = React.useState<TSyllabus | null>(null);
 
   return (
@@ -100,11 +99,14 @@ export default function Lessons({ lessons }) {
                           />
                         </Modal>
                         <ButtonGroup variant="secondary">
-                          <Button
-                            onClick={setEditingSyllabus.bind(null, syllabus)}
-                          >
-                            수정
-                          </Button>
+                          <Modal>
+                            <Button>
+                              수정
+                            </Button>
+                            <EditSyllabusModal
+                              lesson={syllabus}
+                            />
+                          </Modal>
                           <Dropdown>
                             <Button>
                               <ChevronDownIcon />
@@ -144,7 +146,7 @@ export default function Lessons({ lessons }) {
                           textValue={session.id}
                           className="flex items-start"
                           onAction={() => {
-                            setSelectedSessionId(session);
+                            setSelectedSession(session);
                           }}
                         >
                           <div className="size-6 flex items-center justify-center">
@@ -165,15 +167,17 @@ export default function Lessons({ lessons }) {
                                 )}
                           </div>
                           <div>
-                            <p className="tabular-nums">{format(new Date(session.lessonAt), 'yyyy-MM-dd hh:mm')}</p>
+                            <p className="tabular-nums">{format(new Date(session.lessonAt), 'yyyy-MM-dd hh:mm', { in: tz('Asia/Seoul') })}</p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}
                             </Text>
                             {session.feedback && (
-                              <Text>
-                                피드백:
-                                {session.feedback.notes}
-                              </Text>
+                              <div className="mt-1">
+                                <Text className="font-bold">피드백</Text>
+                                <Text className="whitespace-pre-wrap">
+                                  {session.feedback.notes}
+                                </Text>
+                              </div>
                             )}
                           </div>
                         </ListBox.Item>
@@ -188,19 +192,11 @@ export default function Lessons({ lessons }) {
         : (
             <p>일정이 없습니다.</p>
           )}
-      {selectedSessionId && (
+      {selectedSession && (
         <EditSessionModal
-          isOpen={selectedSessionId}
-          onOpenChange={setSelectedSessionId}
-          session={selectedSessionId}
-        />
-      )}
-
-      {editingSyllabus && (
-        <EditSyllabusModal
-          isOpen={editingSyllabus !== null}
-          syllabus={editingSyllabus}
-          onClose={setEditingSyllabus.bind(null, null)}
+          isOpen={selectedSession}
+          onOpenChange={setSelectedSession}
+          session={selectedSession}
         />
       )}
 

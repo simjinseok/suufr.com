@@ -27,6 +27,14 @@ export default async function SharedSyllabusPage({
               name: true,
             },
           },
+          payment: {
+            where: {
+              deletedAt: null,
+            },
+            select: {
+              id: true,
+            },
+          },
           lessons: {
             where: {
               deletedAt: null,

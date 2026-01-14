@@ -1,12 +1,15 @@
 'use client';
 
 import dayjs from 'dayjs';
-import { CircleIcon, CircleCheckBigIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, CheckCircle2Icon, AlertCircleIcon } from 'lucide-react';
 
 type Props = {
   syllabus: {
     title: string;
     notes: string;
+    payment?: {
+      id: number;
+    } | null;
     lessons: Array<{
       id: number;
       notes: string;
@@ -23,11 +26,25 @@ type Props = {
 export default function SyllabusView({ syllabus }: Props) {
   const completedCount = syllabus.lessons.filter(l => l.isDone).length;
   const totalCount = syllabus.lessons.length;
+  const isPaid = !!syllabus.payment;
 
   return (
     <div className="bg-white py-4 border border-gray-100 rounded-xl shadow-sm">
-      <div className="px-4">
+      <div className="px-4 flex items-center justify-between">
         <p className="text-lg font-bold">{syllabus.student?.name}</p>
+        {isPaid
+          ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                <CheckCircle2Icon className="size-3.5" />
+                결제완료
+              </span>
+            )
+          : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                <AlertCircleIcon className="size-3.5" />
+                결제필요
+              </span>
+            )}
       </div>
       <hr className="my-4 h-px border-none w-full bg-gray-200" />
       {syllabus.lessons.length > 0
@@ -60,7 +77,7 @@ export default function SyllabusView({ syllabus }: Props) {
                       {lesson.feedback?.notes && (
                         <div className="mt-2 pl-3 border-l-2 border-blue-300">
                           <p className="text-xs text-blue-600 font-medium">피드백</p>
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
                             {lesson.feedback.notes}
                           </p>
                         </div>

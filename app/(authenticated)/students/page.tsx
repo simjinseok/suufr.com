@@ -1,10 +1,9 @@
 import type { Student } from '@/types/index';
 
-import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
+import { createLoader, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs/server';
 
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import React from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
@@ -15,19 +14,13 @@ import { getSession } from '@/utils/auth';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
-type PageProps = {
-  searchParams: {
-    page: number;
-    status: string;
-    edit: string;
-    q: string;
-  };
-};
-export default async function Page({ searchParams }: PageProps) {
-  const { page: _page, status: _status, edit: _edit, q: _q } = await searchParams;
-  const page = _page > 0 ? Number(_page) : 1;
-  const status = typeof _status === 'string' ? _status : 'active';
-  const q = typeof _q === 'string' ? _q : '';
+const loadSearchParams = createLoader({
+  page: parseAsInteger.withDefault(1),
+  status: parseAsStringEnum(['', 'pending', 'active', 'paused', 'leave']).withDefault('active'),
+  q: parseAsString.withDefault(''),
+});
+export default async function Page(props: PageProps<'/students'>) {
+  const { page, status, q } = await loadSearchParams(props.searchParams);
 
   const { user } = await getSession();
 
