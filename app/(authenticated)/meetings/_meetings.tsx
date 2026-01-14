@@ -1,3 +1,4 @@
+'use client';
 import { format } from 'date-fns/format';
 
 import React from 'react';
@@ -25,18 +26,18 @@ export default function Meetings({ meetings }) {
             <TableCell>
               {meeting.isDone
                 ? (
-                      <CircleCheckBigIcon
-                        width={20}
-                        height={20}
-                        className="text-green-600"
-                      />
+                    <CircleCheckBigIcon
+                      width={20}
+                      height={20}
+                      className="text-green-600"
+                    />
                   )
                 : (
-                      <CircleHelpIcon
-                        width={20}
-                        height={20}
-                        className="text-amber-500"
-                      />
+                    <CircleHelpIcon
+                      width={20}
+                      height={20}
+                      className="text-amber-500"
+                    />
                   )}
             </TableCell>
             <TableCell>{format(meeting.meetingAt, 'yyyy-MM-dd')}</TableCell>
