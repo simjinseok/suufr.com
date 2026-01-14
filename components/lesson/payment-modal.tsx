@@ -21,7 +21,7 @@ import { fromDate, getLocalTimeZone, parseDate, toCalendarDate, today } from '@i
 export default function PaymentModal({ isOpen, onClose, syllabus }) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
-      <Modal.Container>
+      <Modal.Container placement="center">
         <Modal.Dialog>
           {({ close }) => (
             <Content
