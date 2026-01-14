@@ -28,12 +28,13 @@ export default function ConditionForm({
   }, [searchValue]);
 
   return (
-    <Form method="get" className="flex gap-2">
+    <Form method="get" className="flex gap-2 w-full justify-between md:justify-start">
       <TextField
+        className="w-40"
         name="q"
         aria-label="이름 검색"
         value={searchValue}
-        onChange={e => setSearchValue(e.target.value)}
+        onChange={setSearchValue}
       >
         <InputGroup>
           <InputGroup.Prefix>

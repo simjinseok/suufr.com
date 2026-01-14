@@ -58,16 +58,17 @@ export default async function Page(props: PageProps<'/students'>) {
 
   return (
     <div className="mt-3">
-      <div className="flex flex-col">
+      <div className="flex items-end justify-between">
         <h1 className="text-xl font-bold text-default-900 lg:text-3xl">수강생 목록</h1>
+        <NewStudent />
       </div>
+
       <div className="mt-5 flex justify-between">
         <ConditionForm currentStatus={status} />
-        <div>
-          <NewStudent />
-        </div>
       </div>
+
       <Students students={students} />
+
       <div className="mt-5 flex justify-between">
         {page > 1 && (
           <Link

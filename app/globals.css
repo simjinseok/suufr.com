@@ -10,3 +10,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* PC에서 사이드바 고려한 Modal 가운데 정렬 */
+@media (min-width: 640px) {
+  .modal__backdrop {
+    padding-left: 288px;
+  }
+}
