@@ -1,11 +1,8 @@
-import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
 import { format } from 'date-fns/format';
 
 import * as React from 'react';
 import { redirect } from 'next/navigation';
-import { Card } from '@heroui/react';
-import { BanknoteXIcon, ShapesIcon, UserRoundCheckIcon, UserRoundMinusIcon } from 'lucide-react';
 import { Heading } from '@/components/heading';
 import {
   Table,

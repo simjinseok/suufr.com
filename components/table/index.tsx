@@ -3,7 +3,6 @@
 import clsx from "clsx";
 import type React from "react";
 import { createContext, useContext, useState } from "react";
-import { Link } from "../link";
 
 const TableContext = createContext<{
   bleed: boolean;
@@ -168,16 +167,6 @@ export function TableCell({
         !bleed && "sm:first:pl-1 sm:last:pr-1",
       )}
     >
-      {href && (
-        <Link
-          data-row-link
-          href={href}
-          target={target}
-          aria-label={title}
-          tabIndex={cellRef?.previousElementSibling === null ? 0 : -1}
-          className="absolute inset-0 focus:outline-none"
-        />
-      )}
       {children}
     </td>
   );
