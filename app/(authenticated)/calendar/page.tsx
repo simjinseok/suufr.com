@@ -13,24 +13,25 @@ export default async function Page(props: PageProps<'/calendar'>) {
   const { user } = await getSession();
 
   const { date, view: viewParam } = await props.searchParams;
-  const today = new TZDate(new Date(), 'Asia/Seoul');
-  const selectedDate = date ? new Date(date + 'T00:00:00+09:00') : today;
+  const TIMEZONE = 'Asia/Seoul';
+  const today = new TZDate(new Date(), TIMEZONE);
+  const selectedDate = date ? new TZDate(date + 'T00:00:00', TIMEZONE) : today;
   const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'day' ? 'day' : 'month';
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-  // Calculate date range based on view
-  let calendarStart: Date;
-  let calendarEnd: Date;
+  // Calculate date range based on view (TZDate를 사용하면 date-fns가 타임존을 유지)
+  let calendarStart: TZDate;
+  let calendarEnd: TZDate;
 
   if (view === 'month') {
-    calendarStart = startOfMonth(selectedDate);
-    calendarEnd = endOfMonth(selectedDate);
+    calendarStart = startOfMonth(selectedDate) as TZDate;
+    calendarEnd = endOfMonth(selectedDate) as TZDate;
   } else if (view === 'week') {
-    calendarStart = startOfWeek(selectedDate, { locale: ko });
-    calendarEnd = endOfWeek(selectedDate, { locale: ko });
+    calendarStart = startOfWeek(selectedDate, { locale: ko }) as TZDate;
+    calendarEnd = endOfWeek(selectedDate, { locale: ko }) as TZDate;
   } else {
-    calendarStart = startOfDay(selectedDate);
-    calendarEnd = endOfDay(selectedDate);
+    calendarStart = startOfDay(selectedDate) as TZDate;
+    calendarEnd = endOfDay(selectedDate) as TZDate;
   }
 
   const lessons = await prisma.session.findMany({

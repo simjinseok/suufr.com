@@ -13,6 +13,9 @@ import {
   isToday,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { tz } from '@date-fns/tz';
+
+const TIMEZONE = 'Asia/Seoul';
 
 interface Lesson {
   id: string;
@@ -45,7 +48,7 @@ export default function MonthView({ lessons, selectedDate }: MonthViewProps) {
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const getLessonsForDay = (day: Date) => {
-    return lessons.filter(lesson => isSameDay(new Date(lesson.sessionAt), day));
+    return lessons.filter(lesson => isSameDay(new Date(lesson.sessionAt), day, { in: tz(TIMEZONE) }));
   };
 
   const handleDayClick = (day: Date) => {

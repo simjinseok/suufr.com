@@ -10,6 +10,9 @@ import {
   isToday,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { tz } from '@date-fns/tz';
+
+const TIMEZONE = 'Asia/Seoul';
 
 interface Lesson {
   id: string;
@@ -37,7 +40,7 @@ export default function WeekView({ lessons, selectedDate }: WeekViewProps) {
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const getLessonsForDay = (day: Date) => {
-    return lessons.filter(lesson => isSameDay(new Date(lesson.sessionAt), day));
+    return lessons.filter(lesson => isSameDay(new Date(lesson.sessionAt), day, { in: tz(TIMEZONE) }));
   };
 
   const handleDayClick = (day: Date) => {
@@ -101,7 +104,7 @@ export default function WeekView({ lessons, selectedDate }: WeekViewProps) {
                     >
                       <span>{lesson.lesson.student.name}</span>
                       <span className="text-xs ml-2 opacity-70">
-                        {format(new Date(lesson.sessionAt), 'HH:mm')}
+                        {format(new Date(lesson.sessionAt), 'HH:mm', { in: tz(TIMEZONE) })}
                       </span>
                     </div>
                   ))}

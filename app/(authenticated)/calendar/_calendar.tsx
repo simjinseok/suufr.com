@@ -11,8 +11,10 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
+  isSameDay,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { tz, TZDate } from '@date-fns/tz';
 import { Button, Tabs } from '@heroui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CalendarView } from './page';
@@ -38,10 +40,12 @@ interface CalendarProps {
   view: CalendarView;
 }
 
+const TIMEZONE = 'Asia/Seoul';
+
 export default function Calendar({ lessons, selectedDate, view }: CalendarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dateObj = new Date(selectedDate + 'T00:00:00');
+  const dateObj = new TZDate(selectedDate + 'T00:00:00', TIMEZONE);
 
   const goToDate = (date: Date, newView?: CalendarView) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -61,7 +65,7 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
   // Mobile navigation (day only)
   const goToPrevDay = () => goToDate(subDays(dateObj, 1), 'day');
   const goToNextDay = () => goToDate(addDays(dateObj, 1), 'day');
-  const goToTodayMobile = () => goToDate(new Date(), 'day');
+  const goToTodayMobile = () => goToDate(new TZDate(new Date(), TIMEZONE), 'day');
 
   // Desktop navigation (based on view)
   const goToPrev = () => {
@@ -88,7 +92,7 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
     }
   };
 
-  const goToToday = () => goToDate(new Date());
+  const goToToday = () => goToDate(new TZDate(new Date(), TIMEZONE));
 
   // Format header based on view
   const getHeaderText = () => {
@@ -107,12 +111,7 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
 
   // Filter lessons for mobile day view
   const dayLessons = lessons.filter((lesson) => {
-    const lessonDate = new Date(lesson.sessionAt);
-    return (
-      lessonDate.getFullYear() === dateObj.getFullYear()
-      && lessonDate.getMonth() === dateObj.getMonth()
-      && lessonDate.getDate() === dateObj.getDate()
-    );
+    return isSameDay(new Date(lesson.sessionAt), dateObj, { in: tz(TIMEZONE) });
   });
 
   return (

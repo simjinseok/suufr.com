@@ -1,6 +1,9 @@
 'use client';
 import React from 'react';
 import { format } from 'date-fns';
+import { tz } from '@date-fns/tz';
+
+const TIMEZONE = 'Asia/Seoul';
 
 interface Lesson {
   id: string;
@@ -36,7 +39,7 @@ export default function DayView({ lessons }: DayViewProps) {
         >
           {/* Time */}
           <div className="w-14 text-sm font-medium text-zinc-500 flex-shrink-0">
-            {format(new Date(lesson.sessionAt), 'HH:mm')}
+            {format(new Date(lesson.sessionAt), 'HH:mm', { in: tz(TIMEZONE) })}
           </div>
 
           {/* Status indicator */}
