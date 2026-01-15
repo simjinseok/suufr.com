@@ -21,6 +21,7 @@ import type { CalendarView } from './page';
 import MonthView from './_month-view';
 import WeekView from './_week-view';
 import DayView from './_day-view';
+import SessionDetailModal from './_session-detail-modal';
 
 interface Lesson {
   id: string;
@@ -46,6 +47,7 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateObj = new TZDate(selectedDate + 'T00:00:00', TIMEZONE);
+  const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
 
   const goToDate = (date: Date, newView?: CalendarView) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -135,7 +137,7 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
           </Button>
         </div>
         <div className="rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <DayView lessons={dayLessons} />
+          <DayView lessons={dayLessons} onSessionClick={setSelectedSessionId} />
         </div>
       </div>
 
@@ -182,14 +184,20 @@ export default function Calendar({ lessons, selectedDate, view }: CalendarProps)
         {/* View content */}
         <div className="rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
           {view === 'month' && (
-            <MonthView lessons={lessons} selectedDate={dateObj} />
+            <MonthView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} />
           )}
           {view === 'week' && (
-            <WeekView lessons={lessons} selectedDate={dateObj} />
+            <WeekView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} />
           )}
-          {view === 'day' && <DayView lessons={lessons} />}
+          {view === 'day' && <DayView lessons={lessons} onSessionClick={setSelectedSessionId} />}
         </div>
       </div>
+
+      {/* Session Detail Modal */}
+      <SessionDetailModal
+        sessionId={selectedSessionId}
+        onClose={() => setSelectedSessionId(null)}
+      />
     </div>
   );
 }

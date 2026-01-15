@@ -29,9 +29,10 @@ interface Lesson {
 interface WeekViewProps {
   lessons: Lesson[];
   selectedDate: Date;
+  onSessionClick?: (sessionId: string) => void;
 }
 
-export default function WeekView({ lessons, selectedDate }: WeekViewProps) {
+export default function WeekView({ lessons, selectedDate, onSessionClick }: WeekViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -94,9 +95,14 @@ export default function WeekView({ lessons, selectedDate }: WeekViewProps) {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {dayLessons.map(lesson => (
-                    <div
+                    <button
                       key={lesson.id}
-                      className={`text-sm px-3 py-1.5 rounded-lg font-medium ${
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSessionClick?.(lesson.id);
+                      }}
+                      className={`text-sm px-3 py-1.5 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity ${
                         lesson.isDone
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-blue-100 text-blue-700'
@@ -106,7 +112,7 @@ export default function WeekView({ lessons, selectedDate }: WeekViewProps) {
                       <span className="text-xs ml-2 opacity-70">
                         {format(new Date(lesson.sessionAt), 'HH:mm', { in: tz(TIMEZONE) })}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

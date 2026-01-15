@@ -32,11 +32,12 @@ interface Lesson {
 interface MonthViewProps {
   lessons: Lesson[];
   selectedDate: Date;
+  onSessionClick?: (sessionId: string) => void;
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-export default function MonthView({ lessons, selectedDate }: MonthViewProps) {
+export default function MonthView({ lessons, selectedDate, onSessionClick }: MonthViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -111,17 +112,29 @@ export default function MonthView({ lessons, selectedDate }: MonthViewProps) {
               {/* Lesson indicators */}
               <div className="space-y-1">
                 {dayLessons.slice(0, 2).map(lesson => (
-                  <div
+                  <span
                     key={lesson.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSessionClick?.(lesson.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        onSessionClick?.(lesson.id);
+                      }
+                    }}
                     className={`
-                      text-xs px-1.5 py-0.5 rounded truncate font-medium
+                      block text-xs px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:opacity-80 transition-opacity
                       ${lesson.isDone
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-blue-100 text-blue-700'}
                     `}
                   >
                     {lesson.lesson.student.name}
-                  </div>
+                  </span>
                 ))}
                 {dayLessons.length > 2 && (
                   <div className="text-xs text-zinc-400 px-1">

@@ -19,9 +19,10 @@ interface Lesson {
 
 interface DayViewProps {
   lessons: Lesson[];
+  onSessionClick?: (sessionId: string) => void;
 }
 
-export default function DayView({ lessons }: DayViewProps) {
+export default function DayView({ lessons, onSessionClick }: DayViewProps) {
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-400 bg-white">
@@ -33,9 +34,11 @@ export default function DayView({ lessons }: DayViewProps) {
   return (
     <div className="bg-white divide-y divide-zinc-200">
       {lessons.map(lesson => (
-        <div
+        <button
           key={lesson.id}
-          className="flex items-center gap-4 py-4 px-4 hover:bg-zinc-50 transition-colors"
+          type="button"
+          onClick={() => onSessionClick?.(lesson.id)}
+          className="w-full flex items-center gap-4 py-4 px-4 hover:bg-zinc-50 transition-colors text-left cursor-pointer"
         >
           {/* Time */}
           <div className="w-14 text-sm font-medium text-zinc-500 flex-shrink-0">
@@ -71,7 +74,7 @@ export default function DayView({ lessons }: DayViewProps) {
           >
             {lesson.isDone ? '완료' : '예정'}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
