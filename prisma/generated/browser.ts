@@ -23,11 +23,6 @@ export * from './enums';
  */
 export type Student = Prisma.StudentModel
 /**
- * Model Lesson
- * 
- */
-export type Lesson = Prisma.LessonModel
-/**
  * Model Feedback
  * 
  */
@@ -53,12 +48,17 @@ export type StudentComment = Prisma.StudentCommentModel
  */
 export type StudentStatusHistory = Prisma.StudentStatusHistoryModel
 /**
- * Model LessonShare
+ * Model SessionShare
  * 
  */
-export type LessonShare = Prisma.LessonShareModel
+export type SessionShare = Prisma.SessionShareModel
 /**
- * Model Syllabus
+ * Model Session
  * 
  */
-export type Syllabus = Prisma.SyllabusModel
+export type Session = Prisma.SessionModel
+/**
+ * Model Lesson
+ * 
+ */
+export type Lesson = Prisma.LessonModel

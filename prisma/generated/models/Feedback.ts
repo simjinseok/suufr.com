@@ -28,12 +28,12 @@ export type AggregateFeedback = {
 
 export type FeedbackAvgAggregateOutputType = {
   id: number | null
-  lessonId: number | null
+  sessionId: number | null
 }
 
 export type FeedbackSumAggregateOutputType = {
   id: number | null
-  lessonId: number | null
+  sessionId: number | null
 }
 
 export type FeedbackMinAggregateOutputType = {
@@ -42,7 +42,7 @@ export type FeedbackMinAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  lessonId: number | null
+  sessionId: number | null
 }
 
 export type FeedbackMaxAggregateOutputType = {
@@ -51,7 +51,7 @@ export type FeedbackMaxAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  lessonId: number | null
+  sessionId: number | null
 }
 
 export type FeedbackCountAggregateOutputType = {
@@ -60,19 +60,19 @@ export type FeedbackCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   deletedAt: number
-  lessonId: number
+  sessionId: number
   _all: number
 }
 
 
 export type FeedbackAvgAggregateInputType = {
   id?: true
-  lessonId?: true
+  sessionId?: true
 }
 
 export type FeedbackSumAggregateInputType = {
   id?: true
-  lessonId?: true
+  sessionId?: true
 }
 
 export type FeedbackMinAggregateInputType = {
@@ -81,7 +81,7 @@ export type FeedbackMinAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  lessonId?: true
+  sessionId?: true
 }
 
 export type FeedbackMaxAggregateInputType = {
@@ -90,7 +90,7 @@ export type FeedbackMaxAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  lessonId?: true
+  sessionId?: true
 }
 
 export type FeedbackCountAggregateInputType = {
@@ -99,7 +99,7 @@ export type FeedbackCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  lessonId?: true
+  sessionId?: true
   _all?: true
 }
 
@@ -195,7 +195,7 @@ export type FeedbackGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
-  lessonId: number
+  sessionId: number
   _count: FeedbackCountAggregateOutputType | null
   _avg: FeedbackAvgAggregateOutputType | null
   _sum: FeedbackSumAggregateOutputType | null
@@ -227,8 +227,8 @@ export type FeedbackWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
-  lessonId?: Prisma.IntFilter<"Feedback"> | number
-  lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
+  sessionId?: Prisma.IntFilter<"Feedback"> | number
+  session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
 }
 
 export type FeedbackOrderByWithRelationInput = {
@@ -237,13 +237,13 @@ export type FeedbackOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
-  lesson?: Prisma.LessonOrderByWithRelationInput
+  sessionId?: Prisma.SortOrder
+  session?: Prisma.SessionOrderByWithRelationInput
 }
 
 export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  lessonId?: number
+  sessionId?: number
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
@@ -251,8 +251,8 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
-  lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
-}, "id" | "lessonId">
+  session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
+}, "id" | "sessionId">
 
 export type FeedbackOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -260,7 +260,7 @@ export type FeedbackOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
   _count?: Prisma.FeedbackCountOrderByAggregateInput
   _avg?: Prisma.FeedbackAvgOrderByAggregateInput
   _max?: Prisma.FeedbackMaxOrderByAggregateInput
@@ -277,7 +277,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Feedback"> | Date | string | null
-  lessonId?: Prisma.IntWithAggregatesFilter<"Feedback"> | number
+  sessionId?: Prisma.IntWithAggregatesFilter<"Feedback"> | number
 }
 
 export type FeedbackCreateInput = {
@@ -285,7 +285,7 @@ export type FeedbackCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  lesson: Prisma.LessonCreateNestedOneWithoutFeedbackInput
+  session: Prisma.SessionCreateNestedOneWithoutFeedbackInput
 }
 
 export type FeedbackUncheckedCreateInput = {
@@ -294,7 +294,7 @@ export type FeedbackUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  lessonId: number
+  sessionId: number
 }
 
 export type FeedbackUpdateInput = {
@@ -302,7 +302,7 @@ export type FeedbackUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lesson?: Prisma.LessonUpdateOneRequiredWithoutFeedbackNestedInput
+  session?: Prisma.SessionUpdateOneRequiredWithoutFeedbackNestedInput
 }
 
 export type FeedbackUncheckedUpdateInput = {
@@ -311,7 +311,7 @@ export type FeedbackUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lessonId?: Prisma.IntFieldUpdateOperationsInput | number
+  sessionId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FeedbackCreateManyInput = {
@@ -320,7 +320,7 @@ export type FeedbackCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  lessonId: number
+  sessionId: number
 }
 
 export type FeedbackUpdateManyMutationInput = {
@@ -336,12 +336,7 @@ export type FeedbackUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lessonId?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
-export type FeedbackNullableScalarRelationFilter = {
-  is?: Prisma.FeedbackWhereInput | null
-  isNot?: Prisma.FeedbackWhereInput | null
+  sessionId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FeedbackCountOrderByAggregateInput = {
@@ -350,12 +345,12 @@ export type FeedbackCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
 }
 
 export type FeedbackAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
 }
 
 export type FeedbackMaxOrderByAggregateInput = {
@@ -364,7 +359,7 @@ export type FeedbackMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
 }
 
 export type FeedbackMinOrderByAggregateInput = {
@@ -373,58 +368,63 @@ export type FeedbackMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
 }
 
 export type FeedbackSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  lessonId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrder
 }
 
-export type FeedbackCreateNestedOneWithoutLessonInput = {
-  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
-  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutLessonInput
-  connect?: Prisma.FeedbackWhereUniqueInput
-}
-
-export type FeedbackUncheckedCreateNestedOneWithoutLessonInput = {
-  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
-  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutLessonInput
-  connect?: Prisma.FeedbackWhereUniqueInput
-}
-
-export type FeedbackUpdateOneWithoutLessonNestedInput = {
-  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
-  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutLessonInput
-  upsert?: Prisma.FeedbackUpsertWithoutLessonInput
-  disconnect?: Prisma.FeedbackWhereInput | boolean
-  delete?: Prisma.FeedbackWhereInput | boolean
-  connect?: Prisma.FeedbackWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutLessonInput, Prisma.FeedbackUpdateWithoutLessonInput>, Prisma.FeedbackUncheckedUpdateWithoutLessonInput>
-}
-
-export type FeedbackUncheckedUpdateOneWithoutLessonNestedInput = {
-  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
-  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutLessonInput
-  upsert?: Prisma.FeedbackUpsertWithoutLessonInput
-  disconnect?: Prisma.FeedbackWhereInput | boolean
-  delete?: Prisma.FeedbackWhereInput | boolean
-  connect?: Prisma.FeedbackWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutLessonInput, Prisma.FeedbackUpdateWithoutLessonInput>, Prisma.FeedbackUncheckedUpdateWithoutLessonInput>
+export type FeedbackNullableScalarRelationFilter = {
+  is?: Prisma.FeedbackWhereInput | null
+  isNot?: Prisma.FeedbackWhereInput | null
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
-export type FeedbackCreateWithoutLessonInput = {
+export type FeedbackCreateNestedOneWithoutSessionInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutSessionInput
+  connect?: Prisma.FeedbackWhereUniqueInput
+}
+
+export type FeedbackUncheckedCreateNestedOneWithoutSessionInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutSessionInput
+  connect?: Prisma.FeedbackWhereUniqueInput
+}
+
+export type FeedbackUpdateOneWithoutSessionNestedInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutSessionInput
+  upsert?: Prisma.FeedbackUpsertWithoutSessionInput
+  disconnect?: Prisma.FeedbackWhereInput | boolean
+  delete?: Prisma.FeedbackWhereInput | boolean
+  connect?: Prisma.FeedbackWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutSessionInput, Prisma.FeedbackUpdateWithoutSessionInput>, Prisma.FeedbackUncheckedUpdateWithoutSessionInput>
+}
+
+export type FeedbackUncheckedUpdateOneWithoutSessionNestedInput = {
+  create?: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
+  connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutSessionInput
+  upsert?: Prisma.FeedbackUpsertWithoutSessionInput
+  disconnect?: Prisma.FeedbackWhereInput | boolean
+  delete?: Prisma.FeedbackWhereInput | boolean
+  connect?: Prisma.FeedbackWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FeedbackUpdateToOneWithWhereWithoutSessionInput, Prisma.FeedbackUpdateWithoutSessionInput>, Prisma.FeedbackUncheckedUpdateWithoutSessionInput>
+}
+
+export type FeedbackCreateWithoutSessionInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
-export type FeedbackUncheckedCreateWithoutLessonInput = {
+export type FeedbackUncheckedCreateWithoutSessionInput = {
   id?: number
   notes?: string | null
   createdAt?: Date | string
@@ -432,30 +432,30 @@ export type FeedbackUncheckedCreateWithoutLessonInput = {
   deletedAt?: Date | string | null
 }
 
-export type FeedbackCreateOrConnectWithoutLessonInput = {
+export type FeedbackCreateOrConnectWithoutSessionInput = {
   where: Prisma.FeedbackWhereUniqueInput
-  create: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
+  create: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
 }
 
-export type FeedbackUpsertWithoutLessonInput = {
-  update: Prisma.XOR<Prisma.FeedbackUpdateWithoutLessonInput, Prisma.FeedbackUncheckedUpdateWithoutLessonInput>
-  create: Prisma.XOR<Prisma.FeedbackCreateWithoutLessonInput, Prisma.FeedbackUncheckedCreateWithoutLessonInput>
+export type FeedbackUpsertWithoutSessionInput = {
+  update: Prisma.XOR<Prisma.FeedbackUpdateWithoutSessionInput, Prisma.FeedbackUncheckedUpdateWithoutSessionInput>
+  create: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
   where?: Prisma.FeedbackWhereInput
 }
 
-export type FeedbackUpdateToOneWithWhereWithoutLessonInput = {
+export type FeedbackUpdateToOneWithWhereWithoutSessionInput = {
   where?: Prisma.FeedbackWhereInput
-  data: Prisma.XOR<Prisma.FeedbackUpdateWithoutLessonInput, Prisma.FeedbackUncheckedUpdateWithoutLessonInput>
+  data: Prisma.XOR<Prisma.FeedbackUpdateWithoutSessionInput, Prisma.FeedbackUncheckedUpdateWithoutSessionInput>
 }
 
-export type FeedbackUpdateWithoutLessonInput = {
+export type FeedbackUpdateWithoutSessionInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
-export type FeedbackUncheckedUpdateWithoutLessonInput = {
+export type FeedbackUncheckedUpdateWithoutSessionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -471,8 +471,8 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  lessonId?: boolean
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  sessionId?: boolean
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -481,8 +481,8 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  lessonId?: boolean
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  sessionId?: boolean
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -491,8 +491,8 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  lessonId?: boolean
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  sessionId?: boolean
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectScalar = {
@@ -501,24 +501,24 @@ export type FeedbackSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  lessonId?: boolean
+  sessionId?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "sessionId", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }
 export type FeedbackIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }
 export type FeedbackIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }
 
 export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Feedback"
   objects: {
-    lesson: Prisma.$LessonPayload<ExtArgs>
+    session: Prisma.$SessionPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -526,7 +526,7 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
-    lessonId: number
+    sessionId: number
   }, ExtArgs["result"]["feedback"]>
   composites: {}
 }
@@ -921,7 +921,7 @@ readonly fields: FeedbackFieldRefs;
  */
 export interface Prisma__FeedbackClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  lesson<T extends Prisma.LessonDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LessonDefaultArgs<ExtArgs>>): Prisma.Prisma__LessonClient<runtime.Types.Result.GetResult<Prisma.$LessonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  session<T extends Prisma.SessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SessionDefaultArgs<ExtArgs>>): Prisma.Prisma__SessionClient<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -956,7 +956,7 @@ export interface FeedbackFieldRefs {
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
-  readonly lessonId: Prisma.FieldRef<"Feedback", 'Int'>
+  readonly sessionId: Prisma.FieldRef<"Feedback", 'Int'>
 }
     
 

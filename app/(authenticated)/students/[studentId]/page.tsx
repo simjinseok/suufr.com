@@ -11,9 +11,9 @@ type StudentWithStats = {
   name: string;
   status: StudentStatus;
   notes: string;
-  remainingLessonsCount: number;
-  completedSyllabusCount: number;
-  unpaidSyllabusCount: number;
+  remainingSessionsCount: number;
+  completedLessonCount: number;
+  unpaidLessonCount: number;
 };
 
 export default async function Page({ params }: { params: Promise<{ studentId: string }> }) {
@@ -26,29 +26,29 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
       s.name,
       s.status,
       s.notes,
-      CAST(COUNT(l.id) FILTER (
-        WHERE l.is_done = false AND l.deleted_at IS NULL
-      ) AS INT) AS "remainingLessonsCount",
-      CAST(COUNT(DISTINCT syl.id) FILTER (
-        WHERE syl.deleted_at IS NULL
+      CAST(COUNT(sess.id) FILTER (
+        WHERE sess.is_done = false AND sess.deleted_at IS NULL
+      ) AS INT) AS "remainingSessionsCount",
+      CAST(COUNT(DISTINCT les.id) FILTER (
+        WHERE les.deleted_at IS NULL
         AND NOT EXISTS (
-          SELECT 1 FROM lessons l2
-          WHERE l2.syllabus_id = syl.id
-          AND l2.deleted_at IS NULL
-          AND l2.is_done = false
+          SELECT 1 FROM sessions sess2
+          WHERE sess2.lesson_id = les.id
+          AND sess2.deleted_at IS NULL
+          AND sess2.is_done = false
         )
-      ) AS INT) AS "completedSyllabusCount",
-      CAST(COUNT(DISTINCT syl.id) FILTER (
-        WHERE syl.deleted_at IS NULL
+      ) AS INT) AS "completedLessonCount",
+      CAST(COUNT(DISTINCT les.id) FILTER (
+        WHERE les.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM payments p
-          WHERE p.syllabus_id = syl.id
+          WHERE p.lesson_id = les.id
           AND p.deleted_at IS NULL
         )
-      ) AS INT) AS "unpaidSyllabusCount"
+      ) AS INT) AS "unpaidLessonCount"
     FROM students s
-    LEFT JOIN syllabuses syl ON syl.student_id = s.id
-    LEFT JOIN lessons l ON l.syllabus_id = syl.id
+    LEFT JOIN lessons les ON les.student_id = s.id
+    LEFT JOIN sessions sess ON sess.lesson_id = les.id
     WHERE s.id = ${Number(studentId)}
       AND s.user_id = ${user.id}::uuid
       AND s.deleted_at IS NULL
@@ -60,9 +60,9 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
   }
 
   const stats = {
-    remainingLessonsCount: student.remainingLessonsCount,
-    completedSyllabusCount: student.completedSyllabusCount,
-    unpaidSyllabusCount: student.unpaidSyllabusCount,
+    remainingSessionsCount: student.remainingSessionsCount,
+    completedLessonCount: student.completedLessonCount,
+    unpaidLessonCount: student.unpaidLessonCount,
   };
 
   return (

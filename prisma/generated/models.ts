@@ -9,12 +9,12 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Student'
-export type * from './models/Lesson'
 export type * from './models/Feedback'
 export type * from './models/Payment'
 export type * from './models/Meeting'
 export type * from './models/StudentComment'
 export type * from './models/StudentStatusHistory'
-export type * from './models/LessonShare'
-export type * from './models/Syllabus'
+export type * from './models/SessionShare'
+export type * from './models/Session'
+export type * from './models/Lesson'
 export type * from './commonInputTypes'

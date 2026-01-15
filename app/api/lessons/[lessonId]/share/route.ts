@@ -5,10 +5,10 @@ import { generateShareId } from '@/utils/share-id';
 // 공유 링크 생성
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ syllabusId: string }> },
+  { params }: { params: Promise<{ lessonId: string }> },
 ) {
-  const { syllabusId: _syllabusId } = await params;
-  const syllabusId = Number(_syllabusId);
+  const { lessonId: _lessonId } = await params;
+  const lessonId = Number(_lessonId);
 
   const session = await getSession();
 
@@ -16,10 +16,10 @@ export async function POST(
     return new Response('', { status: 401 });
   }
 
-  // 본인 소유 syllabus인지 확인
-  const syllabus = await prisma.syllabus.findUnique({
+  // 본인 소유 lesson인지 확인
+  const lesson = await prisma.lesson.findUnique({
     where: {
-      id: syllabusId,
+      id: lessonId,
       deletedAt: null,
       student: {
         userId: session.user.id,
@@ -27,7 +27,7 @@ export async function POST(
     },
   });
 
-  if (!syllabus) {
+  if (!lesson) {
     return new Response('', { status: 404 });
   }
 
@@ -38,9 +38,9 @@ export async function POST(
   expiresAt.setDate(expiresAt.getDate() + expireDays);
 
   // 기존 활성 공유 링크 무효화
-  await prisma.lessonShare.updateMany({
+  await prisma.sessionShare.updateMany({
     where: {
-      syllabusId: syllabus.id,
+      lessonId: lesson.id,
       deletedAt: null,
     },
     data: {
@@ -49,10 +49,10 @@ export async function POST(
   });
 
   // 새 공유 링크 생성
-  const share = await prisma.lessonShare.create({
+  const share = await prisma.sessionShare.create({
     data: {
-      shareId: generateShareId(syllabus.id),
-      syllabusId: syllabus.id,
+      shareId: generateShareId(lesson.id),
+      lessonId: lesson.id,
       expiresAt,
     },
   });
@@ -69,10 +69,10 @@ export async function POST(
 // 현재 공유 상태 조회
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ syllabusId: string }> },
+  { params }: { params: Promise<{ lessonId: string }> },
 ) {
-  const { syllabusId: _syllabusId } = await params;
-  const syllabusId = Number(_syllabusId);
+  const { lessonId: _lessonId } = await params;
+  const lessonId = Number(_lessonId);
 
   const session = await getSession();
 
@@ -80,9 +80,9 @@ export async function GET(
     return new Response('', { status: 401 });
   }
 
-  const syllabus = await prisma.syllabus.findUnique({
+  const lesson = await prisma.lesson.findUnique({
     where: {
-      id: syllabusId,
+      id: lessonId,
       deletedAt: null,
       student: {
         userId: session.user.id,
@@ -104,11 +104,11 @@ export async function GET(
     },
   });
 
-  if (!syllabus) {
+  if (!lesson) {
     return new Response('', { status: 404 });
   }
 
-  const activeShare = syllabus.shares[0] || null;
+  const activeShare = lesson.shares[0] || null;
 
   return Response.json({
     hasActiveShare: !!activeShare,
@@ -125,10 +125,10 @@ export async function GET(
 // 공유 링크 무효화
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ syllabusId: string }> },
+  { params }: { params: Promise<{ lessonId: string }> },
 ) {
-  const { syllabusId: _syllabusId } = await params;
-  const syllabusId = Number(_syllabusId);
+  const { lessonId: _lessonId } = await params;
+  const lessonId = Number(_lessonId);
 
   const session = await getSession();
 
@@ -136,9 +136,9 @@ export async function DELETE(
     return new Response('', { status: 401 });
   }
 
-  const syllabus = await prisma.syllabus.findUnique({
+  const lesson = await prisma.lesson.findUnique({
     where: {
-      id: syllabusId,
+      id: lessonId,
       deletedAt: null,
       student: {
         userId: session.user.id,
@@ -146,13 +146,13 @@ export async function DELETE(
     },
   });
 
-  if (!syllabus) {
+  if (!lesson) {
     return new Response('', { status: 404 });
   }
 
-  await prisma.lessonShare.updateMany({
+  await prisma.sessionShare.updateMany({
     where: {
-      syllabusId: syllabus.id,
+      lessonId: lesson.id,
       deletedAt: null,
     },
     data: {

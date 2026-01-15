@@ -3,7 +3,7 @@ import type { MonthlyPaymentStats, YearlyPaymentStats } from '@/types/index';
 type PaymentWithStudent = {
   amount: number;
   paidAt: Date;
-  syllabus: {
+  lesson: {
     student: {
       id: number;
       name: string;
@@ -35,12 +35,12 @@ export function groupPaymentsByMonth(payments: PaymentWithStudent[]): MonthlyPay
     stats.totalAmount += payment.amount;
 
     let studentStat = stats.students.find(
-      (s: { id: number }) => s.id === payment.syllabus.student.id
+      (s: { id: number }) => s.id === payment.lesson.student.id
     );
     if (!studentStat) {
       studentStat = {
-        id: payment.syllabus.student.id,
-        name: payment.syllabus.student.name,
+        id: payment.lesson.student.id,
+        name: payment.lesson.student.name,
         count: 0,
         totalAmount: 0,
       };

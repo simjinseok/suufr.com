@@ -1,5 +1,5 @@
 'use client';
-import type { TSyllabus } from '@/types/index';
+import type { TLesson } from '@/types/index';
 
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
@@ -19,7 +19,7 @@ import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
 import React from 'react';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
-import EditSyllabusModal from '@/components/lesson/edit-lesson-modal';
+import EditLessonModal from '@/components/lesson/edit-lesson-modal';
 import AddSessionModal from '@/components/sessions/add-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
 import ShareModal from '@/components/lesson/share-modal';
@@ -31,7 +31,7 @@ export default function Lessons({ lessons }) {
 
   const [selectedSession, setSelectedSession] = React.useState<string | null>(null);
   const [isLessonCreating, setIsLessonCreating]
-    = React.useState<TSyllabus | null>(null);
+    = React.useState<TLesson | null>(null);
 
   return (
     <React.Fragment>
@@ -49,8 +49,8 @@ export default function Lessons({ lessons }) {
       {lessons.length > 0
         ? (
             <ul className="mt-5 flex flex-col gap-5">
-              {lessons.map(syllabus => (
-                <li key={syllabus.id}>
+              {lessons.map(lesson => (
+                <li key={lesson.id}>
                   <Surface className="px-5 py-3 border border-gray-50 rounded-xl shadow-sm">
                     {/* 모바일: 칩 + 버튼 / 제목 세로 배치 */}
                     <div className="flex flex-col gap-2 sm:hidden">
@@ -58,14 +58,14 @@ export default function Lessons({ lessons }) {
                         <div className="flex gap-2">
                           <Modal>
                             <Modal.Trigger>
-                              {syllabus.payment
+                              {lesson.payment
                                 ? (
                                     <Chip size="sm" variant="soft">
-                                      {syllabus.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
-                                      {syllabus.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
-                                      {syllabus.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
-                                      {syllabus.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
-                                      {numberToHangulMixed(syllabus.payment.amount)}
+                                      {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
+                                      {numberToHangulMixed(lesson.payment.amount)}
                                       원
                                     </Chip>
                                   )
@@ -76,22 +76,22 @@ export default function Lessons({ lessons }) {
                                     </Chip>
                                   )}
                             </Modal.Trigger>
-                            <PaymentModal syllabus={syllabus} />
+                            <PaymentModal lesson={lesson} />
                           </Modal>
                           <Modal>
                             <Modal.Trigger>
-                              <Chip size="sm" variant={syllabus.shares?.length ? 'soft' : 'secondary'} color="accent">
-                                {syllabus.shares?.length ? <GlobeIcon className="size-3" /> : <LockIcon className="size-3" />}
-                                {syllabus.shares?.length ? '공유중' : '공유'}
+                              <Chip size="sm" variant={lesson.shares?.length ? 'soft' : 'secondary'} color="accent">
+                                {lesson.shares?.length ? <GlobeIcon className="size-3" /> : <LockIcon className="size-3" />}
+                                {lesson.shares?.length ? '공유중' : '공유'}
                               </Chip>
                             </Modal.Trigger>
-                            <ShareModal syllabus={syllabus} />
+                            <ShareModal lesson={lesson} />
                           </Modal>
                         </div>
                         <ButtonGroup variant="secondary" size="sm">
                           <Modal>
                             <Button>수정</Button>
-                            <EditSyllabusModal lesson={syllabus} />
+                            <EditLessonModal lesson={lesson} />
                           </Modal>
                           <Dropdown>
                             <Button>
@@ -102,8 +102,8 @@ export default function Lessons({ lessons }) {
                                 <Dropdown.Section>
                                   <Header>수업</Header>
                                   <Dropdown.Item
-                                    key="create-syllabus"
-                                    onClick={setIsLessonCreating.bind(null, syllabus)}
+                                    key="create-session"
+                                    onClick={setIsLessonCreating.bind(null, lesson)}
                                   >
                                     수업 추가
                                   </Dropdown.Item>
@@ -113,32 +113,32 @@ export default function Lessons({ lessons }) {
                           </Dropdown>
                         </ButtonGroup>
                       </div>
-                      <p className="text-xl font-bold">{syllabus.title}</p>
+                      <p className="text-xl font-bold">{lesson.title}</p>
                     </div>
 
                     {/* PC: 기존 가로 배치 */}
                     <div className="hidden sm:flex items-center justify-between">
                       <div className="grow">
-                        <p className="mt-1 text-xl font-bold">{syllabus.title}</p>
+                        <p className="mt-1 text-xl font-bold">{lesson.title}</p>
                       </div>
                       <div className="flex gap-3">
                         <Modal>
-                          {syllabus.payment
+                          {lesson.payment
                             ? (
                                 <Button variant="secondary">
-                                  {syllabus.payment.paymentMethod === 'card' && (
+                                  {lesson.payment.paymentMethod === 'card' && (
                                     <CreditCardIcon className="size-4" />
                                   )}
-                                  {syllabus.payment.paymentMethod === 'transfer' && (
+                                  {lesson.payment.paymentMethod === 'transfer' && (
                                     <LandmarkIcon className="size-4" />
                                   )}
-                                  {syllabus.payment.paymentMethod === 'cash' && (
+                                  {lesson.payment.paymentMethod === 'cash' && (
                                     <BanknoteIcon className="size-4" />
                                   )}
-                                  {syllabus.payment.paymentMethod === 'none' && (
+                                  {lesson.payment.paymentMethod === 'none' && (
                                     <BookDashedIcon className="size-4" />
                                   )}
-                                  {numberToHangulMixed(syllabus.payment.amount)}
+                                  {numberToHangulMixed(lesson.payment.amount)}
                                   원
                                 </Button>
                               )
@@ -149,18 +149,18 @@ export default function Lessons({ lessons }) {
                                 </Button>
                               )}
                           <PaymentModal
-                            syllabus={syllabus}
+                            lesson={lesson}
                           />
                         </Modal>
                         <Modal>
                           <Button
                             variant="primary"
                           >
-                            {syllabus.shares?.length ? <GlobeIcon className="size-4" /> : <LockIcon className="size-4" />}
-                            {syllabus.shares?.length ? '공유중' : '공유'}
+                            {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <LockIcon className="size-4" />}
+                            {lesson.shares?.length ? '공유중' : '공유'}
                           </Button>
                           <ShareModal
-                            syllabus={syllabus}
+                            lesson={lesson}
                           />
                         </Modal>
                         <ButtonGroup variant="secondary">
@@ -168,8 +168,8 @@ export default function Lessons({ lessons }) {
                             <Button>
                               수정
                             </Button>
-                            <EditSyllabusModal
-                              lesson={syllabus}
+                            <EditLessonModal
+                              lesson={lesson}
                             />
                           </Modal>
                           <Dropdown>
@@ -181,8 +181,8 @@ export default function Lessons({ lessons }) {
                                 <Dropdown.Section>
                                   <Header>수업</Header>
                                   <Dropdown.Item
-                                    key="create-syllabus"
-                                    onClick={setIsLessonCreating.bind(null, syllabus)}
+                                    key="create-session"
+                                    onClick={setIsLessonCreating.bind(null, lesson)}
                                   >
                                     수업 추가
                                   </Dropdown.Item>
@@ -193,12 +193,12 @@ export default function Lessons({ lessons }) {
                         </ButtonGroup>
                       </div>
                     </div>
-                    <Text className="mt-1 whitespace-pre-wrap">{syllabus.notes}</Text>
+                    <Text className="mt-1 whitespace-pre-wrap">{lesson.notes}</Text>
                     <Divider className="my-3" />
                     <ListBox
-                      aria-label={`계획 ${syllabus.id}의 수업 목록`}
+                      aria-label={`레슨 ${lesson.id}의 수업 목록`}
                       selectionMode="none"
-                      items={syllabus.lessons}
+                      items={lesson.sessions}
                       renderEmptyState={() => (
                         <div className="py-5 flex flex-col gap-3 items-center justify-center">
                           <p>설정된 수업이 없습니다</p>
@@ -232,7 +232,7 @@ export default function Lessons({ lessons }) {
                                 )}
                           </div>
                           <div>
-                            <p className="tabular-nums">{format(new Date(session.lessonAt), 'yyyy-MM-dd hh:mm', { in: tz('Asia/Seoul') })}</p>
+                            <p className="tabular-nums">{format(new Date(session.sessionAt), 'yyyy-MM-dd hh:mm', { in: tz('Asia/Seoul') })}</p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}
                             </Text>

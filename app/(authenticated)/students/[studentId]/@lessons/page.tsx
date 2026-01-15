@@ -9,7 +9,7 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
   const { studentId } = await props.params;
 
   const page = 1;
-  const lessons = await prisma.syllabus.findMany({
+  const lessons = await prisma.lesson.findMany({
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
     select: {
@@ -22,11 +22,11 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
           name: true,
         },
       },
-      lessons: {
+      sessions: {
         select: {
           id: true,
           notes: true,
-          lessonAt: true,
+          sessionAt: true,
           isDone: true,
           feedback: {
             select: {
@@ -42,7 +42,7 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
           deletedAt: null,
         },
         orderBy: {
-          lessonAt: 'asc',
+          sessionAt: 'asc',
         },
       },
       payment: {

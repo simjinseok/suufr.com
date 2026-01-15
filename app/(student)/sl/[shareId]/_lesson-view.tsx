@@ -4,16 +4,16 @@ import dayjs from 'dayjs';
 import { CircleIcon, CircleCheckBigIcon, CheckCircle2Icon, AlertCircleIcon } from 'lucide-react';
 
 type Props = {
-  syllabus: {
+  lesson: {
     title: string;
     notes: string;
     payment?: {
       id: number;
     } | null;
-    lessons: Array<{
+    sessions: Array<{
       id: number;
       notes: string;
-      lessonAt: Date;
+      sessionAt: Date;
       isDone: boolean;
       feedback?: {
         id: number;
@@ -23,15 +23,15 @@ type Props = {
   };
 };
 
-export default function SyllabusView({ syllabus }: Props) {
-  const completedCount = syllabus.lessons.filter(l => l.isDone).length;
-  const totalCount = syllabus.lessons.length;
-  const isPaid = !!syllabus.payment;
+export default function LessonView({ lesson }: Props) {
+  const completedCount = lesson.sessions.filter(l => l.isDone).length;
+  const totalCount = lesson.sessions.length;
+  const isPaid = !!lesson.payment;
 
   return (
     <div className="bg-white py-4 border border-gray-100 rounded-xl shadow-sm">
       <div className="px-4 flex items-center justify-between">
-        <p className="text-lg font-bold">{syllabus.student?.name}</p>
+        <p className="text-lg font-bold">{lesson.student?.name}</p>
         {isPaid
           ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -47,14 +47,14 @@ export default function SyllabusView({ syllabus }: Props) {
             )}
       </div>
       <hr className="my-4 h-px border-none w-full bg-gray-200" />
-      {syllabus.lessons.length > 0
+      {lesson.sessions.length > 0
         ? (
             <div>
               <ul className="px-5 space-y-3">
-                {syllabus.lessons.map(lesson => (
-                  <li key={lesson.id} className="flex items-start gap-2">
+                {lesson.sessions.map(session => (
+                  <li key={session.id} className="flex items-start gap-2">
                     <div className="size-6 flex items-center justify-center flex-shrink-0">
-                      {lesson.isDone
+                      {session.isDone
                         ? (
                             <CircleCheckBigIcon
                               width={20}
@@ -72,13 +72,13 @@ export default function SyllabusView({ syllabus }: Props) {
                     </div>
                     <div className="flex-1">
                       <p className="tabular-nums font-medium">
-                        {dayjs(lesson.lessonAt).format('YYYY-MM-DD HH:mm')}
+                        {dayjs(session.sessionAt).format('YYYY-MM-DD HH:mm')}
                       </p>
-                      {lesson.feedback?.notes && (
+                      {session.feedback?.notes && (
                         <div className="mt-2 pl-3 border-l-2 border-blue-300">
                           <p className="text-xs text-blue-600 font-medium">피드백</p>
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                            {lesson.feedback.notes}
+                            {session.feedback.notes}
                           </p>
                         </div>
                       )}

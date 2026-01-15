@@ -17,8 +17,8 @@ export async function PUT(
   const feedback = await prisma.feedback.findUnique({
     where: {
       id: feedbackId,
-      lesson: {
-        syllabus: {
+      session: {
+        lesson: {
           student: {
             userId: session.user.id,
           },

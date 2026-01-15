@@ -4,7 +4,7 @@ import { Chip } from '@heroui/react';
 import { format } from 'date-fns';
 import { numberToHangulMixed } from 'es-hangul';
 
-type Syllabus = {
+type Lesson = {
   id: number;
   title: string;
   createdAt: Date;
@@ -18,7 +18,7 @@ type Syllabus = {
 };
 
 type Props = {
-  syllabuses: Syllabus[];
+  lessons: Lesson[];
 };
 
 const PAYMENT_METHODS: Record<string, string> = {
@@ -28,8 +28,8 @@ const PAYMENT_METHODS: Record<string, string> = {
   none: '미지정',
 };
 
-export default function PaymentsTable({ syllabuses }: Props) {
-  if (syllabuses.length === 0) {
+export default function PaymentsTable({ lessons }: Props) {
+  if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-500">
         등록된 계획이 없습니다
@@ -37,9 +37,9 @@ export default function PaymentsTable({ syllabuses }: Props) {
     );
   }
 
-  const paidSyllabuses = syllabuses.filter(s => s.payment !== null);
-  const unpaidSyllabuses = syllabuses.filter(s => s.payment === null);
-  const totalAmount = paidSyllabuses.reduce(
+  const paidLessones = lessons.filter(s => s.payment !== null);
+  const unpaidLessones = lessons.filter(s => s.payment === null);
+  const totalAmount = paidLessones.reduce(
     (sum, s) => sum + (s.payment?.amount ?? 0),
     0,
   );
@@ -57,14 +57,14 @@ export default function PaymentsTable({ syllabuses }: Props) {
         <div className="mt-1 text-sm text-zinc-500">
           결제
           {' '}
-          {paidSyllabuses.length}
+          {paidLessones.length}
           건
-          {unpaidSyllabuses.length > 0 && (
+          {unpaidLessones.length > 0 && (
             <span className="text-warning-600 dark:text-warning-400">
               {' '}
               · 미결제
               {' '}
-              {unpaidSyllabuses.length}
+              {unpaidLessones.length}
               건
             </span>
           )}
@@ -93,15 +93,15 @@ export default function PaymentsTable({ syllabuses }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {syllabuses.map(syllabus => (
+            {lessons.map(lesson => (
               <tr
-                key={syllabus.id}
+                key={lesson.id}
                 className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
               >
                 <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
-                  {syllabus.payment
+                  {lesson.payment
                     ? (
-                        format(new Date(syllabus.payment.paidAt), 'yyyy-MM-dd')
+                        format(new Date(lesson.payment.paidAt), 'yyyy-MM-dd')
                       )
                     : (
                         <Chip size="sm" color="warning" variant="flat">
@@ -111,24 +111,24 @@ export default function PaymentsTable({ syllabuses }: Props) {
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-900 dark:text-white">
-                  {syllabus.title}
+                  {lesson.title}
                 </td>
 
                 <td className="py-3 px-4 text-sm tabular-nums text-right font-semibold text-zinc-900 dark:text-white">
-                  {syllabus.payment
-                    ? `${numberToHangulMixed(syllabus.payment.amount)}원`
+                  {lesson.payment
+                    ? `${numberToHangulMixed(lesson.payment.amount)}원`
                     : '-'}
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {syllabus.payment
-                    ? PAYMENT_METHODS[syllabus.payment.paymentMethod]
-                    || syllabus.payment.paymentMethod
+                  {lesson.payment
+                    ? PAYMENT_METHODS[lesson.payment.paymentMethod]
+                    || lesson.payment.paymentMethod
                     : '-'}
                 </td>
 
                 <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-                  {syllabus.payment?.notes || '-'}
+                  {lesson.payment?.notes || '-'}
                 </td>
               </tr>
             ))}

@@ -1,6 +1,6 @@
 'use client';
 import {Description, ModalProps} from '@heroui/react';
-import { TSyllabus } from '@/types/index';
+import { TLesson } from '@/types/index';
 
 import React from 'react';
 import {
@@ -16,13 +16,13 @@ import {
   FieldError,
 } from '@heroui/react';
 
-import { updateSyllabus, removeSyllabus } from '@/actions/lesson';
+import { updateLesson, removeLesson } from '@/actions/lesson';
 import { Controller, useForm } from 'react-hook-form';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
   onOpenChange: ModalProps['onOpenChange'];
-  lesson: TSyllabus;
+  lesson: TLesson;
 }
 export default function EditLessonModal({ lesson, isOpen, onOpenChange }: Props) {
   return (
@@ -45,7 +45,7 @@ interface ContentProps {
 function Content({ lesson, close }: ContentProps) {
   const formId = React.useId();
 
-  const [state, formAction, isPending] = React.useActionState(updateSyllabus, {
+  const [state, formAction, isPending] = React.useActionState(updateLesson, {
     fields: {
       title: lesson?.title,
       notes: lesson?.notes,
@@ -80,7 +80,7 @@ function Content({ lesson, close }: ContentProps) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="syllabusId" value={lesson.id} />
+          <input type="hidden" name="lessonId" value={lesson.id} />
           <Controller
             control={control}
             name="title"
@@ -131,7 +131,7 @@ interface DeleteButtonProps {
 }
 function DeleteButton({ id, close }: DeleteButtonProps) {
   const formId = React.useId();
-  const [state, formAction, isPending] = React.useActionState(removeSyllabus, {});
+  const [state, formAction, isPending] = React.useActionState(removeLesson, {});
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -165,7 +165,7 @@ function DeleteButton({ id, close }: DeleteButtonProps) {
                 id={formId}
                 action={formAction}
               >
-                <input type="hidden" name="syllabusId" value={id} />
+                <input type="hidden" name="lessonId" value={id} />
                 계획을 삭제합니다.
               </Form>
             </AlertDialog.Body>

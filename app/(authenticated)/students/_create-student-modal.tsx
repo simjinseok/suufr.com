@@ -17,7 +17,7 @@ import {
   Label,
 } from '@heroui/react';
 
-import { createStudent } from '@/actions/create-student';
+import { createStudent } from '@/actions/student';
 
 interface Props {
   isOpen: ModalProps['isOpen'];

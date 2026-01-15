@@ -1,17 +1,17 @@
 import prisma from '@/utils/prisma';
 import { notFound } from 'next/navigation';
-import SyllabusView from './_syllabus-view';
+import LessonView from './_lesson-view';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SharedSyllabusPage({
+export default async function SharedLessonPage({
   params,
 }: {
   params: Promise<{ shareId: string }>;
 }) {
   const { shareId } = await params;
 
-  const share = await prisma.lessonShare.findUnique({
+  const share = await prisma.sessionShare.findUnique({
     where: {
       shareId,
       deletedAt: null,
@@ -20,7 +20,7 @@ export default async function SharedSyllabusPage({
       },
     },
     include: {
-      syllabus: {
+      lesson: {
         include: {
           student: {
             select: {
@@ -35,12 +35,12 @@ export default async function SharedSyllabusPage({
               id: true,
             },
           },
-          lessons: {
+          sessions: {
             where: {
               deletedAt: null,
             },
             orderBy: {
-              lessonAt: 'asc',
+              sessionAt: 'asc',
             },
             include: {
               feedback: {
@@ -55,7 +55,7 @@ export default async function SharedSyllabusPage({
     },
   });
 
-  if (!share || !share.syllabus) {
+  if (!share || !share.lesson) {
     notFound();
   }
 
@@ -63,13 +63,13 @@ export default async function SharedSyllabusPage({
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="max-w-2xl mx-auto py-8 px-4">
         <header className="mb-6">
-          <p className="text-lg font-bold text-gray-900">{share.syllabus.student?.name} 레슨</p>
+          <p className="text-lg font-bold text-gray-900">{share.lesson.student?.name} 레슨</p>
           {/*<h1 className="text-2xl font-bold text-gray-900">*/}
-          {/*  {share.syllabus.title}*/}
+          {/*  {share.lesson.title}*/}
           {/*</h1>*/}
         </header>
 
-        <SyllabusView syllabus={share.syllabus} />
+        <LessonView lesson={share.lesson} />
 
         <footer className="mt-8 text-center text-sm text-gray-400">
           <p>

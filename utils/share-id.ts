@@ -19,8 +19,8 @@ function randomString(length: number): string {
     .join('');
 }
 
-export function generateShareId(syllabusId: number): string {
-  const encoded = toBase62(syllabusId);
+export function generateShareId(lessonId: number): string {
+  const encoded = toBase62(lessonId);
   const randomLength = TOTAL_LENGTH - encoded.length;
   return `${encoded}${randomString(randomLength)}`;
 }

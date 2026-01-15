@@ -45,7 +45,7 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
       recordResponse: true,
     },
     async () => {
-      const { syllabusId, ...data } = Object.fromEntries(formData.entries());
+      const { lessonId, ...data } = Object.fromEntries(formData.entries());
 
       const state: UpdatePaymentState = {
         success: false,
@@ -72,9 +72,9 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         return state;
       }
 
-      const syllabus = await prisma.syllabus.findUnique({
+      const lesson = await prisma.lesson.findUnique({
         where: {
-          id: Number(syllabusId),
+          id: Number(lessonId),
           deletedAt: null,
           student: {
             userId: user.id,
@@ -82,14 +82,14 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         },
       });
 
-      if (!syllabus) {
+      if (!lesson) {
         state.message = '존재하지 않는 레슨입니다.';
         return state;
       }
 
       let payment = await prisma.payment.findUnique({
         where: {
-          syllabusId: syllabus.id,
+          lessonId: lesson.id,
         },
       });
 
@@ -108,7 +108,7 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
       else {
         payment = await prisma.payment.create({
           data: {
-            syllabusId: syllabus.id,
+            lessonId: lesson.id,
             ...validationResult.data,
           },
         });
@@ -119,6 +119,70 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
       state.success = true;
       state.message = '입금내역을 수정하였습니다.';
       return state;
+    },
+  );
+}
+
+
+export async function removePayment(prevState: any, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'removePayment',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const lessonId = Number(formData.get('lessonId'));
+
+      const { user } = await getSession();
+
+      if (!user) {
+        return { success: false };
+      }
+
+      const lesson = await prisma.lesson.findUnique({
+        where: {
+          id: lessonId,
+          deletedAt: null,
+          student: {
+            userId: user.id,
+          },
+        },
+      });
+
+      if (!lesson) {
+        return { success: false };
+      }
+
+      const payment = await prisma.payment.findUnique({
+        where: {
+          lessonId: lesson.id,
+        },
+      });
+
+      if (!payment) {
+        return { success: false };
+      }
+
+      const result = await prisma.payment.update({
+        where: {
+          id: payment.id,
+          lesson: {
+            student: {
+              userId: user.id,
+            },
+          },
+        },
+        data: {
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      revalidatePath('/lessons', 'page');
+      revalidatePath('/payments', 'page');
+      return { success: true, timestamp: Date.now() };
     },
   );
 }

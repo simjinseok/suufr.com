@@ -14,11 +14,11 @@ export async function PUT(
     return new Response('', { status: 401 });
   }
 
-  const lesson = await prisma.lesson.findUnique({
+  const lesson = await prisma.session.findUnique({
     where: {
       id: lessonId,
       deletedAt: null,
-      syllabus: {
+      lesson: {
         student: {
           userId: session.user.id,
         },
@@ -31,16 +31,16 @@ export async function PUT(
   }
 
   const formData = await request.formData();
-  const lessonAt = new Date(`${formData.get('lessonAt')}:00+09:00`);
+  const sessionAt = new Date(`${formData.get('sessionAt')}:00+09:00`);
 
-  const result = await prisma.lesson.update({
+  const result = await prisma.session.update({
     where: {
       id: lesson.id,
     },
     data: {
       isDone: formData.get('isDone') === 'on',
       notes: formData.get('notes') as string,
-      lessonAt,
+      sessionAt,
       updatedAt: new Date(),
     },
   });
@@ -48,7 +48,7 @@ export async function PUT(
   return Response.json(
     {
       id: result.id,
-      lessonAt: result.lessonAt,
+      sessionAt: result.sessionAt,
       notes: result.notes,
     },
     { status: 200 },
@@ -68,11 +68,11 @@ export async function DELETE(
     return new Response('', { status: 401 });
   }
 
-  const lesson = await prisma.lesson.findUnique({
+  const lesson = await prisma.session.findUnique({
     where: {
       id: lessonId,
       deletedAt: null,
-      syllabus: {
+      lesson: {
         student: {
           userId: session.user.id,
         },
@@ -84,7 +84,7 @@ export async function DELETE(
     return new Response('', { status: 404 });
   }
 
-  await prisma.lesson.update({
+  await prisma.session.update({
     where: {
       id: lesson.id,
     },

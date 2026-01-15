@@ -30,15 +30,15 @@ export default async function Page(props: PageProps<'/students'>) {
              students.notes AS notes,
              students.status AS status,
              students.created_at AS "createdAt",
-             CAST(COUNT(DISTINCT lessons.id) FILTER (WHERE lessons.is_done = false AND lessons.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
-             MAX(lessons.lesson_at) FILTER (WHERE lessons.is_done = true AND lessons.deleted_at IS NULL) AS "lastLessonDate",
-             MIN(lessons.lesson_at) FILTER (WHERE lessons.is_done = false AND lessons.lesson_at >= NOW() AND lessons.deleted_at IS NULL) AS "nextLessonDate",
-             BOOL_OR(syllabuses.id IS NOT NULL AND syllabuses.deleted_at IS NULL AND NOT EXISTS (
-               SELECT 1 FROM payments WHERE payments.syllabus_id = syllabuses.id AND payments.deleted_at IS NULL
+             CAST(COUNT(DISTINCT sessions.id) FILTER (WHERE sessions.is_done = false AND sessions.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
+             MAX(sessions.session_at) FILTER (WHERE sessions.is_done = true AND sessions.deleted_at IS NULL) AS "lastLessonDate",
+             MIN(sessions.session_at) FILTER (WHERE sessions.is_done = false AND sessions.session_at >= NOW() AND sessions.deleted_at IS NULL) AS "nextLessonDate",
+             BOOL_OR(lessons.id IS NOT NULL AND lessons.deleted_at IS NULL AND NOT EXISTS (
+               SELECT 1 FROM payments WHERE payments.lesson_id = lessons.id AND payments.deleted_at IS NULL
              )) AS "hasUnpaidLesson"
       FROM students
-               LEFT JOIN syllabuses ON syllabuses.student_id = students.id AND syllabuses.deleted_at IS NULL
-               LEFT JOIN lessons ON lessons.syllabus_id = syllabuses.id
+               LEFT JOIN lessons ON lessons.student_id = students.id AND lessons.deleted_at IS NULL
+               LEFT JOIN sessions ON sessions.lesson_id = lessons.id
       WHERE (${status} = '' OR students.status::text = ${status})
         AND (${q} = '' OR students.name ILIKE ${'%' + q + '%'})
         AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL

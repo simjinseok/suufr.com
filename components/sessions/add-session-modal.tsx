@@ -21,7 +21,7 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
   const { control } = useForm({
     values: {
       isDone: false,
-      lessonAt: toCalendarDateTime(today('Asia/Seoul')),
+      sessionAt: toCalendarDateTime(today('Asia/Seoul')),
       notes: '',
     },
   });
@@ -68,7 +68,7 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
                   />
                   <Controller
                     control={control}
-                    name="lessonAt"
+                    name="sessionAt"
                     render={({ field: { name, value, onChange } }) => (
                       <DateField
                         name={name}

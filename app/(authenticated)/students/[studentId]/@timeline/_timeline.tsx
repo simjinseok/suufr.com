@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { fromDate, getLocalTimeZone } from '@internationalized/date';
 import {
   Button,
   Form,
@@ -15,11 +14,10 @@ import {
 } from '@heroui/react';
 import { MessageCircle, ArrowRightLeft, PlusIcon, Pencil, Trash2 } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
-import { createStudentComment } from '@/actions/create-student-comment';
-import { updateStudentComment } from '@/actions/update-student-comment';
-import { deleteStudentComment } from '@/actions/delete-student-comment';
-import { updateStudentStatusHistory } from '@/components/student-status-modal/actions';
 import { Controller, useForm } from 'react-hook-form';
+
+import { createStudentComment, updateStudentComment, deleteStudentComment } from '@/actions/student-comment';
+import { updateStudentStatusHistory } from '@/actions/student-history';
 
 type Comment = {
   id: number;

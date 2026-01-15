@@ -28,90 +28,84 @@ export type AggregateLesson = {
 
 export type LessonAvgAggregateOutputType = {
   id: number | null
-  syllabusId: number | null
+  studentId: number | null
 }
 
 export type LessonSumAggregateOutputType = {
   id: number | null
-  syllabusId: number | null
+  studentId: number | null
 }
 
 export type LessonMinAggregateOutputType = {
   id: number | null
+  title: string | null
   notes: string | null
-  lessonAt: Date | null
-  isDone: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  syllabusId: number | null
+  studentId: number | null
 }
 
 export type LessonMaxAggregateOutputType = {
   id: number | null
+  title: string | null
   notes: string | null
-  lessonAt: Date | null
-  isDone: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  syllabusId: number | null
+  studentId: number | null
 }
 
 export type LessonCountAggregateOutputType = {
   id: number
+  title: number
   notes: number
-  lessonAt: number
-  isDone: number
   createdAt: number
   updatedAt: number
   deletedAt: number
-  syllabusId: number
+  studentId: number
   _all: number
 }
 
 
 export type LessonAvgAggregateInputType = {
   id?: true
-  syllabusId?: true
+  studentId?: true
 }
 
 export type LessonSumAggregateInputType = {
   id?: true
-  syllabusId?: true
+  studentId?: true
 }
 
 export type LessonMinAggregateInputType = {
   id?: true
+  title?: true
   notes?: true
-  lessonAt?: true
-  isDone?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  studentId?: true
 }
 
 export type LessonMaxAggregateInputType = {
   id?: true
+  title?: true
   notes?: true
-  lessonAt?: true
-  isDone?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  studentId?: true
 }
 
 export type LessonCountAggregateInputType = {
   id?: true
+  title?: true
   notes?: true
-  lessonAt?: true
-  isDone?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  studentId?: true
   _all?: true
 }
 
@@ -203,13 +197,12 @@ export type LessonGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type LessonGroupByOutputType = {
   id: number
+  title: string
   notes: string
-  lessonAt: Date
-  isDone: boolean
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
-  syllabusId: number
+  studentId: number
   _count: LessonCountAggregateOutputType | null
   _avg: LessonAvgAggregateOutputType | null
   _sum: LessonSumAggregateOutputType | null
@@ -237,28 +230,30 @@ export type LessonWhereInput = {
   OR?: Prisma.LessonWhereInput[]
   NOT?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
   id?: Prisma.IntFilter<"Lesson"> | number
+  title?: Prisma.StringFilter<"Lesson"> | string
   notes?: Prisma.StringFilter<"Lesson"> | string
-  lessonAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
-  isDone?: Prisma.BoolFilter<"Lesson"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Lesson"> | Date | string | null
-  syllabusId?: Prisma.IntFilter<"Lesson"> | number
-  feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
+  studentId?: Prisma.IntFilter<"Lesson"> | number
+  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
+  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  shares?: Prisma.SessionShareListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }
 
 export type LessonOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
-  lessonAt?: Prisma.SortOrder
-  isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-  feedback?: Prisma.FeedbackOrderByWithRelationInput
-  syllabus?: Prisma.SyllabusOrderByWithRelationInput
+  studentId?: Prisma.SortOrder
+  student?: Prisma.StudentOrderByWithRelationInput
+  payment?: Prisma.PaymentOrderByWithRelationInput
+  shares?: Prisma.SessionShareOrderByRelationAggregateInput
+  sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
 
 export type LessonWhereUniqueInput = Prisma.AtLeast<{
@@ -266,26 +261,26 @@ export type LessonWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
   OR?: Prisma.LessonWhereInput[]
   NOT?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
+  title?: Prisma.StringFilter<"Lesson"> | string
   notes?: Prisma.StringFilter<"Lesson"> | string
-  lessonAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
-  isDone?: Prisma.BoolFilter<"Lesson"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Lesson"> | Date | string | null
-  syllabusId?: Prisma.IntFilter<"Lesson"> | number
-  feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
+  studentId?: Prisma.IntFilter<"Lesson"> | number
+  student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
+  payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  shares?: Prisma.SessionShareListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }, "id">
 
 export type LessonOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
-  lessonAt?: Prisma.SortOrder
-  isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   _count?: Prisma.LessonCountOrderByAggregateInput
   _avg?: Prisma.LessonAvgOrderByAggregateInput
   _max?: Prisma.LessonMaxOrderByAggregateInput
@@ -298,76 +293,77 @@ export type LessonScalarWhereWithAggregatesInput = {
   OR?: Prisma.LessonScalarWhereWithAggregatesInput[]
   NOT?: Prisma.LessonScalarWhereWithAggregatesInput | Prisma.LessonScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Lesson"> | number
+  title?: Prisma.StringWithAggregatesFilter<"Lesson"> | string
   notes?: Prisma.StringWithAggregatesFilter<"Lesson"> | string
-  lessonAt?: Prisma.DateTimeWithAggregatesFilter<"Lesson"> | Date | string
-  isDone?: Prisma.BoolWithAggregatesFilter<"Lesson"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Lesson"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Lesson"> | Date | string | null
-  syllabusId?: Prisma.IntWithAggregatesFilter<"Lesson"> | number
+  studentId?: Prisma.IntWithAggregatesFilter<"Lesson"> | number
 }
 
 export type LessonCreateInput = {
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  feedback?: Prisma.FeedbackCreateNestedOneWithoutLessonInput
-  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
+  student: Prisma.StudentCreateNestedOneWithoutLessonsInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutLessonInput
 }
 
 export type LessonUncheckedCreateInput = {
   id?: number
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabusId: number
-  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutLessonInput
+  studentId: number
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareUncheckedCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutLessonInput
 }
 
 export type LessonUpdateInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  feedback?: Prisma.FeedbackUpdateOneWithoutLessonNestedInput
-  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
+  student?: Prisma.StudentUpdateOneRequiredWithoutLessonsNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutLessonNestedInput
 }
 
 export type LessonUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
-  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutLessonNestedInput
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUncheckedUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutLessonNestedInput
 }
 
 export type LessonCreateManyInput = {
   id?: number
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabusId: number
+  studentId: number
 }
 
 export type LessonUpdateManyMutationInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -375,61 +371,12 @@ export type LessonUpdateManyMutationInput = {
 
 export type LessonUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
-export type LessonCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  lessonAt?: Prisma.SortOrder
-  isDone?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-}
-
-export type LessonAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-}
-
-export type LessonMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  lessonAt?: Prisma.SortOrder
-  isDone?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-}
-
-export type LessonMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  notes?: Prisma.SortOrder
-  lessonAt?: Prisma.SortOrder
-  isDone?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-}
-
-export type LessonSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-}
-
-export type LessonScalarRelationFilter = {
-  is?: Prisma.LessonWhereInput
-  isNot?: Prisma.LessonWhereInput
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type LessonListRelationFilter = {
@@ -442,169 +389,182 @@ export type LessonOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type LessonScalarRelationFilter = {
+  is?: Prisma.LessonWhereInput
+  isNot?: Prisma.LessonWhereInput
 }
 
-export type LessonCreateNestedOneWithoutFeedbackInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
-  connect?: Prisma.LessonWhereUniqueInput
+export type LessonCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
 }
 
-export type LessonUpdateOneRequiredWithoutFeedbackNestedInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutFeedbackInput
-  upsert?: Prisma.LessonUpsertWithoutFeedbackInput
-  connect?: Prisma.LessonWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutFeedbackInput, Prisma.LessonUpdateWithoutFeedbackInput>, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
+export type LessonAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
 }
 
-export type LessonCreateNestedManyWithoutSyllabusInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput> | Prisma.LessonCreateWithoutSyllabusInput[] | Prisma.LessonUncheckedCreateWithoutSyllabusInput[]
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSyllabusInput | Prisma.LessonCreateOrConnectWithoutSyllabusInput[]
-  createMany?: Prisma.LessonCreateManySyllabusInputEnvelope
+export type LessonMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
+}
+
+export type LessonMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
+}
+
+export type LessonSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
+}
+
+export type LessonCreateNestedManyWithoutStudentInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput> | Prisma.LessonCreateWithoutStudentInput[] | Prisma.LessonUncheckedCreateWithoutStudentInput[]
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutStudentInput | Prisma.LessonCreateOrConnectWithoutStudentInput[]
+  createMany?: Prisma.LessonCreateManyStudentInputEnvelope
   connect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
 }
 
-export type LessonUncheckedCreateNestedManyWithoutSyllabusInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput> | Prisma.LessonCreateWithoutSyllabusInput[] | Prisma.LessonUncheckedCreateWithoutSyllabusInput[]
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSyllabusInput | Prisma.LessonCreateOrConnectWithoutSyllabusInput[]
-  createMany?: Prisma.LessonCreateManySyllabusInputEnvelope
+export type LessonUncheckedCreateNestedManyWithoutStudentInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput> | Prisma.LessonCreateWithoutStudentInput[] | Prisma.LessonUncheckedCreateWithoutStudentInput[]
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutStudentInput | Prisma.LessonCreateOrConnectWithoutStudentInput[]
+  createMany?: Prisma.LessonCreateManyStudentInputEnvelope
   connect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
 }
 
-export type LessonUpdateManyWithoutSyllabusNestedInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput> | Prisma.LessonCreateWithoutSyllabusInput[] | Prisma.LessonUncheckedCreateWithoutSyllabusInput[]
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSyllabusInput | Prisma.LessonCreateOrConnectWithoutSyllabusInput[]
-  upsert?: Prisma.LessonUpsertWithWhereUniqueWithoutSyllabusInput | Prisma.LessonUpsertWithWhereUniqueWithoutSyllabusInput[]
-  createMany?: Prisma.LessonCreateManySyllabusInputEnvelope
+export type LessonUpdateManyWithoutStudentNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput> | Prisma.LessonCreateWithoutStudentInput[] | Prisma.LessonUncheckedCreateWithoutStudentInput[]
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutStudentInput | Prisma.LessonCreateOrConnectWithoutStudentInput[]
+  upsert?: Prisma.LessonUpsertWithWhereUniqueWithoutStudentInput | Prisma.LessonUpsertWithWhereUniqueWithoutStudentInput[]
+  createMany?: Prisma.LessonCreateManyStudentInputEnvelope
   set?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   disconnect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   delete?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   connect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
-  update?: Prisma.LessonUpdateWithWhereUniqueWithoutSyllabusInput | Prisma.LessonUpdateWithWhereUniqueWithoutSyllabusInput[]
-  updateMany?: Prisma.LessonUpdateManyWithWhereWithoutSyllabusInput | Prisma.LessonUpdateManyWithWhereWithoutSyllabusInput[]
+  update?: Prisma.LessonUpdateWithWhereUniqueWithoutStudentInput | Prisma.LessonUpdateWithWhereUniqueWithoutStudentInput[]
+  updateMany?: Prisma.LessonUpdateManyWithWhereWithoutStudentInput | Prisma.LessonUpdateManyWithWhereWithoutStudentInput[]
   deleteMany?: Prisma.LessonScalarWhereInput | Prisma.LessonScalarWhereInput[]
 }
 
-export type LessonUncheckedUpdateManyWithoutSyllabusNestedInput = {
-  create?: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput> | Prisma.LessonCreateWithoutSyllabusInput[] | Prisma.LessonUncheckedCreateWithoutSyllabusInput[]
-  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSyllabusInput | Prisma.LessonCreateOrConnectWithoutSyllabusInput[]
-  upsert?: Prisma.LessonUpsertWithWhereUniqueWithoutSyllabusInput | Prisma.LessonUpsertWithWhereUniqueWithoutSyllabusInput[]
-  createMany?: Prisma.LessonCreateManySyllabusInputEnvelope
+export type LessonUncheckedUpdateManyWithoutStudentNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput> | Prisma.LessonCreateWithoutStudentInput[] | Prisma.LessonUncheckedCreateWithoutStudentInput[]
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutStudentInput | Prisma.LessonCreateOrConnectWithoutStudentInput[]
+  upsert?: Prisma.LessonUpsertWithWhereUniqueWithoutStudentInput | Prisma.LessonUpsertWithWhereUniqueWithoutStudentInput[]
+  createMany?: Prisma.LessonCreateManyStudentInputEnvelope
   set?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   disconnect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   delete?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
   connect?: Prisma.LessonWhereUniqueInput | Prisma.LessonWhereUniqueInput[]
-  update?: Prisma.LessonUpdateWithWhereUniqueWithoutSyllabusInput | Prisma.LessonUpdateWithWhereUniqueWithoutSyllabusInput[]
-  updateMany?: Prisma.LessonUpdateManyWithWhereWithoutSyllabusInput | Prisma.LessonUpdateManyWithWhereWithoutSyllabusInput[]
+  update?: Prisma.LessonUpdateWithWhereUniqueWithoutStudentInput | Prisma.LessonUpdateWithWhereUniqueWithoutStudentInput[]
+  updateMany?: Prisma.LessonUpdateManyWithWhereWithoutStudentInput | Prisma.LessonUpdateManyWithWhereWithoutStudentInput[]
   deleteMany?: Prisma.LessonScalarWhereInput | Prisma.LessonScalarWhereInput[]
 }
 
-export type LessonCreateWithoutFeedbackInput = {
+export type LessonCreateNestedOneWithoutPaymentInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutPaymentInput, Prisma.LessonUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutPaymentInput
+  connect?: Prisma.LessonWhereUniqueInput
+}
+
+export type LessonUpdateOneRequiredWithoutPaymentNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutPaymentInput, Prisma.LessonUncheckedCreateWithoutPaymentInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutPaymentInput
+  upsert?: Prisma.LessonUpsertWithoutPaymentInput
+  connect?: Prisma.LessonWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutPaymentInput, Prisma.LessonUpdateWithoutPaymentInput>, Prisma.LessonUncheckedUpdateWithoutPaymentInput>
+}
+
+export type LessonCreateNestedOneWithoutSharesInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutSharesInput, Prisma.LessonUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSharesInput
+  connect?: Prisma.LessonWhereUniqueInput
+}
+
+export type LessonUpdateOneRequiredWithoutSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutSharesInput, Prisma.LessonUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSharesInput
+  upsert?: Prisma.LessonUpsertWithoutSharesInput
+  connect?: Prisma.LessonWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutSharesInput, Prisma.LessonUpdateWithoutSharesInput>, Prisma.LessonUncheckedUpdateWithoutSharesInput>
+}
+
+export type LessonCreateNestedOneWithoutSessionsInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutSessionsInput, Prisma.LessonUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSessionsInput
+  connect?: Prisma.LessonWhereUniqueInput
+}
+
+export type LessonUpdateOneRequiredWithoutSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.LessonCreateWithoutSessionsInput, Prisma.LessonUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.LessonCreateOrConnectWithoutSessionsInput
+  upsert?: Prisma.LessonUpsertWithoutSessionsInput
+  connect?: Prisma.LessonWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LessonUpdateToOneWithWhereWithoutSessionsInput, Prisma.LessonUpdateWithoutSessionsInput>, Prisma.LessonUncheckedUpdateWithoutSessionsInput>
+}
+
+export type LessonCreateWithoutStudentInput = {
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabus: Prisma.SyllabusCreateNestedOneWithoutLessonsInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutLessonInput
 }
 
-export type LessonUncheckedCreateWithoutFeedbackInput = {
+export type LessonUncheckedCreateWithoutStudentInput = {
   id?: number
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabusId: number
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareUncheckedCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutLessonInput
 }
 
-export type LessonCreateOrConnectWithoutFeedbackInput = {
+export type LessonCreateOrConnectWithoutStudentInput = {
   where: Prisma.LessonWhereUniqueInput
-  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput>
 }
 
-export type LessonUpsertWithoutFeedbackInput = {
-  update: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
-  create: Prisma.XOR<Prisma.LessonCreateWithoutFeedbackInput, Prisma.LessonUncheckedCreateWithoutFeedbackInput>
-  where?: Prisma.LessonWhereInput
-}
-
-export type LessonUpdateToOneWithWhereWithoutFeedbackInput = {
-  where?: Prisma.LessonWhereInput
-  data: Prisma.XOR<Prisma.LessonUpdateWithoutFeedbackInput, Prisma.LessonUncheckedUpdateWithoutFeedbackInput>
-}
-
-export type LessonUpdateWithoutFeedbackInput = {
-  notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutLessonsNestedInput
-}
-
-export type LessonUncheckedUpdateWithoutFeedbackInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
-}
-
-export type LessonCreateWithoutSyllabusInput = {
-  notes: string
-  lessonAt: Date | string
-  isDone?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  feedback?: Prisma.FeedbackCreateNestedOneWithoutLessonInput
-}
-
-export type LessonUncheckedCreateWithoutSyllabusInput = {
-  id?: number
-  notes: string
-  lessonAt: Date | string
-  isDone?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  feedback?: Prisma.FeedbackUncheckedCreateNestedOneWithoutLessonInput
-}
-
-export type LessonCreateOrConnectWithoutSyllabusInput = {
-  where: Prisma.LessonWhereUniqueInput
-  create: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput>
-}
-
-export type LessonCreateManySyllabusInputEnvelope = {
-  data: Prisma.LessonCreateManySyllabusInput | Prisma.LessonCreateManySyllabusInput[]
+export type LessonCreateManyStudentInputEnvelope = {
+  data: Prisma.LessonCreateManyStudentInput | Prisma.LessonCreateManyStudentInput[]
   skipDuplicates?: boolean
 }
 
-export type LessonUpsertWithWhereUniqueWithoutSyllabusInput = {
+export type LessonUpsertWithWhereUniqueWithoutStudentInput = {
   where: Prisma.LessonWhereUniqueInput
-  update: Prisma.XOR<Prisma.LessonUpdateWithoutSyllabusInput, Prisma.LessonUncheckedUpdateWithoutSyllabusInput>
-  create: Prisma.XOR<Prisma.LessonCreateWithoutSyllabusInput, Prisma.LessonUncheckedCreateWithoutSyllabusInput>
+  update: Prisma.XOR<Prisma.LessonUpdateWithoutStudentInput, Prisma.LessonUncheckedUpdateWithoutStudentInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutStudentInput, Prisma.LessonUncheckedCreateWithoutStudentInput>
 }
 
-export type LessonUpdateWithWhereUniqueWithoutSyllabusInput = {
+export type LessonUpdateWithWhereUniqueWithoutStudentInput = {
   where: Prisma.LessonWhereUniqueInput
-  data: Prisma.XOR<Prisma.LessonUpdateWithoutSyllabusInput, Prisma.LessonUncheckedUpdateWithoutSyllabusInput>
+  data: Prisma.XOR<Prisma.LessonUpdateWithoutStudentInput, Prisma.LessonUncheckedUpdateWithoutStudentInput>
 }
 
-export type LessonUpdateManyWithWhereWithoutSyllabusInput = {
+export type LessonUpdateManyWithWhereWithoutStudentInput = {
   where: Prisma.LessonScalarWhereInput
-  data: Prisma.XOR<Prisma.LessonUpdateManyMutationInput, Prisma.LessonUncheckedUpdateManyWithoutSyllabusInput>
+  data: Prisma.XOR<Prisma.LessonUpdateManyMutationInput, Prisma.LessonUncheckedUpdateManyWithoutStudentInput>
 }
 
 export type LessonScalarWhereInput = {
@@ -612,133 +572,359 @@ export type LessonScalarWhereInput = {
   OR?: Prisma.LessonScalarWhereInput[]
   NOT?: Prisma.LessonScalarWhereInput | Prisma.LessonScalarWhereInput[]
   id?: Prisma.IntFilter<"Lesson"> | number
+  title?: Prisma.StringFilter<"Lesson"> | string
   notes?: Prisma.StringFilter<"Lesson"> | string
-  lessonAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
-  isDone?: Prisma.BoolFilter<"Lesson"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Lesson"> | Date | string | null
-  syllabusId?: Prisma.IntFilter<"Lesson"> | number
+  studentId?: Prisma.IntFilter<"Lesson"> | number
 }
 
-export type LessonCreateManySyllabusInput = {
-  id?: number
+export type LessonCreateWithoutPaymentInput = {
+  title: string
   notes: string
-  lessonAt: Date | string
-  isDone?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  student: Prisma.StudentCreateNestedOneWithoutLessonsInput
+  shares?: Prisma.SessionShareCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutLessonInput
+}
+
+export type LessonUncheckedCreateWithoutPaymentInput = {
+  id?: number
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  studentId: number
+  shares?: Prisma.SessionShareUncheckedCreateNestedManyWithoutLessonInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutLessonInput
+}
+
+export type LessonCreateOrConnectWithoutPaymentInput = {
+  where: Prisma.LessonWhereUniqueInput
+  create: Prisma.XOR<Prisma.LessonCreateWithoutPaymentInput, Prisma.LessonUncheckedCreateWithoutPaymentInput>
+}
+
+export type LessonUpsertWithoutPaymentInput = {
+  update: Prisma.XOR<Prisma.LessonUpdateWithoutPaymentInput, Prisma.LessonUncheckedUpdateWithoutPaymentInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutPaymentInput, Prisma.LessonUncheckedCreateWithoutPaymentInput>
+  where?: Prisma.LessonWhereInput
+}
+
+export type LessonUpdateToOneWithWhereWithoutPaymentInput = {
+  where?: Prisma.LessonWhereInput
+  data: Prisma.XOR<Prisma.LessonUpdateWithoutPaymentInput, Prisma.LessonUncheckedUpdateWithoutPaymentInput>
+}
+
+export type LessonUpdateWithoutPaymentInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  student?: Prisma.StudentUpdateOneRequiredWithoutLessonsNestedInput
+  shares?: Prisma.SessionShareUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonUncheckedUpdateWithoutPaymentInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  shares?: Prisma.SessionShareUncheckedUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonCreateWithoutSharesInput = {
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  student: Prisma.StudentCreateNestedOneWithoutLessonsInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutLessonInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutLessonInput
+}
+
+export type LessonUncheckedCreateWithoutSharesInput = {
+  id?: number
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  studentId: number
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutLessonInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutLessonInput
+}
+
+export type LessonCreateOrConnectWithoutSharesInput = {
+  where: Prisma.LessonWhereUniqueInput
+  create: Prisma.XOR<Prisma.LessonCreateWithoutSharesInput, Prisma.LessonUncheckedCreateWithoutSharesInput>
+}
+
+export type LessonUpsertWithoutSharesInput = {
+  update: Prisma.XOR<Prisma.LessonUpdateWithoutSharesInput, Prisma.LessonUncheckedUpdateWithoutSharesInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutSharesInput, Prisma.LessonUncheckedCreateWithoutSharesInput>
+  where?: Prisma.LessonWhereInput
+}
+
+export type LessonUpdateToOneWithWhereWithoutSharesInput = {
+  where?: Prisma.LessonWhereInput
+  data: Prisma.XOR<Prisma.LessonUpdateWithoutSharesInput, Prisma.LessonUncheckedUpdateWithoutSharesInput>
+}
+
+export type LessonUpdateWithoutSharesInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  student?: Prisma.StudentUpdateOneRequiredWithoutLessonsNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutLessonNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonUncheckedUpdateWithoutSharesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutLessonNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonCreateWithoutSessionsInput = {
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  student: Prisma.StudentCreateNestedOneWithoutLessonsInput
+  payment?: Prisma.PaymentCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareCreateNestedManyWithoutLessonInput
+}
+
+export type LessonUncheckedCreateWithoutSessionsInput = {
+  id?: number
+  title: string
+  notes: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  studentId: number
+  payment?: Prisma.PaymentUncheckedCreateNestedOneWithoutLessonInput
+  shares?: Prisma.SessionShareUncheckedCreateNestedManyWithoutLessonInput
+}
+
+export type LessonCreateOrConnectWithoutSessionsInput = {
+  where: Prisma.LessonWhereUniqueInput
+  create: Prisma.XOR<Prisma.LessonCreateWithoutSessionsInput, Prisma.LessonUncheckedCreateWithoutSessionsInput>
+}
+
+export type LessonUpsertWithoutSessionsInput = {
+  update: Prisma.XOR<Prisma.LessonUpdateWithoutSessionsInput, Prisma.LessonUncheckedUpdateWithoutSessionsInput>
+  create: Prisma.XOR<Prisma.LessonCreateWithoutSessionsInput, Prisma.LessonUncheckedCreateWithoutSessionsInput>
+  where?: Prisma.LessonWhereInput
+}
+
+export type LessonUpdateToOneWithWhereWithoutSessionsInput = {
+  where?: Prisma.LessonWhereInput
+  data: Prisma.XOR<Prisma.LessonUpdateWithoutSessionsInput, Prisma.LessonUncheckedUpdateWithoutSessionsInput>
+}
+
+export type LessonUpdateWithoutSessionsInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  student?: Prisma.StudentUpdateOneRequiredWithoutLessonsNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonUncheckedUpdateWithoutSessionsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  studentId?: Prisma.IntFieldUpdateOperationsInput | number
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUncheckedUpdateManyWithoutLessonNestedInput
+}
+
+export type LessonCreateManyStudentInput = {
+  id?: number
+  title: string
+  notes: string
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
-export type LessonUpdateWithoutSyllabusInput = {
+export type LessonUpdateWithoutStudentInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  feedback?: Prisma.FeedbackUpdateOneWithoutLessonNestedInput
+  payment?: Prisma.PaymentUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutLessonNestedInput
 }
 
-export type LessonUncheckedUpdateWithoutSyllabusInput = {
+export type LessonUncheckedUpdateWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  feedback?: Prisma.FeedbackUncheckedUpdateOneWithoutLessonNestedInput
+  payment?: Prisma.PaymentUncheckedUpdateOneWithoutLessonNestedInput
+  shares?: Prisma.SessionShareUncheckedUpdateManyWithoutLessonNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutLessonNestedInput
 }
 
-export type LessonUncheckedUpdateManyWithoutSyllabusInput = {
+export type LessonUncheckedUpdateManyWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
-  lessonAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+
+/**
+ * Count Type LessonCountOutputType
+ */
+
+export type LessonCountOutputType = {
+  shares: number
+  sessions: number
+}
+
+export type LessonCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  shares?: boolean | LessonCountOutputTypeCountSharesArgs
+  sessions?: boolean | LessonCountOutputTypeCountSessionsArgs
+}
+
+/**
+ * LessonCountOutputType without action
+ */
+export type LessonCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LessonCountOutputType
+   */
+  select?: Prisma.LessonCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * LessonCountOutputType without action
+ */
+export type LessonCountOutputTypeCountSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SessionShareWhereInput
+}
+
+/**
+ * LessonCountOutputType without action
+ */
+export type LessonCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SessionWhereInput
+}
 
 
 export type LessonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  title?: boolean
   notes?: boolean
-  lessonAt?: boolean
-  isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  feedback?: boolean | Prisma.Lesson$feedbackArgs<ExtArgs>
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  studentId?: boolean
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
+  payment?: boolean | Prisma.Lesson$paymentArgs<ExtArgs>
+  shares?: boolean | Prisma.Lesson$sharesArgs<ExtArgs>
+  sessions?: boolean | Prisma.Lesson$sessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.LessonCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lesson"]>
 
 export type LessonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  title?: boolean
   notes?: boolean
-  lessonAt?: boolean
-  isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  studentId?: boolean
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lesson"]>
 
 export type LessonSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  title?: boolean
   notes?: boolean
-  lessonAt?: boolean
-  isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  studentId?: boolean
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["lesson"]>
 
 export type LessonSelectScalar = {
   id?: boolean
+  title?: boolean
   notes?: boolean
-  lessonAt?: boolean
-  isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
+  studentId?: boolean
 }
 
-export type LessonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "lessonAt" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "syllabusId", ExtArgs["result"]["lesson"]>
+export type LessonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["lesson"]>
 export type LessonInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  feedback?: boolean | Prisma.Lesson$feedbackArgs<ExtArgs>
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
+  payment?: boolean | Prisma.Lesson$paymentArgs<ExtArgs>
+  shares?: boolean | Prisma.Lesson$sharesArgs<ExtArgs>
+  sessions?: boolean | Prisma.Lesson$sessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.LessonCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LessonIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }
 export type LessonIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }
 
 export type $LessonPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Lesson"
   objects: {
-    feedback: Prisma.$FeedbackPayload<ExtArgs> | null
-    syllabus: Prisma.$SyllabusPayload<ExtArgs>
+    student: Prisma.$StudentPayload<ExtArgs>
+    payment: Prisma.$PaymentPayload<ExtArgs> | null
+    shares: Prisma.$SessionSharePayload<ExtArgs>[]
+    sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    title: string
     notes: string
-    lessonAt: Date
-    isDone: boolean
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
-    syllabusId: number
+    studentId: number
   }, ExtArgs["result"]["lesson"]>
   composites: {}
 }
@@ -1133,8 +1319,10 @@ readonly fields: LessonFieldRefs;
  */
 export interface Prisma__LessonClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  feedback<T extends Prisma.Lesson$feedbackArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lesson$feedbackArgs<ExtArgs>>): Prisma.Prisma__FeedbackClient<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  syllabus<T extends Prisma.SyllabusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SyllabusDefaultArgs<ExtArgs>>): Prisma.Prisma__SyllabusClient<runtime.Types.Result.GetResult<Prisma.$SyllabusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  student<T extends Prisma.StudentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StudentDefaultArgs<ExtArgs>>): Prisma.Prisma__StudentClient<runtime.Types.Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  payment<T extends Prisma.Lesson$paymentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lesson$paymentArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  shares<T extends Prisma.Lesson$sharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lesson$sharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sessions<T extends Prisma.Lesson$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Lesson$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1165,13 +1353,12 @@ export interface Prisma__LessonClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface LessonFieldRefs {
   readonly id: Prisma.FieldRef<"Lesson", 'Int'>
+  readonly title: Prisma.FieldRef<"Lesson", 'String'>
   readonly notes: Prisma.FieldRef<"Lesson", 'String'>
-  readonly lessonAt: Prisma.FieldRef<"Lesson", 'DateTime'>
-  readonly isDone: Prisma.FieldRef<"Lesson", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Lesson", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Lesson", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Lesson", 'DateTime'>
-  readonly syllabusId: Prisma.FieldRef<"Lesson", 'Int'>
+  readonly studentId: Prisma.FieldRef<"Lesson", 'Int'>
 }
     
 
@@ -1568,22 +1755,70 @@ export type LessonDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 /**
- * Lesson.feedback
+ * Lesson.payment
  */
-export type Lesson$feedbackArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Lesson$paymentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Feedback
+   * Select specific fields to fetch from the Payment
    */
-  select?: Prisma.FeedbackSelect<ExtArgs> | null
+  select?: Prisma.PaymentSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Feedback
+   * Omit specific fields from the Payment
    */
-  omit?: Prisma.FeedbackOmit<ExtArgs> | null
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.FeedbackInclude<ExtArgs> | null
-  where?: Prisma.FeedbackWhereInput
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
+}
+
+/**
+ * Lesson.shares
+ */
+export type Lesson$sharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SessionShare
+   */
+  select?: Prisma.SessionShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SessionShare
+   */
+  omit?: Prisma.SessionShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SessionShareInclude<ExtArgs> | null
+  where?: Prisma.SessionShareWhereInput
+  orderBy?: Prisma.SessionShareOrderByWithRelationInput | Prisma.SessionShareOrderByWithRelationInput[]
+  cursor?: Prisma.SessionShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SessionShareScalarFieldEnum | Prisma.SessionShareScalarFieldEnum[]
+}
+
+/**
+ * Lesson.sessions
+ */
+export type Lesson$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Session
+   */
+  select?: Prisma.SessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Session
+   */
+  omit?: Prisma.SessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SessionInclude<ExtArgs> | null
+  where?: Prisma.SessionWhereInput
+  orderBy?: Prisma.SessionOrderByWithRelationInput | Prisma.SessionOrderByWithRelationInput[]
+  cursor?: Prisma.SessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
 }
 
 /**

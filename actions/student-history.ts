@@ -1,31 +1,22 @@
 'use server';
+import prisma from '@/utils/prisma';
+import { revalidatePath } from 'next/cache';
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
-import { revalidatePath } from 'next/cache';
-import { parseZonedDateTime } from '@internationalized/date';
-
 import { z } from 'zod';
-import { createClient } from '@/utils/supabase';
-import prisma from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+
 const createSchema = z.object({
-  studentId: z.coerce.number(),
-  changedAt: z.string().transform((val, ctx) => {
-    try {
-      const parsed = parseZonedDateTime(val);
-      return parsed.toDate();
-    }
-    catch (error) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '유효하지 않은 날짜 형식입니다',
-      });
-      return z.NEVER;
-    }
-  }),
   status: z.enum(['pending', 'active', 'paused', 'leave']).optional().default('pending'),
-  notes: z.string(),
+  notes: z.string().optional(),
 });
-export async function createStudentStatusHistory(formData: FormData) {
+export type CreateStudentStatusHistoryState = {
+  success?: boolean;
+  message?: string;
+  fieldErrors?: Record<string, string | string[]>;
+  timestamp?: number;
+};
+export async function createStudentStatusHistory(prevState: CreateStudentStatusHistoryState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudentStatusHistory',
     {
@@ -34,20 +25,25 @@ export async function createStudentStatusHistory(formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const supabase = await createClient();
+      const { user } = await getSession();
+      const { studentId, ...data } = Object.fromEntries(formData.entries());
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const state: CreateStudentStatusHistoryState = {
+        success: false,
+        timestamp: Date.now(),
+      };
 
       if (!user) {
-        return { success: false };
+        return state;
       }
 
-      const validationResult = createSchema.safeParse(Object.fromEntries(formData));
+      const validationResult = createSchema.safeParse(data);
       if (!validationResult.success) {
-        return { success: false, errors: validationResult.error.flatten().fieldErrors };
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
       }
+      console.log('아니 왜? data', data);
+      console.log('result', validationResult.data);
 
       const student = await prisma.student.findFirst({
         select: {
@@ -55,19 +51,21 @@ export async function createStudentStatusHistory(formData: FormData) {
           status: true,
         },
         where: {
-          id: validationResult.data.studentId,
+          id: Number(studentId),
           userId: user.id,
           deletedAt: null,
         },
       });
 
       if (!student) {
-        return { success: false };
+        state.message = '수강생 정보를 찾을 수 없습니다.';
+        return state;
       }
 
       const studentStatusHistory = await prisma.$transaction(async (tx) => {
         const statusHistory = await tx.studentStatusHistory.create({
           data: {
+            studentId: student.id,
             ...validationResult.data,
           },
         });
@@ -86,16 +84,26 @@ export async function createStudentStatusHistory(formData: FormData) {
       });
 
       revalidatePath('/students/[studentId]', 'page');
-      return { success: true, studentStatusHistory };
+      state.success = true;
+      state.message = '수강생의 상태를 변경하였습니다';
+      return state;
     },
   );
 }
 
 const updateSchema = z.object({
-  notes: z.string().trim(),
+  studentStatusHistoryId: z.coerce.number(),
+  notes: z.string().optional(),
 });
 
-export async function updateStudentStatusHistory(prevState: any, formData: FormData) {
+export type UpdateStudentStatusHistoryState = {
+  success?: boolean;
+  message?: string;
+  fieldErrors?: Record<string, string | string[]>;
+  timestamp?: number;
+};
+
+export async function updateStudentStatusHistory(prevState: UpdateStudentStatusHistoryState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentStatusHistory',
     {
@@ -104,30 +112,26 @@ export async function updateStudentStatusHistory(prevState: any, formData: FormD
       recordResponse: true,
     },
     async () => {
-      const supabase = await createClient();
+      const { user } = await getSession();
 
-      const state = {
+      const state: UpdateStudentStatusHistoryState = {
         success: false,
         timestamp: Date.now(),
       };
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
       if (!user) {
-        return { success: false };
+        return state;
       }
 
       const validationResult = updateSchema.safeParse(Object.fromEntries(formData));
       if (!validationResult.success) {
-        return { success: false, errors: validationResult.error.flatten().fieldErrors };
+        state.fieldErrors = validationResult.error.flatten().fieldErrors;
+        return state;
       }
 
-      const historyId = Number(formData.get('studentStatusHistoryId'));
-
-      const updatedStatusHistory = await prisma.studentStatusHistory.update({
+      await prisma.studentStatusHistory.update({
         where: {
-          id: historyId,
+          id: validationResult.data.studentStatusHistoryId,
         },
         data: {
           notes: validationResult.data.notes,
@@ -136,6 +140,7 @@ export async function updateStudentStatusHistory(prevState: any, formData: FormD
 
       revalidatePath('/students/[studentId]', 'page');
       state.success = true;
+      state.message = '수정하였습니다';
       return state;
     },
   );

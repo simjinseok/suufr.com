@@ -13,7 +13,7 @@ type CreateSessionState = {
   success: boolean;
   fields?: {
     isDone: boolean;
-    lessonAt: string;
+    sessionAt: string;
     notes: string;
   };
   timestamp: number;
@@ -33,7 +33,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
         success: false,
         fields: {
           isDone: data.isDone === 'on',
-          lessonAt: data.lessonAt as string,
+          sessionAt: data.sessionAt as string,
           notes: data.notes as string,
         },
         timestamp: Date.now(),
@@ -44,7 +44,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
         return state;
       }
 
-      const syllabus = await prisma.syllabus.findUnique({
+      const lesson = await prisma.lesson.findUnique({
         where: {
           id: Number(lessonId),
           deletedAt: null,
@@ -54,16 +54,16 @@ export async function createSession(prevState: CreateSessionState, formData: For
         },
       });
 
-      if (!syllabus) {
+      if (!lesson) {
         return state;
       }
 
-      await prisma.lesson.create({
+      await prisma.session.create({
         data: {
-          syllabusId: Number(lessonId),
+          lessonId: Number(lessonId),
           isDone: data.isDone === 'on',
           notes: data.notes as string,
-          lessonAt: parseDateTime(data.lessonAt as string).toDate('Asia/Seoul'),
+          sessionAt: parseDateTime(data.sessionAt as string).toDate('Asia/Seoul'),
         },
       });
 
@@ -79,13 +79,13 @@ export async function createSession(prevState: CreateSessionState, formData: For
 
 type UpdateSessionState = ServerActionState<{
   isDone: boolean;
-  lessonAt: string;
+  sessionAt: string;
   notes: string;
   feedback: string;
 }>;
 const updateSessionSchema = z.object({
   isDone: z.preprocess(val => val === 'on', z.boolean()),
-  lessonAt: z.string().transform(val => parseDateTime(val).toDate('Asia/Seoul')),
+  sessionAt: z.string().transform(val => parseDateTime(val).toDate('Asia/Seoul')),
   notes: z.string().trim(),
   feedback: z.string().trim(),
 }).transform(data => ({
@@ -108,7 +108,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         success: false,
         fields: {
           isDone: data.isDone === 'on',
-          lessonAt: data.lessonAt as string,
+          sessionAt: data.sessionAt as string,
           notes: data.notes as string,
           feedback: data.feedback as string,
         },
@@ -126,13 +126,13 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      const { isDone, lessonAt, notes, feedback } = validationResult.data;
+      const { isDone, sessionAt, notes, feedback } = validationResult.data;
 
-      const lesson = await prisma.lesson.findUnique({
+      const lesson = await prisma.session.findUnique({
         where: {
           id: Number(sessionId),
           deletedAt: null,
-          syllabus: {
+          lesson: {
             deletedAt: null,
             student: {
               userId: session.user.id,
@@ -147,10 +147,10 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      await prisma.lesson.update({
+      await prisma.session.update({
         where: {
           id: Number(sessionId),
-          syllabus: {
+          lesson: {
             student: {
               userId: session.user.id,
             },
@@ -158,7 +158,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         },
         data: {
           notes,
-          lessonAt,
+          sessionAt,
           isDone,
           updatedAt: currentDate,
         },
@@ -167,14 +167,14 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       // feedback 처리: isDone이고 내용이 있으면 upsert, 아니면 소프트 삭제
       if (isDone && feedback) {
         await prisma.feedback.upsert({
-          where: { lessonId: lesson.id },
-          create: { lessonId: lesson.id, notes: feedback },
+          where: { sessionId: lesson.id },
+          create: { sessionId: lesson.id, notes: feedback },
           update: { notes: feedback, deletedAt: null, updatedAt: currentDate },
         });
       }
       else {
         await prisma.feedback.updateMany({
-          where: { lessonId: lesson.id, deletedAt: null },
+          where: { sessionId: lesson.id, deletedAt: null },
           data: { deletedAt: currentDate },
         });
       }
@@ -216,11 +216,11 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
 
       const sessionId = Number(formData.get('sessionId'));
 
-      const lesson = await prisma.lesson.findUnique({
+      const lesson = await prisma.session.findUnique({
         where: {
           id: sessionId,
           deletedAt: null,
-          syllabus: {
+          lesson: {
             deletedAt: null,
             student: {
               userId: session.user.id,
@@ -233,10 +233,10 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
         return state;
       }
 
-      await prisma.lesson.update({
+      await prisma.session.update({
         where: {
           id: lesson.id,
-          syllabus: {
+          lesson: {
             deletedAt: null,
             student: {
               userId: session.user.id,
@@ -283,15 +283,15 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
         return state;
       }
 
-      const lessonId = Number(formData.get('lessonId'));
+      const sessionId = Number(formData.get('sessionId'));
       const notes = formData.get('notes') as string;
       const shouldDelete = formData.get('delete') === 'true';
 
-      const lesson = await prisma.lesson.findUnique({
+      const sessionRecord = await prisma.session.findUnique({
         where: {
-          id: lessonId,
+          id: sessionId,
           deletedAt: null,
-          syllabus: {
+          lesson: {
             deletedAt: null,
             student: {
               userId: session.user.id,
@@ -303,20 +303,20 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
         },
       });
 
-      if (!lesson) {
+      if (!sessionRecord) {
         state.message = '존재하지 않는 수업입니다.';
         return state;
       }
 
-      if (!lesson.isDone) {
+      if (!sessionRecord.isDone) {
         state.message = '완료된 수업만 피드백을 작성할 수 있습니다.';
         return state;
       }
 
       if (shouldDelete) {
-        if (lesson.feedback) {
+        if (sessionRecord.feedback) {
           await prisma.feedback.delete({
-            where: { id: lesson.feedback.id },
+            where: { id: sessionRecord.feedback.id },
           });
         }
         state.success = true;
@@ -324,8 +324,8 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
       }
       else {
         await prisma.feedback.upsert({
-          where: { lessonId },
-          create: { lessonId, notes },
+          where: { sessionId },
+          create: { sessionId, notes },
           update: { notes, updatedAt: new Date() },
         });
         state.success = true;

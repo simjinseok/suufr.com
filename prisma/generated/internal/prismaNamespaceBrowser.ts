@@ -52,14 +52,14 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Student: 'Student',
-  Lesson: 'Lesson',
   Feedback: 'Feedback',
   Payment: 'Payment',
   Meeting: 'Meeting',
   StudentComment: 'StudentComment',
   StudentStatusHistory: 'StudentStatusHistory',
-  LessonShare: 'LessonShare',
-  Syllabus: 'Syllabus'
+  SessionShare: 'SessionShare',
+  Session: 'Session',
+  Lesson: 'Lesson'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -92,27 +92,13 @@ export const StudentScalarFieldEnum = {
 export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeof StudentScalarFieldEnum]
 
 
-export const LessonScalarFieldEnum = {
-  id: 'id',
-  notes: 'notes',
-  lessonAt: 'lessonAt',
-  isDone: 'isDone',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  syllabusId: 'syllabusId'
-} as const
-
-export type LessonScalarFieldEnum = (typeof LessonScalarFieldEnum)[keyof typeof LessonScalarFieldEnum]
-
-
 export const FeedbackScalarFieldEnum = {
   id: 'id',
   notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  lessonId: 'lessonId'
+  sessionId: 'sessionId'
 } as const
 
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
@@ -127,7 +113,7 @@ export const PaymentScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  syllabusId: 'syllabusId'
+  lessonId: 'lessonId'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
@@ -175,20 +161,34 @@ export const StudentStatusHistoryScalarFieldEnum = {
 export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistoryScalarFieldEnum)[keyof typeof StudentStatusHistoryScalarFieldEnum]
 
 
-export const LessonShareScalarFieldEnum = {
+export const SessionShareScalarFieldEnum = {
   id: 'id',
   shareId: 'shareId',
-  syllabusId: 'syllabusId',
+  lessonId: 'lessonId',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
 } as const
 
-export type LessonShareScalarFieldEnum = (typeof LessonShareScalarFieldEnum)[keyof typeof LessonShareScalarFieldEnum]
+export type SessionShareScalarFieldEnum = (typeof SessionShareScalarFieldEnum)[keyof typeof SessionShareScalarFieldEnum]
 
 
-export const SyllabusScalarFieldEnum = {
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  notes: 'notes',
+  sessionAt: 'sessionAt',
+  isDone: 'isDone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  lessonId: 'lessonId'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const LessonScalarFieldEnum = {
   id: 'id',
   title: 'title',
   notes: 'notes',
@@ -198,7 +198,7 @@ export const SyllabusScalarFieldEnum = {
   studentId: 'studentId'
 } as const
 
-export type SyllabusScalarFieldEnum = (typeof SyllabusScalarFieldEnum)[keyof typeof SyllabusScalarFieldEnum]
+export type LessonScalarFieldEnum = (typeof LessonScalarFieldEnum)[keyof typeof LessonScalarFieldEnum]
 
 
 export const SortOrder = {

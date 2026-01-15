@@ -14,18 +14,17 @@ import {
 import { BanknoteIcon, BookDashedIcon, CalendarIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { updatePayment } from '../../actions/update-payment';
-import { removePayment } from '../../actions/remove-payment';
+import { updatePayment, removePayment } from '@/actions/payment';
 import { fromDate, getLocalTimeZone, parseDate, toCalendarDate, today } from '@internationalized/date';
 
-export default function PaymentModal({ isOpen, onClose, syllabus }) {
+export default function PaymentModal({ isOpen, onClose, lesson }) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
       <Modal.Container placement="center">
         <Modal.Dialog>
           {({ close }) => (
             <Content
-              syllabus={syllabus}
+              lesson={lesson}
               close={close}
             />
           )}
@@ -35,22 +34,22 @@ export default function PaymentModal({ isOpen, onClose, syllabus }) {
   );
 }
 
-function Content({ close, syllabus }) {
+function Content({ close, lesson }) {
   const formId = React.useId();
 
   const { control } = useForm({
     values: {
-      paidAt: syllabus?.payment ? toCalendarDate(fromDate(syllabus.payment.paidAt, 'Asia/Seoul')) : today(getLocalTimeZone()),
-      amount: syllabus?.payment?.amount || 0,
-      paymentMethod: syllabus?.payment?.paymentMethod || 'card',
-      notes: syllabus?.payment?.notes || '',
+      paidAt: lesson?.payment ? toCalendarDate(fromDate(lesson.payment.paidAt, 'Asia/Seoul')) : today(getLocalTimeZone()),
+      amount: lesson?.payment?.amount || 0,
+      paymentMethod: lesson?.payment?.paymentMethod || 'card',
+      notes: lesson?.payment?.notes || '',
     },
   });
 
   const [state, formAction, isPending] = React.useActionState(updatePayment, {});
   const payment = React.useMemo(() => {
-    return syllabus.payment;
-  }, [syllabus]);
+    return lesson.payment;
+  }, [lesson]);
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -73,7 +72,7 @@ function Content({ close, syllabus }) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="syllabusId" value={syllabus.id} />
+          <input type="hidden" name="lessonId" value={lesson.id} />
           <Controller
             control={control}
             name="paidAt"
@@ -180,7 +179,7 @@ function Content({ close, syllabus }) {
       </Modal.Body>
       <Modal.Footer>
         {payment && (
-          <RemoveButton lessonId={syllabus.id} />
+          <RemoveButton lessonId={lesson.id} />
         )}
         <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>

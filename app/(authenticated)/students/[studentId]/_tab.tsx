@@ -10,7 +10,7 @@ export default function Tab() {
             기본정보
             <Tabs.Indicator />
           </Tabs.Tab>
-          <Tabs.Tab id="syllabuses">
+          <Tabs.Tab id="lessons">
             계획
             <Tabs.Indicator />
           </Tabs.Tab>

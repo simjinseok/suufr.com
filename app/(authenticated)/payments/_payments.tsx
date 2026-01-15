@@ -9,8 +9,8 @@ import {
 } from '@heroui/react';
 import PaymentModal from '@/components/lesson/payment-modal';
 
-export default function Payments({ syllabuses }) {
-  const [editingSyllabus, setEditingSyllabus] = React.useState(null);
+export default function Payments({ lessons }) {
+  const [editingLesson, setEditingLesson] = React.useState(null);
 
   return (
     <React.Fragment>
@@ -27,31 +27,31 @@ export default function Payments({ syllabuses }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {syllabuses.map(syllabus => (
+            {lessons.map(lesson => (
               <tr
-                key={`syllabus-${syllabus.id}`}
+                key={`lesson-${lesson.id}`}
                 className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
               >
                 <td className="py-4 px-6 text-sm tabular-nums text-zinc-900 dark:text-white">
-                  {format(syllabus.payment.paidAt, 'yyyy-MM-dd')}
+                  {format(lesson.payment.paidAt, 'yyyy-MM-dd')}
                 </td>
                 <td className="py-4 px-6">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                    {syllabus.payment.paymentMethod}
+                    {lesson.payment.paymentMethod}
                   </span>
                 </td>
                 <td className="py-4 px-6 text-sm tabular-nums text-right font-medium text-zinc-900 dark:text-white">
-                  {numberToHangulMixed(syllabus.payment.amount)}
+                  {numberToHangulMixed(lesson.payment.amount)}
                   원
                 </td>
                 <td className="py-4 px-6 text-sm text-zinc-700 dark:text-zinc-300">
-                  {syllabus.student.name}
+                  {lesson.student.name}
                 </td>
                 <td className="py-4 px-6 text-sm text-zinc-500 dark:text-zinc-400 max-w-xs truncate">
-                  {syllabus.payment.notes || '—'}
+                  {lesson.payment.notes || '—'}
                 </td>
                 <td className="py-4 px-6 text-right">
-                  <Button size="sm" variant="light" onPress={() => setEditingSyllabus(syllabus)}>
+                  <Button size="sm" variant="light" onPress={() => setEditingLesson(lesson)}>
                     수정
                   </Button>
                 </td>
@@ -61,9 +61,9 @@ export default function Payments({ syllabuses }) {
         </table>
       </div>
       {/* <PaymentModal */}
-      {/*  isOpen={editingSyllabus !== null} */}
-      {/*  syllabus={editingSyllabus} */}
-      {/*  onClose={() => { setEditingSyllabus(null); }} */}
+      {/*  isOpen={editingLesson !== null} */}
+      {/*  lesson={editingLesson} */}
+      {/*  onClose={() => { setEditingLesson(null); }} */}
       {/* /> */}
     </React.Fragment>
   );

@@ -9,10 +9,10 @@ import Calendar from './_calendar';
 
 export type CalendarView = 'month' | 'week' | 'day';
 
-export default async function Page({ searchParams }) {
+export default async function Page(props: PageProps<'/calendar'>) {
   const { user } = await getSession();
 
-  const { date, view: viewParam } = await searchParams;
+  const { date, view: viewParam } = await props.searchParams;
   const today = new TZDate(new Date(), 'Asia/Seoul');
   const selectedDate = date ? new Date(date + 'T00:00:00+09:00') : today;
   const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'day' ? 'day' : 'month';

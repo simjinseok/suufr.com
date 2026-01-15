@@ -16,28 +16,12 @@ model Student {
   updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(0)
   userId          String                 @map("user_id") @db.Uuid
+  lessons         Lesson[]
   comments        StudentComment[]
   statusHistories StudentStatusHistory[]
-  syllabuses      Syllabus[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
-}
-
-model Lesson {
-  id          Int       @id @default(autoincrement())
-  notes       String
-  lessonAt    DateTime  @map("lesson_at") @db.Timestamptz(0)
-  isDone      Boolean   @default(false) @map("is_done")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(0)
-  syllabusId  Int       @map("syllabus_id")
-  feedback    Feedback?
-  syllabus    Syllabus  @relation(fields: [syllabusId], references: [id])
-
-  @@index([syllabusId, lessonAt, deletedAt])
-  @@map("lessons")
 }
 
 model Feedback {
@@ -46,10 +30,10 @@ model Feedback {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
-  lessonId  Int       @unique @map("lesson_id")
-  lesson    Lesson    @relation(fields: [lessonId], references: [id])
+  sessionId Int       @unique @map("session_id")
+  session   Session   @relation(fields: [sessionId], references: [id])
 
-  @@index([lessonId, deletedAt])
+  @@index([sessionId, deletedAt])
   @@map("feedback")
 }
 
@@ -62,10 +46,10 @@ model Payment {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
-  syllabusId    Int       @unique @map("syllabus_id")
-  syllabus      Syllabus  @relation(fields: [syllabusId], references: [id])
+  lessonId      Int       @unique @map("lesson_id")
+  lesson        Lesson    @relation(fields: [lessonId], references: [id])
 
-  @@index([paidAt, deletedAt, syllabusId])
+  @@index([paidAt, deletedAt, lessonId])
   @@map("payments")
 }
 
@@ -113,36 +97,52 @@ model StudentStatusHistory {
   @@map("student_status_histories")
 }
 
-model LessonShare {
-  id          Int       @id @default(autoincrement())
-  shareId     String    @unique @map("share_id") @db.VarChar(10)
-  syllabusId  Int       @map("syllabus_id")
-  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(0)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(0)
-  syllabus    Syllabus  @relation(fields: [syllabusId], references: [id])
+model SessionShare {
+  id        Int       @id @default(autoincrement())
+  shareId   String    @unique @map("share_id") @db.VarChar(10)
+  lessonId  Int       @map("lesson_id")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  lesson    Lesson    @relation(fields: [lessonId], references: [id])
 
-  @@index([syllabusId, deletedAt])
   @@index([shareId, expiresAt, deletedAt])
-  @@map("lesson_shares")
+  @@index([lessonId, deletedAt])
+  @@map("session_shares")
 }
 
-model Syllabus {
-  id          Int           @id @default(autoincrement())
-  title       String
-  notes       String
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(0)
-  studentId   Int           @map("student_id")
-  shares      LessonShare[]
-  lessons     Lesson[]
-  payment     Payment?
-  student     Student       @relation(fields: [studentId], references: [id])
+model Session {
+  id        Int       @id @default(autoincrement())
+  notes     String
+  sessionAt DateTime  @map("session_at") @db.Timestamptz(0)
+  isDone    Boolean   @default(false) @map("is_done")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  lessonId  Int       @map("lesson_id")
+  feedback  Feedback?
+  lesson    Lesson    @relation(fields: [lessonId], references: [id])
+
+  @@index([lessonId, sessionAt, deletedAt])
+  @@map("sessions")
+}
+
+model Lesson {
+  id        Int            @id @default(autoincrement())
+  title     String
+  notes     String
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?      @map("deleted_at") @db.Timestamptz(0)
+  studentId Int            @map("student_id")
+  student   Student        @relation(fields: [studentId], references: [id], map: "syllabuses_student_id_fkey")
+  payment   Payment?
+  shares    SessionShare[]
+  sessions  Session[]
 
   @@index([studentId, createdAt, deletedAt])
-  @@map("syllabuses")
+  @@map("lessons")
 }
 
 enum StudentStatus {

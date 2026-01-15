@@ -12,7 +12,7 @@ type Payment = {
   paymentMethod: string;
   notes: string | null;
   paidAt: Date;
-  syllabus: {
+  lesson: {
     student: {
       id: number;
       name: string;
@@ -96,7 +96,7 @@ export default function MonthlyView({ stats, payments }: Props) {
                         {format(payment.paidAt, 'yyyy-MM-dd')}
                       </td>
                       <td className="py-3 px-4 text-sm text-zinc-900 dark:text-white">
-                        {payment.syllabus.student.name}
+                        {payment.lesson.student.name}
                       </td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">

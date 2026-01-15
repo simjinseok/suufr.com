@@ -1,9 +1,6 @@
-import { fromDate } from '@internationalized/date';
-
 import React from 'react';
 import {
   Button,
-  DatePicker,
   Form,
   Modal,
   ModalBody,
@@ -16,7 +13,7 @@ import {
   Textarea,
 } from '@heroui/react';
 
-import { createStudentStatusHistory, updateStudentStatusHistory } from './actions';
+import { createStudentStatusHistory, updateStudentStatusHistory } from '@/actions/student-history';
 import StatusBadge from '@/components/status-badge';
 
 export default function StudentStatusModal({ isOpen, onClose, student, statusHistory }) {
@@ -28,8 +25,7 @@ export default function StudentStatusModal({ isOpen, onClose, student, statusHis
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     startTransition(async () => {
-      const result = statusHistory ? await updateStudentStatusHistory(formData) : await createStudentStatusHistory(formData);
-      console.log('fefe', result);
+      const result = statusHistory ? await updateStudentStatusHistory({}, formData) : await createStudentStatusHistory({}, formData);
       if (result.success) {
         onClose();
       }
@@ -52,13 +48,7 @@ export default function StudentStatusModal({ isOpen, onClose, student, statusHis
                       <input type="hidden" name="studentStatusHistoryId" value={statusHistory.id} />
                     )
                   : (<input type="hidden" name="studentId" value={student.id} />)}
-                <DatePicker
-                  name="changedAt"
-                  label="변경일"
-                  granularity="day"
-                  defaultValue={fromDate(statusHistory?.changedAt || new Date(), 'asia/seoul')}
-                />
-                <div className="mt-4 w-full">
+                <div className="w-full">
                   {statusHistory
                     ? (
                         <StatusBadge status={statusHistory.status} />

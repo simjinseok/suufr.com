@@ -17,12 +17,12 @@ import { fromDate, toCalendarDateTime } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { updateSession, removeSession } from '@/actions/session';
-import { Session } from 'node:inspector';
+import { TSession } from '@/types/index';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
   onOpenChange: ModalProps['onOpenChange'];
-  session: Session;
+  session: TSession;
 }
 export default function EditSessionModal({ isOpen, onOpenChange, session }: Props) {
   return (
@@ -48,7 +48,7 @@ function Content({ session, close }: ContentProps) {
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
       isDone: session?.isDone,
-      lessonAt: session.lessonAt,
+      sessionAt: session.sessionAt,
       notes: session?.notes,
       feedback: session?.feedback?.notes,
     },
@@ -56,7 +56,7 @@ function Content({ session, close }: ContentProps) {
   const { control } = useForm({
     values: {
       isDone: state.fields?.isDone,
-      lessonAt: state.fields?.lessonAt,
+      sessionAt: state.fields?.sessionAt,
       notes: state.fields?.notes,
       feedback: state.fields?.feedback,
     },
@@ -103,7 +103,7 @@ function Content({ session, close }: ContentProps) {
           />
           <Controller
             control={control}
-            name="lessonAt"
+            name="sessionAt"
             render={({ field: { name, value, onChange } }) => (
               <DateField
                 name={name}

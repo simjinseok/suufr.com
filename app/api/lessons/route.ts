@@ -23,16 +23,16 @@ export async function GET(request: Request) {
     return new Response('', { status: 404 });
   }
 
-  const lessons = await prisma.lesson.findMany({
+  const lessons = await prisma.session.findMany({
     where: {
-      syllabus: {
+      lesson: {
         studentId: student.id,
       },
       deletedAt: null,
     },
     orderBy: [
       {
-        lessonAt: 'desc',
+        sessionAt: 'desc',
       },
     ],
   });
@@ -48,10 +48,10 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const syllabusId = Number(formData.get('syllabusId'));
-  const syllabus = await prisma.syllabus.findUnique({
+  const lessonId = Number(formData.get('lessonId'));
+  const lesson = await prisma.lesson.findUnique({
     where: {
-      id: syllabusId,
+      id: lessonId,
       deletedAt: null,
       student: {
         userId: session.user.id,
@@ -59,32 +59,32 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!syllabus) {
+  if (!lesson) {
     return new Response('', { status: 404 });
   }
 
-  const dates = formData.getAll('lessonAt');
+  const dates = formData.getAll('sessionAt');
   if (dates.length === 1) {
-    const lessonAt = new Date(`${dates[0]}:00+09:00`);
+    const sessionAt = new Date(`${dates[0]}:00+09:00`);
 
-    const lesson = await prisma.lesson.create({
+    const newSession = await prisma.session.create({
       data: {
-        syllabusId: syllabus.id,
+        lessonId: lesson.id,
         notes: formData.get('notes') as string,
-        lessonAt,
+        sessionAt,
       },
     });
 
-    return Response.json(lesson, { status: 201 });
+    return Response.json(newSession, { status: 201 });
   }
 
   if (dates.length > 1) {
-    const results = await prisma.lesson.createMany({
+    const results = await prisma.session.createMany({
       data: dates.map((date) => {
         return {
-          syllabusId: syllabus.id,
+          lessonId: lesson.id,
           notes: '',
-          lessonAt: `${date}:00+09:00`,
+          sessionAt: `${date}:00+09:00`,
         };
       }),
     });

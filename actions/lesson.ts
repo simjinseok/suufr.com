@@ -4,7 +4,6 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
-import { createClient } from '@/utils/supabase';
 import prisma from '@/utils/prisma';
 import { parseZonedDateTime } from '@internationalized/date';
 import { getSession } from '@/utils/auth';
@@ -52,10 +51,10 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
         }
       }
 
-      // 트랜잭션으로 syllabus와 lesson들을 함께 생성
+      // 트랜잭션으로 lesson과 session들을 함께 생성
       await prisma.$transaction(async (tx) => {
-        // syllabus 생성
-        const syllabus = await tx.syllabus.create({
+        // lesson 생성
+        const lesson = await tx.lesson.create({
           data: {
             title: (formData.get('title') as string) || '',
             notes: (formData.get('notes') as string) || '',
@@ -63,21 +62,21 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
           },
         });
 
-        // lesson들이 있으면 생성
+        // session들이 있으면 생성
         if (lessonDates.length > 0) {
-          await tx.lesson.createMany({
+          await tx.session.createMany({
             data: lessonDates.map((dateString) => {
-              const lessonAt = parseZonedDateTime(dateString).toDate();
+              const sessionAt = parseZonedDateTime(dateString).toDate();
               return {
-                syllabusId: syllabus.id,
+                lessonId: lesson.id,
                 notes: '',
-                lessonAt,
+                sessionAt,
               };
             }),
           });
         }
       });
-      revalidatePath('/syllabuses', 'page');
+      revalidatePath('/lessons', 'page');
       state.success = true;
       state.message = '레슨을 추가하였습니다';
       return state;
@@ -92,16 +91,16 @@ const updateLessonSchema = z.object({
   title: z.string().min(1, { error: '제목을 입력해주세요' }),
   notes: z.string(),
 });
-export async function updateSyllabus(state: UpdateLessonState, formData: FormData) {
+export async function updateLesson(state: UpdateLessonState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'updateSyllabus',
+    'updateLesson',
     {
       formData,
       headers: await headers(),
       recordResponse: true,
     },
     async () => {
-      const { syllabusId, ...data } = Object.fromEntries(formData.entries());
+      const { lessonId, ...data } = Object.fromEntries(formData.entries());
 
       const state: UpdateLessonState = {
         success: false,
@@ -123,9 +122,9 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
         return state;
       }
 
-      const syllabus = await prisma.syllabus.findUnique({
+      const lesson = await prisma.lesson.findUnique({
         where: {
-          id: Number(syllabusId),
+          id: Number(lessonId),
           deletedAt: null,
           student: {
             userId: user.id,
@@ -133,13 +132,13 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
         },
       });
 
-      if (!syllabus) {
+      if (!lesson) {
         return state;
       }
 
-      const result = await prisma.syllabus.update({
+      const result = await prisma.lesson.update({
         where: {
-          id: syllabus.id,
+          id: lesson.id,
           deletedAt: null,
           student: {
             userId: user.id,
@@ -161,17 +160,16 @@ export async function updateSyllabus(state: UpdateLessonState, formData: FormDat
 }
 
 type RemoveLessonState = ServerActionState<null>;
-export async function removeLesson(prevState: RemoveLessonState, formData: FormData) {}
-export async function removeSyllabus(prevState: any, formData: FormData) {
+export async function removeLesson(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'removeSyllabus',
+    'removeLesson',
     {
       formData,
       headers: await headers(),
       recordResponse: true,
     },
     async () => {
-      const syllabusId = Number(formData.get('syllabusId'));
+      const lessonId = Number(formData.get('lessonId'));
 
       const state: RemoveLessonState = {
         success: false,
@@ -183,16 +181,16 @@ export async function removeSyllabus(prevState: any, formData: FormData) {
         return state;
       }
 
-      const syllabus = await prisma.syllabus.findUnique({
+      const lesson = await prisma.lesson.findUnique({
         where: {
-          id: syllabusId,
+          id: lessonId,
           deletedAt: null,
           student: {
             userId: user.id,
           },
         },
         include: {
-          lessons: {
+          sessions: {
             where: {
               deletedAt: null,
               isDone: false,
@@ -201,19 +199,19 @@ export async function removeSyllabus(prevState: any, formData: FormData) {
         },
       });
 
-      if (!syllabus) {
+      if (!lesson) {
         return { success: false };
       }
 
-      // 활성화된 lesson이 있으면 삭제 불가
-      if (syllabus.lessons.length > 0) {
+      // 활성화된 session이 있으면 삭제 불가
+      if (lesson.sessions.length > 0) {
         state.message = '먼저 수업을 삭제해주세요';
         return state;
       }
 
-      const result = await prisma.syllabus.update({
+      const result = await prisma.lesson.update({
         where: {
-          id: syllabus.id,
+          id: lesson.id,
         },
         data: {
           deletedAt: new Date(),

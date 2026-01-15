@@ -15,11 +15,11 @@ export async function POST(
     return new Response('', { status: 401 });
   }
 
-  const lesson = await prisma.lesson.findUnique({
+  const lesson = await prisma.session.findUnique({
     where: {
       id: lessonId,
       deletedAt: null,
-      syllabus: {
+      lesson: {
         student: {
           userId: session.user.id,
         },
@@ -36,7 +36,7 @@ export async function POST(
 
   const feedback = await prisma.feedback.findUnique({
     where: {
-      lessonId: lesson.id,
+      sessionId: lesson.id,
     },
   });
 
@@ -55,7 +55,7 @@ export async function POST(
   else {
     feedbackResult = await prisma.feedback.create({
       data: {
-        lessonId: lesson.id,
+        sessionId: lesson.id,
         notes: schemaData.notes || '',
       },
     });

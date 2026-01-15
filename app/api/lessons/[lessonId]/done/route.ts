@@ -14,11 +14,11 @@ export async function PUT(
     return new Response('', { status: 401 });
   }
 
-  const lesson = await prisma.lesson.findUnique({
+  const lesson = await prisma.session.findUnique({
     where: {
       id: lessonId,
       deletedAt: null,
-      syllabus: {
+      lesson: {
         student: {
           userId: session.user.id,
         },
@@ -30,7 +30,7 @@ export async function PUT(
     return new Response('', { status: 404 });
   }
 
-  const result = await prisma.lesson.update({
+  const result = await prisma.session.update({
     where: {
       id: lesson.id,
     },

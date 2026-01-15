@@ -8,7 +8,7 @@ export default async function PaymentsPage({
 }) {
   const { studentId } = await params;
 
-  const syllabuses = await prisma.syllabus.findMany({
+  const lessons = await prisma.lesson.findMany({
     select: {
       id: true,
       title: true,
@@ -34,10 +34,10 @@ export default async function PaymentsPage({
   });
 
   // 삭제된 payment는 null로 처리
-  const processedSyllabuses = syllabuses.map((syllabus) => ({
-    ...syllabus,
-    payment: syllabus.payment?.deletedAt ? null : syllabus.payment,
+  const processedLessons = lessons.map((lesson) => ({
+    ...lesson,
+    payment: lesson.payment?.deletedAt ? null : lesson.payment,
   }));
 
-  return <PaymentsTable syllabuses={processedSyllabuses} />;
+  return <PaymentsTable lessons={processedLessons} />;
 }

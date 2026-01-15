@@ -29,13 +29,13 @@ export type AggregatePayment = {
 export type PaymentAvgAggregateOutputType = {
   id: number | null
   amount: number | null
-  syllabusId: number | null
+  lessonId: number | null
 }
 
 export type PaymentSumAggregateOutputType = {
   id: number | null
   amount: number | null
-  syllabusId: number | null
+  lessonId: number | null
 }
 
 export type PaymentMinAggregateOutputType = {
@@ -47,7 +47,7 @@ export type PaymentMinAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  syllabusId: number | null
+  lessonId: number | null
 }
 
 export type PaymentMaxAggregateOutputType = {
@@ -59,7 +59,7 @@ export type PaymentMaxAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  syllabusId: number | null
+  lessonId: number | null
 }
 
 export type PaymentCountAggregateOutputType = {
@@ -71,7 +71,7 @@ export type PaymentCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   deletedAt: number
-  syllabusId: number
+  lessonId: number
   _all: number
 }
 
@@ -79,13 +79,13 @@ export type PaymentCountAggregateOutputType = {
 export type PaymentAvgAggregateInputType = {
   id?: true
   amount?: true
-  syllabusId?: true
+  lessonId?: true
 }
 
 export type PaymentSumAggregateInputType = {
   id?: true
   amount?: true
-  syllabusId?: true
+  lessonId?: true
 }
 
 export type PaymentMinAggregateInputType = {
@@ -97,7 +97,7 @@ export type PaymentMinAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  lessonId?: true
 }
 
 export type PaymentMaxAggregateInputType = {
@@ -109,7 +109,7 @@ export type PaymentMaxAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  lessonId?: true
 }
 
 export type PaymentCountAggregateInputType = {
@@ -121,7 +121,7 @@ export type PaymentCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  syllabusId?: true
+  lessonId?: true
   _all?: true
 }
 
@@ -220,7 +220,7 @@ export type PaymentGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
-  syllabusId: number
+  lessonId: number
   _count: PaymentCountAggregateOutputType | null
   _avg: PaymentAvgAggregateOutputType | null
   _sum: PaymentSumAggregateOutputType | null
@@ -255,8 +255,8 @@ export type PaymentWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
-  syllabusId?: Prisma.IntFilter<"Payment"> | number
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
+  lessonId?: Prisma.IntFilter<"Payment"> | number
+  lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
 }
 
 export type PaymentOrderByWithRelationInput = {
@@ -268,13 +268,13 @@ export type PaymentOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
-  syllabus?: Prisma.SyllabusOrderByWithRelationInput
+  lessonId?: Prisma.SortOrder
+  lesson?: Prisma.LessonOrderByWithRelationInput
 }
 
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  syllabusId?: number
+  lessonId?: number
   AND?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   OR?: Prisma.PaymentWhereInput[]
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
@@ -285,8 +285,8 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
-  syllabus?: Prisma.XOR<Prisma.SyllabusScalarRelationFilter, Prisma.SyllabusWhereInput>
-}, "id" | "syllabusId">
+  lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
+}, "id" | "lessonId">
 
 export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -297,7 +297,7 @@ export type PaymentOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
   _count?: Prisma.PaymentCountOrderByAggregateInput
   _avg?: Prisma.PaymentAvgOrderByAggregateInput
   _max?: Prisma.PaymentMaxOrderByAggregateInput
@@ -317,7 +317,7 @@ export type PaymentScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
-  syllabusId?: Prisma.IntWithAggregatesFilter<"Payment"> | number
+  lessonId?: Prisma.IntWithAggregatesFilter<"Payment"> | number
 }
 
 export type PaymentCreateInput = {
@@ -328,7 +328,7 @@ export type PaymentCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabus: Prisma.SyllabusCreateNestedOneWithoutPaymentInput
+  lesson: Prisma.LessonCreateNestedOneWithoutPaymentInput
 }
 
 export type PaymentUncheckedCreateInput = {
@@ -340,7 +340,7 @@ export type PaymentUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabusId: number
+  lessonId: number
 }
 
 export type PaymentUpdateInput = {
@@ -351,7 +351,7 @@ export type PaymentUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabus?: Prisma.SyllabusUpdateOneRequiredWithoutPaymentNestedInput
+  lesson?: Prisma.LessonUpdateOneRequiredWithoutPaymentNestedInput
 }
 
 export type PaymentUncheckedUpdateInput = {
@@ -363,7 +363,7 @@ export type PaymentUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
+  lessonId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type PaymentCreateManyInput = {
@@ -375,7 +375,7 @@ export type PaymentCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  syllabusId: number
+  lessonId: number
 }
 
 export type PaymentUpdateManyMutationInput = {
@@ -397,7 +397,7 @@ export type PaymentUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  syllabusId?: Prisma.IntFieldUpdateOperationsInput | number
+  lessonId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type PaymentCountOrderByAggregateInput = {
@@ -409,13 +409,13 @@ export type PaymentCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
 }
 
 export type PaymentAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
 }
 
 export type PaymentMaxOrderByAggregateInput = {
@@ -427,7 +427,7 @@ export type PaymentMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
 }
 
 export type PaymentMinOrderByAggregateInput = {
@@ -439,13 +439,13 @@ export type PaymentMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
 }
 
 export type PaymentSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  syllabusId?: Prisma.SortOrder
+  lessonId?: Prisma.SortOrder
 }
 
 export type PaymentNullableScalarRelationFilter = {
@@ -453,39 +453,39 @@ export type PaymentNullableScalarRelationFilter = {
   isNot?: Prisma.PaymentWhereInput | null
 }
 
-export type PaymentCreateNestedOneWithoutSyllabusInput = {
-  create?: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
-  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutSyllabusInput
+export type PaymentCreateNestedOneWithoutLessonInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLessonInput
   connect?: Prisma.PaymentWhereUniqueInput
 }
 
-export type PaymentUncheckedCreateNestedOneWithoutSyllabusInput = {
-  create?: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
-  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutSyllabusInput
+export type PaymentUncheckedCreateNestedOneWithoutLessonInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLessonInput
   connect?: Prisma.PaymentWhereUniqueInput
 }
 
-export type PaymentUpdateOneWithoutSyllabusNestedInput = {
-  create?: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
-  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutSyllabusInput
-  upsert?: Prisma.PaymentUpsertWithoutSyllabusInput
+export type PaymentUpdateOneWithoutLessonNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLessonInput
+  upsert?: Prisma.PaymentUpsertWithoutLessonInput
   disconnect?: Prisma.PaymentWhereInput | boolean
   delete?: Prisma.PaymentWhereInput | boolean
   connect?: Prisma.PaymentWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutSyllabusInput, Prisma.PaymentUpdateWithoutSyllabusInput>, Prisma.PaymentUncheckedUpdateWithoutSyllabusInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutLessonInput, Prisma.PaymentUpdateWithoutLessonInput>, Prisma.PaymentUncheckedUpdateWithoutLessonInput>
 }
 
-export type PaymentUncheckedUpdateOneWithoutSyllabusNestedInput = {
-  create?: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
-  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutSyllabusInput
-  upsert?: Prisma.PaymentUpsertWithoutSyllabusInput
+export type PaymentUncheckedUpdateOneWithoutLessonNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLessonInput
+  upsert?: Prisma.PaymentUpsertWithoutLessonInput
   disconnect?: Prisma.PaymentWhereInput | boolean
   delete?: Prisma.PaymentWhereInput | boolean
   connect?: Prisma.PaymentWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutSyllabusInput, Prisma.PaymentUpdateWithoutSyllabusInput>, Prisma.PaymentUncheckedUpdateWithoutSyllabusInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutLessonInput, Prisma.PaymentUpdateWithoutLessonInput>, Prisma.PaymentUncheckedUpdateWithoutLessonInput>
 }
 
-export type PaymentCreateWithoutSyllabusInput = {
+export type PaymentCreateWithoutLessonInput = {
   amount: number
   paymentMethod: string
   notes?: string | null
@@ -495,7 +495,7 @@ export type PaymentCreateWithoutSyllabusInput = {
   deletedAt?: Date | string | null
 }
 
-export type PaymentUncheckedCreateWithoutSyllabusInput = {
+export type PaymentUncheckedCreateWithoutLessonInput = {
   id?: number
   amount: number
   paymentMethod: string
@@ -506,23 +506,23 @@ export type PaymentUncheckedCreateWithoutSyllabusInput = {
   deletedAt?: Date | string | null
 }
 
-export type PaymentCreateOrConnectWithoutSyllabusInput = {
+export type PaymentCreateOrConnectWithoutLessonInput = {
   where: Prisma.PaymentWhereUniqueInput
-  create: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
 }
 
-export type PaymentUpsertWithoutSyllabusInput = {
-  update: Prisma.XOR<Prisma.PaymentUpdateWithoutSyllabusInput, Prisma.PaymentUncheckedUpdateWithoutSyllabusInput>
-  create: Prisma.XOR<Prisma.PaymentCreateWithoutSyllabusInput, Prisma.PaymentUncheckedCreateWithoutSyllabusInput>
+export type PaymentUpsertWithoutLessonInput = {
+  update: Prisma.XOR<Prisma.PaymentUpdateWithoutLessonInput, Prisma.PaymentUncheckedUpdateWithoutLessonInput>
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutLessonInput, Prisma.PaymentUncheckedCreateWithoutLessonInput>
   where?: Prisma.PaymentWhereInput
 }
 
-export type PaymentUpdateToOneWithWhereWithoutSyllabusInput = {
+export type PaymentUpdateToOneWithWhereWithoutLessonInput = {
   where?: Prisma.PaymentWhereInput
-  data: Prisma.XOR<Prisma.PaymentUpdateWithoutSyllabusInput, Prisma.PaymentUncheckedUpdateWithoutSyllabusInput>
+  data: Prisma.XOR<Prisma.PaymentUpdateWithoutLessonInput, Prisma.PaymentUncheckedUpdateWithoutLessonInput>
 }
 
-export type PaymentUpdateWithoutSyllabusInput = {
+export type PaymentUpdateWithoutLessonInput = {
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -532,7 +532,7 @@ export type PaymentUpdateWithoutSyllabusInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
-export type PaymentUncheckedUpdateWithoutSyllabusInput = {
+export type PaymentUncheckedUpdateWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   paymentMethod?: Prisma.StringFieldUpdateOperationsInput | string
@@ -554,8 +554,8 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lessonId?: boolean
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
 export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -567,8 +567,8 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lessonId?: boolean
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
 export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -580,8 +580,8 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lessonId?: boolean
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
 export type PaymentSelectScalar = {
@@ -593,24 +593,24 @@ export type PaymentSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  syllabusId?: boolean
+  lessonId?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "paymentMethod" | "notes" | "paidAt" | "createdAt" | "updatedAt" | "deletedAt" | "syllabusId", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "paymentMethod" | "notes" | "paidAt" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }
 export type PaymentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }
 export type PaymentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  syllabus?: boolean | Prisma.SyllabusDefaultArgs<ExtArgs>
+  lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }
 
 export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Payment"
   objects: {
-    syllabus: Prisma.$SyllabusPayload<ExtArgs>
+    lesson: Prisma.$LessonPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -621,7 +621,7 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
-    syllabusId: number
+    lessonId: number
   }, ExtArgs["result"]["payment"]>
   composites: {}
 }
@@ -1016,7 +1016,7 @@ readonly fields: PaymentFieldRefs;
  */
 export interface Prisma__PaymentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  syllabus<T extends Prisma.SyllabusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SyllabusDefaultArgs<ExtArgs>>): Prisma.Prisma__SyllabusClient<runtime.Types.Result.GetResult<Prisma.$SyllabusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  lesson<T extends Prisma.LessonDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LessonDefaultArgs<ExtArgs>>): Prisma.Prisma__LessonClient<runtime.Types.Result.GetResult<Prisma.$LessonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1054,7 +1054,7 @@ export interface PaymentFieldRefs {
   readonly createdAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Payment", 'DateTime'>
-  readonly syllabusId: Prisma.FieldRef<"Payment", 'Int'>
+  readonly lessonId: Prisma.FieldRef<"Payment", 'Int'>
 }
     
 

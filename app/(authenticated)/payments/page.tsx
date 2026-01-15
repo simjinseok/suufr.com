@@ -48,7 +48,7 @@ export default async function Page({ searchParams }: Props) {
       gte: from,
       lte: to,
     },
-    syllabus: {
+    lesson: {
       student: {
         userId: user.id,
         deletedAt: null,
@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: Props) {
   const payments = await prisma.payment.findMany({
     where,
     include: {
-      syllabus: {
+      lesson: {
         include: {
           student: {
             select: {

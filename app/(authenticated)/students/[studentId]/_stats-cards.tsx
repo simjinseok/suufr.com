@@ -4,9 +4,9 @@ import { Card } from '@heroui/react';
 
 type Props = {
   stats: {
-    remainingLessonsCount: number;
-    completedSyllabusCount: number;
-    unpaidSyllabusCount: number;
+    remainingSessionsCount: number;
+    completedLessonCount: number;
+    unpaidLessonCount: number;
   };
 };
 
@@ -18,7 +18,7 @@ export default function StatsCards({ stats }: Props) {
           <div className="flex flex-col gap-y-2">
             <dt className="text-small font-medium text-default-500">남은 수업</dt>
             <dd className="text-2xl font-semibold text-primary-600">
-              {stats.remainingLessonsCount}회
+              {stats.remainingSessionsCount}회
             </dd>
           </div>
         </div>
@@ -28,7 +28,7 @@ export default function StatsCards({ stats }: Props) {
           <div className="flex flex-col gap-y-2">
             <dt className="text-small font-medium text-default-500">완료한 레슨</dt>
             <dd className="text-2xl font-semibold text-success-600">
-              {stats.completedSyllabusCount}회
+              {stats.completedLessonCount}회
             </dd>
           </div>
         </div>

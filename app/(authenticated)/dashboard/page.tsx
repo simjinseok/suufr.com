@@ -20,7 +20,7 @@ export default async function Page() {
   const currentDate = new Date();
   const [
     currentActiveStudentCount,
-    notPaidSyllabusesCount,
+    notPaidLessonsCount,
     leftStudentsCount,
   ] = await Promise.all([
     prisma.student.count({
@@ -30,7 +30,7 @@ export default async function Page() {
         status: 'active',
       },
     }),
-    prisma.syllabus.count({
+    prisma.lesson.count({
       where: {
         student: {
           userId: user.id,
@@ -103,7 +103,7 @@ export default async function Page() {
       {/* </div> */}
 
       <React.Suspense>
-        <NotPaidSyllabuses user={user} />
+        <NotPaidLessons user={user} />
       </React.Suspense>
 
       <React.Suspense>
@@ -113,8 +113,8 @@ export default async function Page() {
   );
 }
 
-async function NotPaidSyllabuses({ user }: any) {
-  const syllabuses = await prisma.syllabus.findMany({
+async function NotPaidLessons({ user }: any) {
+  const lessons = await prisma.lesson.findMany({
     include: {
       student: true,
     },
@@ -130,7 +130,7 @@ async function NotPaidSyllabuses({ user }: any) {
     },
   });
 
-  if (syllabuses.length < 1) {
+  if (lessons.length < 1) {
     return null;
   }
 
@@ -145,10 +145,10 @@ async function NotPaidSyllabuses({ user }: any) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {syllabuses.map(syllabus => (
-            <TableRow key={`syllabus-${syllabus.id}`}>
-              <TableCell>{syllabus.student.name}</TableCell>
-              <TableCell>{syllabus.title}</TableCell>
+          {lessons.map(lesson => (
+            <TableRow key={`lesson-${lesson.id}`}>
+              <TableCell>{lesson.student.name}</TableCell>
+              <TableCell>{lesson.title}</TableCell>
             </TableRow>
           ))}
         </TableBody>

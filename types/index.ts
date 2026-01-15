@@ -6,37 +6,37 @@ export type Student = {
   createdAt?: Date;
   completedSessionsCount?: number;
   sessionsCount?: number;
-  lastLessonDate?: Date | null;
-  nextLessonDate?: Date | null;
+  lastSessionDate?: Date | null;
+  nextSessionDate?: Date | null;
   hasUnpaidLesson?: boolean;
-  lessons?: TLesson[];
+  sessions?: TSession[];
   payments?: TPayment[];
 };
 
-export type TSyllabus = {
+export type TLesson = {
   id: number;
   title: string;
   notes: string;
 
   student?: TStudent;
   payment?: TPayment;
-  lessons: TLesson[];
-  shares?: TLessonShare[];
+  sessions: TSession[];
+  shares?: TSessionShare[];
 };
 
-export type TLesson = {
+export type TSession = {
   id: number;
   notes: string;
   isDone: boolean;
-  lessonAt: Date;
-  syllabus?: TSyllabus;
+  sessionAt: Date;
+  lesson?: TLesson;
   feedback?: TFeedback;
 };
 
 export type TFeedback = {
   id: number;
   notes: string;
-  lesson?: TLesson;
+  session?: TSession;
 };
 
 export type TPayment = {
@@ -56,10 +56,10 @@ export type TMeeting = {
   meetingAt: Date;
 };
 
-export type TLessonShare = {
+export type TSessionShare = {
   id: number;
   shareId: string;
-  syllabusId: number;
+  lessonId: number;
   expiresAt: Date;
   createdAt: Date;
 };

@@ -10,12 +10,12 @@ import {
   Input,
 } from '@heroui/react';
 import { CopyIcon, CheckIcon, LinkIcon, Trash2Icon } from 'lucide-react';
-import type { TSyllabus } from '@/types/index';
+import type { TLesson } from '@/types/index';
 
 type Props = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  syllabus: TSyllabus;
+  lesson: TLesson;
 };
 
 type ShareState = {
@@ -27,25 +27,11 @@ type ShareState = {
   } | null;
 };
 
-export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
-  const [shareState, setShareState] = React.useState<ShareState | null>(syllabus?.shares?.[0]);
+export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
+  const [shareState, setShareState] = React.useState<ShareState | null>(lesson?.shares?.[0]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [expireDays, setExpireDays] = React.useState(60);
   const [copied, setCopied] = React.useState(false);
-
-  // 현재 공유 상태 조회
-  // React.useEffect(() => {
-  //   if (isOpen && syllabus?.id) {
-  //     setIsLoading(true);
-  //     fetch(`/api/syllabuses/${syllabus.id}/share`)
-  //       .then((res) => res.json())
-  //       .then((data) => {
-  //         setShareState(data);
-  //         setIsLoading(false);
-  //       })
-  //       .catch(() => setIsLoading(false));
-  //   }
-  // }, [isOpen, syllabus?.id]);
 
   // 공유 링크 생성
   const handleCreateShare = React.useCallback(async () => {
@@ -53,7 +39,7 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
     const formData = new FormData();
     formData.set('expireDays', String(expireDays));
 
-    const response = await fetch(`/api/syllabuses/${syllabus.id}/share`, {
+    const response = await fetch(`/api/lessons/${lesson.id}/share`, {
       method: 'POST',
       body: formData,
     });
@@ -63,19 +49,19 @@ export default function ShareModal({ isOpen, onOpenChange, syllabus }: Props) {
       setShareState(data);
     }
     setIsLoading(false);
-  }, [syllabus.id, expireDays]);
+  }, [lesson.id, expireDays]);
 
   // 공유 링크 무효화
   const handleRevokeShare = React.useCallback(async () => {
     if (!confirm('공유 링크를 무효화하시겠습니까?')) return;
 
     setIsLoading(true);
-    await fetch(`/api/syllabuses/${syllabus.id}/share`, {
+    await fetch(`/api/lessons/${lesson.id}/share`, {
       method: 'DELETE',
     });
     setShareState({ hasActiveShare: false, share: null });
     setIsLoading(false);
-  }, [syllabus.id]);
+  }, [lesson.id]);
 
   // 클립보드 복사
   const handleCopy = React.useCallback(async () => {

@@ -4,20 +4,17 @@ import {
   Form,
   Modal,
   Select,
-  TextArea, TextField, Label, ListBox, DateField, DateInputGroup,
+  TextArea, TextField, Label, ListBox,
 } from '@heroui/react';
-import { parseDate } from '@internationalized/date';
 
-import { createStudentStatusHistory } from '@/actions/student';
+import { createStudentStatusHistory } from '@/actions/student-history';
 import { Controller, useForm } from 'react-hook-form';
-import dayjs from 'dayjs';
 
 export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
   const formId = React.useId();
 
   const { control } = useForm({
     values: {
-      changedAt: dayjs().format('YYYY-MM-DD'),
       status: student.status,
       notes: '',
     },
@@ -51,34 +48,9 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
                   <input type="hidden" name="studentId" value={student.id} />
                   <Controller
                     control={control}
-                    name="changedAt"
-                    render={({ field: { name, value, onChange } }) => (
-                      <DateField
-                        name={name}
-                        value={parseDate(value)}
-                        onChange={(date) => {
-                          if (!date) {
-                            onChange('');
-                            return;
-                          }
-                          onChange(date.toString());
-                        }}
-                      >
-                        <Label>날짜</Label>
-                        <DateInputGroup>
-                          <DateInputGroup.Input>
-                            {segment => <DateInputGroup.Segment segment={segment} />}
-                          </DateInputGroup.Input>
-                        </DateInputGroup>
-                      </DateField>
-                    )}
-                  />
-                  <Controller
-                    control={control}
                     name="status"
                     render={({ field: { name, value, onChange } }) => (
                       <Select
-                        className="mt-4"
                         name={name}
                         value={value}
                         onChange={onChange}
