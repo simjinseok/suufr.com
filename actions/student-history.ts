@@ -129,9 +129,24 @@ export async function updateStudentStatusHistory(prevState: UpdateStudentStatusH
         return state;
       }
 
-      await prisma.studentStatusHistory.update({
+      // 해당 상태 기록이 현재 사용자의 학생에 속하는지 확인
+      const history = await prisma.studentStatusHistory.findUnique({
         where: {
           id: validationResult.data.studentStatusHistoryId,
+        },
+        include: {
+          student: true,
+        },
+      });
+
+      if (!history || history.student.userId !== user.id) {
+        state.message = '권한이 없습니다';
+        return state;
+      }
+
+      await prisma.studentStatusHistory.update({
+        where: {
+          id: history.id,
         },
         data: {
           notes: validationResult.data.notes,

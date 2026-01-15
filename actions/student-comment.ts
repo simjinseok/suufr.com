@@ -72,6 +72,9 @@ export async function updateStudentComment(formData: FormData) {
         where: {
           id: commentId,
           deletedAt: null,
+          student: {
+            userId: user.id,
+          },
         },
         include: {
           student: true,
@@ -97,38 +100,47 @@ export async function updateStudentComment(formData: FormData) {
 }
 
 export async function deleteStudentComment(commentId: number) {
-  const { user } = await getSession();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
-
-  // 코멘트가 현재 사용자의 것인지 확인
-  const existingComment = await prisma.studentComment.findFirst({
-    where: {
-      id: commentId,
-      deletedAt: null,
-      student: {
-        userId: user.id,
-      },
+  return await Sentry.withServerActionInstrumentation(
+    'deleteStudentComment',
+    {
+      headers: await headers(),
+      recordResponse: true,
     },
-  });
+    async () => {
+      const { user } = await getSession();
 
-  if (!existingComment) {
-    throw new Error('Comment not found');
-  }
+      if (!user) {
+        throw new Error('Unauthorized');
+      }
 
-  // 소프트 삭제
-  await prisma.studentComment.update({
-    where: {
-      id: commentId,
+      // 코멘트가 현재 사용자의 것인지 확인
+      const existingComment = await prisma.studentComment.findFirst({
+        where: {
+          id: commentId,
+          deletedAt: null,
+          student: {
+            userId: user.id,
+          },
+        },
+      });
+
+      if (!existingComment) {
+        throw new Error('Comment not found');
+      }
+
+      // 소프트 삭제
+      await prisma.studentComment.update({
+        where: {
+          id: commentId,
+        },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+
+      revalidatePath(`/students/${existingComment.studentId}`);
+
+      return { success: true };
     },
-    data: {
-      deletedAt: new Date(),
-    },
-  });
-
-  revalidatePath(`/students/${existingComment.studentId}`);
-
-  return { success: true };
+  );
 }

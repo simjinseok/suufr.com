@@ -77,7 +77,7 @@ type UpdateStudentState = ServerActionState<{
 }>;
 export async function updateStudent(prevState: UpdateStudentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'createStudent',
+    'updateStudent',
     {
       formData,
       headers: await headers(),
