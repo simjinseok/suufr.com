@@ -42,8 +42,6 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
-      console.log('아니 왜? data', data);
-      console.log('result', validationResult.data);
 
       const student = await prisma.student.findFirst({
         select: {

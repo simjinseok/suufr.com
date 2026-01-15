@@ -14,7 +14,6 @@ const updateScheme = z.object({
   amount: z.coerce.number().min(0),
   paymentMethod: z.enum(['card', 'transfer', 'cash', 'none']),
   paidAt: z.string().transform((val, ctx) => {
-    console.log('머몬', val);
     try {
       return parseDate(val).toDate('Asia/Seoul');
     }

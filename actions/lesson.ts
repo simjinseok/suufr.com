@@ -151,7 +151,6 @@ export async function updateLesson(state: UpdateLessonState, formData: FormData)
         },
       });
 
-      console.log('?', result);
       revalidatePath('/lessons', 'page');
       state.success = true;
       return state;

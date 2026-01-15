@@ -41,7 +41,6 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
   });
 
   const [state, formAction, isPending] = React.useActionState(updateStudent, {});
-  console.log('state', state);
 
   React.useEffect(() => {
     if (typeof state.success !== 'boolean') {
