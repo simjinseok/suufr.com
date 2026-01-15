@@ -6,12 +6,12 @@ export default async function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-4 gap-4">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
       <Sidebar />
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-14 sm:pt-0">
         <div className="h-full">
-          <div className="max-w-3xl mx-auto py-6 px-2 pt-14 sm:pt-6">
+          <div className="max-w-3xl mx-auto py-6 px-4 sm:px-2">
             {children}
           </div>
         </div>

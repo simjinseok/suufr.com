@@ -5,8 +5,6 @@ import Link from 'next/link';
 import {
   HomeIcon,
   BookUserIcon,
-  NotebookTextIcon,
-  CalendarDaysIcon,
   ReceiptIcon,
   UserRoundCheckIcon,
   CalendarIcon,
@@ -20,7 +18,11 @@ const menuItems = [
   { href: '/calendar', label: '캘린더', icon: CalendarIcon },
 ];
 
-export function AppNavigation() {
+interface AppNavigationProps {
+  onItemClick?: () => void;
+}
+
+export function AppNavigation({ onItemClick }: AppNavigationProps) {
   const pathname = usePathname();
 
   return (
@@ -34,6 +36,7 @@ export function AppNavigation() {
           <Link
             key={item.href}
             href={item.href}
+            onClick={onItemClick}
             className={`
               flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
               transition-all duration-200
