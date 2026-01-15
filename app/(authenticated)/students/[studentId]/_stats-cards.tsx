@@ -12,7 +12,7 @@ type Props = {
 
 export default function StatsCards({ stats }: Props) {
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <Card className="border border-transparent dark:border-default-100">
         <div className="p-4">
           <div className="flex flex-col gap-y-2">

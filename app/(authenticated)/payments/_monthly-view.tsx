@@ -36,12 +36,12 @@ export default function MonthlyView({ stats, payments }: Props) {
 
   return (
     <div className="mt-6 space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="border border-transparent dark:border-default-100">
           <div className="p-4">
             <div className="flex flex-col gap-y-2">
               <dt className="text-small font-medium text-default-500">결제 건수</dt>
-              <dd className="text-2xl font-semibold text-default-700">
+              <dd className="text-xl font-semibold text-default-700 sm:text-2xl">
                 {stats.count}건
               </dd>
             </div>
@@ -52,7 +52,7 @@ export default function MonthlyView({ stats, payments }: Props) {
           <div className="p-4">
             <div className="flex flex-col gap-y-2">
               <dt className="text-small font-medium text-default-500">결제 금액</dt>
-              <dd className="text-2xl font-semibold text-default-700">
+              <dd className="text-xl font-semibold text-default-700 sm:text-2xl">
                 {numberToHangulMixed(stats.totalAmount)}원
               </dd>
             </div>
