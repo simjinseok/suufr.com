@@ -1,26 +1,45 @@
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
-import { startOfWeek } from 'date-fns/startOfWeek';
-import { startOfMonth } from 'date-fns/startOfMonth';
-import { addWeeks } from 'date-fns/addWeeks';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { TZDate } from '@date-fns/tz';
 
 import React from 'react';
 import Calendar from './_calendar';
 
+export type CalendarView = 'month' | 'week' | 'day';
+
 export default async function Page({ searchParams }) {
   const { user } = await getSession();
 
-  const { start, end } = await searchParams;
-  const calendarStart = start ? new Date(start) : startOfWeek(startOfMonth(new Date()), { weekStartsOn: 0 });
-  const calendarEnd = end ? new Date(end) : addWeeks(calendarStart, 6);
+  const { date, view: viewParam } = await searchParams;
+  const today = new TZDate(new Date(), 'Asia/Seoul');
+  const selectedDate = date ? new Date(date + 'T00:00:00+09:00') : today;
+  const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'day' ? 'day' : 'month';
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-  const lessons = await prisma.lesson.findMany({
+  // Calculate date range based on view
+  let calendarStart: Date;
+  let calendarEnd: Date;
+
+  if (view === 'month') {
+    calendarStart = startOfMonth(selectedDate);
+    calendarEnd = endOfMonth(selectedDate);
+  } else if (view === 'week') {
+    calendarStart = startOfWeek(selectedDate, { locale: ko });
+    calendarEnd = endOfWeek(selectedDate, { locale: ko });
+  } else {
+    calendarStart = startOfDay(selectedDate);
+    calendarEnd = endOfDay(selectedDate);
+  }
+
+  const lessons = await prisma.session.findMany({
     select: {
       id: true,
       isDone: true,
-      lessonAt: true,
+      sessionAt: true,
       notes: true,
-      syllabus: {
+      lesson: {
         select: {
           student: {
             select: {
@@ -31,22 +50,30 @@ export default async function Page({ searchParams }) {
       },
     },
     where: {
-      lessonAt: {
+      sessionAt: {
         gte: calendarStart,
-        lt: calendarEnd,
+        lte: calendarEnd,
       },
       deletedAt: null,
-      syllabus: {
+      lesson: {
         student: {
           userId: user.id,
         },
       },
     },
+    orderBy: {
+      sessionAt: 'asc',
+    },
   });
+
+  const serializedLessons = lessons.map(lesson => ({
+    ...lesson,
+    sessionAt: lesson.sessionAt.toISOString(),
+  }));
 
   return (
     <div>
-      <Calendar lessons={lessons} />
+      <Calendar lessons={serializedLessons} selectedDate={selectedDateStr} view={view} />
     </div>
   );
 }
