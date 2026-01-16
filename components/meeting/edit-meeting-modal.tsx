@@ -19,6 +19,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { fromDate, getLocalTimeZone } from '@internationalized/date';
 
 import { updateMeeting } from '@/actions/meeting';
+import { useHourCycle } from '@/contexts/time-format';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -47,6 +48,7 @@ interface ContentProps {
 
 function Content({ meeting, close }: ContentProps) {
   const formId = React.useId();
+  const hourCycle = useHourCycle();
 
   const [state, formAction, isPending] = React.useActionState(updateMeeting, {
     fields: {
@@ -104,6 +106,7 @@ function Content({ meeting, close }: ContentProps) {
             name="meetingAt"
             granularity="minute"
             hideTimeZone
+            hourCycle={hourCycle}
             defaultValue={fromDate(new Date(meeting.meetingAt), getLocalTimeZone())}
           >
             <Label>날짜</Label>

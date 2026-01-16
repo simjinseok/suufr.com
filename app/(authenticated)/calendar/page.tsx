@@ -1,5 +1,6 @@
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
+import { getUserSettings } from '@/actions/settings';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { TZDate } from '@date-fns/tz';
@@ -11,6 +12,7 @@ export type CalendarView = 'month' | 'week' | 'day';
 
 export default async function Page(props: PageProps<'/calendar'>) {
   const { user } = await getSession();
+  const settings = await getUserSettings(user.id);
 
   const { date, view: viewParam } = await props.searchParams;
   const TIMEZONE = 'Asia/Seoul';
@@ -39,6 +41,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
       id: true,
       isDone: true,
       sessionAt: true,
+      duration: true,
       notes: true,
       lesson: {
         select: {
@@ -74,7 +77,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
 
   return (
     <div>
-      <Calendar lessons={serializedLessons} selectedDate={selectedDateStr} view={view} />
+      <Calendar lessons={serializedLessons} selectedDate={selectedDateStr} view={view} timeFormat={settings.timeFormat} />
     </div>
   );
 }

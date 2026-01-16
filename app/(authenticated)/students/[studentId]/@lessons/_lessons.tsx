@@ -1,9 +1,10 @@
 'use client';
-import type { TLesson } from '@/types/index';
+import type { TLesson, TimeFormat } from '@/types/index';
 
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
 import { tz } from '@date-fns/tz';
+import { formatTime } from '@/utils/time-format';
 
 import { Button, ButtonGroup, Chip, Dropdown, Header, ListBox, Modal, Surface } from '@heroui/react';
 import {
@@ -26,7 +27,7 @@ import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
 import { useParams } from 'next/navigation';
 
-export default function Lessons({ lessons }) {
+export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeFormat: TimeFormat }) {
   const { studentId } = useParams();
 
   const [selectedSession, setSelectedSession] = React.useState<string | null>(null);
@@ -232,7 +233,7 @@ export default function Lessons({ lessons }) {
                                 )}
                           </div>
                           <div>
-                            <p className="tabular-nums">{format(new Date(session.sessionAt), 'yyyy-MM-dd hh:mm', { in: tz('Asia/Seoul') })}</p>
+                            <p className="tabular-nums">{format(new Date(session.sessionAt), 'yyyy-MM-dd', { in: tz('Asia/Seoul') })} {formatTime(session.sessionAt, timeFormat)}</p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}
                             </Text>

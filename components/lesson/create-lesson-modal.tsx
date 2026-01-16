@@ -22,6 +22,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { now } from '@internationalized/date';
 
 import { createLesson } from '@/actions/lesson';
+import { useHourCycle } from '@/contexts/time-format';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -121,6 +122,7 @@ function Content({ close, studentId }: ContentProps) {
 }
 
 function LessonsGenerator() {
+  const hourCycle = useHourCycle();
   const [date, setDate] = React.useState<ZonedDateTime | null>(now('Asia/Seoul'));
   const [count, setCount] = React.useState(4);
   const [days, setDays] = React.useState(new Set());
@@ -154,7 +156,7 @@ function LessonsGenerator() {
       수업
       <Surface className="mt-2 p-2 flex flex-col gap-2  rounded-xl" variant="default">
         <div className="flex gap-1">
-          <DateField value={date} onChange={setDate} hideTimeZone>
+          <DateField value={date} onChange={setDate} hourCycle={hourCycle} hideTimeZone>
             <Label>기준 날짜</Label>
             <DateInputGroup>
               <DateInputGroup.Prefix>
@@ -196,6 +198,7 @@ function LessonsGenerator() {
                 className="tabular-nums"
                 name={`lesson[${idx}]`}
                 value={lesson}
+                hourCycle={hourCycle}
                 isReadOnly
                 hideTimeZone
               >

@@ -8,6 +8,7 @@ import {
   Form,
   Label,
   Modal,
+  NumberField,
   TextArea,
   TextField,
 } from '@heroui/react';
@@ -15,13 +16,17 @@ import { toCalendarDateTime, today } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { createSession } from '@/actions/session';
+import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 
 export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
   const formId = React.useId();
+  const hourCycle = useHourCycle();
+  const defaultDuration = useDefaultDuration();
   const { control } = useForm({
     values: {
       isDone: false,
       sessionAt: toCalendarDateTime(today('Asia/Seoul')),
+      duration: defaultDuration,
       notes: '',
     },
   });
@@ -75,6 +80,7 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
                         granularity="minute"
                         value={value}
                         onChange={onChange}
+                        hourCycle={hourCycle}
                         hideTimeZone
                       >
                         <Label>날짜</Label>
@@ -87,6 +93,26 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
                           </DateInputGroup.Input>
                         </DateInputGroup>
                       </DateField>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="duration"
+                    render={({ field: { name, value, onChange } }) => (
+                      <NumberField
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        minValue={5}
+                        step={5}
+                      >
+                        <Label>수업 시간 (분)</Label>
+                        <NumberField.Group>
+                          <NumberField.DecrementButton />
+                          <NumberField.Input className="w-16 text-center" />
+                          <NumberField.IncrementButton />
+                        </NumberField.Group>
+                      </NumberField>
                     )}
                   />
                   <Controller

@@ -14,6 +14,7 @@ type CreateSessionState = {
   fields?: {
     isDone: boolean;
     sessionAt: string;
+    duration: number;
     notes: string;
   };
   timestamp: number;
@@ -34,6 +35,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
         fields: {
           isDone: data.isDone === 'on',
           sessionAt: data.sessionAt as string,
+          duration: Number(data.duration) || 60,
           notes: data.notes as string,
         },
         timestamp: Date.now(),
@@ -63,6 +65,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
           lessonId: Number(lessonId),
           isDone: data.isDone === 'on',
           notes: data.notes as string,
+          duration: Number(data.duration) || 60,
           sessionAt: parseDateTime(data.sessionAt as string).toDate('Asia/Seoul'),
         },
       });
@@ -80,12 +83,14 @@ export async function createSession(prevState: CreateSessionState, formData: For
 type UpdateSessionState = ServerActionState<{
   isDone: boolean;
   sessionAt: string;
+  duration: number;
   notes: string;
   feedback: string;
 }>;
 const updateSessionSchema = z.object({
   isDone: z.preprocess(val => val === 'on', z.boolean()),
   sessionAt: z.string().transform(val => parseDateTime(val).toDate('Asia/Seoul')),
+  duration: z.coerce.number().int().min(1).default(60),
   notes: z.string().trim(),
   feedback: z.string().trim(),
 }).transform(data => ({
@@ -109,6 +114,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         fields: {
           isDone: data.isDone === 'on',
           sessionAt: data.sessionAt as string,
+          duration: Number(data.duration) || 60,
           notes: data.notes as string,
           feedback: data.feedback as string,
         },
@@ -126,7 +132,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      const { isDone, sessionAt, notes, feedback } = validationResult.data;
+      const { isDone, sessionAt, duration, notes, feedback } = validationResult.data;
 
       const lesson = await prisma.session.findUnique({
         where: {
@@ -159,6 +165,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         data: {
           notes,
           sessionAt,
+          duration,
           isDone,
           updatedAt: currentDate,
         },

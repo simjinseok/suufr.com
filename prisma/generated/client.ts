@@ -84,3 +84,8 @@ export type Session = Prisma.SessionModel
  * 
  */
 export type Lesson = Prisma.LessonModel
+/**
+ * Model UserSettings
+ * 
+ */
+export type UserSettings = Prisma.UserSettingsModel

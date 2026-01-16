@@ -1,11 +1,13 @@
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
+import { getUserSettings } from '@/actions/settings';
 
 import Lessons from './_lessons';
 
 const PAGE_SIZE = 20;
 export default async function LessonsPage(props: PageProps<'/students/[studentId]'>) {
   const { user } = await getSession();
+  const settings = await getUserSettings(user.id);
   const { studentId } = await props.params;
 
   const page = 1;
@@ -27,6 +29,7 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
           id: true,
           notes: true,
           sessionAt: true,
+          duration: true,
           isDone: true,
           feedback: {
             select: {
@@ -88,5 +91,5 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
     },
   });
 
-  return <Lessons lessons={lessons} />;
+  return <Lessons lessons={lessons} timeFormat={settings.timeFormat} />;
 }

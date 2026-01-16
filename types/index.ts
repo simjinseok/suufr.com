@@ -1,3 +1,11 @@
+export type TimeFormat = '12h' | '24h';
+
+export type TUserSettings = {
+  userId: string;
+  timeFormat: TimeFormat;
+  defaultDuration: number;
+};
+
 export type Student = {
   id: number;
   name: string;
@@ -29,6 +37,7 @@ export type TSession = {
   notes: string;
   isDone: boolean;
   sessionAt: Date;
+  duration: number;
   lesson?: TLesson;
   feedback?: TFeedback;
 };

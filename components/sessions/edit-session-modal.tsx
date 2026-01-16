@@ -6,10 +6,12 @@ import {
   Button,
   Checkbox,
   DateField,
-  DateInputGroup, Description,
+  DateInputGroup,
+  Description,
   Form,
   Label,
   Modal,
+  NumberField,
   TextArea,
   TextField,
 } from '@heroui/react';
@@ -18,6 +20,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { updateSession, removeSession } from '@/actions/session';
 import { TSession } from '@/types/index';
+import { useHourCycle } from '@/contexts/time-format';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -44,11 +47,14 @@ interface ContentProps {
 }
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
+  const hourCycle = useHourCycle();
 
+  console.log(session);
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
       isDone: session?.isDone,
       sessionAt: session.sessionAt,
+      duration: session?.duration,
       notes: session?.notes,
       feedback: session?.feedback?.notes,
     },
@@ -57,6 +63,7 @@ function Content({ session, close }: ContentProps) {
     values: {
       isDone: state.fields?.isDone,
       sessionAt: state.fields?.sessionAt,
+      duration: state.fields?.duration,
       notes: state.fields?.notes,
       feedback: state.fields?.feedback,
     },
@@ -114,6 +121,7 @@ function Content({ session, close }: ContentProps) {
                     onChange(date.toDate('Asia/Seoul'));
                   }
                 }}
+                hourCycle={hourCycle}
                 hideTimeZone
                 isRequired
               >
@@ -127,6 +135,26 @@ function Content({ session, close }: ContentProps) {
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
+            )}
+          />
+          <Controller
+            control={control}
+            name="duration"
+            render={({ field: { name, value, onChange } }) => (
+              <NumberField
+                name={name}
+                value={value}
+                onChange={onChange}
+                minValue={5}
+                step={5}
+              >
+                <Label>수업 시간 (분)</Label>
+                <NumberField.Group>
+                  <NumberField.DecrementButton />
+                  <NumberField.Input />
+                  <NumberField.IncrementButton />
+                </NumberField.Group>
+              </NumberField>
             )}
           />
           <Controller

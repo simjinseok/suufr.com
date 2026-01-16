@@ -15,6 +15,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { now, getLocalTimeZone } from '@internationalized/date';
 
 import { createMeeting } from '@/actions/meeting';
+import { useHourCycle } from '@/contexts/time-format';
 
 export default function CreateMeetingModal() {
   return (
@@ -36,6 +37,7 @@ interface ContentProps {
 
 function Content({ close }: ContentProps) {
   const formId = React.useId();
+  const hourCycle = useHourCycle();
 
   const [state, formAction, isPending] = React.useActionState(createMeeting, {
     fields: {
@@ -91,6 +93,7 @@ function Content({ close }: ContentProps) {
             name="meetingAt"
             granularity="minute"
             defaultValue={now(getLocalTimeZone())}
+            hourCycle={hourCycle}
           >
             <Label>날짜</Label>
             <DateInputGroup>

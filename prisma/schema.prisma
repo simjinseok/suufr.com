@@ -116,6 +116,7 @@ model Session {
   id        Int       @id @default(autoincrement())
   notes     String
   sessionAt DateTime  @map("session_at") @db.Timestamptz(0)
+  duration  Int       @default(60)
   isDone    Boolean   @default(false) @map("is_done")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
@@ -150,4 +151,14 @@ enum StudentStatus {
   active
   paused
   leave
+}
+
+model UserSettings {
+  userId          String   @id @map("user_id") @db.Uuid
+  timeFormat      String   @default("24h") @map("time_format")
+  defaultDuration Int      @default(50) @map("default_duration")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  @@map("user_settings")
 }

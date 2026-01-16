@@ -28,11 +28,13 @@ export type AggregateSession = {
 
 export type SessionAvgAggregateOutputType = {
   id: number | null
+  duration: number | null
   lessonId: number | null
 }
 
 export type SessionSumAggregateOutputType = {
   id: number | null
+  duration: number | null
   lessonId: number | null
 }
 
@@ -40,6 +42,7 @@ export type SessionMinAggregateOutputType = {
   id: number | null
   notes: string | null
   sessionAt: Date | null
+  duration: number | null
   isDone: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,6 +54,7 @@ export type SessionMaxAggregateOutputType = {
   id: number | null
   notes: string | null
   sessionAt: Date | null
+  duration: number | null
   isDone: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -62,6 +66,7 @@ export type SessionCountAggregateOutputType = {
   id: number
   notes: number
   sessionAt: number
+  duration: number
   isDone: number
   createdAt: number
   updatedAt: number
@@ -73,11 +78,13 @@ export type SessionCountAggregateOutputType = {
 
 export type SessionAvgAggregateInputType = {
   id?: true
+  duration?: true
   lessonId?: true
 }
 
 export type SessionSumAggregateInputType = {
   id?: true
+  duration?: true
   lessonId?: true
 }
 
@@ -85,6 +92,7 @@ export type SessionMinAggregateInputType = {
   id?: true
   notes?: true
   sessionAt?: true
+  duration?: true
   isDone?: true
   createdAt?: true
   updatedAt?: true
@@ -96,6 +104,7 @@ export type SessionMaxAggregateInputType = {
   id?: true
   notes?: true
   sessionAt?: true
+  duration?: true
   isDone?: true
   createdAt?: true
   updatedAt?: true
@@ -107,6 +116,7 @@ export type SessionCountAggregateInputType = {
   id?: true
   notes?: true
   sessionAt?: true
+  duration?: true
   isDone?: true
   createdAt?: true
   updatedAt?: true
@@ -205,6 +215,7 @@ export type SessionGroupByOutputType = {
   id: number
   notes: string
   sessionAt: Date
+  duration: number
   isDone: boolean
   createdAt: Date
   updatedAt: Date
@@ -239,6 +250,7 @@ export type SessionWhereInput = {
   id?: Prisma.IntFilter<"Session"> | number
   notes?: Prisma.StringFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  duration?: Prisma.IntFilter<"Session"> | number
   isDone?: Prisma.BoolFilter<"Session"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -252,6 +264,7 @@ export type SessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -268,6 +281,7 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SessionWhereInput | Prisma.SessionWhereInput[]
   notes?: Prisma.StringFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  duration?: Prisma.IntFilter<"Session"> | number
   isDone?: Prisma.BoolFilter<"Session"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -281,6 +295,7 @@ export type SessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -300,6 +315,7 @@ export type SessionScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Session"> | number
   notes?: Prisma.StringWithAggregatesFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
+  duration?: Prisma.IntWithAggregatesFilter<"Session"> | number
   isDone?: Prisma.BoolWithAggregatesFilter<"Session"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
@@ -310,6 +326,7 @@ export type SessionScalarWhereWithAggregatesInput = {
 export type SessionCreateInput = {
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -322,6 +339,7 @@ export type SessionUncheckedCreateInput = {
   id?: number
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -333,6 +351,7 @@ export type SessionUncheckedCreateInput = {
 export type SessionUpdateInput = {
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -345,6 +364,7 @@ export type SessionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -357,6 +377,7 @@ export type SessionCreateManyInput = {
   id?: number
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -367,6 +388,7 @@ export type SessionCreateManyInput = {
 export type SessionUpdateManyMutationInput = {
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -377,6 +399,7 @@ export type SessionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -393,6 +416,7 @@ export type SessionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -402,6 +426,7 @@ export type SessionCountOrderByAggregateInput = {
 
 export type SessionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
 }
 
@@ -409,6 +434,7 @@ export type SessionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -420,6 +446,7 @@ export type SessionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -429,6 +456,7 @@ export type SessionMinOrderByAggregateInput = {
 
 export type SessionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
 }
 
@@ -501,6 +529,7 @@ export type SessionUncheckedUpdateManyWithoutLessonNestedInput = {
 export type SessionCreateWithoutFeedbackInput = {
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -512,6 +541,7 @@ export type SessionUncheckedCreateWithoutFeedbackInput = {
   id?: number
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -538,6 +568,7 @@ export type SessionUpdateToOneWithWhereWithoutFeedbackInput = {
 export type SessionUpdateWithoutFeedbackInput = {
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -549,6 +580,7 @@ export type SessionUncheckedUpdateWithoutFeedbackInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -559,6 +591,7 @@ export type SessionUncheckedUpdateWithoutFeedbackInput = {
 export type SessionCreateWithoutLessonInput = {
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -570,6 +603,7 @@ export type SessionUncheckedCreateWithoutLessonInput = {
   id?: number
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -610,6 +644,7 @@ export type SessionScalarWhereInput = {
   id?: Prisma.IntFilter<"Session"> | number
   notes?: Prisma.StringFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  duration?: Prisma.IntFilter<"Session"> | number
   isDone?: Prisma.BoolFilter<"Session"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Session"> | Date | string
@@ -621,6 +656,7 @@ export type SessionCreateManyLessonInput = {
   id?: number
   notes: string
   sessionAt: Date | string
+  duration?: number
   isDone?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -630,6 +666,7 @@ export type SessionCreateManyLessonInput = {
 export type SessionUpdateWithoutLessonInput = {
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -641,6 +678,7 @@ export type SessionUncheckedUpdateWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -652,6 +690,7 @@ export type SessionUncheckedUpdateManyWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  duration?: Prisma.IntFieldUpdateOperationsInput | number
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -664,6 +703,7 @@ export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   notes?: boolean
   sessionAt?: boolean
+  duration?: boolean
   isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -677,6 +717,7 @@ export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   notes?: boolean
   sessionAt?: boolean
+  duration?: boolean
   isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -689,6 +730,7 @@ export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   notes?: boolean
   sessionAt?: boolean
+  duration?: boolean
   isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -701,6 +743,7 @@ export type SessionSelectScalar = {
   id?: boolean
   notes?: boolean
   sessionAt?: boolean
+  duration?: boolean
   isDone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -708,7 +751,7 @@ export type SessionSelectScalar = {
   lessonId?: boolean
 }
 
-export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "sessionAt" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["session"]>
+export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "sessionAt" | "duration" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["session"]>
 export type SessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   feedback?: boolean | Prisma.Session$feedbackArgs<ExtArgs>
   lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
@@ -730,6 +773,7 @@ export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: number
     notes: string
     sessionAt: Date
+    duration: number
     isDone: boolean
     createdAt: Date
     updatedAt: Date
@@ -1163,6 +1207,7 @@ export interface SessionFieldRefs {
   readonly id: Prisma.FieldRef<"Session", 'Int'>
   readonly notes: Prisma.FieldRef<"Session", 'String'>
   readonly sessionAt: Prisma.FieldRef<"Session", 'DateTime'>
+  readonly duration: Prisma.FieldRef<"Session", 'Int'>
   readonly isDone: Prisma.FieldRef<"Session", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Session", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Session", 'DateTime'>

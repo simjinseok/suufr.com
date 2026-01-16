@@ -1,9 +1,7 @@
 'use client';
 import React from 'react';
-import { format } from 'date-fns';
-import { tz } from '@date-fns/tz';
-
-const TIMEZONE = 'Asia/Seoul';
+import { formatTime } from '@/utils/time-format';
+import type { TimeFormat } from '@/types/index';
 
 interface Lesson {
   id: string;
@@ -20,9 +18,10 @@ interface Lesson {
 interface DayViewProps {
   lessons: Lesson[];
   onSessionClick?: (sessionId: string) => void;
+  timeFormat: TimeFormat;
 }
 
-export default function DayView({ lessons, onSessionClick }: DayViewProps) {
+export default function DayView({ lessons, onSessionClick, timeFormat }: DayViewProps) {
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-400 bg-white">
@@ -41,8 +40,8 @@ export default function DayView({ lessons, onSessionClick }: DayViewProps) {
           className="w-full flex items-center gap-4 py-4 px-4 hover:bg-zinc-50 transition-colors text-left cursor-pointer"
         >
           {/* Time */}
-          <div className="w-14 text-sm font-medium text-zinc-500 flex-shrink-0">
-            {format(new Date(lesson.sessionAt), 'HH:mm', { in: tz(TIMEZONE) })}
+          <div className="w-20 text-sm font-medium text-zinc-500 flex-shrink-0">
+            {formatTime(lesson.sessionAt, timeFormat)}
           </div>
 
           {/* Status indicator */}

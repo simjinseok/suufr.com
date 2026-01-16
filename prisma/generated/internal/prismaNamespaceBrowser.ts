@@ -59,7 +59,8 @@ export const ModelName = {
   StudentStatusHistory: 'StudentStatusHistory',
   SessionShare: 'SessionShare',
   Session: 'Session',
-  Lesson: 'Lesson'
+  Lesson: 'Lesson',
+  UserSettings: 'UserSettings'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -178,6 +179,7 @@ export const SessionScalarFieldEnum = {
   id: 'id',
   notes: 'notes',
   sessionAt: 'sessionAt',
+  duration: 'duration',
   isDone: 'isDone',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -199,6 +201,17 @@ export const LessonScalarFieldEnum = {
 } as const
 
 export type LessonScalarFieldEnum = (typeof LessonScalarFieldEnum)[keyof typeof LessonScalarFieldEnum]
+
+
+export const UserSettingsScalarFieldEnum = {
+  userId: 'userId',
+  timeFormat: 'timeFormat',
+  defaultDuration: 'defaultDuration',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
 
 
 export const SortOrder = {

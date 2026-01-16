@@ -11,6 +11,8 @@ import {
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
+import { formatTime } from '@/utils/time-format';
+import type { TimeFormat } from '@/types/index';
 
 const TIMEZONE = 'Asia/Seoul';
 
@@ -30,9 +32,10 @@ interface WeekViewProps {
   lessons: Lesson[];
   selectedDate: Date;
   onSessionClick?: (sessionId: string) => void;
+  timeFormat: TimeFormat;
 }
 
-export default function WeekView({ lessons, selectedDate, onSessionClick }: WeekViewProps) {
+export default function WeekView({ lessons, selectedDate, onSessionClick, timeFormat }: WeekViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -110,7 +113,7 @@ export default function WeekView({ lessons, selectedDate, onSessionClick }: Week
                     >
                       <span>{lesson.lesson.student.name}</span>
                       <span className="text-xs ml-2 opacity-70">
-                        {format(new Date(lesson.sessionAt), 'HH:mm', { in: tz(TIMEZONE) })}
+                        {formatTime(lesson.sessionAt, timeFormat)}
                       </span>
                     </button>
                   ))}
