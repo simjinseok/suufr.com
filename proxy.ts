@@ -16,7 +16,13 @@ export async function proxy(request: NextRequest) {
       const newTokens = await refreshAccessToken(refreshToken, username);
 
       if (newTokens) {
-        const response = NextResponse.next();
+        // 1. Request cookies 업데이트 (서버 컴포넌트용 - 같은 요청 사이클)
+        request.cookies.set('access_token', newTokens.access_token);
+
+        // 2. Response 생성 및 cookies 설정 (브라우저용 - 다음 요청)
+        const response = NextResponse.next({
+          request: { headers: request.headers },
+        });
         response.cookies.set('access_token', newTokens.access_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
