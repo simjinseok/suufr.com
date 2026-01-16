@@ -47,7 +47,10 @@ export default async function Page() {
           userId: user.id,
         },
         deletedAt: null,
-        payment: null,
+        OR: [
+          { payment: null },
+          { payment: { deletedAt: { not: null } } },
+        ],
       },
       orderBy: {
         createdAt: 'desc',
