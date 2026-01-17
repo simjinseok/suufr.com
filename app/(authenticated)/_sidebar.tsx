@@ -11,7 +11,7 @@ import {
   CalendarIcon,
   SettingsIcon,
 } from 'lucide-react';
-import {Button, Dropdown, Separator} from '@heroui/react';
+import { Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
 
@@ -56,16 +56,24 @@ export function Sidebar() {
                 <UserIcon className="w-3.5 h-3.5 text-gray-500" />
               </div>
             </Button>
-            <Dropdown.Popover placement="bottom end">
+            <Dropdown.Popover placement="bottom center">
               <Dropdown.Menu aria-label="유저 메뉴">
                 <Dropdown.Item id="settings" href="/settings" textValue="설정">
-                  <SettingsIcon className="w-4 h-4" />
-                  설정
+                  <div>
+                    <SettingsIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>설정</Label>
+                  </div>
                 </Dropdown.Item>
                 <Separator />
                 <Dropdown.Item id="logout" href="/auth/logout" textValue="로그아웃">
-                  <LogOutIcon className="w-4 h-4" />
-                  로그아웃
+                  <div>
+                    <LogOutIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>로그아웃</Label>
+                  </div>
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown.Popover>
@@ -74,29 +82,49 @@ export function Sidebar() {
           {/* 햄버거 메뉴 드롭다운 */}
           <Dropdown>
             <Button variant="ghost" isIconOnly size="sm">
-              <MenuIcon className="w-5 h-5 text-gray-700" />
+              <MenuIcon className="size-5 text-gray-700" />
             </Button>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label="메뉴">
                 <Dropdown.Item id="dashboard" href="/dashboard" textValue="메인">
-                  <HomeIcon className="w-4 h-4" />
-                  메인
+                  <div>
+                    <HomeIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>대시보드</Label>
+                  </div>
                 </Dropdown.Item>
                 <Dropdown.Item id="students" href="/students" textValue="수강생">
-                  <BookUserIcon className="w-4 h-4" />
-                  수강생
+                  <div>
+                    <BookUserIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>수강생</Label>
+                  </div>
                 </Dropdown.Item>
                 <Dropdown.Item id="payments" href="/payments" textValue="입금내역">
-                  <ReceiptIcon className="w-4 h-4" />
-                  입금내역
+                  <div>
+                    <ReceiptIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>입금내역</Label>
+                  </div>
                 </Dropdown.Item>
                 <Dropdown.Item id="meetings" href="/meetings" textValue="상담">
-                  <UserRoundCheckIcon className="w-4 h-4" />
-                  상담
+                  <div>
+                    <UserRoundCheckIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>상담</Label>
+                  </div>
                 </Dropdown.Item>
                 <Dropdown.Item id="calendar" href="/calendar" textValue="캘린더">
-                  <CalendarIcon className="w-4 h-4" />
-                  캘린더
+                  <div>
+                    <CalendarIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>캘린더</Label>
+                  </div>
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown.Popover>
