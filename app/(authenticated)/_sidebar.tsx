@@ -21,7 +21,7 @@ export function Sidebar() {
       <div className="h-16 flex items-center px-5">
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600
+            className="w-9 h-9 rounded-xl bg-linear-to-br from-violet-500 to-indigo-600
                         flex items-center justify-center shadow-lg shadow-indigo-500/30"
           >
             <span className="text-sm font-bold text-white">스</span>
@@ -40,7 +40,7 @@ export function Sidebar() {
       <header className="sm:hidden fixed top-0 left-0 right-0 z-50 h-14 px-4 flex items-center justify-between bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
         <div className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600
+            className="w-8 h-8 rounded-lg bg-linear-to-br from-violet-500 to-indigo-600
                         flex items-center justify-center shadow-md shadow-indigo-500/25"
           >
             <span className="text-xs font-bold text-white">스</span>
@@ -56,7 +56,7 @@ export function Sidebar() {
                 <UserIcon className="w-3.5 h-3.5 text-gray-500" />
               </div>
             </Button>
-            <Dropdown.Popover placement="bottom center">
+            <Dropdown.Popover placement="bottom">
               <Dropdown.Menu aria-label="유저 메뉴">
                 <Dropdown.Item id="settings" href="/settings" textValue="설정">
                   <div>
