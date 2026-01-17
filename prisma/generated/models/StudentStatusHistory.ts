@@ -38,6 +38,7 @@ export type StudentStatusHistorySumAggregateOutputType = {
 
 export type StudentStatusHistoryMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   status: $Enums.StudentStatus | null
   notes: string | null
   changedAt: Date | null
@@ -49,6 +50,7 @@ export type StudentStatusHistoryMinAggregateOutputType = {
 
 export type StudentStatusHistoryMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   status: $Enums.StudentStatus | null
   notes: string | null
   changedAt: Date | null
@@ -60,6 +62,7 @@ export type StudentStatusHistoryMaxAggregateOutputType = {
 
 export type StudentStatusHistoryCountAggregateOutputType = {
   id: number
+  uuid: number
   status: number
   notes: number
   changedAt: number
@@ -83,6 +86,7 @@ export type StudentStatusHistorySumAggregateInputType = {
 
 export type StudentStatusHistoryMinAggregateInputType = {
   id?: true
+  uuid?: true
   status?: true
   notes?: true
   changedAt?: true
@@ -94,6 +98,7 @@ export type StudentStatusHistoryMinAggregateInputType = {
 
 export type StudentStatusHistoryMaxAggregateInputType = {
   id?: true
+  uuid?: true
   status?: true
   notes?: true
   changedAt?: true
@@ -105,6 +110,7 @@ export type StudentStatusHistoryMaxAggregateInputType = {
 
 export type StudentStatusHistoryCountAggregateInputType = {
   id?: true
+  uuid?: true
   status?: true
   notes?: true
   changedAt?: true
@@ -203,6 +209,7 @@ export type StudentStatusHistoryGroupByArgs<ExtArgs extends runtime.Types.Extens
 
 export type StudentStatusHistoryGroupByOutputType = {
   id: number
+  uuid: string
   status: $Enums.StudentStatus
   notes: string | null
   changedAt: Date
@@ -237,6 +244,7 @@ export type StudentStatusHistoryWhereInput = {
   OR?: Prisma.StudentStatusHistoryWhereInput[]
   NOT?: Prisma.StudentStatusHistoryWhereInput | Prisma.StudentStatusHistoryWhereInput[]
   id?: Prisma.IntFilter<"StudentStatusHistory"> | number
+  uuid?: Prisma.UuidFilter<"StudentStatusHistory"> | string
   status?: Prisma.EnumStudentStatusFilter<"StudentStatusHistory"> | $Enums.StudentStatus
   notes?: Prisma.StringNullableFilter<"StudentStatusHistory"> | string | null
   changedAt?: Prisma.DateTimeFilter<"StudentStatusHistory"> | Date | string
@@ -249,6 +257,7 @@ export type StudentStatusHistoryWhereInput = {
 
 export type StudentStatusHistoryOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   changedAt?: Prisma.SortOrder
@@ -261,6 +270,7 @@ export type StudentStatusHistoryOrderByWithRelationInput = {
 
 export type StudentStatusHistoryWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.StudentStatusHistoryWhereInput | Prisma.StudentStatusHistoryWhereInput[]
   OR?: Prisma.StudentStatusHistoryWhereInput[]
   NOT?: Prisma.StudentStatusHistoryWhereInput | Prisma.StudentStatusHistoryWhereInput[]
@@ -272,10 +282,11 @@ export type StudentStatusHistoryWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"StudentStatusHistory"> | Date | string | null
   studentId?: Prisma.IntFilter<"StudentStatusHistory"> | number
   student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
-}, "id">
+}, "id" | "uuid">
 
 export type StudentStatusHistoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   changedAt?: Prisma.SortOrder
@@ -295,6 +306,7 @@ export type StudentStatusHistoryScalarWhereWithAggregatesInput = {
   OR?: Prisma.StudentStatusHistoryScalarWhereWithAggregatesInput[]
   NOT?: Prisma.StudentStatusHistoryScalarWhereWithAggregatesInput | Prisma.StudentStatusHistoryScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"StudentStatusHistory"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"StudentStatusHistory"> | string
   status?: Prisma.EnumStudentStatusWithAggregatesFilter<"StudentStatusHistory"> | $Enums.StudentStatus
   notes?: Prisma.StringNullableWithAggregatesFilter<"StudentStatusHistory"> | string | null
   changedAt?: Prisma.DateTimeWithAggregatesFilter<"StudentStatusHistory"> | Date | string
@@ -305,6 +317,7 @@ export type StudentStatusHistoryScalarWhereWithAggregatesInput = {
 }
 
 export type StudentStatusHistoryCreateInput = {
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -316,6 +329,7 @@ export type StudentStatusHistoryCreateInput = {
 
 export type StudentStatusHistoryUncheckedCreateInput = {
   id?: number
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -326,6 +340,7 @@ export type StudentStatusHistoryUncheckedCreateInput = {
 }
 
 export type StudentStatusHistoryUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -337,6 +352,7 @@ export type StudentStatusHistoryUpdateInput = {
 
 export type StudentStatusHistoryUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -348,6 +364,7 @@ export type StudentStatusHistoryUncheckedUpdateInput = {
 
 export type StudentStatusHistoryCreateManyInput = {
   id?: number
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -358,6 +375,7 @@ export type StudentStatusHistoryCreateManyInput = {
 }
 
 export type StudentStatusHistoryUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -368,6 +386,7 @@ export type StudentStatusHistoryUpdateManyMutationInput = {
 
 export type StudentStatusHistoryUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,6 +408,7 @@ export type StudentStatusHistoryOrderByRelationAggregateInput = {
 
 export type StudentStatusHistoryCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   changedAt?: Prisma.SortOrder
@@ -405,6 +425,7 @@ export type StudentStatusHistoryAvgOrderByAggregateInput = {
 
 export type StudentStatusHistoryMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   changedAt?: Prisma.SortOrder
@@ -416,6 +437,7 @@ export type StudentStatusHistoryMaxOrderByAggregateInput = {
 
 export type StudentStatusHistoryMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   changedAt?: Prisma.SortOrder
@@ -473,6 +495,7 @@ export type StudentStatusHistoryUncheckedUpdateManyWithoutStudentNestedInput = {
 }
 
 export type StudentStatusHistoryCreateWithoutStudentInput = {
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -483,6 +506,7 @@ export type StudentStatusHistoryCreateWithoutStudentInput = {
 
 export type StudentStatusHistoryUncheckedCreateWithoutStudentInput = {
   id?: number
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -522,6 +546,7 @@ export type StudentStatusHistoryScalarWhereInput = {
   OR?: Prisma.StudentStatusHistoryScalarWhereInput[]
   NOT?: Prisma.StudentStatusHistoryScalarWhereInput | Prisma.StudentStatusHistoryScalarWhereInput[]
   id?: Prisma.IntFilter<"StudentStatusHistory"> | number
+  uuid?: Prisma.UuidFilter<"StudentStatusHistory"> | string
   status?: Prisma.EnumStudentStatusFilter<"StudentStatusHistory"> | $Enums.StudentStatus
   notes?: Prisma.StringNullableFilter<"StudentStatusHistory"> | string | null
   changedAt?: Prisma.DateTimeFilter<"StudentStatusHistory"> | Date | string
@@ -533,6 +558,7 @@ export type StudentStatusHistoryScalarWhereInput = {
 
 export type StudentStatusHistoryCreateManyStudentInput = {
   id?: number
+  uuid?: string
   status: $Enums.StudentStatus
   notes?: string | null
   changedAt?: Date | string
@@ -542,6 +568,7 @@ export type StudentStatusHistoryCreateManyStudentInput = {
 }
 
 export type StudentStatusHistoryUpdateWithoutStudentInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -552,6 +579,7 @@ export type StudentStatusHistoryUpdateWithoutStudentInput = {
 
 export type StudentStatusHistoryUncheckedUpdateWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -562,6 +590,7 @@ export type StudentStatusHistoryUncheckedUpdateWithoutStudentInput = {
 
 export type StudentStatusHistoryUncheckedUpdateManyWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   changedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -574,6 +603,7 @@ export type StudentStatusHistoryUncheckedUpdateManyWithoutStudentInput = {
 
 export type StudentStatusHistorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   status?: boolean
   notes?: boolean
   changedAt?: boolean
@@ -586,6 +616,7 @@ export type StudentStatusHistorySelect<ExtArgs extends runtime.Types.Extensions.
 
 export type StudentStatusHistorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   status?: boolean
   notes?: boolean
   changedAt?: boolean
@@ -598,6 +629,7 @@ export type StudentStatusHistorySelectCreateManyAndReturn<ExtArgs extends runtim
 
 export type StudentStatusHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   status?: boolean
   notes?: boolean
   changedAt?: boolean
@@ -610,6 +642,7 @@ export type StudentStatusHistorySelectUpdateManyAndReturn<ExtArgs extends runtim
 
 export type StudentStatusHistorySelectScalar = {
   id?: boolean
+  uuid?: boolean
   status?: boolean
   notes?: boolean
   changedAt?: boolean
@@ -619,7 +652,7 @@ export type StudentStatusHistorySelectScalar = {
   studentId?: boolean
 }
 
-export type StudentStatusHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "status" | "notes" | "changedAt" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["studentStatusHistory"]>
+export type StudentStatusHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "status" | "notes" | "changedAt" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["studentStatusHistory"]>
 export type StudentStatusHistoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }
@@ -637,6 +670,7 @@ export type $StudentStatusHistoryPayload<ExtArgs extends runtime.Types.Extension
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     status: $Enums.StudentStatus
     notes: string | null
     changedAt: Date
@@ -1069,6 +1103,7 @@ export interface Prisma__StudentStatusHistoryClient<T, Null = never, ExtArgs ext
  */
 export interface StudentStatusHistoryFieldRefs {
   readonly id: Prisma.FieldRef<"StudentStatusHistory", 'Int'>
+  readonly uuid: Prisma.FieldRef<"StudentStatusHistory", 'String'>
   readonly status: Prisma.FieldRef<"StudentStatusHistory", 'StudentStatus'>
   readonly notes: Prisma.FieldRef<"StudentStatusHistory", 'String'>
   readonly changedAt: Prisma.FieldRef<"StudentStatusHistory", 'DateTime'>

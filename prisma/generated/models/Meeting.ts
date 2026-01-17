@@ -36,6 +36,7 @@ export type MeetingSumAggregateOutputType = {
 
 export type MeetingMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   name: string | null
   notes: string | null
   userId: string | null
@@ -49,6 +50,7 @@ export type MeetingMinAggregateOutputType = {
 
 export type MeetingMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   name: string | null
   notes: string | null
   userId: string | null
@@ -62,6 +64,7 @@ export type MeetingMaxAggregateOutputType = {
 
 export type MeetingCountAggregateOutputType = {
   id: number
+  uuid: number
   name: number
   notes: number
   userId: number
@@ -85,6 +88,7 @@ export type MeetingSumAggregateInputType = {
 
 export type MeetingMinAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   userId?: true
@@ -98,6 +102,7 @@ export type MeetingMinAggregateInputType = {
 
 export type MeetingMaxAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   userId?: true
@@ -111,6 +116,7 @@ export type MeetingMaxAggregateInputType = {
 
 export type MeetingCountAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   userId?: true
@@ -211,6 +217,7 @@ export type MeetingGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type MeetingGroupByOutputType = {
   id: number
+  uuid: string
   name: string
   notes: string | null
   userId: string
@@ -247,6 +254,7 @@ export type MeetingWhereInput = {
   OR?: Prisma.MeetingWhereInput[]
   NOT?: Prisma.MeetingWhereInput | Prisma.MeetingWhereInput[]
   id?: Prisma.IntFilter<"Meeting"> | number
+  uuid?: Prisma.UuidFilter<"Meeting"> | string
   name?: Prisma.StringFilter<"Meeting"> | string
   notes?: Prisma.StringNullableFilter<"Meeting"> | string | null
   userId?: Prisma.UuidFilter<"Meeting"> | string
@@ -260,6 +268,7 @@ export type MeetingWhereInput = {
 
 export type MeetingOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -273,6 +282,7 @@ export type MeetingOrderByWithRelationInput = {
 
 export type MeetingWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.MeetingWhereInput | Prisma.MeetingWhereInput[]
   OR?: Prisma.MeetingWhereInput[]
   NOT?: Prisma.MeetingWhereInput | Prisma.MeetingWhereInput[]
@@ -285,10 +295,11 @@ export type MeetingWhereUniqueInput = Prisma.AtLeast<{
   meetingAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
   isDone?: Prisma.BoolFilter<"Meeting"> | boolean
   phone?: Prisma.StringNullableFilter<"Meeting"> | string | null
-}, "id">
+}, "id" | "uuid">
 
 export type MeetingOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -310,6 +321,7 @@ export type MeetingScalarWhereWithAggregatesInput = {
   OR?: Prisma.MeetingScalarWhereWithAggregatesInput[]
   NOT?: Prisma.MeetingScalarWhereWithAggregatesInput | Prisma.MeetingScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Meeting"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"Meeting"> | string
   name?: Prisma.StringWithAggregatesFilter<"Meeting"> | string
   notes?: Prisma.StringNullableWithAggregatesFilter<"Meeting"> | string | null
   userId?: Prisma.UuidWithAggregatesFilter<"Meeting"> | string
@@ -322,6 +334,7 @@ export type MeetingScalarWhereWithAggregatesInput = {
 }
 
 export type MeetingCreateInput = {
+  uuid?: string
   name: string
   notes?: string | null
   userId: string
@@ -335,6 +348,7 @@ export type MeetingCreateInput = {
 
 export type MeetingUncheckedCreateInput = {
   id?: number
+  uuid?: string
   name: string
   notes?: string | null
   userId: string
@@ -347,6 +361,7 @@ export type MeetingUncheckedCreateInput = {
 }
 
 export type MeetingUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -360,6 +375,7 @@ export type MeetingUpdateInput = {
 
 export type MeetingUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -373,6 +389,7 @@ export type MeetingUncheckedUpdateInput = {
 
 export type MeetingCreateManyInput = {
   id?: number
+  uuid?: string
   name: string
   notes?: string | null
   userId: string
@@ -385,6 +402,7 @@ export type MeetingCreateManyInput = {
 }
 
 export type MeetingUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -398,6 +416,7 @@ export type MeetingUpdateManyMutationInput = {
 
 export type MeetingUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -411,6 +430,7 @@ export type MeetingUncheckedUpdateManyInput = {
 
 export type MeetingCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -428,6 +448,7 @@ export type MeetingAvgOrderByAggregateInput = {
 
 export type MeetingMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -441,6 +462,7 @@ export type MeetingMaxOrderByAggregateInput = {
 
 export type MeetingMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   userId?: Prisma.SortOrder
@@ -464,6 +486,7 @@ export type BoolFieldUpdateOperationsInput = {
 
 export type MeetingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   userId?: boolean
@@ -477,6 +500,7 @@ export type MeetingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 
 export type MeetingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   userId?: boolean
@@ -490,6 +514,7 @@ export type MeetingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type MeetingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   userId?: boolean
@@ -503,6 +528,7 @@ export type MeetingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type MeetingSelectScalar = {
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   userId?: boolean
@@ -514,13 +540,14 @@ export type MeetingSelectScalar = {
   phone?: boolean
 }
 
-export type MeetingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "notes" | "userId" | "createdAt" | "updatedAt" | "deletedAt" | "meetingAt" | "isDone" | "phone", ExtArgs["result"]["meeting"]>
+export type MeetingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "userId" | "createdAt" | "updatedAt" | "deletedAt" | "meetingAt" | "isDone" | "phone", ExtArgs["result"]["meeting"]>
 
 export type $MeetingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Meeting"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     name: string
     notes: string | null
     userId: string
@@ -954,6 +981,7 @@ export interface Prisma__MeetingClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface MeetingFieldRefs {
   readonly id: Prisma.FieldRef<"Meeting", 'Int'>
+  readonly uuid: Prisma.FieldRef<"Meeting", 'String'>
   readonly name: Prisma.FieldRef<"Meeting", 'String'>
   readonly notes: Prisma.FieldRef<"Meeting", 'String'>
   readonly userId: Prisma.FieldRef<"Meeting", 'String'>

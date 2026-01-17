@@ -38,6 +38,7 @@ export type FeedbackSumAggregateOutputType = {
 
 export type FeedbackMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -47,6 +48,7 @@ export type FeedbackMinAggregateOutputType = {
 
 export type FeedbackMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,6 +58,7 @@ export type FeedbackMaxAggregateOutputType = {
 
 export type FeedbackCountAggregateOutputType = {
   id: number
+  uuid: number
   notes: number
   createdAt: number
   updatedAt: number
@@ -77,6 +80,7 @@ export type FeedbackSumAggregateInputType = {
 
 export type FeedbackMinAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +90,7 @@ export type FeedbackMinAggregateInputType = {
 
 export type FeedbackMaxAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   createdAt?: true
   updatedAt?: true
@@ -95,6 +100,7 @@ export type FeedbackMaxAggregateInputType = {
 
 export type FeedbackCountAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   createdAt?: true
   updatedAt?: true
@@ -191,6 +197,7 @@ export type FeedbackGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 
 export type FeedbackGroupByOutputType = {
   id: number
+  uuid: string
   notes: string | null
   createdAt: Date
   updatedAt: Date
@@ -223,6 +230,7 @@ export type FeedbackWhereInput = {
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   id?: Prisma.IntFilter<"Feedback"> | number
+  uuid?: Prisma.UuidFilter<"Feedback"> | string
   notes?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
@@ -233,6 +241,7 @@ export type FeedbackWhereInput = {
 
 export type FeedbackOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -243,6 +252,7 @@ export type FeedbackOrderByWithRelationInput = {
 
 export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   sessionId?: number
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
@@ -252,10 +262,11 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Feedback"> | Date | string | null
   session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
-}, "id" | "sessionId">
+}, "id" | "uuid" | "sessionId">
 
 export type FeedbackOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -273,6 +284,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   OR?: Prisma.FeedbackScalarWhereWithAggregatesInput[]
   NOT?: Prisma.FeedbackScalarWhereWithAggregatesInput | Prisma.FeedbackScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Feedback"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"Feedback"> | string
   notes?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
@@ -281,6 +293,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
 }
 
 export type FeedbackCreateInput = {
+  uuid?: string
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -290,6 +303,7 @@ export type FeedbackCreateInput = {
 
 export type FeedbackUncheckedCreateInput = {
   id?: number
+  uuid?: string
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -298,6 +312,7 @@ export type FeedbackUncheckedCreateInput = {
 }
 
 export type FeedbackUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -307,6 +322,7 @@ export type FeedbackUpdateInput = {
 
 export type FeedbackUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -316,6 +332,7 @@ export type FeedbackUncheckedUpdateInput = {
 
 export type FeedbackCreateManyInput = {
   id?: number
+  uuid?: string
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -324,6 +341,7 @@ export type FeedbackCreateManyInput = {
 }
 
 export type FeedbackUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,6 +350,7 @@ export type FeedbackUpdateManyMutationInput = {
 
 export type FeedbackUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -341,6 +360,7 @@ export type FeedbackUncheckedUpdateManyInput = {
 
 export type FeedbackCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -355,6 +375,7 @@ export type FeedbackAvgOrderByAggregateInput = {
 
 export type FeedbackMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -364,6 +385,7 @@ export type FeedbackMaxOrderByAggregateInput = {
 
 export type FeedbackMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -418,6 +440,7 @@ export type FeedbackUncheckedUpdateOneWithoutSessionNestedInput = {
 }
 
 export type FeedbackCreateWithoutSessionInput = {
+  uuid?: string
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -426,6 +449,7 @@ export type FeedbackCreateWithoutSessionInput = {
 
 export type FeedbackUncheckedCreateWithoutSessionInput = {
   id?: number
+  uuid?: string
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -449,6 +473,7 @@ export type FeedbackUpdateToOneWithWhereWithoutSessionInput = {
 }
 
 export type FeedbackUpdateWithoutSessionInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -457,6 +482,7 @@ export type FeedbackUpdateWithoutSessionInput = {
 
 export type FeedbackUncheckedUpdateWithoutSessionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -467,6 +493,7 @@ export type FeedbackUncheckedUpdateWithoutSessionInput = {
 
 export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -477,6 +504,7 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
 
 export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -487,6 +515,7 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
 
 export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -497,6 +526,7 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 
 export type FeedbackSelectScalar = {
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -504,7 +534,7 @@ export type FeedbackSelectScalar = {
   sessionId?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "sessionId", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "sessionId", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
 }
@@ -522,6 +552,7 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     notes: string | null
     createdAt: Date
     updatedAt: Date
@@ -952,6 +983,7 @@ export interface Prisma__FeedbackClient<T, Null = never, ExtArgs extends runtime
  */
 export interface FeedbackFieldRefs {
   readonly id: Prisma.FieldRef<"Feedback", 'Int'>
+  readonly uuid: Prisma.FieldRef<"Feedback", 'String'>
   readonly notes: Prisma.FieldRef<"Feedback", 'String'>
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Feedback", 'DateTime'>

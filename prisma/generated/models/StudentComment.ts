@@ -38,6 +38,7 @@ export type StudentCommentSumAggregateOutputType = {
 
 export type StudentCommentMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -47,6 +48,7 @@ export type StudentCommentMinAggregateOutputType = {
 
 export type StudentCommentMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,6 +58,7 @@ export type StudentCommentMaxAggregateOutputType = {
 
 export type StudentCommentCountAggregateOutputType = {
   id: number
+  uuid: number
   content: number
   createdAt: number
   updatedAt: number
@@ -77,6 +80,7 @@ export type StudentCommentSumAggregateInputType = {
 
 export type StudentCommentMinAggregateInputType = {
   id?: true
+  uuid?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +90,7 @@ export type StudentCommentMinAggregateInputType = {
 
 export type StudentCommentMaxAggregateInputType = {
   id?: true
+  uuid?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -95,6 +100,7 @@ export type StudentCommentMaxAggregateInputType = {
 
 export type StudentCommentCountAggregateInputType = {
   id?: true
+  uuid?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -191,6 +197,7 @@ export type StudentCommentGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 
 export type StudentCommentGroupByOutputType = {
   id: number
+  uuid: string
   content: string
   createdAt: Date
   updatedAt: Date
@@ -223,6 +230,7 @@ export type StudentCommentWhereInput = {
   OR?: Prisma.StudentCommentWhereInput[]
   NOT?: Prisma.StudentCommentWhereInput | Prisma.StudentCommentWhereInput[]
   id?: Prisma.IntFilter<"StudentComment"> | number
+  uuid?: Prisma.UuidFilter<"StudentComment"> | string
   content?: Prisma.StringFilter<"StudentComment"> | string
   createdAt?: Prisma.DateTimeFilter<"StudentComment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StudentComment"> | Date | string
@@ -233,6 +241,7 @@ export type StudentCommentWhereInput = {
 
 export type StudentCommentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -243,6 +252,7 @@ export type StudentCommentOrderByWithRelationInput = {
 
 export type StudentCommentWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.StudentCommentWhereInput | Prisma.StudentCommentWhereInput[]
   OR?: Prisma.StudentCommentWhereInput[]
   NOT?: Prisma.StudentCommentWhereInput | Prisma.StudentCommentWhereInput[]
@@ -252,10 +262,11 @@ export type StudentCommentWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"StudentComment"> | Date | string | null
   studentId?: Prisma.IntFilter<"StudentComment"> | number
   student?: Prisma.XOR<Prisma.StudentScalarRelationFilter, Prisma.StudentWhereInput>
-}, "id">
+}, "id" | "uuid">
 
 export type StudentCommentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -273,6 +284,7 @@ export type StudentCommentScalarWhereWithAggregatesInput = {
   OR?: Prisma.StudentCommentScalarWhereWithAggregatesInput[]
   NOT?: Prisma.StudentCommentScalarWhereWithAggregatesInput | Prisma.StudentCommentScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"StudentComment"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"StudentComment"> | string
   content?: Prisma.StringWithAggregatesFilter<"StudentComment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StudentComment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"StudentComment"> | Date | string
@@ -281,6 +293,7 @@ export type StudentCommentScalarWhereWithAggregatesInput = {
 }
 
 export type StudentCommentCreateInput = {
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -290,6 +303,7 @@ export type StudentCommentCreateInput = {
 
 export type StudentCommentUncheckedCreateInput = {
   id?: number
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -298,6 +312,7 @@ export type StudentCommentUncheckedCreateInput = {
 }
 
 export type StudentCommentUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -307,6 +322,7 @@ export type StudentCommentUpdateInput = {
 
 export type StudentCommentUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -316,6 +332,7 @@ export type StudentCommentUncheckedUpdateInput = {
 
 export type StudentCommentCreateManyInput = {
   id?: number
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -324,6 +341,7 @@ export type StudentCommentCreateManyInput = {
 }
 
 export type StudentCommentUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,6 +350,7 @@ export type StudentCommentUpdateManyMutationInput = {
 
 export type StudentCommentUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -351,6 +370,7 @@ export type StudentCommentOrderByRelationAggregateInput = {
 
 export type StudentCommentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -365,6 +385,7 @@ export type StudentCommentAvgOrderByAggregateInput = {
 
 export type StudentCommentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -374,6 +395,7 @@ export type StudentCommentMaxOrderByAggregateInput = {
 
 export type StudentCommentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -429,6 +451,7 @@ export type StudentCommentUncheckedUpdateManyWithoutStudentNestedInput = {
 }
 
 export type StudentCommentCreateWithoutStudentInput = {
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -437,6 +460,7 @@ export type StudentCommentCreateWithoutStudentInput = {
 
 export type StudentCommentUncheckedCreateWithoutStudentInput = {
   id?: number
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -474,6 +498,7 @@ export type StudentCommentScalarWhereInput = {
   OR?: Prisma.StudentCommentScalarWhereInput[]
   NOT?: Prisma.StudentCommentScalarWhereInput | Prisma.StudentCommentScalarWhereInput[]
   id?: Prisma.IntFilter<"StudentComment"> | number
+  uuid?: Prisma.UuidFilter<"StudentComment"> | string
   content?: Prisma.StringFilter<"StudentComment"> | string
   createdAt?: Prisma.DateTimeFilter<"StudentComment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StudentComment"> | Date | string
@@ -483,6 +508,7 @@ export type StudentCommentScalarWhereInput = {
 
 export type StudentCommentCreateManyStudentInput = {
   id?: number
+  uuid?: string
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -490,6 +516,7 @@ export type StudentCommentCreateManyStudentInput = {
 }
 
 export type StudentCommentUpdateWithoutStudentInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -498,6 +525,7 @@ export type StudentCommentUpdateWithoutStudentInput = {
 
 export type StudentCommentUncheckedUpdateWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -506,6 +534,7 @@ export type StudentCommentUncheckedUpdateWithoutStudentInput = {
 
 export type StudentCommentUncheckedUpdateManyWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -516,6 +545,7 @@ export type StudentCommentUncheckedUpdateManyWithoutStudentInput = {
 
 export type StudentCommentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -526,6 +556,7 @@ export type StudentCommentSelect<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type StudentCommentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -536,6 +567,7 @@ export type StudentCommentSelectCreateManyAndReturn<ExtArgs extends runtime.Type
 
 export type StudentCommentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -546,6 +578,7 @@ export type StudentCommentSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
 
 export type StudentCommentSelectScalar = {
   id?: boolean
+  uuid?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -553,7 +586,7 @@ export type StudentCommentSelectScalar = {
   studentId?: boolean
 }
 
-export type StudentCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "content" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["studentComment"]>
+export type StudentCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "content" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["studentComment"]>
 export type StudentCommentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
 }
@@ -571,6 +604,7 @@ export type $StudentCommentPayload<ExtArgs extends runtime.Types.Extensions.Inte
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     content: string
     createdAt: Date
     updatedAt: Date
@@ -1001,6 +1035,7 @@ export interface Prisma__StudentCommentClient<T, Null = never, ExtArgs extends r
  */
 export interface StudentCommentFieldRefs {
   readonly id: Prisma.FieldRef<"StudentComment", 'Int'>
+  readonly uuid: Prisma.FieldRef<"StudentComment", 'String'>
   readonly content: Prisma.FieldRef<"StudentComment", 'String'>
   readonly createdAt: Prisma.FieldRef<"StudentComment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"StudentComment", 'DateTime'>

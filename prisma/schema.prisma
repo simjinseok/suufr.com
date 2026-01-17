@@ -9,6 +9,7 @@ datasource db {
 
 model Student {
   id              Int                    @id @default(autoincrement())
+  uuid            String                 @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name            String
   notes           String
   status          StudentStatus          @default(pending)
@@ -26,6 +27,7 @@ model Student {
 
 model Feedback {
   id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   notes     String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
@@ -39,6 +41,7 @@ model Feedback {
 
 model Payment {
   id            Int       @id @default(autoincrement())
+  uuid          String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   amount        Int
   paymentMethod String    @map("payment_method")
   notes         String?
@@ -55,6 +58,7 @@ model Payment {
 
 model Meeting {
   id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name      String
   notes     String?
   userId    String    @map("user_id") @db.Uuid
@@ -71,6 +75,7 @@ model Meeting {
 
 model StudentComment {
   id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   content   String
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
@@ -84,6 +89,7 @@ model StudentComment {
 
 model StudentStatusHistory {
   id        Int           @id @default(autoincrement())
+  uuid      String        @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   status    StudentStatus
   notes     String?
   changedAt DateTime      @default(now()) @map("changed_at") @db.Timestamptz(0)
@@ -99,6 +105,7 @@ model StudentStatusHistory {
 
 model SessionShare {
   id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   shareId   String    @unique @map("share_id") @db.VarChar(10)
   lessonId  Int       @map("lesson_id")
   expiresAt DateTime  @map("expires_at") @db.Timestamptz(0)
@@ -114,6 +121,7 @@ model SessionShare {
 
 model Session {
   id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   notes     String
   sessionAt DateTime  @map("session_at") @db.Timestamptz(0)
   duration  Int       @default(60)
@@ -131,6 +139,7 @@ model Session {
 
 model Lesson {
   id        Int            @id @default(autoincrement())
+  uuid      String         @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   title     String
   notes     String
   createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(0)

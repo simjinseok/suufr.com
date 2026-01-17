@@ -36,6 +36,7 @@ export type StudentSumAggregateOutputType = {
 
 export type StudentMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   name: string | null
   notes: string | null
   status: $Enums.StudentStatus | null
@@ -47,6 +48,7 @@ export type StudentMinAggregateOutputType = {
 
 export type StudentMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   name: string | null
   notes: string | null
   status: $Enums.StudentStatus | null
@@ -58,6 +60,7 @@ export type StudentMaxAggregateOutputType = {
 
 export type StudentCountAggregateOutputType = {
   id: number
+  uuid: number
   name: number
   notes: number
   status: number
@@ -79,6 +82,7 @@ export type StudentSumAggregateInputType = {
 
 export type StudentMinAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   status?: true
@@ -90,6 +94,7 @@ export type StudentMinAggregateInputType = {
 
 export type StudentMaxAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   status?: true
@@ -101,6 +106,7 @@ export type StudentMaxAggregateInputType = {
 
 export type StudentCountAggregateInputType = {
   id?: true
+  uuid?: true
   name?: true
   notes?: true
   status?: true
@@ -199,6 +205,7 @@ export type StudentGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type StudentGroupByOutputType = {
   id: number
+  uuid: string
   name: string
   notes: string
   status: $Enums.StudentStatus
@@ -233,6 +240,7 @@ export type StudentWhereInput = {
   OR?: Prisma.StudentWhereInput[]
   NOT?: Prisma.StudentWhereInput | Prisma.StudentWhereInput[]
   id?: Prisma.IntFilter<"Student"> | number
+  uuid?: Prisma.UuidFilter<"Student"> | string
   name?: Prisma.StringFilter<"Student"> | string
   notes?: Prisma.StringFilter<"Student"> | string
   status?: Prisma.EnumStudentStatusFilter<"Student"> | $Enums.StudentStatus
@@ -247,6 +255,7 @@ export type StudentWhereInput = {
 
 export type StudentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -261,6 +270,7 @@ export type StudentOrderByWithRelationInput = {
 
 export type StudentWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.StudentWhereInput | Prisma.StudentWhereInput[]
   OR?: Prisma.StudentWhereInput[]
   NOT?: Prisma.StudentWhereInput | Prisma.StudentWhereInput[]
@@ -274,10 +284,11 @@ export type StudentWhereUniqueInput = Prisma.AtLeast<{
   lessons?: Prisma.LessonListRelationFilter
   comments?: Prisma.StudentCommentListRelationFilter
   statusHistories?: Prisma.StudentStatusHistoryListRelationFilter
-}, "id">
+}, "id" | "uuid">
 
 export type StudentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -297,6 +308,7 @@ export type StudentScalarWhereWithAggregatesInput = {
   OR?: Prisma.StudentScalarWhereWithAggregatesInput[]
   NOT?: Prisma.StudentScalarWhereWithAggregatesInput | Prisma.StudentScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Student"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"Student"> | string
   name?: Prisma.StringWithAggregatesFilter<"Student"> | string
   notes?: Prisma.StringWithAggregatesFilter<"Student"> | string
   status?: Prisma.EnumStudentStatusWithAggregatesFilter<"Student"> | $Enums.StudentStatus
@@ -307,6 +319,7 @@ export type StudentScalarWhereWithAggregatesInput = {
 }
 
 export type StudentCreateInput = {
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -321,6 +334,7 @@ export type StudentCreateInput = {
 
 export type StudentUncheckedCreateInput = {
   id?: number
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -334,6 +348,7 @@ export type StudentUncheckedCreateInput = {
 }
 
 export type StudentUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -348,6 +363,7 @@ export type StudentUpdateInput = {
 
 export type StudentUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -362,6 +378,7 @@ export type StudentUncheckedUpdateInput = {
 
 export type StudentCreateManyInput = {
   id?: number
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -372,6 +389,7 @@ export type StudentCreateManyInput = {
 }
 
 export type StudentUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -383,6 +401,7 @@ export type StudentUpdateManyMutationInput = {
 
 export type StudentUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -394,6 +413,7 @@ export type StudentUncheckedUpdateManyInput = {
 
 export type StudentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -409,6 +429,7 @@ export type StudentAvgOrderByAggregateInput = {
 
 export type StudentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -420,6 +441,7 @@ export type StudentMaxOrderByAggregateInput = {
 
 export type StudentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -505,6 +527,7 @@ export type StudentUpdateOneRequiredWithoutLessonsNestedInput = {
 }
 
 export type StudentCreateWithoutCommentsInput = {
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -518,6 +541,7 @@ export type StudentCreateWithoutCommentsInput = {
 
 export type StudentUncheckedCreateWithoutCommentsInput = {
   id?: number
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -546,6 +570,7 @@ export type StudentUpdateToOneWithWhereWithoutCommentsInput = {
 }
 
 export type StudentUpdateWithoutCommentsInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -559,6 +584,7 @@ export type StudentUpdateWithoutCommentsInput = {
 
 export type StudentUncheckedUpdateWithoutCommentsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -571,6 +597,7 @@ export type StudentUncheckedUpdateWithoutCommentsInput = {
 }
 
 export type StudentCreateWithoutStatusHistoriesInput = {
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -584,6 +611,7 @@ export type StudentCreateWithoutStatusHistoriesInput = {
 
 export type StudentUncheckedCreateWithoutStatusHistoriesInput = {
   id?: number
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -612,6 +640,7 @@ export type StudentUpdateToOneWithWhereWithoutStatusHistoriesInput = {
 }
 
 export type StudentUpdateWithoutStatusHistoriesInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -625,6 +654,7 @@ export type StudentUpdateWithoutStatusHistoriesInput = {
 
 export type StudentUncheckedUpdateWithoutStatusHistoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -637,6 +667,7 @@ export type StudentUncheckedUpdateWithoutStatusHistoriesInput = {
 }
 
 export type StudentCreateWithoutLessonsInput = {
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -650,6 +681,7 @@ export type StudentCreateWithoutLessonsInput = {
 
 export type StudentUncheckedCreateWithoutLessonsInput = {
   id?: number
+  uuid?: string
   name: string
   notes: string
   status?: $Enums.StudentStatus
@@ -678,6 +710,7 @@ export type StudentUpdateToOneWithWhereWithoutLessonsInput = {
 }
 
 export type StudentUpdateWithoutLessonsInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -691,6 +724,7 @@ export type StudentUpdateWithoutLessonsInput = {
 
 export type StudentUncheckedUpdateWithoutLessonsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusFieldUpdateOperationsInput | $Enums.StudentStatus
@@ -753,6 +787,7 @@ export type StudentCountOutputTypeCountStatusHistoriesArgs<ExtArgs extends runti
 
 export type StudentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   status?: boolean
@@ -768,6 +803,7 @@ export type StudentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 
 export type StudentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   status?: boolean
@@ -779,6 +815,7 @@ export type StudentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   status?: boolean
@@ -790,6 +827,7 @@ export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type StudentSelectScalar = {
   id?: boolean
+  uuid?: boolean
   name?: boolean
   notes?: boolean
   status?: boolean
@@ -799,7 +837,7 @@ export type StudentSelectScalar = {
   userId?: boolean
 }
 
-export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "notes" | "status" | "createdAt" | "updatedAt" | "deletedAt" | "userId", ExtArgs["result"]["student"]>
+export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "status" | "createdAt" | "updatedAt" | "deletedAt" | "userId", ExtArgs["result"]["student"]>
 export type StudentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lessons?: boolean | Prisma.Student$lessonsArgs<ExtArgs>
   comments?: boolean | Prisma.Student$commentsArgs<ExtArgs>
@@ -818,6 +856,7 @@ export type $StudentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     name: string
     notes: string
     status: $Enums.StudentStatus
@@ -1252,6 +1291,7 @@ export interface Prisma__StudentClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface StudentFieldRefs {
   readonly id: Prisma.FieldRef<"Student", 'Int'>
+  readonly uuid: Prisma.FieldRef<"Student", 'String'>
   readonly name: Prisma.FieldRef<"Student", 'String'>
   readonly notes: Prisma.FieldRef<"Student", 'String'>
   readonly status: Prisma.FieldRef<"Student", 'StudentStatus'>

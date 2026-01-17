@@ -40,6 +40,7 @@ export type SessionSumAggregateOutputType = {
 
 export type SessionMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   notes: string | null
   sessionAt: Date | null
   duration: number | null
@@ -52,6 +53,7 @@ export type SessionMinAggregateOutputType = {
 
 export type SessionMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   notes: string | null
   sessionAt: Date | null
   duration: number | null
@@ -64,6 +66,7 @@ export type SessionMaxAggregateOutputType = {
 
 export type SessionCountAggregateOutputType = {
   id: number
+  uuid: number
   notes: number
   sessionAt: number
   duration: number
@@ -90,6 +93,7 @@ export type SessionSumAggregateInputType = {
 
 export type SessionMinAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   sessionAt?: true
   duration?: true
@@ -102,6 +106,7 @@ export type SessionMinAggregateInputType = {
 
 export type SessionMaxAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   sessionAt?: true
   duration?: true
@@ -114,6 +119,7 @@ export type SessionMaxAggregateInputType = {
 
 export type SessionCountAggregateInputType = {
   id?: true
+  uuid?: true
   notes?: true
   sessionAt?: true
   duration?: true
@@ -213,6 +219,7 @@ export type SessionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type SessionGroupByOutputType = {
   id: number
+  uuid: string
   notes: string
   sessionAt: Date
   duration: number
@@ -248,6 +255,7 @@ export type SessionWhereInput = {
   OR?: Prisma.SessionWhereInput[]
   NOT?: Prisma.SessionWhereInput | Prisma.SessionWhereInput[]
   id?: Prisma.IntFilter<"Session"> | number
+  uuid?: Prisma.UuidFilter<"Session"> | string
   notes?: Prisma.StringFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   duration?: Prisma.IntFilter<"Session"> | number
@@ -262,6 +270,7 @@ export type SessionWhereInput = {
 
 export type SessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
   duration?: Prisma.SortOrder
@@ -276,6 +285,7 @@ export type SessionOrderByWithRelationInput = {
 
 export type SessionWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.SessionWhereInput | Prisma.SessionWhereInput[]
   OR?: Prisma.SessionWhereInput[]
   NOT?: Prisma.SessionWhereInput | Prisma.SessionWhereInput[]
@@ -289,10 +299,11 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<{
   lessonId?: Prisma.IntFilter<"Session"> | number
   feedback?: Prisma.XOR<Prisma.FeedbackNullableScalarRelationFilter, Prisma.FeedbackWhereInput> | null
   lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
-}, "id">
+}, "id" | "uuid">
 
 export type SessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
   duration?: Prisma.SortOrder
@@ -313,6 +324,7 @@ export type SessionScalarWhereWithAggregatesInput = {
   OR?: Prisma.SessionScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SessionScalarWhereWithAggregatesInput | Prisma.SessionScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Session"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"Session"> | string
   notes?: Prisma.StringWithAggregatesFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
   duration?: Prisma.IntWithAggregatesFilter<"Session"> | number
@@ -324,6 +336,7 @@ export type SessionScalarWhereWithAggregatesInput = {
 }
 
 export type SessionCreateInput = {
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -337,6 +350,7 @@ export type SessionCreateInput = {
 
 export type SessionUncheckedCreateInput = {
   id?: number
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -349,6 +363,7 @@ export type SessionUncheckedCreateInput = {
 }
 
 export type SessionUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -362,6 +377,7 @@ export type SessionUpdateInput = {
 
 export type SessionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -375,6 +391,7 @@ export type SessionUncheckedUpdateInput = {
 
 export type SessionCreateManyInput = {
   id?: number
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -386,6 +403,7 @@ export type SessionCreateManyInput = {
 }
 
 export type SessionUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -397,6 +415,7 @@ export type SessionUpdateManyMutationInput = {
 
 export type SessionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -414,6 +433,7 @@ export type SessionScalarRelationFilter = {
 
 export type SessionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
   duration?: Prisma.SortOrder
@@ -432,6 +452,7 @@ export type SessionAvgOrderByAggregateInput = {
 
 export type SessionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
   duration?: Prisma.SortOrder
@@ -444,6 +465,7 @@ export type SessionMaxOrderByAggregateInput = {
 
 export type SessionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   sessionAt?: Prisma.SortOrder
   duration?: Prisma.SortOrder
@@ -527,6 +549,7 @@ export type SessionUncheckedUpdateManyWithoutLessonNestedInput = {
 }
 
 export type SessionCreateWithoutFeedbackInput = {
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -539,6 +562,7 @@ export type SessionCreateWithoutFeedbackInput = {
 
 export type SessionUncheckedCreateWithoutFeedbackInput = {
   id?: number
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -566,6 +590,7 @@ export type SessionUpdateToOneWithWhereWithoutFeedbackInput = {
 }
 
 export type SessionUpdateWithoutFeedbackInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -578,6 +603,7 @@ export type SessionUpdateWithoutFeedbackInput = {
 
 export type SessionUncheckedUpdateWithoutFeedbackInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -589,6 +615,7 @@ export type SessionUncheckedUpdateWithoutFeedbackInput = {
 }
 
 export type SessionCreateWithoutLessonInput = {
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -601,6 +628,7 @@ export type SessionCreateWithoutLessonInput = {
 
 export type SessionUncheckedCreateWithoutLessonInput = {
   id?: number
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -642,6 +670,7 @@ export type SessionScalarWhereInput = {
   OR?: Prisma.SessionScalarWhereInput[]
   NOT?: Prisma.SessionScalarWhereInput | Prisma.SessionScalarWhereInput[]
   id?: Prisma.IntFilter<"Session"> | number
+  uuid?: Prisma.UuidFilter<"Session"> | string
   notes?: Prisma.StringFilter<"Session"> | string
   sessionAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   duration?: Prisma.IntFilter<"Session"> | number
@@ -654,6 +683,7 @@ export type SessionScalarWhereInput = {
 
 export type SessionCreateManyLessonInput = {
   id?: number
+  uuid?: string
   notes: string
   sessionAt: Date | string
   duration?: number
@@ -664,6 +694,7 @@ export type SessionCreateManyLessonInput = {
 }
 
 export type SessionUpdateWithoutLessonInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -676,6 +707,7 @@ export type SessionUpdateWithoutLessonInput = {
 
 export type SessionUncheckedUpdateWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -688,6 +720,7 @@ export type SessionUncheckedUpdateWithoutLessonInput = {
 
 export type SessionUncheckedUpdateManyWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   sessionAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   duration?: Prisma.IntFieldUpdateOperationsInput | number
@@ -701,6 +734,7 @@ export type SessionUncheckedUpdateManyWithoutLessonInput = {
 
 export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   sessionAt?: boolean
   duration?: boolean
@@ -715,6 +749,7 @@ export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 
 export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   sessionAt?: boolean
   duration?: boolean
@@ -728,6 +763,7 @@ export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   sessionAt?: boolean
   duration?: boolean
@@ -741,6 +777,7 @@ export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 
 export type SessionSelectScalar = {
   id?: boolean
+  uuid?: boolean
   notes?: boolean
   sessionAt?: boolean
   duration?: boolean
@@ -751,7 +788,7 @@ export type SessionSelectScalar = {
   lessonId?: boolean
 }
 
-export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notes" | "sessionAt" | "duration" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["session"]>
+export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "notes" | "sessionAt" | "duration" | "isDone" | "createdAt" | "updatedAt" | "deletedAt" | "lessonId", ExtArgs["result"]["session"]>
 export type SessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   feedback?: boolean | Prisma.Session$feedbackArgs<ExtArgs>
   lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
@@ -771,6 +808,7 @@ export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     notes: string
     sessionAt: Date
     duration: number
@@ -1205,6 +1243,7 @@ export interface Prisma__SessionClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface SessionFieldRefs {
   readonly id: Prisma.FieldRef<"Session", 'Int'>
+  readonly uuid: Prisma.FieldRef<"Session", 'String'>
   readonly notes: Prisma.FieldRef<"Session", 'String'>
   readonly sessionAt: Prisma.FieldRef<"Session", 'DateTime'>
   readonly duration: Prisma.FieldRef<"Session", 'Int'>

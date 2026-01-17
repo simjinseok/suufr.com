@@ -38,6 +38,7 @@ export type LessonSumAggregateOutputType = {
 
 export type LessonMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   title: string | null
   notes: string | null
   createdAt: Date | null
@@ -48,6 +49,7 @@ export type LessonMinAggregateOutputType = {
 
 export type LessonMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   title: string | null
   notes: string | null
   createdAt: Date | null
@@ -58,6 +60,7 @@ export type LessonMaxAggregateOutputType = {
 
 export type LessonCountAggregateOutputType = {
   id: number
+  uuid: number
   title: number
   notes: number
   createdAt: number
@@ -80,6 +83,7 @@ export type LessonSumAggregateInputType = {
 
 export type LessonMinAggregateInputType = {
   id?: true
+  uuid?: true
   title?: true
   notes?: true
   createdAt?: true
@@ -90,6 +94,7 @@ export type LessonMinAggregateInputType = {
 
 export type LessonMaxAggregateInputType = {
   id?: true
+  uuid?: true
   title?: true
   notes?: true
   createdAt?: true
@@ -100,6 +105,7 @@ export type LessonMaxAggregateInputType = {
 
 export type LessonCountAggregateInputType = {
   id?: true
+  uuid?: true
   title?: true
   notes?: true
   createdAt?: true
@@ -197,6 +203,7 @@ export type LessonGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type LessonGroupByOutputType = {
   id: number
+  uuid: string
   title: string
   notes: string
   createdAt: Date
@@ -230,6 +237,7 @@ export type LessonWhereInput = {
   OR?: Prisma.LessonWhereInput[]
   NOT?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
   id?: Prisma.IntFilter<"Lesson"> | number
+  uuid?: Prisma.UuidFilter<"Lesson"> | string
   title?: Prisma.StringFilter<"Lesson"> | string
   notes?: Prisma.StringFilter<"Lesson"> | string
   createdAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
@@ -244,6 +252,7 @@ export type LessonWhereInput = {
 
 export type LessonOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -258,6 +267,7 @@ export type LessonOrderByWithRelationInput = {
 
 export type LessonWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   AND?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
   OR?: Prisma.LessonWhereInput[]
   NOT?: Prisma.LessonWhereInput | Prisma.LessonWhereInput[]
@@ -271,10 +281,11 @@ export type LessonWhereUniqueInput = Prisma.AtLeast<{
   payment?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   shares?: Prisma.SessionShareListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
-}, "id">
+}, "id" | "uuid">
 
 export type LessonOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -293,6 +304,7 @@ export type LessonScalarWhereWithAggregatesInput = {
   OR?: Prisma.LessonScalarWhereWithAggregatesInput[]
   NOT?: Prisma.LessonScalarWhereWithAggregatesInput | Prisma.LessonScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Lesson"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"Lesson"> | string
   title?: Prisma.StringWithAggregatesFilter<"Lesson"> | string
   notes?: Prisma.StringWithAggregatesFilter<"Lesson"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Lesson"> | Date | string
@@ -302,6 +314,7 @@ export type LessonScalarWhereWithAggregatesInput = {
 }
 
 export type LessonCreateInput = {
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -315,6 +328,7 @@ export type LessonCreateInput = {
 
 export type LessonUncheckedCreateInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -327,6 +341,7 @@ export type LessonUncheckedCreateInput = {
 }
 
 export type LessonUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -340,6 +355,7 @@ export type LessonUpdateInput = {
 
 export type LessonUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -353,6 +369,7 @@ export type LessonUncheckedUpdateInput = {
 
 export type LessonCreateManyInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -362,6 +379,7 @@ export type LessonCreateManyInput = {
 }
 
 export type LessonUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -371,6 +389,7 @@ export type LessonUpdateManyMutationInput = {
 
 export type LessonUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -396,6 +415,7 @@ export type LessonScalarRelationFilter = {
 
 export type LessonCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -411,6 +431,7 @@ export type LessonAvgOrderByAggregateInput = {
 
 export type LessonMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -421,6 +442,7 @@ export type LessonMaxOrderByAggregateInput = {
 
 export type LessonMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   title?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -519,6 +541,7 @@ export type LessonUpdateOneRequiredWithoutSessionsNestedInput = {
 }
 
 export type LessonCreateWithoutStudentInput = {
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -531,6 +554,7 @@ export type LessonCreateWithoutStudentInput = {
 
 export type LessonUncheckedCreateWithoutStudentInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -572,6 +596,7 @@ export type LessonScalarWhereInput = {
   OR?: Prisma.LessonScalarWhereInput[]
   NOT?: Prisma.LessonScalarWhereInput | Prisma.LessonScalarWhereInput[]
   id?: Prisma.IntFilter<"Lesson"> | number
+  uuid?: Prisma.UuidFilter<"Lesson"> | string
   title?: Prisma.StringFilter<"Lesson"> | string
   notes?: Prisma.StringFilter<"Lesson"> | string
   createdAt?: Prisma.DateTimeFilter<"Lesson"> | Date | string
@@ -581,6 +606,7 @@ export type LessonScalarWhereInput = {
 }
 
 export type LessonCreateWithoutPaymentInput = {
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -593,6 +619,7 @@ export type LessonCreateWithoutPaymentInput = {
 
 export type LessonUncheckedCreateWithoutPaymentInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -620,6 +647,7 @@ export type LessonUpdateToOneWithWhereWithoutPaymentInput = {
 }
 
 export type LessonUpdateWithoutPaymentInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -632,6 +660,7 @@ export type LessonUpdateWithoutPaymentInput = {
 
 export type LessonUncheckedUpdateWithoutPaymentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -643,6 +672,7 @@ export type LessonUncheckedUpdateWithoutPaymentInput = {
 }
 
 export type LessonCreateWithoutSharesInput = {
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -655,6 +685,7 @@ export type LessonCreateWithoutSharesInput = {
 
 export type LessonUncheckedCreateWithoutSharesInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -682,6 +713,7 @@ export type LessonUpdateToOneWithWhereWithoutSharesInput = {
 }
 
 export type LessonUpdateWithoutSharesInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -694,6 +726,7 @@ export type LessonUpdateWithoutSharesInput = {
 
 export type LessonUncheckedUpdateWithoutSharesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -705,6 +738,7 @@ export type LessonUncheckedUpdateWithoutSharesInput = {
 }
 
 export type LessonCreateWithoutSessionsInput = {
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -717,6 +751,7 @@ export type LessonCreateWithoutSessionsInput = {
 
 export type LessonUncheckedCreateWithoutSessionsInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -744,6 +779,7 @@ export type LessonUpdateToOneWithWhereWithoutSessionsInput = {
 }
 
 export type LessonUpdateWithoutSessionsInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -756,6 +792,7 @@ export type LessonUpdateWithoutSessionsInput = {
 
 export type LessonUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -768,6 +805,7 @@ export type LessonUncheckedUpdateWithoutSessionsInput = {
 
 export type LessonCreateManyStudentInput = {
   id?: number
+  uuid?: string
   title: string
   notes: string
   createdAt?: Date | string
@@ -776,6 +814,7 @@ export type LessonCreateManyStudentInput = {
 }
 
 export type LessonUpdateWithoutStudentInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -788,6 +827,7 @@ export type LessonUpdateWithoutStudentInput = {
 
 export type LessonUncheckedUpdateWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -800,6 +840,7 @@ export type LessonUncheckedUpdateWithoutStudentInput = {
 
 export type LessonUncheckedUpdateManyWithoutStudentInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -849,6 +890,7 @@ export type LessonCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types
 
 export type LessonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   title?: boolean
   notes?: boolean
   createdAt?: boolean
@@ -864,6 +906,7 @@ export type LessonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 
 export type LessonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   title?: boolean
   notes?: boolean
   createdAt?: boolean
@@ -875,6 +918,7 @@ export type LessonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
 
 export type LessonSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   title?: boolean
   notes?: boolean
   createdAt?: boolean
@@ -886,6 +930,7 @@ export type LessonSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
 
 export type LessonSelectScalar = {
   id?: boolean
+  uuid?: boolean
   title?: boolean
   notes?: boolean
   createdAt?: boolean
@@ -894,7 +939,7 @@ export type LessonSelectScalar = {
   studentId?: boolean
 }
 
-export type LessonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["lesson"]>
+export type LessonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "title" | "notes" | "createdAt" | "updatedAt" | "deletedAt" | "studentId", ExtArgs["result"]["lesson"]>
 export type LessonInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student?: boolean | Prisma.StudentDefaultArgs<ExtArgs>
   payment?: boolean | Prisma.Lesson$paymentArgs<ExtArgs>
@@ -919,6 +964,7 @@ export type $LessonPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     title: string
     notes: string
     createdAt: Date
@@ -1353,6 +1399,7 @@ export interface Prisma__LessonClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface LessonFieldRefs {
   readonly id: Prisma.FieldRef<"Lesson", 'Int'>
+  readonly uuid: Prisma.FieldRef<"Lesson", 'String'>
   readonly title: Prisma.FieldRef<"Lesson", 'String'>
   readonly notes: Prisma.FieldRef<"Lesson", 'String'>
   readonly createdAt: Prisma.FieldRef<"Lesson", 'DateTime'>

@@ -38,6 +38,7 @@ export type SessionShareSumAggregateOutputType = {
 
 export type SessionShareMinAggregateOutputType = {
   id: number | null
+  uuid: string | null
   shareId: string | null
   lessonId: number | null
   expiresAt: Date | null
@@ -48,6 +49,7 @@ export type SessionShareMinAggregateOutputType = {
 
 export type SessionShareMaxAggregateOutputType = {
   id: number | null
+  uuid: string | null
   shareId: string | null
   lessonId: number | null
   expiresAt: Date | null
@@ -58,6 +60,7 @@ export type SessionShareMaxAggregateOutputType = {
 
 export type SessionShareCountAggregateOutputType = {
   id: number
+  uuid: number
   shareId: number
   lessonId: number
   expiresAt: number
@@ -80,6 +83,7 @@ export type SessionShareSumAggregateInputType = {
 
 export type SessionShareMinAggregateInputType = {
   id?: true
+  uuid?: true
   shareId?: true
   lessonId?: true
   expiresAt?: true
@@ -90,6 +94,7 @@ export type SessionShareMinAggregateInputType = {
 
 export type SessionShareMaxAggregateInputType = {
   id?: true
+  uuid?: true
   shareId?: true
   lessonId?: true
   expiresAt?: true
@@ -100,6 +105,7 @@ export type SessionShareMaxAggregateInputType = {
 
 export type SessionShareCountAggregateInputType = {
   id?: true
+  uuid?: true
   shareId?: true
   lessonId?: true
   expiresAt?: true
@@ -197,6 +203,7 @@ export type SessionShareGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 
 export type SessionShareGroupByOutputType = {
   id: number
+  uuid: string
   shareId: string
   lessonId: number
   expiresAt: Date
@@ -230,6 +237,7 @@ export type SessionShareWhereInput = {
   OR?: Prisma.SessionShareWhereInput[]
   NOT?: Prisma.SessionShareWhereInput | Prisma.SessionShareWhereInput[]
   id?: Prisma.IntFilter<"SessionShare"> | number
+  uuid?: Prisma.UuidFilter<"SessionShare"> | string
   shareId?: Prisma.StringFilter<"SessionShare"> | string
   lessonId?: Prisma.IntFilter<"SessionShare"> | number
   expiresAt?: Prisma.DateTimeFilter<"SessionShare"> | Date | string
@@ -241,6 +249,7 @@ export type SessionShareWhereInput = {
 
 export type SessionShareOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   shareId?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -252,6 +261,7 @@ export type SessionShareOrderByWithRelationInput = {
 
 export type SessionShareWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  uuid?: string
   shareId?: string
   AND?: Prisma.SessionShareWhereInput | Prisma.SessionShareWhereInput[]
   OR?: Prisma.SessionShareWhereInput[]
@@ -262,10 +272,11 @@ export type SessionShareWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"SessionShare"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"SessionShare"> | Date | string | null
   lesson?: Prisma.XOR<Prisma.LessonScalarRelationFilter, Prisma.LessonWhereInput>
-}, "id" | "shareId">
+}, "id" | "uuid" | "shareId">
 
 export type SessionShareOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   shareId?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -284,6 +295,7 @@ export type SessionShareScalarWhereWithAggregatesInput = {
   OR?: Prisma.SessionShareScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SessionShareScalarWhereWithAggregatesInput | Prisma.SessionShareScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"SessionShare"> | number
+  uuid?: Prisma.UuidWithAggregatesFilter<"SessionShare"> | string
   shareId?: Prisma.StringWithAggregatesFilter<"SessionShare"> | string
   lessonId?: Prisma.IntWithAggregatesFilter<"SessionShare"> | number
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"SessionShare"> | Date | string
@@ -293,6 +305,7 @@ export type SessionShareScalarWhereWithAggregatesInput = {
 }
 
 export type SessionShareCreateInput = {
+  uuid?: string
   shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
@@ -303,6 +316,7 @@ export type SessionShareCreateInput = {
 
 export type SessionShareUncheckedCreateInput = {
   id?: number
+  uuid?: string
   shareId: string
   lessonId: number
   expiresAt: Date | string
@@ -312,6 +326,7 @@ export type SessionShareUncheckedCreateInput = {
 }
 
 export type SessionShareUpdateInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -322,6 +337,7 @@ export type SessionShareUpdateInput = {
 
 export type SessionShareUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   lessonId?: Prisma.IntFieldUpdateOperationsInput | number
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,6 +348,7 @@ export type SessionShareUncheckedUpdateInput = {
 
 export type SessionShareCreateManyInput = {
   id?: number
+  uuid?: string
   shareId: string
   lessonId: number
   expiresAt: Date | string
@@ -341,6 +358,7 @@ export type SessionShareCreateManyInput = {
 }
 
 export type SessionShareUpdateManyMutationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -350,6 +368,7 @@ export type SessionShareUpdateManyMutationInput = {
 
 export type SessionShareUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   lessonId?: Prisma.IntFieldUpdateOperationsInput | number
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -360,6 +379,7 @@ export type SessionShareUncheckedUpdateManyInput = {
 
 export type SessionShareCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   shareId?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -375,6 +395,7 @@ export type SessionShareAvgOrderByAggregateInput = {
 
 export type SessionShareMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   shareId?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -385,6 +406,7 @@ export type SessionShareMaxOrderByAggregateInput = {
 
 export type SessionShareMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  uuid?: Prisma.SortOrder
   shareId?: Prisma.SortOrder
   lessonId?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -451,6 +473,7 @@ export type SessionShareUncheckedUpdateManyWithoutLessonNestedInput = {
 }
 
 export type SessionShareCreateWithoutLessonInput = {
+  uuid?: string
   shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
@@ -460,6 +483,7 @@ export type SessionShareCreateWithoutLessonInput = {
 
 export type SessionShareUncheckedCreateWithoutLessonInput = {
   id?: number
+  uuid?: string
   shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
@@ -498,6 +522,7 @@ export type SessionShareScalarWhereInput = {
   OR?: Prisma.SessionShareScalarWhereInput[]
   NOT?: Prisma.SessionShareScalarWhereInput | Prisma.SessionShareScalarWhereInput[]
   id?: Prisma.IntFilter<"SessionShare"> | number
+  uuid?: Prisma.UuidFilter<"SessionShare"> | string
   shareId?: Prisma.StringFilter<"SessionShare"> | string
   lessonId?: Prisma.IntFilter<"SessionShare"> | number
   expiresAt?: Prisma.DateTimeFilter<"SessionShare"> | Date | string
@@ -508,6 +533,7 @@ export type SessionShareScalarWhereInput = {
 
 export type SessionShareCreateManyLessonInput = {
   id?: number
+  uuid?: string
   shareId: string
   expiresAt: Date | string
   createdAt?: Date | string
@@ -516,6 +542,7 @@ export type SessionShareCreateManyLessonInput = {
 }
 
 export type SessionShareUpdateWithoutLessonInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -525,6 +552,7 @@ export type SessionShareUpdateWithoutLessonInput = {
 
 export type SessionShareUncheckedUpdateWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -534,6 +562,7 @@ export type SessionShareUncheckedUpdateWithoutLessonInput = {
 
 export type SessionShareUncheckedUpdateManyWithoutLessonInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
   shareId?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -545,6 +574,7 @@ export type SessionShareUncheckedUpdateManyWithoutLessonInput = {
 
 export type SessionShareSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   shareId?: boolean
   lessonId?: boolean
   expiresAt?: boolean
@@ -556,6 +586,7 @@ export type SessionShareSelect<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type SessionShareSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   shareId?: boolean
   lessonId?: boolean
   expiresAt?: boolean
@@ -567,6 +598,7 @@ export type SessionShareSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type SessionShareSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  uuid?: boolean
   shareId?: boolean
   lessonId?: boolean
   expiresAt?: boolean
@@ -578,6 +610,7 @@ export type SessionShareSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type SessionShareSelectScalar = {
   id?: boolean
+  uuid?: boolean
   shareId?: boolean
   lessonId?: boolean
   expiresAt?: boolean
@@ -586,7 +619,7 @@ export type SessionShareSelectScalar = {
   deletedAt?: boolean
 }
 
-export type SessionShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shareId" | "lessonId" | "expiresAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["sessionShare"]>
+export type SessionShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "shareId" | "lessonId" | "expiresAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["sessionShare"]>
 export type SessionShareInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lesson?: boolean | Prisma.LessonDefaultArgs<ExtArgs>
 }
@@ -604,6 +637,7 @@ export type $SessionSharePayload<ExtArgs extends runtime.Types.Extensions.Intern
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    uuid: string
     shareId: string
     lessonId: number
     expiresAt: Date
@@ -1035,6 +1069,7 @@ export interface Prisma__SessionShareClient<T, Null = never, ExtArgs extends run
  */
 export interface SessionShareFieldRefs {
   readonly id: Prisma.FieldRef<"SessionShare", 'Int'>
+  readonly uuid: Prisma.FieldRef<"SessionShare", 'String'>
   readonly shareId: Prisma.FieldRef<"SessionShare", 'String'>
   readonly lessonId: Prisma.FieldRef<"SessionShare", 'Int'>
   readonly expiresAt: Prisma.FieldRef<"SessionShare", 'DateTime'>

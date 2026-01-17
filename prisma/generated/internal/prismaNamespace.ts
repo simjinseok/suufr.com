@@ -1194,6 +1194,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const StudentScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   name: 'name',
   notes: 'notes',
   status: 'status',
@@ -1208,6 +1209,7 @@ export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeo
 
 export const FeedbackScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -1220,6 +1222,7 @@ export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typ
 
 export const PaymentScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   amount: 'amount',
   paymentMethod: 'paymentMethod',
   notes: 'notes',
@@ -1235,6 +1238,7 @@ export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeo
 
 export const MeetingScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   name: 'name',
   notes: 'notes',
   userId: 'userId',
@@ -1251,6 +1255,7 @@ export type MeetingScalarFieldEnum = (typeof MeetingScalarFieldEnum)[keyof typeo
 
 export const StudentCommentScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   content: 'content',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -1263,6 +1268,7 @@ export type StudentCommentScalarFieldEnum = (typeof StudentCommentScalarFieldEnu
 
 export const StudentStatusHistoryScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   status: 'status',
   notes: 'notes',
   changedAt: 'changedAt',
@@ -1277,6 +1283,7 @@ export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistorySc
 
 export const SessionShareScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   shareId: 'shareId',
   lessonId: 'lessonId',
   expiresAt: 'expiresAt',
@@ -1290,6 +1297,7 @@ export type SessionShareScalarFieldEnum = (typeof SessionShareScalarFieldEnum)[k
 
 export const SessionScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   notes: 'notes',
   sessionAt: 'sessionAt',
   duration: 'duration',
@@ -1305,6 +1313,7 @@ export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeo
 
 export const LessonScalarFieldEnum = {
   id: 'id',
+  uuid: 'uuid',
   title: 'title',
   notes: 'notes',
   createdAt: 'createdAt',
