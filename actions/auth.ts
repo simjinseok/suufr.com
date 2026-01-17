@@ -99,6 +99,12 @@ export async function login(
       const { AccessToken, RefreshToken, ExpiresIn }
         = response.AuthenticationResult;
 
+      // Extract sub (real Cognito username) from JWT for token refresh
+      const payload = JSON.parse(
+        Buffer.from(AccessToken!.split('.')[1], 'base64').toString(),
+      );
+      const cognitoUsername = payload.sub;
+
       const cookieStore = await cookies();
       const isProduction = process.env.NODE_ENV === 'production';
 
@@ -115,8 +121,8 @@ export async function login(
         sameSite: 'strict',
       });
 
-      // Store username for token refresh
-      cookieStore.set('cognito_username', validation.data.email, {
+      // Store real username (sub) for token refresh - SECRET_HASH requires actual username, not email alias
+      cookieStore.set('cognito_username', cognitoUsername, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'strict',
@@ -195,6 +201,12 @@ export async function respondToMfa(
       const { AccessToken, RefreshToken, ExpiresIn }
         = response.AuthenticationResult;
 
+      // Extract sub (real Cognito username) from JWT for token refresh
+      const payload = JSON.parse(
+        Buffer.from(AccessToken!.split('.')[1], 'base64').toString(),
+      );
+      const cognitoUsername = payload.sub;
+
       const isProduction = process.env.NODE_ENV === 'production';
 
       cookieStore.set('access_token', AccessToken!, {
@@ -210,8 +222,8 @@ export async function respondToMfa(
         sameSite: 'strict',
       });
 
-      // Store username for token refresh
-      cookieStore.set('cognito_username', email, {
+      // Store real username (sub) for token refresh - SECRET_HASH requires actual username, not email alias
+      cookieStore.set('cognito_username', cognitoUsername, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'strict',
