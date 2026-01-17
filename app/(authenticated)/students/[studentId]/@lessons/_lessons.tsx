@@ -38,8 +38,8 @@ export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeF
     <React.Fragment>
       <div className="flex justify-end">
         <Modal>
-          <Button variant="secondary">
-            <PlusIcon />
+          <Button variant="secondary" size="sm">
+            <PlusIcon className="size-4" />
             레슨 추가
           </Button>
           <CreateLessonModal
