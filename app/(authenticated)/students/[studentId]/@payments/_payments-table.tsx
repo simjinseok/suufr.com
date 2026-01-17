@@ -1,8 +1,10 @@
 'use client';
 
-import { Chip } from '@heroui/react';
+import {Button, Chip, Modal, Surface} from '@heroui/react';
 import { format } from 'date-fns';
 import { numberToHangulMixed } from 'es-hangul';
+import { ko } from 'date-fns/locale/ko';
+import PaymentModal from '@/components/lesson/payment-modal';
 
 type Lesson = {
   id: number;
@@ -32,108 +34,108 @@ export default function PaymentsTable({ lessons }: Props) {
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-500">
-        등록된 계획이 없습니다
+        등록된 레슨이 없습니다
       </div>
     );
   }
 
-  const paidLessones = lessons.filter(s => s.payment !== null);
-  const unpaidLessones = lessons.filter(s => s.payment === null);
-  const totalAmount = paidLessones.reduce(
+  const paidLessons = lessons.filter(s => s.payment !== null);
+  const unpaidLessons = lessons.filter(s => s.payment === null);
+  const totalAmount = paidLessons.reduce(
     (sum, s) => sum + (s.payment?.amount ?? 0),
     0,
   );
 
   return (
     <div className="space-y-4">
-      <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+      <Surface variant="secondary" className="rounded-2xl p-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-zinc-500">총 결제액</span>
-          <span className="text-xl font-bold text-zinc-900 dark:text-white">
+          <span className="text-sm font-medium text-primary-600">총 결제액</span>
+          <span className="text-lg md:text-xl font-bold text-primary-900 tabular-nums">
             {numberToHangulMixed(totalAmount)}
             원
           </span>
         </div>
-        <div className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-xs text-primary-600">
           결제
           {' '}
-          {paidLessones.length}
+          {paidLessons.length}
           건
-          {unpaidLessones.length > 0 && (
-            <span className="text-warning-600 dark:text-warning-400">
+          {unpaidLessons.length > 0 && (
+            <span className="text-warning-600 font-medium">
               {' '}
               · 미결제
               {' '}
-              {unpaidLessones.length}
+              {unpaidLessons.length}
               건
             </span>
           )}
-        </div>
-      </div>
+        </p>
+      </Surface>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full">
-          <thead className="bg-zinc-50 dark:bg-zinc-800/50">
-            <tr>
-              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-                결제일
-              </th>
-              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-                계획
-              </th>
-              <th className="text-right text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-                금액
-              </th>
-              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-                결제수단
-              </th>
-              <th className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider py-3 px-4">
-                메모
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {lessons.map(lesson => (
-              <tr
-                key={lesson.id}
-                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
-              >
-                <td className="py-3 px-4 text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
-                  {lesson.payment
-                    ? (
-                        format(new Date(lesson.payment.paidAt), 'yyyy-MM-dd')
-                      )
-                    : (
-                        <Chip size="sm" color="warning" variant="flat">
-                          결제필요
-                        </Chip>
-                      )}
-                </td>
-
-                <td className="py-3 px-4 text-sm text-zinc-900 dark:text-white">
+      <div className="bg-white rounded-2xl overflow-hidden">
+        {lessons.map((lesson, index) => (
+          <div
+            key={lesson.id}
+            className={`
+            p-4
+            ${index !== lessons.length - 1 ? 'border-b border-zinc-100' : ''}
+            ${!lesson.payment ? 'bg-warning-50' : ''}
+          `}
+          >
+            <div className="flex justify-between items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-zinc-900">
                   {lesson.title}
-                </td>
+                </p>
+                {lesson.payment
+                  ? (
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        {format(new Date(lesson.payment.paidAt), 'M월 d일', { locale: ko })}
+                  &nbsp;·&nbsp;
+                        {PAYMENT_METHODS[lesson.payment.paymentMethod]}
+                      </p>
+                    )
+                  : (
+                      <Chip size="sm" color="warning" variant="soft" className="mt-0.5">
+                        결제 대기중
+                      </Chip>
+                    )}
+              </div>
+              <div className="shrink-0">
+                {lesson.payment
+                  ? (
+                      <p className="text-base font-bold text-zinc-900 tabular-nums">
+                        {numberToHangulMixed(lesson.payment.amount)}
+                        원
+                      </p>
+                    )
+                  : (
+                      <Modal>
+                        <Button
+                          size="sm"
+                          variant="danger-soft"
+                        >
+                          결제 등록
+                        </Button>
+                        <PaymentModal lesson={lesson} />
+                      </Modal>
+                    )}
+              </div>
+            </div>
 
-                <td className="py-3 px-4 text-sm tabular-nums text-right font-semibold text-zinc-900 dark:text-white">
-                  {lesson.payment
-                    ? `${numberToHangulMixed(lesson.payment.amount)}원`
-                    : '-'}
-                </td>
-
-                <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {lesson.payment
-                    ? PAYMENT_METHODS[lesson.payment.paymentMethod]
-                    || lesson.payment.paymentMethod
-                    : '-'}
-                </td>
-
-                <td className="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-                  {lesson.payment?.notes || '-'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            {/* 메모 (있는 경우만) */}
+            {lesson.payment?.notes && (
+              <div className={`
+              mt-3 p-3 rounded-lg text-sm text-zinc-600 leading-relaxed whitespace-pre-line
+              ${lesson.payment ? 'bg-zinc-50' : 'bg-warning-100'}
+            `}
+              >
+                {lesson.payment.notes}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

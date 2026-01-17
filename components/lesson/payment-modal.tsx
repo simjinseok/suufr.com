@@ -1,4 +1,6 @@
 'use client';
+import type { ModalProps } from '@heroui/react';
+
 import { numberToHangulMixed } from 'es-hangul';
 
 import React from 'react';
@@ -15,12 +17,17 @@ import { BanknoteIcon, BookDashedIcon, CalendarIcon, CreditCardIcon, LandmarkIco
 import { Controller, useForm } from 'react-hook-form';
 
 import { updatePayment, removePayment } from '@/actions/payment';
-import { fromDate, getLocalTimeZone, parseDate, toCalendarDate, today } from '@internationalized/date';
+import { fromDate, getLocalTimeZone, toCalendarDate, today } from '@internationalized/date';
 
-export default function PaymentModal({ isOpen, onClose, lesson }) {
+interface Props {
+  isOpen: ModalProps['isOpen'];
+  onClose: ModalProps['onOpenChange'];
+  lesson: any;
+}
+export default function PaymentModal({ isOpen, onClose, lesson }: Props) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
-      <Modal.Container placement="center">
+      <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
             <Content
