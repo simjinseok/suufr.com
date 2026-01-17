@@ -9,8 +9,9 @@ import {
   ReceiptIcon,
   UserRoundCheckIcon,
   CalendarIcon,
+  SettingsIcon,
 } from 'lucide-react';
-import { Button, Dropdown } from '@heroui/react';
+import {Button, Dropdown, Separator} from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
 
@@ -50,17 +51,18 @@ export function Sidebar() {
         <div className="flex items-center gap-1">
           {/* 유저 프로필 드롭다운 */}
           <Dropdown>
-            <Button variant="light" isIconOnly size="sm">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <Button variant="ghost" isIconOnly size="sm">
+              <div className="w-6 h-6 rounded-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                 <UserIcon className="w-3.5 h-3.5 text-gray-500" />
               </div>
             </Button>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label="유저 메뉴">
-                <Dropdown.Item id="profile" textValue="프로필">
-                  <UserIcon className="w-4 h-4" />
-                  프로필
+                <Dropdown.Item id="settings" href="/settings" textValue="설정">
+                  <SettingsIcon className="w-4 h-4" />
+                  설정
                 </Dropdown.Item>
+                <Separator />
                 <Dropdown.Item id="logout" href="/auth/logout" textValue="로그아웃">
                   <LogOutIcon className="w-4 h-4" />
                   로그아웃
@@ -71,7 +73,7 @@ export function Sidebar() {
 
           {/* 햄버거 메뉴 드롭다운 */}
           <Dropdown>
-            <Button variant="light" isIconOnly size="sm">
+            <Button variant="ghost" isIconOnly size="sm">
               <MenuIcon className="w-5 h-5 text-gray-700" />
             </Button>
             <Dropdown.Popover placement="bottom end">
