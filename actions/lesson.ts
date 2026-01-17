@@ -51,6 +51,9 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
         }
       }
 
+      // 수업 시간 (분)
+      const lessonDuration = parseInt(formData.get('lessonDuration') as string, 10) || 60;
+
       // 트랜잭션으로 lesson과 session들을 함께 생성
       await prisma.$transaction(async (tx) => {
         // lesson 생성
@@ -71,6 +74,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
                 lessonId: lesson.id,
                 notes: '',
                 sessionAt,
+                duration: lessonDuration,
               };
             }),
           });
