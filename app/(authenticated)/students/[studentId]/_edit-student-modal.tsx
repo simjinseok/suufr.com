@@ -9,9 +9,7 @@ import {
   Form,
   Modal,
   Input,
-  Select,
   TextArea,
-  ListBox,
   Spinner,
   TextField,
   Label,
@@ -35,7 +33,6 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
     values: {
       id: student.id,
       name: student.name,
-      status: student.status,
       notes: student.notes,
     },
   });
@@ -100,41 +97,6 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
                       </TextField>
                     )}
                   />
-                  <Controller
-                    control={control}
-                    name="status"
-                    render={({ field: { name, value, onChange } }) => (
-                      <Select
-                        className="mt-4"
-                        name={name}
-                        value={value}
-                        isDisabled
-                      >
-                        <Label>상태</Label>
-                        <Select.Trigger>
-                          <Select.Value />
-                          <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                          <ListBox>
-                            <ListBox.Item id="pending">
-                              대기중
-                            </ListBox.Item>
-                            <ListBox.Item id="active">
-                              수강중
-                            </ListBox.Item>
-                            <ListBox.Item id="paused">
-                              일시정지
-                            </ListBox.Item>
-                            <ListBox.Item id="leave">
-                              그만둠
-                            </ListBox.Item>
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
-                    )}
-                  />
-
                   <Controller
                     control={control}
                     name="notes"
