@@ -49,6 +49,7 @@ export default async function Page({ searchParams }: Props) {
       lte: to,
     },
     lesson: {
+      deletedAt: null,
       student: {
         userId: user.id,
         deletedAt: null,

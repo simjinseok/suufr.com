@@ -1,6 +1,6 @@
 'use client';
 import type { ZonedDateTime } from '@internationalized/date';
-import { Description, ModalProps, Tooltip } from '@heroui/react';
+import { Description, ModalProps, TimeField, Tooltip } from '@heroui/react';
 
 import * as React from 'react';
 import {
@@ -17,7 +17,7 @@ import {
   TextArea,
   TextField,
 } from '@heroui/react';
-import { CalendarIcon, InfoIcon } from 'lucide-react';
+import { CalendarIcon, HelpCircleIcon, InfoIcon, MessageSquareTextIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { now } from '@internationalized/date';
 
@@ -153,10 +153,23 @@ function LessonsGenerator() {
 
   return (
     <Surface className="pt-3 pb-2 px-2 rounded-xl" variant="secondary">
-      수업
+      <div className="flex items-center gap-3">
+        <p className="font-medium">수업</p>
+        <Tooltip delay={100}>
+          <Tooltip.Trigger>
+            <HelpCircleIcon strokeWidth={1.5} className="size-4" />
+          </Tooltip.Trigger>
+          <Tooltip.Content placement="bottom" className="p-4">
+            <Tooltip.Arrow />
+            레슨 생성시 수업을 생성할 수 있습니다.
+            <br />
+            횟수와 시간을 기준으로 자동으로 일정을 계산합니다.
+          </Tooltip.Content>
+        </Tooltip>
+      </div>
       <Surface className="mt-2 p-2 flex flex-col gap-2  rounded-xl" variant="default">
         <div className="flex gap-1">
-          <DateField value={date} onChange={setDate} hourCycle={hourCycle} hideTimeZone>
+          <DateField value={date} granularity="day" onChange={setDate} hideTimeZone>
             <Label>기준 날짜</Label>
             <DateInputGroup>
               <DateInputGroup.Prefix>
@@ -167,6 +180,17 @@ function LessonsGenerator() {
               </DateInputGroup.Input>
             </DateInputGroup>
           </DateField>
+
+        </div>
+        <div className="flex gap-3">
+          <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={setDate} hideTimeZone>
+            <Label>시간</Label>
+            <DateInputGroup>
+              <DateInputGroup.Input>
+                {segment => <DateInputGroup.Segment segment={segment} />}
+              </DateInputGroup.Input>
+            </DateInputGroup>
+          </TimeField>
           <NumberField value={count} minValue={1} maxValue={20} onChange={value => setCount(value)}>
             <Label>횟수</Label>
             <NumberField.Group>
