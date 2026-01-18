@@ -32,12 +32,12 @@ export default async function Page() {
     }),
     prisma.lesson.findMany({
       select: {
-        id: true,
+        uuid: true,
         title: true,
         createdAt: true,
         student: {
           select: {
-            id: true,
+            uuid: true,
             name: true,
           },
         },
@@ -53,7 +53,7 @@ export default async function Page() {
         ],
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
     }),
     prisma.studentStatus.count({

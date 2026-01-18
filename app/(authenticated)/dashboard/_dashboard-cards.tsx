@@ -25,8 +25,6 @@ export default function DashboardCards({
   leftStudentsCount,
   notPaidLessons,
 }: Props) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
     <div className="mt-3 flex flex-col gap-3 md:grid md:grid-cols-3">
       <Card className="border border-transparent dark:border-default-100">
@@ -76,7 +74,6 @@ export default function DashboardCards({
               <Button
                 size="sm"
                 variant="tertiary"
-                onPress={() => setIsOpen(true)}
               >
                 상세
               </Button>
@@ -114,9 +111,9 @@ function ModalContent({ lessons, close }: ModalContentProps) {
           ? (
               <ul className="space-y-2">
                 {lessons.map(lesson => (
-                  <li key={lesson.id}>
+                  <li key={lesson.uuid}>
                     <Link
-                      href={`/students/${lesson.student.id}`}
+                      href={`/students/${lesson.student.uuid}`}
                       className="group flex items-center justify-between p-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-colors"
                     >
                       <div className="flex flex-col gap-0.5">

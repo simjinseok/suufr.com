@@ -58,25 +58,25 @@ export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeF
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
                           <Modal>
-                            <Modal.Trigger>
-                              {lesson.payment
-                                ? (
-                                    <Chip size="sm" variant="soft">
-                                      {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
-                                      {numberToHangulMixed(lesson.payment.amount)}
-                                      원
-                                    </Chip>
-                                  )
-                                : (
+                            {lesson.payment
+                              ? (
+                                  <Chip size="sm" variant="soft">
+                                    {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
+                                    {numberToHangulMixed(lesson.payment.amount)}
+                                    원
+                                  </Chip>
+                                )
+                              : (
+                                  <Modal.Trigger>
                                     <Chip size="sm" variant="soft" color="danger">
                                       <BanknoteXIcon className="size-3" />
                                       결제필요
                                     </Chip>
-                                  )}
-                            </Modal.Trigger>
+                                  </Modal.Trigger>
+                                )}
                             <PaymentModal lesson={lesson} />
                           </Modal>
                           <Modal>
@@ -233,7 +233,11 @@ export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeF
                                 )}
                           </div>
                           <div>
-                            <p className="tabular-nums">{format(new Date(session.sessionAt), 'yyyy-MM-dd', { in: tz('Asia/Seoul') })} {formatTime(session.sessionAt, timeFormat)}</p>
+                            <p className="tabular-nums">
+                              {format(new Date(session.sessionAt), 'yyyy-MM-dd', { in: tz('Asia/Seoul') })}
+                              {' '}
+                              {formatTime(session.sessionAt, timeFormat)}
+                            </p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}
                             </Text>

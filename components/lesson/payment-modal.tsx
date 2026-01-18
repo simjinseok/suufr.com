@@ -20,8 +20,8 @@ import { updatePayment, removePayment } from '@/actions/payment';
 import { fromDate, getLocalTimeZone, toCalendarDate, today } from '@internationalized/date';
 
 interface Props {
-  isOpen: ModalProps['isOpen'];
-  onClose: ModalProps['onOpenChange'];
+  isOpen?: ModalProps['isOpen'];
+  onClose?: ModalProps['onOpenChange'];
   lesson: any;
 }
 export default function PaymentModal({ isOpen, onClose, lesson }: Props) {
