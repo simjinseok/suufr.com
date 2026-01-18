@@ -1,7 +1,7 @@
 /**
- * Cloudinary URL 최적화 유틸리티 (클라이언트용)
+ * Cloudinary URL 유틸리티 (클라이언트에서도 사용 가능)
  *
- * 원본 URL을 받아서 크기와 품질이 최적화된 URL로 변환
+ * 서버 전용 함수는 cloudinary-url.server.ts 참조
  */
 
 type ImageOptions = {

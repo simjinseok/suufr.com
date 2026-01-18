@@ -9,6 +9,23 @@
 * 🟢 You can import this file directly.
 */
 
+export const OrganizationRole = {
+  owner: 'owner',
+  teacher: 'teacher'
+} as const
+
+export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
+
+
+export const MemberStatusValue = {
+  active: 'active',
+  paused: 'paused',
+  leave: 'leave'
+} as const
+
+export type MemberStatusValue = (typeof MemberStatusValue)[keyof typeof MemberStatusValue]
+
+
 export const StudentStatusValue = {
   pending: 'pending',
   active: 'active',

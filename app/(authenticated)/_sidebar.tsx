@@ -10,12 +10,27 @@ import {
   UserRoundCheckIcon,
   CalendarIcon,
   SettingsIcon,
+  BuildingIcon,
 } from 'lucide-react';
 import { Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
+import { OrganizationSwitcher } from '@/components/organization-switcher';
+import type { OrganizationRole } from '@/prisma/generated/client';
 
-export function Sidebar() {
+type OrganizationItem = {
+  id: number;
+  uuid: string;
+  name: string;
+  role: OrganizationRole;
+};
+
+type Props = {
+  currentOrg: OrganizationItem;
+  organizations: OrganizationItem[];
+};
+
+export function Sidebar({ currentOrg, organizations }: Props) {
   const sidebarContent = (
     <>
       <div className="h-16 flex items-center px-5">
@@ -29,8 +44,11 @@ export function Sidebar() {
           <h1 className="text-lg font-semibold text-gray-900 tracking-tight">스프</h1>
         </div>
       </div>
+      <div className="px-3 pb-2">
+        <OrganizationSwitcher currentOrg={currentOrg} organizations={organizations} />
+      </div>
       <AppNavigation />
-      <UserMenu />
+      <UserMenu currentOrg={currentOrg} />
     </>
   );
 
@@ -58,6 +76,20 @@ export function Sidebar() {
             </Button>
             <Dropdown.Popover placement="bottom">
               <Dropdown.Menu aria-label="유저 메뉴">
+                {currentOrg.role === 'owner' && (
+                  <Dropdown.Item
+                    id="org-settings"
+                    href={`/organizations/${currentOrg.uuid}/settings`}
+                    textValue="과외방 설정"
+                  >
+                    <div>
+                      <BuildingIcon strokeWidth={1.5} className="size-5" />
+                    </div>
+                    <div>
+                      <Label>과외방 설정</Label>
+                    </div>
+                  </Dropdown.Item>
+                )}
                 <Dropdown.Item id="settings" href="/settings" textValue="설정">
                   <div>
                     <SettingsIcon strokeWidth={1.5} className="size-5" />

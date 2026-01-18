@@ -5,6 +5,10 @@ import Student from './_student';
 import StatsCards from './_stats-cards';
 import { getSession } from '@/utils/auth';
 import { StudentStatusValue } from '@prisma/client';
+function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
+  if (!key) return null;
+  return `/assets/${folder}/${key}.webp`;
+}
 
 type StudentWithStats = {
   id: number;
@@ -12,7 +16,7 @@ type StudentWithStats = {
   name: string;
   status: StudentStatusValue;
   notes: string;
-  profileImageUrl: string | null;
+  profileImageKey: string | null;
   nextPaymentAt: Date | null;
   remainingSessionsCount: number;
   completedLessonCount: number;
@@ -37,7 +41,7 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
       s.name,
       s.status,
       s.notes,
-      s.profile_image_url AS "profileImageUrl",
+      s.profile_image_key AS "profileImageKey",
       s.next_payment_at AS "nextPaymentAt",
       CAST(COUNT(sess.id) FILTER (
         WHERE sess.is_done = false AND sess.deleted_at IS NULL
@@ -72,6 +76,13 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
     return notFound();
   }
 
+  // profileImageKey → profileImageUrl 변환 (key는 클라이언트에 노출하지 않음)
+  const { profileImageKey, ...studentData } = student;
+  const studentWithImageUrl = {
+    ...studentData,
+    profileImageUrl: buildAssetUrl(profileImageKey, 'student'),
+  };
+
   const statuses = await prisma.studentStatus.findMany({
     select: {
       id: true,
@@ -97,7 +108,7 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
 
   return (
     <>
-      <Student student={student} statuses={statuses} />
+      <Student student={studentWithImageUrl} statuses={statuses} />
       <StatsCards stats={stats} />
     </>
   );

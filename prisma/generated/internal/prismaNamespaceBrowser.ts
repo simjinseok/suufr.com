@@ -51,6 +51,9 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  Organization: 'Organization',
+  OrganizationMember: 'OrganizationMember',
+  MemberStatus: 'MemberStatus',
   Student: 'Student',
   Feedback: 'Feedback',
   Payment: 'Payment',
@@ -79,13 +82,60 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const OrganizationScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  name: 'name',
+  logoUrl: 'logoUrl',
+  phone: 'phone',
+  address: 'address',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const OrganizationMemberScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  name: 'name',
+  role: 'role',
+  status: 'status',
+  profileImageKey: 'profileImageKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  organizationId: 'organizationId',
+  userId: 'userId'
+} as const
+
+export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
+export const MemberStatusScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  status: 'status',
+  notes: 'notes',
+  changedAt: 'changedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt',
+  memberId: 'memberId'
+} as const
+
+export type MemberStatusScalarFieldEnum = (typeof MemberStatusScalarFieldEnum)[keyof typeof MemberStatusScalarFieldEnum]
+
+
 export const StudentScalarFieldEnum = {
   id: 'id',
   uuid: 'uuid',
   name: 'name',
   notes: 'notes',
   status: 'status',
-  profileImageUrl: 'profileImageUrl',
+  profileImageKey: 'profileImageKey',
   nextPaymentAt: 'nextPaymentAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -219,6 +269,7 @@ export const UserSettingsScalarFieldEnum = {
   use24HourFormat: 'use24HourFormat',
   defaultDuration: 'defaultDuration',
   autoUpdateNextPaymentAt: 'autoUpdateNextPaymentAt',
+  currentOrganizationId: 'currentOrganizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

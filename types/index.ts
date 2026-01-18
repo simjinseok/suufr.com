@@ -11,7 +11,7 @@ export type Student = {
   name: string;
   notes: string;
   status: string;
-  profileImageUrl?: string | null;
+  profileImageKey?: string | null;
   nextPaymentAt?: Date | null;
   createdAt?: Date;
   completedSessionsCount?: number;
@@ -106,4 +106,34 @@ export type YearlyPaymentStats = {
   totalAmount: number;
   months: MonthlyPaymentStats[];
   students: StudentPaymentStats[];
+};
+
+export type Organization = {
+  id: number;
+  uuid: string;
+  name: string;
+  logoUrl?: string;
+  phone?: string;
+  address?: string;
+};
+
+export type MemberStatusValue = 'active' | 'paused' | 'leave';
+
+export type OrganizationMember = {
+  id: number;
+  uuid: string;
+  name: string;
+  role: 'owner' | 'teacher';
+  status: MemberStatusValue;
+  profileImageKey?: string | null;
+  userId?: string;
+  isLinked: boolean;
+};
+
+export type TMemberStatus = {
+  id: number;
+  uuid: string;
+  status: MemberStatusValue;
+  notes: string | null;
+  changedAt: Date;
 };

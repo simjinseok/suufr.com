@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { randomUUID } from 'crypto';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -47,15 +48,51 @@ export async function uploadImage(file: File): Promise<UploadResult> {
 }
 
 export async function moveImage(publicId: string): Promise<string | null> {
-  const newPublicId = publicId.replace('suufr/temp/', 'suufr/students/');
+  const key = randomUUID();
+  const newPublicId = `suufr/students/${key}`;
 
   try {
-    const result = await cloudinary.uploader.rename(publicId, newPublicId, {
+    await cloudinary.uploader.rename(publicId, newPublicId, {
       invalidate: true,
     });
-    return result.secure_url;
+    return key;
   } catch (error) {
     console.error('Move image error:', error);
     return null;
+  }
+}
+
+export async function moveMemberImage(publicId: string): Promise<string | null> {
+  const key = randomUUID();
+  const newPublicId = `suufr/members/${key}`;
+
+  try {
+    await cloudinary.uploader.rename(publicId, newPublicId, {
+      invalidate: true,
+    });
+    return key;
+  } catch (error) {
+    console.error('Move member image error:', error);
+    return null;
+  }
+}
+
+/**
+ * Cloudinary에서 이미지 삭제
+ *
+ * @param key - 이미지 키 (UUID)
+ * @param folder - 폴더 타입 ('students' | 'members')
+ */
+export async function deleteImage(key: string, folder: 'students' | 'members'): Promise<boolean> {
+  const publicId = `suufr/${folder}/${key}`;
+
+  try {
+    await cloudinary.uploader.destroy(publicId, {
+      invalidate: true,
+    });
+    return true;
+  } catch (error) {
+    console.error('Delete image error:', error);
+    return false;
   }
 }

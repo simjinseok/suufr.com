@@ -40,7 +40,7 @@ export type StudentMinAggregateOutputType = {
   name: string | null
   notes: string | null
   status: $Enums.StudentStatusValue | null
-  profileImageUrl: string | null
+  profileImageKey: string | null
   nextPaymentAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -54,7 +54,7 @@ export type StudentMaxAggregateOutputType = {
   name: string | null
   notes: string | null
   status: $Enums.StudentStatusValue | null
-  profileImageUrl: string | null
+  profileImageKey: string | null
   nextPaymentAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -68,7 +68,7 @@ export type StudentCountAggregateOutputType = {
   name: number
   notes: number
   status: number
-  profileImageUrl: number
+  profileImageKey: number
   nextPaymentAt: number
   createdAt: number
   updatedAt: number
@@ -92,7 +92,7 @@ export type StudentMinAggregateInputType = {
   name?: true
   notes?: true
   status?: true
-  profileImageUrl?: true
+  profileImageKey?: true
   nextPaymentAt?: true
   createdAt?: true
   updatedAt?: true
@@ -106,7 +106,7 @@ export type StudentMaxAggregateInputType = {
   name?: true
   notes?: true
   status?: true
-  profileImageUrl?: true
+  profileImageKey?: true
   nextPaymentAt?: true
   createdAt?: true
   updatedAt?: true
@@ -120,7 +120,7 @@ export type StudentCountAggregateInputType = {
   name?: true
   notes?: true
   status?: true
-  profileImageUrl?: true
+  profileImageKey?: true
   nextPaymentAt?: true
   createdAt?: true
   updatedAt?: true
@@ -221,7 +221,7 @@ export type StudentGroupByOutputType = {
   name: string
   notes: string
   status: $Enums.StudentStatusValue
-  profileImageUrl: string | null
+  profileImageKey: string | null
   nextPaymentAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -258,7 +258,7 @@ export type StudentWhereInput = {
   name?: Prisma.StringFilter<"Student"> | string
   notes?: Prisma.StringFilter<"Student"> | string
   status?: Prisma.EnumStudentStatusValueFilter<"Student"> | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.StringNullableFilter<"Student"> | string | null
+  profileImageKey?: Prisma.StringNullableFilter<"Student"> | string | null
   nextPaymentAt?: Prisma.DateTimeNullableFilter<"Student"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
@@ -275,7 +275,7 @@ export type StudentOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   nextPaymentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -295,7 +295,7 @@ export type StudentWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Student"> | string
   notes?: Prisma.StringFilter<"Student"> | string
   status?: Prisma.EnumStudentStatusValueFilter<"Student"> | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.StringNullableFilter<"Student"> | string | null
+  profileImageKey?: Prisma.StringNullableFilter<"Student"> | string | null
   nextPaymentAt?: Prisma.DateTimeNullableFilter<"Student"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
@@ -312,7 +312,7 @@ export type StudentOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   nextPaymentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -334,7 +334,7 @@ export type StudentScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Student"> | string
   notes?: Prisma.StringWithAggregatesFilter<"Student"> | string
   status?: Prisma.EnumStudentStatusValueWithAggregatesFilter<"Student"> | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Student"> | string | null
+  profileImageKey?: Prisma.StringNullableWithAggregatesFilter<"Student"> | string | null
   nextPaymentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Student"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Student"> | Date | string
@@ -347,7 +347,7 @@ export type StudentCreateInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -364,7 +364,7 @@ export type StudentUncheckedCreateInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -380,7 +380,7 @@ export type StudentUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -397,7 +397,7 @@ export type StudentUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,7 +414,7 @@ export type StudentCreateManyInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -427,7 +427,7 @@ export type StudentUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -441,7 +441,7 @@ export type StudentUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -455,7 +455,7 @@ export type StudentCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  profileImageUrl?: Prisma.SortOrder
+  profileImageKey?: Prisma.SortOrder
   nextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -473,7 +473,7 @@ export type StudentMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  profileImageUrl?: Prisma.SortOrder
+  profileImageKey?: Prisma.SortOrder
   nextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -487,7 +487,7 @@ export type StudentMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  profileImageUrl?: Prisma.SortOrder
+  profileImageKey?: Prisma.SortOrder
   nextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -504,32 +504,8 @@ export type StudentScalarRelationFilter = {
   isNot?: Prisma.StudentWhereInput
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
-}
-
 export type EnumStudentStatusValueFieldUpdateOperationsInput = {
   set?: $Enums.StudentStatusValue
-}
-
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type StudentCreateNestedOneWithoutCommentsInput = {
@@ -579,7 +555,7 @@ export type StudentCreateWithoutCommentsInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -595,7 +571,7 @@ export type StudentUncheckedCreateWithoutCommentsInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -626,7 +602,7 @@ export type StudentUpdateWithoutCommentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -642,7 +618,7 @@ export type StudentUncheckedUpdateWithoutCommentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -657,7 +633,7 @@ export type StudentCreateWithoutStatusesInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -673,7 +649,7 @@ export type StudentUncheckedCreateWithoutStatusesInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -704,7 +680,7 @@ export type StudentUpdateWithoutStatusesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -720,7 +696,7 @@ export type StudentUncheckedUpdateWithoutStatusesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -735,7 +711,7 @@ export type StudentCreateWithoutLessonsInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -751,7 +727,7 @@ export type StudentUncheckedCreateWithoutLessonsInput = {
   name: string
   notes: string
   status?: $Enums.StudentStatusValue
-  profileImageUrl?: string | null
+  profileImageKey?: string | null
   nextPaymentAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -782,7 +758,7 @@ export type StudentUpdateWithoutLessonsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -798,7 +774,7 @@ export type StudentUncheckedUpdateWithoutLessonsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   notes?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumStudentStatusValueFieldUpdateOperationsInput | $Enums.StudentStatusValue
-  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nextPaymentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -863,7 +839,7 @@ export type StudentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name?: boolean
   notes?: boolean
   status?: boolean
-  profileImageUrl?: boolean
+  profileImageKey?: boolean
   nextPaymentAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -881,7 +857,7 @@ export type StudentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   notes?: boolean
   status?: boolean
-  profileImageUrl?: boolean
+  profileImageKey?: boolean
   nextPaymentAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -895,7 +871,7 @@ export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   notes?: boolean
   status?: boolean
-  profileImageUrl?: boolean
+  profileImageKey?: boolean
   nextPaymentAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -909,7 +885,7 @@ export type StudentSelectScalar = {
   name?: boolean
   notes?: boolean
   status?: boolean
-  profileImageUrl?: boolean
+  profileImageKey?: boolean
   nextPaymentAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -917,7 +893,7 @@ export type StudentSelectScalar = {
   userId?: boolean
 }
 
-export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "status" | "profileImageUrl" | "nextPaymentAt" | "createdAt" | "updatedAt" | "deletedAt" | "userId", ExtArgs["result"]["student"]>
+export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "status" | "profileImageKey" | "nextPaymentAt" | "createdAt" | "updatedAt" | "deletedAt" | "userId", ExtArgs["result"]["student"]>
 export type StudentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lessons?: boolean | Prisma.Student$lessonsArgs<ExtArgs>
   comments?: boolean | Prisma.Student$commentsArgs<ExtArgs>
@@ -940,7 +916,7 @@ export type $StudentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     name: string
     notes: string
     status: $Enums.StudentStatusValue
-    profileImageUrl: string | null
+    profileImageKey: string | null
     nextPaymentAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -1377,7 +1353,7 @@ export interface StudentFieldRefs {
   readonly name: Prisma.FieldRef<"Student", 'String'>
   readonly notes: Prisma.FieldRef<"Student", 'String'>
   readonly status: Prisma.FieldRef<"Student", 'StudentStatusValue'>
-  readonly profileImageUrl: Prisma.FieldRef<"Student", 'String'>
+  readonly profileImageKey: Prisma.FieldRef<"Student", 'String'>
   readonly nextPaymentAt: Prisma.FieldRef<"Student", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Student", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Student", 'DateTime'>

@@ -9,10 +9,6 @@ import EditStudentModal from '@/components/student/edit-student-modal';
 import ChangeStatusModal from './_change-status-modal';
 import StatusModal from './_status-modal';
 
-function getProfileImageUrl(studentUuid: string): string {
-  return `/api/students/${studentUuid}/profile-image.webp`;
-}
-
 const PAYMENT_METHODS = {
   card: '카드',
   transfer: '계좌이체',
@@ -20,7 +16,6 @@ const PAYMENT_METHODS = {
   none: '미지정',
 };
 export default function Student({ student, statuses }) {
-  const [isEditing, setIsEditing] = React.useState(false);
   const [isEditingStatus, setIsEditingStatus] = React.useState(false);
   const [isStatusHistoryOpen, setIsStatusHistoryOpen] = React.useState(false);
 
@@ -29,7 +24,7 @@ export default function Student({ student, statuses }) {
       <div className="flex gap-3">
         <Avatar size="lg" className="shrink-0">
           {student.profileImageUrl
-            ? <Avatar.Image src={getProfileImageUrl(student.uuid)} alt={student.name} />
+            ? <Avatar.Image src={student.profileImageUrl} alt={student.name} />
             : null}
           <Avatar.Fallback>{student.name.charAt(student.name.length - 1)}</Avatar.Fallback>
         </Avatar>

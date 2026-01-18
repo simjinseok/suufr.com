@@ -18,11 +18,12 @@ export default function SignupForm() {
   const router = useRouter();
 
   const [state, formAction, isPending] = React.useActionState(signup, {
-    fields: { email: '', password: '', passwordConfirm: '' },
+    fields: { name: '', email: '', password: '', passwordConfirm: '' },
   });
 
   const { control } = useForm({
     values: {
+      name: state.fields?.name || '',
       email: state.fields?.email || '',
       password: '',
       passwordConfirm: '',
@@ -59,6 +60,23 @@ export default function SignupForm() {
               {state.message}
             </div>
           )}
+
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                name={name}
+                value={value}
+                onChange={onChange}
+                isRequired
+              >
+                <Label>이름</Label>
+                <Input type="text" placeholder="홍길동" />
+                <FieldError />
+              </TextField>
+            )}
+          />
 
           <Controller
             control={control}

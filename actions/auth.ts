@@ -31,6 +31,48 @@ import {
   resetPasswordSchema,
   mfaSchema,
 } from '@/schemas/auth';
+import prisma from '@/utils/prisma';
+
+// Organization + OrganizationMember 자동 생성 (첫 로그인 시)
+async function ensureUserWithOrganization(
+  userId: string,
+  email: string,
+  name?: string,
+) {
+  // 이미 멤버십이 있으면 스킵
+  const existingMember = await prisma.organizationMember.findUnique({
+    where: { userId },
+  });
+
+  if (existingMember) return;
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Organization 생성 (사용자 이름으로)
+    const orgName = name || email.split('@')[0];
+    const org = await tx.organization.create({
+      data: {
+        name: orgName,
+      },
+    });
+
+    // 2. OrganizationMember 생성 (프로필 역할)
+    await tx.organizationMember.create({
+      data: {
+        name: orgName,
+        role: 'owner',
+        organizationId: org.id,
+        userId,
+      },
+    });
+
+    // 3. UserSettings 생성 또는 업데이트
+    await tx.userSettings.upsert({
+      where: { userId },
+      create: { userId, currentOrganizationId: org.id },
+      update: { currentOrganizationId: org.id },
+    });
+  });
+}
 
 // Login action
 type LoginFields = { email: string; password: string };
@@ -127,6 +169,13 @@ export async function login(
         secure: isProduction,
         sameSite: 'strict',
       });
+
+      // User 프로비저닝 (User + Organization + OrganizationMember 자동 생성)
+      await ensureUserWithOrganization(
+        cognitoUsername,
+        payload.email,
+        payload.name,
+      );
 
       state.success = true;
     }
@@ -233,6 +282,13 @@ export async function respondToMfa(
       cookieStore.delete('mfa_session');
       cookieStore.delete('mfa_email');
 
+      // User 프로비저닝 (User + Organization + OrganizationMember 자동 생성)
+      await ensureUserWithOrganization(
+        cognitoUsername,
+        payload.email,
+        payload.name,
+      );
+
       state.success = true;
     }
   }
@@ -252,7 +308,7 @@ export async function respondToMfa(
 }
 
 // Signup action
-type SignupFields = { email: string; password: string; passwordConfirm: string };
+type SignupFields = { name: string; email: string; password: string; passwordConfirm: string };
 type SignupState = ServerActionState<SignupFields>;
 
 export async function signup(
@@ -263,6 +319,7 @@ export async function signup(
   const state: SignupState = {
     success: false,
     fields: {
+      name: (data.name as string) || '',
       email: (data.email as string) || '',
       password: '',
       passwordConfirm: '',
@@ -287,6 +344,10 @@ export async function signup(
         {
           Name: 'email',
           Value: validation.data.email,
+        },
+        {
+          Name: 'name',
+          Value: validation.data.name,
         },
       ],
     });

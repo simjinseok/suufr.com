@@ -8,6 +8,9 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Organization'
+export type * from './models/OrganizationMember'
+export type * from './models/MemberStatus'
 export type * from './models/Student'
 export type * from './models/Feedback'
 export type * from './models/Payment'

@@ -1,11 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { redirect } from 'next/navigation';
 import { getSession } from '@/utils/auth';
 import prisma from '@/utils/prisma';
-import { optimizeImageUrl } from '@/utils/cloudinary-url';
+import { buildCloudinaryUrl } from '@/utils/cloudinary-url.server';
 
+// 기존 라우트 - 새 /assets/student/[key] 라우트로 리다이렉트
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ studentUuid: string }> },
 ) {
   const session = await getSession();
@@ -17,43 +19,21 @@ export async function GET(
 
   const student = await prisma.student.findUnique({
     where: { uuid: studentUuid, userId: session.user.id, deletedAt: null },
-    select: { profileImageUrl: true, updatedAt: true },
+    select: { profileImageKey: true },
   });
 
-  if (!student?.profileImageUrl) {
+  if (!student?.profileImageKey) {
     return new NextResponse(null, { status: 404 });
   }
 
-  // ETag 생성 (updatedAt 기반)
-  const etag = `"${student.updatedAt.getTime()}"`;
-
-  // If-None-Match 헤더 확인 - ETag 일치 시 304 반환
-  const ifNoneMatch = request.headers.get('If-None-Match');
-  if (ifNoneMatch === etag) {
-    return new NextResponse(null, { status: 304 });
-  }
-
-  // Cloudinary URL에 최적화 파라미터 추가
-  const optimizedUrl = optimizeImageUrl(student.profileImageUrl, {
-    width: 112, // 56px * 2 for retina
+  const cloudinaryUrl = buildCloudinaryUrl(student.profileImageKey, 'students', {
+    width: 112,
     format: 'webp',
   });
 
-  if (!optimizedUrl) {
+  if (!cloudinaryUrl) {
     return new NextResponse(null, { status: 404 });
   }
 
-  const imageResponse = await fetch(optimizedUrl);
-
-  if (!imageResponse.ok) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  return new NextResponse(imageResponse.body, {
-    headers: {
-      'Content-Type': 'image/webp',
-      'ETag': etag,
-      'Cache-Control': 'private, no-cache',
-    },
-  });
+  redirect(cloudinaryUrl);
 }

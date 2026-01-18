@@ -2,6 +2,10 @@ import type { Student } from '@/types/index';
 
 import prisma from '@/utils/prisma';
 import { createLoader, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs/server';
+function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
+  if (!key) return null;
+  return `/assets/${folder}/${key}.webp`;
+}
 
 import Link from 'next/link';
 import React from 'react';
@@ -30,7 +34,7 @@ export default async function Page(props: PageProps<'/students'>) {
              students.name AS name,
              students.notes AS notes,
              students.status AS status,
-             students.profile_image_url AS "profileImageUrl",
+             students.profile_image_key AS "profileImageKey",
              students.created_at AS "createdAt",
              CAST(COUNT(DISTINCT sessions.id) FILTER (WHERE sessions.is_done = false AND sessions.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
              MAX(sessions.session_at) FILTER (WHERE sessions.is_done = true AND sessions.deleted_at IS NULL) AS "lastSessionDate",
@@ -49,6 +53,13 @@ export default async function Page(props: PageProps<'/students'>) {
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
   `;
 
+  // profileImageKey → profileImageUrl 변환 (key는 클라이언트에 노출하지 않음)
+  const studentsWithImageUrl = students.map(({ profileImageKey, ...student }) => ({
+    ...student,
+    profileImageUrl: buildAssetUrl(profileImageKey ?? null, 'student'),
+  }));
+
+  console.log(studentsWithImageUrl);
   const studentCount: number = await prisma.student.count({
     where: {
       deletedAt: null,
@@ -69,7 +80,7 @@ export default async function Page(props: PageProps<'/students'>) {
         <ConditionForm currentStatus={status} />
       </div>
 
-      <Students students={students} />
+      <Students students={studentsWithImageUrl} />
 
       <div className="mt-5 flex justify-between">
         {page > 1 && (

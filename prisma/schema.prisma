@@ -7,13 +7,90 @@ datasource db {
   provider = "postgresql"
 }
 
+// Organization (과외방)
+model Organization {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name      String // 상호명
+  logoUrl   String?   @map("logo_url")
+  phone     String? // 연락처
+  address   String? // 주소 (지도용)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+
+  members OrganizationMember[]
+
+  @@map("organizations")
+}
+
+// OrganizationMember (멤버십)
+// 멤버는 조직에서 생성 가능 (계정 연결 없이)
+// 선택적으로 초대를 통해 사용자 계정과 1:1 연결
+enum OrganizationRole {
+  owner // 소유자: 모든 권한
+  teacher // 선생님: 수업 관리
+}
+
+// 멤버 상태 Enum
+enum MemberStatusValue {
+  active // 활동중
+  paused // 일시정지
+  leave // 탈퇴
+
+  @@map("MemberStatus")
+}
+
+model OrganizationMember {
+  id              Int               @id @default(autoincrement())
+  uuid            String            @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name            String // 멤버 이름 (필수, 표시용)
+  role            OrganizationRole  @default(teacher)
+  status          MemberStatusValue @default(active) // 현재 상태
+  profileImageKey String?           @map("profile_image_key")
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(0)
+
+  // 조직 (필수)
+  organizationId Int          @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  // 사용자 연결 (선택) - Cognito sub 직접 참조
+  userId String? @unique @map("user_id") @db.Uuid
+
+  // 상태 변경 이력
+  statuses MemberStatus[]
+
+  @@unique([organizationId, name]) // 같은 조직 내 이름 중복 방지
+  @@index([organizationId, role, deletedAt])
+  @@map("organization_members")
+}
+
+// 멤버 상태 변경 이력
+model MemberStatus {
+  id        Int               @id @default(autoincrement())
+  uuid      String            @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  status    MemberStatusValue
+  notes     String? // 상태 변경 사유
+  changedAt DateTime          @default(now()) @map("changed_at") @db.Timestamptz(0)
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?         @map("deleted_at") @db.Timestamptz(0)
+  memberId  Int               @map("member_id")
+  member    OrganizationMember @relation(fields: [memberId], references: [id])
+
+  @@index([memberId, changedAt, deletedAt])
+  @@map("member_statuses")
+}
+
 model Student {
   id              Int                  @id @default(autoincrement())
   uuid            String               @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name            String
   notes           String
   status          StudentStatusValue   @default(pending)
-  profileImageUrl String?              @map("profile_image_url")
+  profileImageKey String?              @map("profile_image_key")
   nextPaymentAt   DateTime?            @map("next_payment_at") @db.Date
   createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(0)
@@ -167,12 +244,13 @@ enum StudentStatusValue {
 }
 
 model UserSettings {
-  userId                    String   @id @map("user_id") @db.Uuid
-  use24HourFormat           Boolean  @default(false) @map("use_24_hour_format")
-  defaultDuration           Int      @default(50) @map("default_duration")
-  autoUpdateNextPaymentAt   Boolean  @default(true) @map("auto_update_next_payment_at")
-  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+  userId                  String   @id @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  use24HourFormat         Boolean  @default(false) @map("use_24_hour_format")
+  defaultDuration         Int      @default(50) @map("default_duration")
+  autoUpdateNextPaymentAt Boolean  @default(true) @map("auto_update_next_payment_at")
+  currentOrganizationId   Int?     @map("current_organization_id")
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 
   @@map("user_settings")
 }

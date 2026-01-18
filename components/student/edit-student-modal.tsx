@@ -56,7 +56,7 @@ function Content({ student, close }: ContentProps) {
     name: string;
     notes: string;
     nextPaymentAt: CalendarDate | null;
-    profileImageUrl: string | null;
+    profileImageKey: string | null;
   }>({
     values: {
       id: student.id,
@@ -65,7 +65,7 @@ function Content({ student, close }: ContentProps) {
       nextPaymentAt: student.nextPaymentAt
         ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
         : null,
-      profileImageUrl: student.profileImageUrl ?? null,
+      profileImageKey: student.profileImageKey ?? null,
     },
   });
 
@@ -99,7 +99,7 @@ function Content({ student, close }: ContentProps) {
           <input type="hidden" name="studentUuid" value={student.uuid} />
           <Controller
             control={control}
-            name="profileImageUrl"
+            name="profileImageKey"
             render={({ field: { value, onChange } }) => (
               <ProfileImageUpload
                 name={watchName}

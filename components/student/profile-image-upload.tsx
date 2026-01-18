@@ -5,6 +5,15 @@ import { Avatar, Spinner } from '@heroui/react';
 import { CameraIcon, XIcon } from 'lucide-react';
 import { optimizeAvatarUrl } from '@/utils/cloudinary-url';
 
+function getProfileImageSrc(value: string, displaySize: number): string {
+  // 임시 URL (업로드 프리뷰) - Cloudinary URL로 시작하는 경우
+  if (value.includes('res.cloudinary.com')) {
+    return optimizeAvatarUrl(value, displaySize) || value;
+  }
+  // 저장된 키 - 새로운 asset 경로 사용
+  return `/assets/student/${value}.webp`;
+}
+
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (리사이징 전 원본 허용)
 const OUTPUT_SIZE = 400; // 출력 이미지 크기 (px)
@@ -148,7 +157,7 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
       >
         <Avatar size="lg">
           {value
-            ? <Avatar.Image src={optimizeAvatarUrl(value, AVATAR_DISPLAY_SIZE)!} alt={name} />
+            ? <Avatar.Image src={getProfileImageSrc(value, AVATAR_DISPLAY_SIZE)} alt={name} />
             : null}
           <Avatar.Fallback>{initial}</Avatar.Fallback>
         </Avatar>
@@ -188,7 +197,7 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
         className="hidden"
         disabled={disabled || isUploading}
       />
-      <input type="hidden" name="profileImageUrl" value={value || ''} />
+      <input type="hidden" name="profileImageKey" value={value || ''} />
       <input type="hidden" name="profileImagePublicId" value={publicId || ''} />
     </div>
   );

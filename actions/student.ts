@@ -8,7 +8,7 @@ import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
-import { moveImage } from '@/utils/cloudinary';
+import { moveImage, deleteImage } from '@/utils/cloudinary';
 
 const createStudentSchema = z.object({
   name: z.string().trim().min(1, { error: '이름을 입력해주세요' }),
@@ -72,7 +72,7 @@ const updateStudentSchema = z.object({
   name: z.string().min(1),
   notes: z.string(),
   nextPaymentAt: z.string().optional(),
-  profileImageUrl: z.string().url().nullable().optional(),
+  profileImageKey: z.string().nullable().optional(),
 });
 
 type UpdateStudentState = ServerActionState<{
@@ -90,8 +90,8 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
     async () => {
       const { user } = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
-      const { studentUuid, profileImageUrl: rawProfileImageUrl, profileImagePublicId: rawPublicId, ...data } = formEntries;
-      let profileImageUrl = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
+      const { studentUuid, profileImageKey: rawProfileImageUrl, profileImagePublicId: rawPublicId, ...data } = formEntries;
+      let profileImageKey = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
       const publicId = typeof rawPublicId === 'string' && rawPublicId !== '' ? rawPublicId : null;
       const state: UpdateStudentState = {
         success: false,
@@ -116,21 +116,23 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
 
       const validationResult = updateStudentSchema.safeParse({
         ...data,
-        profileImageUrl,
+        profileImageKey,
       });
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
 
-      const { nextPaymentAt, profileImageUrl: validatedProfileImageUrl, ...restData } = validationResult.data;
+      const { nextPaymentAt, profileImageKey: validatedProfileImageUrl, ...restData } = validationResult.data;
 
       // 새 이미지가 임시 폴더에 업로드된 경우 정식 폴더로 이동
-      let finalProfileImageUrl = validatedProfileImageUrl;
+      let finalProfileImageKey = student.profileImageKey; // 기존 값 유지
+      const oldImageKey = student.profileImageKey;
+
       if (publicId?.startsWith('suufr/temp/')) {
-        const movedUrl = await moveImage(publicId);
-        if (movedUrl) {
-          finalProfileImageUrl = movedUrl;
+        const newKey = await moveImage(publicId);
+        if (newKey) {
+          finalProfileImageKey = newKey;
         }
       }
 
@@ -140,12 +142,17 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         },
         data: {
           ...restData,
-          profileImageUrl: finalProfileImageUrl,
+          profileImageKey: finalProfileImageKey,
           // 날짜만 저장하는 필드라서 UTC로 저장해야함. 아니면 하루가 깍임
           nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('UTC') : null,
           updatedAt: new Date(),
         },
       });
+
+      // 새 이미지가 저장된 경우, 이전 이미지 삭제
+      if (finalProfileImageKey !== oldImageKey && oldImageKey) {
+        await deleteImage(oldImageKey, 'students');
+      }
 
       revalidatePath('/students', 'page');
       revalidatePath('/students/[studentUuid]', 'page');
