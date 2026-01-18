@@ -18,6 +18,8 @@ type StudentWithStats = {
   notes: string;
   profileImageKey: string | null;
   nextPaymentAt: Date | null;
+  phone: string | null;
+  email: string | null;
   remainingSessionsCount: number;
   completedLessonCount: number;
   unpaidLessonCount: number;
@@ -47,6 +49,8 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
       s.notes,
       s.profile_image_key AS "profileImageKey",
       s.next_payment_at AS "nextPaymentAt",
+      s.phone,
+      s.email,
       CAST(COUNT(sess.id) FILTER (
         WHERE sess.is_done = false AND sess.deleted_at IS NULL
       ) AS INT) AS "remainingSessionsCount",
@@ -73,7 +77,7 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
     WHERE s.uuid = ${studentUuid}::uuid
       AND s.organization_id = ${organization.id}
       AND s.deleted_at IS NULL
-    GROUP BY s.id, s.uuid, s.name, s.status, s.notes, s.next_payment_at
+    GROUP BY s.id, s.uuid, s.name, s.status, s.notes, s.next_payment_at, s.phone, s.email
   `;
 
   if (!student) {

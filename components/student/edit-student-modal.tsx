@@ -57,6 +57,8 @@ function Content({ student, close }: ContentProps) {
     notes: string;
     nextPaymentAt: CalendarDate | null;
     profileImageKey: string | null;
+    phone: string;
+    email: string;
   }>({
     values: {
       id: student.id,
@@ -66,6 +68,8 @@ function Content({ student, close }: ContentProps) {
         ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
         : null,
       profileImageKey: student.profileImageKey ?? null,
+      phone: student.phone ?? '',
+      email: student.email ?? '',
     },
   });
 
@@ -121,6 +125,40 @@ function Content({ student, close }: ContentProps) {
               >
                 <Label>이름</Label>
                 <Input autoComplete="off" />
+                <FieldError />
+              </TextField>
+            )}
+          />
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                className="mt-4"
+                name={name}
+                value={value}
+                onChange={onChange}
+                isReadOnly={isPending}
+              >
+                <Label>연락처</Label>
+                <Input type="tel" autoComplete="off" />
+                <FieldError />
+              </TextField>
+            )}
+          />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                className="mt-4"
+                name={name}
+                value={value}
+                onChange={onChange}
+                isReadOnly={isPending}
+              >
+                <Label>이메일</Label>
+                <Input type="email" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}

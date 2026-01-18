@@ -80,6 +80,8 @@ const updateStudentSchema = z.object({
   notes: z.string(),
   nextPaymentAt: z.string().optional(),
   profileImageKey: z.string().nullable().optional(),
+  phone: z.string().optional().transform(val => val === '' ? null : val),
+  email: z.string().optional().transform(val => val === '' ? null : val),
 });
 
 type UpdateStudentState = ServerActionState<{

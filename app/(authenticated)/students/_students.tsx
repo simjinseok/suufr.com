@@ -46,24 +46,6 @@ export default function Students({ students }: { students: Student[] }) {
                 size="sm"
               />
             </div>
-            <p className="text-xs text-zinc-500">
-              {student.lastSessionDate && (
-                <Chip size="sm" color="default" variant="tertiary">
-                  최근&nbsp;
-                  {format(new Date(student.lastSessionDate), 'M월 d일', { locale: ko })}
-                  {student.nextSessionDate && ' · '}
-                </Chip>
-              )}
-              {student.nextSessionDate && (
-                <Chip size="sm" color="default" variant="tertiary">
-                  다음&nbsp;
-                  <span className="text-primary-600 font-medium">
-                    {format(new Date(student.nextSessionDate), 'M월 d일', { locale: ko })}
-                  </span>
-                </Chip>
-              )}
-              {!student.lastSessionDate && !student.nextSessionDate && '수업 없음'}
-            </p>
           </div>
 
           {/* 화살표 */}

@@ -13,6 +13,8 @@ export type Student = {
   status: string;
   profileImageKey?: string | null;
   nextPaymentAt?: Date | null;
+  phone?: string | null;
+  email?: string | null;
   createdAt?: Date;
   completedSessionsCount?: number;
   sessionsCount?: number;
