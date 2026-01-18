@@ -39,7 +39,7 @@ export default async function Page(props: PageProps<'/students'>) {
              students.notes AS notes,
              students.status AS status,
              students.profile_image_key AS "profileImageKey",
-             students.created_at AS "createdAt",
+             students.created_at AS "createdAt"
       FROM students
                LEFT JOIN lessons ON lessons.student_id = students.id AND lessons.deleted_at IS NULL
                LEFT JOIN sessions ON sessions.lesson_id = lessons.id
