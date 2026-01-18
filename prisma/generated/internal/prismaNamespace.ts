@@ -396,7 +396,8 @@ export const ModelName = {
   SessionShare: 'SessionShare',
   Session: 'Session',
   Lesson: 'Lesson',
-  UserSettings: 'UserSettings'
+  UserSettings: 'UserSettings',
+  AppToken: 'AppToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "organization" | "organizationMember" | "memberStatus" | "student" | "feedback" | "payment" | "meeting" | "studentComment" | "studentStatus" | "sessionShare" | "session" | "lesson" | "userSettings"
+    modelProps: "organization" | "organizationMember" | "memberStatus" | "student" | "feedback" | "payment" | "meeting" | "studentComment" | "studentStatus" | "sessionShare" | "session" | "lesson" | "userSettings" | "appToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1379,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AppToken: {
+      payload: Prisma.$AppTokenPayload<ExtArgs>
+      fields: Prisma.AppTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.AppTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        findMany: {
+          args: Prisma.AppTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>[]
+        }
+        create: {
+          args: Prisma.AppTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        createMany: {
+          args: Prisma.AppTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.AppTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        update: {
+          args: Prisma.AppTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.AppTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppToken>
+        }
+        groupBy: {
+          args: Prisma.AppTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppTokenCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1476,6 +1551,8 @@ export const StudentScalarFieldEnum = {
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
   userId: 'userId',
+  phone: 'phone',
+  email: 'email',
   organizationId: 'organizationId'
 } as const
 
@@ -1613,6 +1690,20 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const AppTokenScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  name: 'name',
+  tokenHash: 'tokenHash',
+  lastUsedAt: 'lastUsedAt',
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt',
+  userId: 'userId'
+} as const
+
+export type AppTokenScalarFieldEnum = (typeof AppTokenScalarFieldEnum)[keyof typeof AppTokenScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1857,6 +1948,7 @@ export type GlobalOmitConfig = {
   session?: Prisma.SessionOmit
   lesson?: Prisma.LessonOmit
   userSettings?: Prisma.UserSettingsOmit
+  appToken?: Prisma.AppTokenOmit
 }
 
 /* Types for Logging */

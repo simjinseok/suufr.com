@@ -104,3 +104,8 @@ export type Lesson = Prisma.LessonModel
  * 
  */
 export type UserSettings = Prisma.UserSettingsModel
+/**
+ * Model AppToken
+ * 
+ */
+export type AppToken = Prisma.AppTokenModel

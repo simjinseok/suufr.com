@@ -63,7 +63,8 @@ export const ModelName = {
   SessionShare: 'SessionShare',
   Session: 'Session',
   Lesson: 'Lesson',
-  UserSettings: 'UserSettings'
+  UserSettings: 'UserSettings',
+  AppToken: 'AppToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -141,6 +142,8 @@ export const StudentScalarFieldEnum = {
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
   userId: 'userId',
+  phone: 'phone',
+  email: 'email',
   organizationId: 'organizationId'
 } as const
 
@@ -278,6 +281,20 @@ export const UserSettingsScalarFieldEnum = {
 } as const
 
 export type UserSettingsScalarFieldEnum = (typeof UserSettingsScalarFieldEnum)[keyof typeof UserSettingsScalarFieldEnum]
+
+
+export const AppTokenScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  name: 'name',
+  tokenHash: 'tokenHash',
+  lastUsedAt: 'lastUsedAt',
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt',
+  userId: 'userId'
+} as const
+
+export type AppTokenScalarFieldEnum = (typeof AppTokenScalarFieldEnum)[keyof typeof AppTokenScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -7,7 +7,7 @@ import { ko } from 'date-fns/locale/ko';
 import Link from 'next/link';
 import React from 'react';
 import { Avatar, Chip } from '@heroui/react';
-import { ChevronRightIcon } from 'lucide-react';
+import { ChevronRightIcon, UserIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 
 export default function Students({ students }: { students: Student[] }) {
@@ -32,7 +32,7 @@ export default function Students({ students }: { students: Student[] }) {
             {student.profileImageUrl
               ? <Avatar.Image src={student.profileImageUrl} alt={student.name} loading="lazy" />
               : null}
-            <Avatar.Fallback>{student.name.charAt(student.name.length - 1)}</Avatar.Fallback>
+            <Avatar.Fallback><UserIcon className="w-5 h-5" /></Avatar.Fallback>
           </Avatar>
 
           {/* 정보 영역 */}

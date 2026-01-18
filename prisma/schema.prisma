@@ -102,6 +102,10 @@ model Student {
   deletedAt       DateTime?          @map("deleted_at") @db.Timestamptz(0)
   userId          String             @map("user_id") @db.Uuid // 유지 (추후 제거)
 
+  // 연락처 정보 (CardDAV)
+  phone String?
+  email String?
+
   // 조직
   organizationId Int          @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -223,8 +227,9 @@ model Session {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
   lessonId  Int       @map("lesson_id")
-  feedback  Feedback?
-  lesson    Lesson    @relation(fields: [lessonId], references: [id])
+
+  feedback Feedback?
+  lesson   Lesson    @relation(fields: [lessonId], references: [id])
 
   @@index([lessonId, sessionAt, deletedAt])
   @@map("sessions")
@@ -273,4 +278,20 @@ model UserSettings {
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 
   @@map("user_settings")
+}
+
+// 앱 토큰 (CalDAV/CardDAV 인증용)
+model AppToken {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name       String // "iPhone", "MacBook" 등
+  tokenHash  String    @map("token_hash")
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(0)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(0)
+  userId     String    @map("user_id") @db.Uuid
+
+  @@index([userId, deletedAt])
+  @@index([tokenHash, deletedAt])
+  @@map("app_tokens")
 }

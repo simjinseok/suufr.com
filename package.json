@@ -34,6 +34,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "es-hangul": "^2.3.8",
+    "fast-xml-parser": "^5.3.3",
     "framer-motion": "^12.26.2",
     "import-in-the-middle": "^2.0.4",
     "lucide-react": "^0.562.0",

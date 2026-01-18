@@ -10,6 +10,7 @@ import {
   UserRoundCheckIcon,
   CalendarIcon,
   SettingsIcon,
+  ShieldIcon,
   BuildingIcon,
   ChevronsUpDownIcon,
   CheckIcon,
@@ -51,6 +52,9 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
 
     if (keyStr === 'settings') {
       window.location.href = '/settings';
+    }
+    else if (keyStr === 'security') {
+      window.location.href = '/settings/security';
     }
     else if (keyStr === 'org-settings') {
       window.location.href = `/organizations/${currentOrg.uuid}/settings`;
@@ -158,6 +162,14 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
                   </div>
                   <div>
                     <Label>계정 설정</Label>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="security" textValue="보안 설정">
+                  <div>
+                    <ShieldIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>보안 설정</Label>
                   </div>
                 </Dropdown.Item>
                 <Separator />

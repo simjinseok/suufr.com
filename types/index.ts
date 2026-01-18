@@ -137,3 +137,11 @@ export type TMemberStatus = {
   notes: string | null;
   changedAt: Date;
 };
+
+export type TAppToken = {
+  id: number;
+  uuid: string;
+  name: string;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+};

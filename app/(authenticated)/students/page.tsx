@@ -40,12 +40,6 @@ export default async function Page(props: PageProps<'/students'>) {
              students.status AS status,
              students.profile_image_key AS "profileImageKey",
              students.created_at AS "createdAt",
-             CAST(COUNT(DISTINCT sessions.id) FILTER (WHERE sessions.is_done = false AND sessions.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
-             MAX(sessions.session_at) FILTER (WHERE sessions.is_done = true AND sessions.deleted_at IS NULL) AS "lastSessionDate",
-             MIN(sessions.session_at) FILTER (WHERE sessions.is_done = false AND sessions.session_at >= NOW() AND sessions.deleted_at IS NULL) AS "nextSessionDate",
-             BOOL_OR(lessons.id IS NOT NULL AND lessons.deleted_at IS NULL AND NOT EXISTS (
-               SELECT 1 FROM payments WHERE payments.lesson_id = lessons.id AND payments.deleted_at IS NULL
-             )) AS "hasUnpaidLesson"
       FROM students
                LEFT JOIN lessons ON lessons.student_id = students.id AND lessons.deleted_at IS NULL
                LEFT JOIN sessions ON sessions.lesson_id = lessons.id

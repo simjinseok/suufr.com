@@ -4,6 +4,11 @@ import LessonView from './_lesson-view';
 
 export const dynamic = 'force-dynamic';
 
+function buildAssetUrl(key: string | null | undefined, folder: 'organization' | 'member'): string | null {
+  if (!key) return null;
+  return `/assets/${folder}/${key}.webp`;
+}
+
 export default async function SharedLessonPage({
   params,
 }: {
@@ -26,6 +31,18 @@ export default async function SharedLessonPage({
             select: {
               name: true,
               nextPaymentAt: true,
+            },
+          },
+          member: {
+            select: {
+              name: true,
+              profileImageKey: true,
+              organization: {
+                select: {
+                  name: true,
+                  logoImageKey: true,
+                },
+              },
             },
           },
           payment: {
@@ -60,17 +77,35 @@ export default async function SharedLessonPage({
     notFound();
   }
 
+  const { member } = share.lesson;
+  const teacher = member ? {
+    name: member.name,
+    profileImageUrl: buildAssetUrl(member.profileImageKey, 'member'),
+  } : null;
+  const organization = member?.organization ? {
+    name: member.organization.name,
+    logoUrl: buildAssetUrl(member.organization.logoImageKey, 'organization'),
+  } : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <header className="mb-6">
-          <p className="text-lg font-bold text-gray-900">{share.lesson.student?.name} 레슨</p>
-          {/*<h1 className="text-2xl font-bold text-gray-900">*/}
-          {/*  {share.lesson.title}*/}
-          {/*</h1>*/}
-        </header>
+        {/* 조직 정보 (카드 밖 최상단) */}
+        {organization && (
+          <div className="mb-4">
+            {organization.logoUrl ? (
+              <img
+                src={organization.logoUrl}
+                alt={organization.name}
+                className="h-[120px]"
+              />
+            ) : (
+              <p className="text-sm font-medium text-gray-600">{organization.name}</p>
+            )}
+          </div>
+        )}
 
-        <LessonView lesson={share.lesson} />
+        <LessonView lesson={share.lesson} teacher={teacher} />
 
         <footer className="mt-8 text-center text-sm text-gray-400">
           <p>
