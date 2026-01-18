@@ -12,6 +12,7 @@ import {
   Label,
   Modal,
   NumberField,
+  Tabs,
   TextArea,
   TextField,
 } from '@heroui/react';
@@ -48,8 +49,8 @@ interface ContentProps {
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
+  const [selectedTab, setSelectedTab] = React.useState<'memo' | 'feedback'>('memo');
 
-  console.log(session);
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
       isDone: session?.isDone,
@@ -59,7 +60,7 @@ function Content({ session, close }: ContentProps) {
       feedback: session?.feedback?.notes,
     },
   });
-  const { control } = useForm({
+  const { control, watch } = useForm({
     values: {
       isDone: state.fields?.isDone,
       sessionAt: state.fields?.sessionAt,
@@ -68,6 +69,15 @@ function Content({ session, close }: ContentProps) {
       feedback: state.fields?.feedback,
     },
   });
+
+  const isDoneValue = watch('isDone');
+
+  // isDone이 false가 되면 memo 탭으로 전환
+  React.useEffect(() => {
+    if (!isDoneValue && selectedTab === 'feedback') {
+      setSelectedTab('memo');
+    }
+  }, [isDoneValue, selectedTab]);
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -157,41 +167,52 @@ function Content({ session, close }: ContentProps) {
               </NumberField>
             )}
           />
-          <Controller
-            control={control}
-            name="notes"
-            render={({ field: { name, value, onChange } }) => (
-              <TextField
-                name={name}
-                value={value}
-                onChange={onChange}
-              >
-                <Label>메모</Label>
-                <TextArea rows={5} className="resize-none" />
-                <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
-              </TextField>
-            )}
-          />
+          <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as 'memo' | 'feedback')}>
+            <Tabs.ListContainer>
+              <Tabs.List>
+                <Tabs.Tab id="memo">
+                  메모
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab id="feedback" isDisabled={!isDoneValue}>
+                  피드백
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
+          </Tabs>
 
-          <Controller
-            control={control}
-            name="isDone"
-            render={({ field: { value } }) => (
-              <React.Activity mode={value ? 'visible' : 'hidden'}>
-                <Controller
-                  control={control}
-                  name="feedback"
-                  render={({ field: { name, value, onChange } }) => (
-                    <TextField name={name} value={value} onChange={onChange}>
-                      <Label>피드백</Label>
-                      <TextArea rows={5} className="resize-none" />
-                      <Description>수강생에게 보여줄 피드백입니다</Description>
-                    </TextField>
-                  )}
-                />
-              </React.Activity>
-            )}
-          />
+          <React.Activity mode={selectedTab === 'memo' ? 'visible' : 'hidden'}>
+            <Controller
+              control={control}
+              name="notes"
+              render={({ field: { name, value, onChange } }) => (
+                <TextField
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                >
+                  <Label className="sr-only">메모</Label>
+                  <TextArea rows={5} className="resize-none" />
+                  <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
+                </TextField>
+              )}
+            />
+          </React.Activity>
+
+          <React.Activity mode={selectedTab === 'feedback' ? 'visible' : 'hidden'}>
+            <Controller
+              control={control}
+              name="feedback"
+              render={({ field: { name, value, onChange } }) => (
+                <TextField name={name} value={value} onChange={onChange}>
+                  <Label className="sr-only">피드백</Label>
+                  <TextArea rows={5} className="resize-none" />
+                  <Description>수강생에게 보여줄 피드백입니다</Description>
+                </TextField>
+              )}
+            />
+          </React.Activity>
         </Form>
       </Modal.Body>
       <Modal.Footer>
