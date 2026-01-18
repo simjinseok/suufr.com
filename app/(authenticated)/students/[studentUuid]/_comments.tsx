@@ -108,7 +108,7 @@ function Content({ studentUuid, comment }) {
               {comment && (
                 <input type="hidden" name="id" value={comment.id} />
               )}
-              <Textarea name="content" label="내용" defaultValue={comment?.content} autoFocus />
+              <Textarea name="content" label="내용" defaultValue={comment?.content} />
             </Form>
           </ModalBody>
           <ModalFooter>

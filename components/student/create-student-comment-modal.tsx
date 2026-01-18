@@ -62,7 +62,7 @@ function Content({ studentUuid, close }) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>내용</Label>
-                <TextArea rows={5} autoFocus />
+                <TextArea rows={5} />
               </TextField>
             )}
           />

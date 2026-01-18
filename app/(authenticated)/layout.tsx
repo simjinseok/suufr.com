@@ -20,7 +20,7 @@ export default async function AuthenticatedLayout({
 
   return (
     <TimeFormatProvider use24HourFormat={settings.use24HourFormat} defaultDuration={settings.defaultDuration}>
-      <div className="flex h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
+      <div className="flex min-h-dvh bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
         <Sidebar
           currentOrg={session.organization}
           organizations={session.organizations}
