@@ -2,72 +2,10 @@
 
 import * as React from 'react';
 import { Spinner } from '@heroui/react';
-import { Building2Icon, CameraIcon, XIcon } from 'lucide-react';
-import { optimizeImageUrl } from '@/utils/cloudinary-url';
-
-function getLogoImageSrc(value: string, displaySize: number): string {
-  // 임시 URL (업로드 프리뷰)
-  if (value.includes('res.cloudinary.com')) {
-    return optimizeImageUrl(value, { width: displaySize }) || value;
-  }
-  // /assets/ 경로
-  return value;
-}
+import { CameraIcon, XIcon } from 'lucide-react';
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (리사이징 전 원본 허용)
-const OUTPUT_SIZE = 400; // 출력 이미지 크기 (px)
-const OUTPUT_QUALITY = 0.85; // JPEG 퀄리티 (0-1)
-const LOGO_DISPLAY_SIZE = 96; // 표시 크기 (px)
-
-async function resizeImage(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-
-      // 정사각형 크롭 + 리사이징
-      const canvas = document.createElement('canvas');
-      canvas.width = OUTPUT_SIZE;
-      canvas.height = OUTPUT_SIZE;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Canvas context not available'));
-        return;
-      }
-
-      // 중앙 기준 정사각형 크롭
-      const size = Math.min(img.width, img.height);
-      const sx = (img.width - size) / 2;
-      const sy = (img.height - size) / 2;
-
-      ctx.drawImage(img, sx, sy, size, size, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob);
-          }
-          else {
-            reject(new Error('Failed to create blob'));
-          }
-        },
-        'image/jpeg',
-        OUTPUT_QUALITY,
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-
-    img.src = url;
-  });
-}
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 
 interface Props {
   value: string | null;
@@ -91,7 +29,7 @@ export default function OrganizationLogoUpload({ value, onChange, onPublicIdChan
     setError(null);
 
     if (file.size > MAX_FILE_SIZE) {
-      setError('파일 크기는 10MB 이하여야 합니다.');
+      setError('파일 크기는 1MB 이하여야 합니다.');
       return;
     }
 
@@ -103,12 +41,8 @@ export default function OrganizationLogoUpload({ value, onChange, onPublicIdChan
     setIsUploading(true);
 
     try {
-      // 이미지 리사이징 및 압축
-      const resizedBlob = await resizeImage(file);
-      const resizedFile = new File([resizedBlob], 'logo.jpg', { type: 'image/jpeg' });
-
       const formData = new FormData();
-      formData.append('file', resizedFile);
+      formData.append('file', file);
 
       const response = await fetch('/api/organizations/logo', {
         method: 'POST',
@@ -162,42 +96,48 @@ export default function OrganizationLogoUpload({ value, onChange, onPublicIdChan
           className="relative cursor-pointer group"
           onClick={handleClick}
         >
-          <div className="size-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
-            {hasImage ? (
+          {hasImage ? (
+            <div className="relative">
               <img
-                src={getLogoImageSrc(displayImageUrl, LOGO_DISPLAY_SIZE)}
+                src={displayImageUrl}
                 alt="조직 로고"
-                className="size-full object-cover"
+                className="h-[120px]"
               />
-            ) : (
-              <Building2Icon className="size-10 text-gray-400" />
-            )}
-          </div>
-
-          {isUploading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-              <Spinner size="sm" color="white" />
+              {isUploading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <Spinner size="sm" color="white" />
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CameraIcon className="size-6 text-white" />
+                </div>
+              )}
+              {!isUploading && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="absolute -top-2 -right-2 size-6 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger-600"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              )}
             </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-              <CameraIcon className="size-6 text-white" />
+            <div className="relative">
+              <div className="size-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                <CameraIcon className="size-5 text-gray-400" />
+              </div>
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                  <Spinner size="sm" color="white" />
+                </div>
+              )}
             </div>
-          )}
-
-          {hasImage && !isUploading && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="absolute -top-2 -right-2 size-6 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger-600"
-            >
-              <XIcon className="size-4" />
-            </button>
           )}
         </div>
 
         <div className="text-xs text-gray-500">
-          <p>권장 크기: 400 x 400px</p>
-          <p>최대 10MB (JPG, PNG, WebP)</p>
+          <p>최대 1MB (JPG, PNG, WebP)</p>
         </div>
       </div>
 

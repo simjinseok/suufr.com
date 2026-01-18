@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { buildCloudinaryUrl } from '@/utils/cloudinary-url.server';
 
 export async function GET(
   _request: Request,
@@ -10,14 +9,13 @@ export async function GET(
   // .webp 확장자 제거
   const imageKey = key.replace(/\.webp$/, '');
 
-  const cloudinaryUrl = buildCloudinaryUrl(imageKey, 'organizations', {
-    width: 200,
-    format: 'webp',
-  });
-
-  if (!cloudinaryUrl) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) {
     return new Response(null, { status: 404 });
   }
+
+  // 원본 이미지 그대로 반환 (리사이징/크롭 없음)
+  const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/upload/suufr/organizations/${imageKey}`;
 
   redirect(cloudinaryUrl);
 }

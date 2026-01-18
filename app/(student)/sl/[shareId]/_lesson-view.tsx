@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 
 import * as React from 'react';
-import { CircleIcon, CircleCheckBigIcon, CheckCircle2Icon, AlertCircleIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, UserIcon } from 'lucide-react';
 
 interface Props {
   lesson: {
@@ -27,41 +27,40 @@ interface Props {
       } | null;
     }>;
   };
-};
+  teacher?: {
+    name: string;
+    profileImageUrl: string | null;
+  } | null;
+}
 
-export default function LessonView({ lesson }: Props) {
+export default function LessonView({ lesson, teacher }: Props) {
   const completedCount = lesson.sessions.filter(l => l.isDone).length;
   const totalCount = lesson.sessions.length;
-  const isPaid = !!lesson.payment;
 
   return (
     <div className="bg-white py-4 border border-gray-100 rounded-xl shadow-sm">
+      {/* 레슨 타이틀 & 결제상태 */}
       <div className="px-4 flex items-center justify-between">
-        <p className="text-lg font-bold">{lesson.student?.name}</p>
-        {isPaid
-          ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                <CheckCircle2Icon className="size-3.5" />
-                결제완료
-              </span>
-            )
-          : (
-              <div className="flex flex-col items-end gap-1">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                  <AlertCircleIcon className="size-3.5" />
-                  결제필요
-                </span>
-                {lesson.student?.nextPaymentAt && (
-                  <span className="text-xs text-gray-500">
-                    다음결제예정일:
-                    {' '}
-                    {format(lesson.student.nextPaymentAt, 'M월 d일', { locale: ko })}
-                  </span>
-                )}
-              </div>
-            )}
+        <h2 className="text-lg font-semibold text-gray-900">{lesson.title}</h2>
+        <div className="flex flex-col items-end gap-1">
+          {lesson.payment ? (
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              결제완료
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+              미결제
+            </span>
+          )}
+          {lesson.student?.nextPaymentAt && (
+            <span className="text-xs text-gray-500">
+              다음결제예정일: {format(lesson.student.nextPaymentAt, 'M월 d일', { locale: ko })}
+            </span>
+          )}
+        </div>
       </div>
       <hr className="my-4 h-px border-none w-full bg-gray-200" />
+
       {lesson.sessions.length > 0
         ? (
             <div>
@@ -102,25 +101,45 @@ export default function LessonView({ lesson }: Props) {
                 ))}
               </ul>
               <hr className="my-4 h-px border-none w-full bg-gray-200" />
-              <div className="px-5">
-                <div className="flex justify-between text-sm text-gray-600 mb-1">
-                  <span>진행률</span>
-                  <span>
-                    {completedCount}
-                    {' '}
-                    /
-                    {totalCount}
-                    {' '}
-                    완료
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all"
-                    style={{
-                      width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
-                    }}
-                  />
+              <div className="px-5 flex items-center gap-4">
+                {/* 선생님 프로필 */}
+                {teacher && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {teacher.profileImageUrl ? (
+                      <img
+                        src={teacher.profileImageUrl}
+                        alt={teacher.name}
+                        className="size-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="size-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <UserIcon className="size-4 text-gray-400" />
+                      </div>
+                    )}
+                    <p className="text-sm font-medium text-gray-700">{teacher.name}</p>
+                  </div>
+                )}
+                {/* 진행률 */}
+                <div className="flex-1">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>진행률</span>
+                    <span>
+                      {completedCount}
+                      {' '}
+                      /
+                      {totalCount}
+                      {' '}
+                      완료
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all"
+                      style={{
+                        width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -18,7 +18,7 @@ export async function PUT(
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: meetingId,
-      userId: session.user.id,
+      organizationId: session.organization.id,
       deletedAt: null,
     },
   });
@@ -64,7 +64,7 @@ export async function DELETE(
   const meeting = await prisma.meeting.findUnique({
     where: {
       id: meetingId,
-      userId: session.user.id,
+      organizationId: session.organization.id,
       deletedAt: null,
     },
   });
