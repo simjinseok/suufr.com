@@ -21,7 +21,7 @@ export async function POST(
       deletedAt: null,
       lesson: {
         student: {
-          userId: session.user.id,
+          organizationId: session.organization.id,
         },
       },
     },

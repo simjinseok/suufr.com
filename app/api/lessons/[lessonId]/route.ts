@@ -20,7 +20,7 @@ export async function PUT(
       deletedAt: null,
       lesson: {
         student: {
-          userId: session.user.id,
+          organizationId: session.organization.id,
         },
       },
     },
@@ -74,7 +74,7 @@ export async function DELETE(
       deletedAt: null,
       lesson: {
         student: {
-          userId: session.user.id,
+          organizationId: session.organization.id,
         },
       },
     },
