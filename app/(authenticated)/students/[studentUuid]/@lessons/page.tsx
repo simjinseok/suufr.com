@@ -97,5 +97,5 @@ export default async function LessonsPage({
     },
   });
 
-  return <Lessons lessons={lessons} timeFormat={settings.timeFormat} />;
+  return <Lessons lessons={lessons} use24HourFormat={settings.use24HourFormat} />;
 }

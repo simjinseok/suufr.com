@@ -36,7 +36,7 @@ export type UserSettingsSumAggregateOutputType = {
 
 export type UserSettingsMinAggregateOutputType = {
   userId: string | null
-  timeFormat: string | null
+  use24HourFormat: boolean | null
   defaultDuration: number | null
   autoUpdateNextPaymentAt: boolean | null
   createdAt: Date | null
@@ -45,7 +45,7 @@ export type UserSettingsMinAggregateOutputType = {
 
 export type UserSettingsMaxAggregateOutputType = {
   userId: string | null
-  timeFormat: string | null
+  use24HourFormat: boolean | null
   defaultDuration: number | null
   autoUpdateNextPaymentAt: boolean | null
   createdAt: Date | null
@@ -54,7 +54,7 @@ export type UserSettingsMaxAggregateOutputType = {
 
 export type UserSettingsCountAggregateOutputType = {
   userId: number
-  timeFormat: number
+  use24HourFormat: number
   defaultDuration: number
   autoUpdateNextPaymentAt: number
   createdAt: number
@@ -73,7 +73,7 @@ export type UserSettingsSumAggregateInputType = {
 
 export type UserSettingsMinAggregateInputType = {
   userId?: true
-  timeFormat?: true
+  use24HourFormat?: true
   defaultDuration?: true
   autoUpdateNextPaymentAt?: true
   createdAt?: true
@@ -82,7 +82,7 @@ export type UserSettingsMinAggregateInputType = {
 
 export type UserSettingsMaxAggregateInputType = {
   userId?: true
-  timeFormat?: true
+  use24HourFormat?: true
   defaultDuration?: true
   autoUpdateNextPaymentAt?: true
   createdAt?: true
@@ -91,7 +91,7 @@ export type UserSettingsMaxAggregateInputType = {
 
 export type UserSettingsCountAggregateInputType = {
   userId?: true
-  timeFormat?: true
+  use24HourFormat?: true
   defaultDuration?: true
   autoUpdateNextPaymentAt?: true
   createdAt?: true
@@ -187,7 +187,7 @@ export type UserSettingsGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 
 export type UserSettingsGroupByOutputType = {
   userId: string
-  timeFormat: string
+  use24HourFormat: boolean
   defaultDuration: number
   autoUpdateNextPaymentAt: boolean
   createdAt: Date
@@ -219,7 +219,7 @@ export type UserSettingsWhereInput = {
   OR?: Prisma.UserSettingsWhereInput[]
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   userId?: Prisma.UuidFilter<"UserSettings"> | string
-  timeFormat?: Prisma.StringFilter<"UserSettings"> | string
+  use24HourFormat?: Prisma.BoolFilter<"UserSettings"> | boolean
   defaultDuration?: Prisma.IntFilter<"UserSettings"> | number
   autoUpdateNextPaymentAt?: Prisma.BoolFilter<"UserSettings"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
@@ -228,7 +228,7 @@ export type UserSettingsWhereInput = {
 
 export type UserSettingsOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
-  timeFormat?: Prisma.SortOrder
+  use24HourFormat?: Prisma.SortOrder
   defaultDuration?: Prisma.SortOrder
   autoUpdateNextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -240,7 +240,7 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   OR?: Prisma.UserSettingsWhereInput[]
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
-  timeFormat?: Prisma.StringFilter<"UserSettings"> | string
+  use24HourFormat?: Prisma.BoolFilter<"UserSettings"> | boolean
   defaultDuration?: Prisma.IntFilter<"UserSettings"> | number
   autoUpdateNextPaymentAt?: Prisma.BoolFilter<"UserSettings"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
@@ -249,7 +249,7 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
 
 export type UserSettingsOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
-  timeFormat?: Prisma.SortOrder
+  use24HourFormat?: Prisma.SortOrder
   defaultDuration?: Prisma.SortOrder
   autoUpdateNextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -266,7 +266,7 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserSettingsScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserSettingsScalarWhereWithAggregatesInput | Prisma.UserSettingsScalarWhereWithAggregatesInput[]
   userId?: Prisma.UuidWithAggregatesFilter<"UserSettings"> | string
-  timeFormat?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
+  use24HourFormat?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   defaultDuration?: Prisma.IntWithAggregatesFilter<"UserSettings"> | number
   autoUpdateNextPaymentAt?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
@@ -275,7 +275,7 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
 
 export type UserSettingsCreateInput = {
   userId: string
-  timeFormat?: string
+  use24HourFormat?: boolean
   defaultDuration?: number
   autoUpdateNextPaymentAt?: boolean
   createdAt?: Date | string
@@ -284,7 +284,7 @@ export type UserSettingsCreateInput = {
 
 export type UserSettingsUncheckedCreateInput = {
   userId: string
-  timeFormat?: string
+  use24HourFormat?: boolean
   defaultDuration?: number
   autoUpdateNextPaymentAt?: boolean
   createdAt?: Date | string
@@ -293,7 +293,7 @@ export type UserSettingsUncheckedCreateInput = {
 
 export type UserSettingsUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  use24HourFormat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
   autoUpdateNextPaymentAt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -302,7 +302,7 @@ export type UserSettingsUpdateInput = {
 
 export type UserSettingsUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  use24HourFormat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
   autoUpdateNextPaymentAt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -311,7 +311,7 @@ export type UserSettingsUncheckedUpdateInput = {
 
 export type UserSettingsCreateManyInput = {
   userId: string
-  timeFormat?: string
+  use24HourFormat?: boolean
   defaultDuration?: number
   autoUpdateNextPaymentAt?: boolean
   createdAt?: Date | string
@@ -320,7 +320,7 @@ export type UserSettingsCreateManyInput = {
 
 export type UserSettingsUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  use24HourFormat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
   autoUpdateNextPaymentAt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -329,7 +329,7 @@ export type UserSettingsUpdateManyMutationInput = {
 
 export type UserSettingsUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  use24HourFormat?: Prisma.BoolFieldUpdateOperationsInput | boolean
   defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
   autoUpdateNextPaymentAt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -338,7 +338,7 @@ export type UserSettingsUncheckedUpdateManyInput = {
 
 export type UserSettingsCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
-  timeFormat?: Prisma.SortOrder
+  use24HourFormat?: Prisma.SortOrder
   defaultDuration?: Prisma.SortOrder
   autoUpdateNextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -351,7 +351,7 @@ export type UserSettingsAvgOrderByAggregateInput = {
 
 export type UserSettingsMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
-  timeFormat?: Prisma.SortOrder
+  use24HourFormat?: Prisma.SortOrder
   defaultDuration?: Prisma.SortOrder
   autoUpdateNextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -360,7 +360,7 @@ export type UserSettingsMaxOrderByAggregateInput = {
 
 export type UserSettingsMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
-  timeFormat?: Prisma.SortOrder
+  use24HourFormat?: Prisma.SortOrder
   defaultDuration?: Prisma.SortOrder
   autoUpdateNextPaymentAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -375,7 +375,7 @@ export type UserSettingsSumOrderByAggregateInput = {
 
 export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
-  timeFormat?: boolean
+  use24HourFormat?: boolean
   defaultDuration?: boolean
   autoUpdateNextPaymentAt?: boolean
   createdAt?: boolean
@@ -384,7 +384,7 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
-  timeFormat?: boolean
+  use24HourFormat?: boolean
   defaultDuration?: boolean
   autoUpdateNextPaymentAt?: boolean
   createdAt?: boolean
@@ -393,7 +393,7 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
-  timeFormat?: boolean
+  use24HourFormat?: boolean
   defaultDuration?: boolean
   autoUpdateNextPaymentAt?: boolean
   createdAt?: boolean
@@ -402,21 +402,21 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type UserSettingsSelectScalar = {
   userId?: boolean
-  timeFormat?: boolean
+  use24HourFormat?: boolean
   defaultDuration?: boolean
   autoUpdateNextPaymentAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId" | "timeFormat" | "defaultDuration" | "autoUpdateNextPaymentAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId" | "use24HourFormat" | "defaultDuration" | "autoUpdateNextPaymentAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 
 export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserSettings"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     userId: string
-    timeFormat: string
+    use24HourFormat: boolean
     defaultDuration: number
     autoUpdateNextPaymentAt: boolean
     createdAt: Date
@@ -845,7 +845,7 @@ export interface Prisma__UserSettingsClient<T, Null = never, ExtArgs extends run
  */
 export interface UserSettingsFieldRefs {
   readonly userId: Prisma.FieldRef<"UserSettings", 'String'>
-  readonly timeFormat: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly use24HourFormat: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly defaultDuration: Prisma.FieldRef<"UserSettings", 'Int'>
   readonly autoUpdateNextPaymentAt: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"UserSettings", 'DateTime'>

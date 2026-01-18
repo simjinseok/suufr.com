@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import { formatTime } from '@/utils/time-format';
-import type { TimeFormat } from '@/types/index';
 
 interface Lesson {
   id: string;
@@ -18,10 +17,10 @@ interface Lesson {
 interface DayViewProps {
   lessons: Lesson[];
   onSessionClick?: (sessionId: string) => void;
-  timeFormat: TimeFormat;
+  use24HourFormat: boolean;
 }
 
-export default function DayView({ lessons, onSessionClick, timeFormat }: DayViewProps) {
+export default function DayView({ lessons, onSessionClick, use24HourFormat }: DayViewProps) {
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-400 bg-white">
@@ -41,7 +40,7 @@ export default function DayView({ lessons, onSessionClick, timeFormat }: DayView
         >
           {/* Time */}
           <div className="w-20 text-sm font-medium text-zinc-500 flex-shrink-0">
-            {formatTime(lesson.sessionAt, timeFormat)}
+            {formatTime(lesson.sessionAt, use24HourFormat)}
           </div>
 
           {/* Status indicator */}

@@ -168,7 +168,7 @@ enum StudentStatusValue {
 
 model UserSettings {
   userId                    String   @id @map("user_id") @db.Uuid
-  timeFormat                String   @default("24h") @map("time_format")
+  use24HourFormat           Boolean  @default(false) @map("use_24_hour_format")
   defaultDuration           Int      @default(50) @map("default_duration")
   autoUpdateNextPaymentAt   Boolean  @default(true) @map("auto_update_next_payment_at")
   createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(0)

@@ -1,8 +1,6 @@
-export type TimeFormat = '12h' | '24h';
-
 export type TUserSettings = {
   userId: string;
-  timeFormat: TimeFormat;
+  use24HourFormat: boolean;
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
 };

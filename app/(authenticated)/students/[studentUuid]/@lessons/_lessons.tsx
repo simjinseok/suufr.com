@@ -1,5 +1,5 @@
 'use client';
-import type { TLesson, TimeFormat } from '@/types/index';
+import type { TLesson } from '@/types/index';
 
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
@@ -27,7 +27,7 @@ import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
 import { useParams } from 'next/navigation';
 
-export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeFormat: TimeFormat }) {
+export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; use24HourFormat: boolean }) {
   const { studentUuid } = useParams<{ studentUuid: string }>();
 
   const [selectedSession, setSelectedSession] = React.useState<string | null>(null);
@@ -236,7 +236,7 @@ export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeF
                             <p className="tabular-nums">
                               {format(new Date(session.sessionAt), 'yyyy-MM-dd', { in: tz('Asia/Seoul') })}
                               {' '}
-                              {formatTime(session.sessionAt, timeFormat)}
+                              {formatTime(session.sessionAt, use24HourFormat)}
                             </p>
                             <Text className="whitespace-pre-wrap">
                               {session.notes}

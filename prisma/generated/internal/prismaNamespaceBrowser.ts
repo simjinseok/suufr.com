@@ -216,7 +216,7 @@ export type LessonScalarFieldEnum = (typeof LessonScalarFieldEnum)[keyof typeof 
 
 export const UserSettingsScalarFieldEnum = {
   userId: 'userId',
-  timeFormat: 'timeFormat',
+  use24HourFormat: 'use24HourFormat',
   defaultDuration: 'defaultDuration',
   autoUpdateNextPaymentAt: 'autoUpdateNextPaymentAt',
   createdAt: 'createdAt',

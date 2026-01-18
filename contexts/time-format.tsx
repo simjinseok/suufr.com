@@ -4,23 +4,24 @@ import type { TUserSettings } from '@/types/index';
 
 const defaultSettings: TUserSettings = {
   userId: '',
-  timeFormat: '24h',
+  use24HourFormat: false,
   defaultDuration: 50,
+  autoUpdateNextPaymentAt: true,
 };
 
 const UserSettingsContext = createContext<TUserSettings>(defaultSettings);
 
 export function TimeFormatProvider({
   children,
-  timeFormat,
+  use24HourFormat,
   defaultDuration,
 }: {
   children: React.ReactNode;
-  timeFormat: TUserSettings['timeFormat'];
+  use24HourFormat: TUserSettings['use24HourFormat'];
   defaultDuration: TUserSettings['defaultDuration'];
 }) {
   return (
-    <UserSettingsContext value={{ ...defaultSettings, timeFormat, defaultDuration }}>
+    <UserSettingsContext value={{ ...defaultSettings, use24HourFormat, defaultDuration }}>
       {children}
     </UserSettingsContext>
   );
@@ -30,14 +31,14 @@ export function useUserSettings() {
   return useContext(UserSettingsContext);
 }
 
-export function useTimeFormat() {
+export function useIs24HourFormat() {
   const settings = useUserSettings();
-  return settings.timeFormat;
+  return settings.use24HourFormat;
 }
 
 export function useHourCycle() {
-  const timeFormat = useTimeFormat();
-  return timeFormat === '12h' ? 12 : 24;
+  const use24HourFormat = useIs24HourFormat();
+  return use24HourFormat ? 24 : 12;
 }
 
 export function useDefaultDuration() {

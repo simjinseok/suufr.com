@@ -77,7 +77,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
 
   return (
     <div>
-      <Calendar lessons={serializedLessons} selectedDate={selectedDateStr} view={view} timeFormat={settings.timeFormat} />
+      <Calendar lessons={serializedLessons} selectedDate={selectedDateStr} view={view} use24HourFormat={settings.use24HourFormat} />
     </div>
   );
 }

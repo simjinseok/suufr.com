@@ -18,7 +18,6 @@ import { tz, TZDate } from '@date-fns/tz';
 import { Button, Tabs } from '@heroui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CalendarView } from './page';
-import type { TimeFormat } from '@/types/index';
 import MonthView from './_month-view';
 import WeekView from './_week-view';
 import DayView from './_day-view';
@@ -40,12 +39,12 @@ interface CalendarProps {
   lessons: Lesson[];
   selectedDate: string;
   view: CalendarView;
-  timeFormat: TimeFormat;
+  use24HourFormat: boolean;
 }
 
 const TIMEZONE = 'Asia/Seoul';
 
-export default function Calendar({ lessons, selectedDate, view, timeFormat }: CalendarProps) {
+export default function Calendar({ lessons, selectedDate, view, use24HourFormat }: CalendarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateObj = new TZDate(selectedDate + 'T00:00:00', TIMEZONE);
@@ -139,7 +138,7 @@ export default function Calendar({ lessons, selectedDate, view, timeFormat }: Ca
           </Button>
         </div>
         <div className="rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <DayView lessons={dayLessons} onSessionClick={setSelectedSessionId} timeFormat={timeFormat} />
+          <DayView lessons={dayLessons} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />
         </div>
       </div>
 
@@ -189,9 +188,9 @@ export default function Calendar({ lessons, selectedDate, view, timeFormat }: Ca
             <MonthView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} />
           )}
           {view === 'week' && (
-            <WeekView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} timeFormat={timeFormat} />
+            <WeekView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />
           )}
-          {view === 'day' && <DayView lessons={lessons} onSessionClick={setSelectedSessionId} timeFormat={timeFormat} />}
+          {view === 'day' && <DayView lessons={lessons} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />}
         </div>
       </div>
 
