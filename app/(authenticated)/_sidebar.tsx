@@ -11,8 +11,10 @@ import {
   CalendarIcon,
   SettingsIcon,
   BuildingIcon,
+  ChevronsUpDownIcon,
+  CheckIcon,
 } from 'lucide-react';
-import { Button, Dropdown, Label, Separator } from '@heroui/react';
+import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
@@ -25,12 +27,32 @@ type OrganizationItem = {
   role: OrganizationRole;
 };
 
+type MembershipItem = {
+  id: number;
+  uuid: string;
+  name: string;
+  role: OrganizationRole;
+  profileImageKey: string | null;
+};
+
 type Props = {
   currentOrg: OrganizationItem;
   organizations: OrganizationItem[];
+  membership: MembershipItem;
 };
 
-export function Sidebar({ currentOrg, organizations }: Props) {
+export function Sidebar({ currentOrg, organizations, membership }: Props) {
+  const profileImageUrl = membership.profileImageKey
+    ? `/assets/member/${membership.profileImageKey}.webp`
+    : null;
+  const memberInitial = membership.name.charAt(membership.name.length - 1);
+
+  const handleOrgSelect = (key: string | number) => {
+    const selectedOrg = organizations.find(org => org.uuid === key);
+    if (selectedOrg && selectedOrg.id !== currentOrg.id) {
+      window.location.href = `/api/switch-organization/${selectedOrg.uuid}`;
+    }
+  };
   const sidebarContent = (
     <>
       <div className="h-16 flex items-center px-5">
@@ -48,7 +70,7 @@ export function Sidebar({ currentOrg, organizations }: Props) {
         <OrganizationSwitcher currentOrg={currentOrg} organizations={organizations} />
       </div>
       <AppNavigation />
-      <UserMenu currentOrg={currentOrg} />
+      <UserMenu currentOrg={currentOrg} membership={membership} />
     </>
   );
 
@@ -63,16 +85,58 @@ export function Sidebar({ currentOrg, organizations }: Props) {
           >
             <span className="text-xs font-bold text-white">스</span>
           </div>
-          <h1 className="text-base font-semibold text-gray-900 tracking-tight">스프</h1>
+          {/* 모바일 조직 선택기 */}
+          <Dropdown>
+            <Button variant="ghost" className="h-8 px-2 gap-1.5">
+              <div className="w-5 h-5 rounded bg-linear-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
+                <BuildingIcon className="w-3 h-3 text-indigo-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-900 max-w-24 truncate">
+                {currentOrg.name}
+              </span>
+              <ChevronsUpDownIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </Button>
+            <Dropdown.Popover placement="bottom start">
+              <Dropdown.Menu
+                aria-label="조직 선택"
+                onAction={handleOrgSelect}
+                selectionMode="single"
+                selectedKeys={new Set([currentOrg.uuid])}
+              >
+                {organizations.map((org) => (
+                  <Dropdown.Item
+                    key={org.uuid}
+                    id={org.uuid}
+                    textValue={org.name}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
+                        <BuildingIcon className="w-3 h-3 text-indigo-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Label className="truncate">{org.name}</Label>
+                      </div>
+                      {org.id === currentOrg.id && (
+                        <CheckIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+                      )}
+                    </div>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
         </div>
 
         <div className="flex items-center gap-1">
           {/* 유저 프로필 드롭다운 */}
           <Dropdown>
             <Button variant="ghost" isIconOnly size="sm">
-              <div className="w-6 h-6 rounded-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                <UserIcon className="w-3.5 h-3.5 text-gray-500" />
-              </div>
+              <Avatar size="xs">
+                {profileImageUrl ? (
+                  <Avatar.Image src={profileImageUrl} alt={membership.name} />
+                ) : null}
+                <Avatar.Fallback>{memberInitial}</Avatar.Fallback>
+              </Avatar>
             </Button>
             <Dropdown.Popover placement="bottom">
               <Dropdown.Menu aria-label="유저 메뉴">

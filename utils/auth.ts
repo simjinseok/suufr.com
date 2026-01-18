@@ -19,6 +19,7 @@ export type Session = {
     uuid: string;
     name: string;
     role: OrganizationRole;
+    profileImageKey: string | null;
   };
   organizations: Array<{
     id: number;
@@ -110,6 +111,7 @@ export async function getSession(): Promise<Session | null> {
           uuid: currentMembership.uuid,
           name: currentMembership.name,
           role: currentMembership.role,
+          profileImageKey: currentMembership.profileImageKey,
         }
       : (null as unknown as Session['membership']),
     organizations,
