@@ -129,6 +129,17 @@ Core models: User, Student, Syllabus, Lesson, Payment, Meeting, Feedback, Lesson
 
 Students have status: pending | active | paused | leave (tracked via StudentStatusHistory)
 
+## Prisma Schema Changes
+
+When modifying the database schema:
+1. Edit `prisma/schema.prisma` with the desired changes
+2. Run `pnpm prisma:migrate -- --create-only` to create a migration file WITHOUT applying it
+3. Use descriptive migration names (e.g., `add_user_avatar`, `rename_status_field`)
+4. Review the generated SQL in `prisma/migrations/`
+5. Apply later with `pnpm prisma:deploy` when ready
+
+**DO NOT** just edit schema.prisma without creating a migration. Always use `--create-only` to generate the migration file first.
+
 ## Environment Variables
 
 Required: `POSTGRES_PRISMA_URL`, `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `COGNITO_DOMAIN`, `COGNITO_REDIRECT_URI`, `NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_SENTRY_DSN`
