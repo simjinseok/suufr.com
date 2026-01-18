@@ -24,17 +24,17 @@ import { useHourCycle } from '@/contexts/time-format';
 import ScheduleMeetingsModal, { type ScheduleSettings } from './schedule-meetings-modal';
 
 interface Props {
-  isOpen: ModalProps['isOpen'];
-  onOpenChange: ModalProps['onOpenChange'];
-  studentId: string;
+  isOpen?: ModalProps['isOpen'];
+  onOpenChange?: ModalProps['onOpenChange'];
+  studentUuid: string;
 }
-export default function CreateLessonModal({ isOpen, onOpenChange, studentId }: Props) {
+export default function CreateLessonModal({ isOpen, onOpenChange, studentUuid }: Props) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
-            <Content studentId={studentId} close={close} />
+            <Content studentUuid={studentUuid} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -43,10 +43,10 @@ export default function CreateLessonModal({ isOpen, onOpenChange, studentId }: P
 }
 
 interface ContentProps {
-  studentId: string;
+  studentUuid: string;
   close: () => void;
 }
-function Content({ close, studentId }: ContentProps) {
+function Content({ close, studentUuid }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const [scheduledLessons, setScheduledLessons] = React.useState<ZonedDateTime[]>([]);
@@ -87,7 +87,7 @@ function Content({ close, studentId }: ContentProps) {
       </Modal.Header>
       <Modal.Body>
         <Form id={formId} className="mt-4 p-1 flex flex-col gap-4" action={formAction}>
-          <input type="hidden" name="studentId" value={studentId} />
+          <input type="hidden" name="studentUuid" value={studentUuid} />
 
           <Controller
             control={control}

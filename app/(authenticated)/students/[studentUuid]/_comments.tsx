@@ -19,7 +19,7 @@ import { updateStudentComment } from '../../../../actions/update-student-comment
 import { format } from 'date-fns/format';
 
 export default function Comments({ comments }) {
-  const { studentId } = useParams();
+  const { studentUuid } = useParams();
 
   const [editForm, setEditForm] = React.useState(null);
 
@@ -65,22 +65,22 @@ export default function Comments({ comments }) {
       <CommentFormModal
         isOpen={editForm !== null}
         onClose={() => { setEditForm(null); }}
-        studentId={studentId}
+        studentUuid={studentUuid as string}
         comment={editForm}
       />
     </React.Fragment>
   );
 }
 
-function CommentFormModal({ isOpen, onClose, studentId, comment }) {
+function CommentFormModal({ isOpen, onClose, studentUuid, comment }) {
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
-      <Content studentId={studentId} comment={comment} />
+      <Content studentUuid={studentUuid} comment={comment} />
     </Modal>
   );
 }
 
-function Content({ studentId, comment }) {
+function Content({ studentUuid, comment }) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [page, setPage] = React.useState(1);
@@ -104,7 +104,7 @@ function Content({ studentId, comment }) {
                 });
               }}
             >
-              <input type="hidden" name="studentId" value={studentId} />
+              <input type="hidden" name="studentUuid" value={studentUuid} />
               {comment && (
                 <input type="hidden" name="id" value={comment.id} />
               )}

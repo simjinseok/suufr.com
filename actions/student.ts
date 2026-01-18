@@ -8,6 +8,7 @@ import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
+import { moveImage } from '@/utils/cloudinary';
 
 const createStudentSchema = z.object({
   name: z.string().trim().min(1, { error: '이름을 입력해주세요' }),
@@ -71,10 +72,12 @@ const updateStudentSchema = z.object({
   name: z.string().min(1),
   notes: z.string(),
   nextPaymentAt: z.string().optional(),
+  profileImageUrl: z.string().url().nullable().optional(),
 });
 
 type UpdateStudentState = ServerActionState<{
-
+  name: string;
+  notes: string;
 }>;
 export async function updateStudent(prevState: UpdateStudentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
@@ -86,7 +89,10 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
     },
     async () => {
       const { user } = await getSession();
-      const { studentId, ...data } = Object.fromEntries(formData.entries());
+      const formEntries = Object.fromEntries(formData.entries());
+      const { studentUuid, profileImageUrl: rawProfileImageUrl, profileImagePublicId: rawPublicId, ...data } = formEntries;
+      let profileImageUrl = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
+      const publicId = typeof rawPublicId === 'string' && rawPublicId !== '' ? rawPublicId : null;
       const state: UpdateStudentState = {
         success: false,
         timestamp: Date.now(),
@@ -98,7 +104,7 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
 
       const student = await prisma.student.findUnique({
         where: {
-          id: Number(studentId),
+          uuid: studentUuid as string,
           userId: user.id,
           deletedAt: null,
         },
@@ -108,26 +114,41 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         return state;
       }
 
-      const validationResult = updateStudentSchema.safeParse(data);
+      const validationResult = updateStudentSchema.safeParse({
+        ...data,
+        profileImageUrl,
+      });
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
 
-      const { nextPaymentAt, ...restData } = validationResult.data;
-      const result = await prisma.student.update({
+      const { nextPaymentAt, profileImageUrl: validatedProfileImageUrl, ...restData } = validationResult.data;
+
+      // 새 이미지가 임시 폴더에 업로드된 경우 정식 폴더로 이동
+      let finalProfileImageUrl = validatedProfileImageUrl;
+      if (publicId?.startsWith('suufr/temp/')) {
+        const movedUrl = await moveImage(publicId);
+        if (movedUrl) {
+          finalProfileImageUrl = movedUrl;
+        }
+      }
+
+      await prisma.student.update({
         where: {
           id: student.id,
         },
         data: {
           ...restData,
-          nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('Asia/Seoul') : null,
+          profileImageUrl: finalProfileImageUrl,
+          // 날짜만 저장하는 필드라서 UTC로 저장해야함. 아니면 하루가 깍임
+          nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('UTC') : null,
           updatedAt: new Date(),
         },
       });
 
       revalidatePath('/students', 'page');
-      revalidatePath('/students/[studentId]', 'page');
+      revalidatePath('/students/[studentUuid]', 'page');
       state.success = true;
       state.message = '수강생 정보를 수정하였습니다.';
       return state;
@@ -144,7 +165,7 @@ export default async function removeStudent(formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const studentId = Number(formData.get('studentId'));
+      const studentUuid = formData.get('studentUuid') as string;
 
       const { user } = await getSession();
 
@@ -154,7 +175,7 @@ export default async function removeStudent(formData: FormData) {
 
       const student = await prisma.student.findUnique({
         where: {
-          id: studentId,
+          uuid: studentUuid,
           userId: user.id,
           deletedAt: null,
         },

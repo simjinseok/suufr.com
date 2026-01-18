@@ -1,14 +1,24 @@
 import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
 import { getUserSettings } from '@/actions/settings';
+import { notFound } from 'next/navigation';
 
 import Lessons from './_lessons';
 
 const PAGE_SIZE = 20;
-export default async function LessonsPage(props: PageProps<'/students/[studentId]'>) {
+export default async function LessonsPage({
+  params,
+}: {
+  params: Promise<{ studentUuid: string }>;
+}) {
   const { user } = await getSession();
   const settings = await getUserSettings(user.id);
-  const { studentId } = await props.params;
+  const { studentUuid } = await params;
+
+  const student = await prisma.student.findUnique({
+    where: { uuid: studentUuid, userId: user.id, deletedAt: null },
+    select: { id: true },
+  });
 
   const page = 1;
   const lessons = await prisma.lesson.findMany({
@@ -80,11 +90,7 @@ export default async function LessonsPage(props: PageProps<'/students/[studentId
     },
     where: {
       deletedAt: null,
-      student: {
-        id: Number(studentId),
-        userId: user.id,
-        deletedAt: null,
-      },
+      studentId: student.id,
     },
     orderBy: {
       createdAt: 'desc',

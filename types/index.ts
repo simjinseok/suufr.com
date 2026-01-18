@@ -9,9 +9,11 @@ export type TUserSettings = {
 
 export type Student = {
   id: number;
+  uuid: string;
   name: string;
   notes: string;
   status: string;
+  profileImageUrl?: string | null;
   nextPaymentAt?: Date | null;
   createdAt?: Date;
   completedSessionsCount?: number;

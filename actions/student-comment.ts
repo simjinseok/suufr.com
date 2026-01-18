@@ -5,8 +5,12 @@ import { revalidatePath } from 'next/cache';
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { getSession } from '@/utils/auth';
+import { ServerActionState } from '@/types/index';
 
-export async function createStudentComment(formData: FormData) {
+type CreateStudentCommentState = ServerActionState<{
+  content: string;
+}>;
+export async function createStudentComment(prevState: CreateStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudentComment',
     {
@@ -21,35 +25,48 @@ export async function createStudentComment(formData: FormData) {
         throw new Error('Unauthorized');
       }
 
-      const studentId = Number(formData.get('studentId'));
+      const state: CreateStudentCommentState = {
+        success: false,
+        fields: {
+          content: (formData.get('content') as string) || '',
+        },
+        timestamp: Date.now(),
+      };
+      const studentUuid = formData.get('studentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
       // 학생이 현재 사용자의 것인지 확인
       const student = await prisma.student.findFirst({
         where: {
-          id: studentId,
+          uuid: studentUuid,
           userId: user.id,
           deletedAt: null,
         },
       });
 
       if (!student) {
-        throw new Error('Student not found');
+        return state;
       }
 
       const comment = await prisma.studentComment.create({
         data: {
           content,
-          studentId,
+          studentId: student.id,
         },
       });
 
-      return comment;
+      revalidatePath(`/students/[studentUuid]/@comments`)
+      state.success = true;
+      state.message = '코멘트를 작성하였습니다.';
+      return state;
     },
   );
 }
 
-export async function updateStudentComment(formData: FormData) {
+type UpdateStudentCommentState = ServerActionState<{
+  content: string;
+}>;
+export async function updateStudentComment(prevState: UpdateStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentComment',
     {
@@ -64,13 +81,21 @@ export async function updateStudentComment(formData: FormData) {
         throw new Error('Unauthorized');
       }
 
-      const commentId = Number(formData.get('id'));
+      const state: UpdateStudentCommentState = {
+        success: false,
+        fields: {
+          content: (formData.get('content') as string) || '',
+        },
+        timestamp: Date.now(),
+      };
+
+      const commentUuid = formData.get('commentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
       // 코멘트가 현재 사용자의 것인지 확인
-      const existingComment = await prisma.studentComment.findFirst({
+      const comment = await prisma.studentComment.findFirst({
         where: {
-          id: commentId,
+          uuid: commentUuid,
           deletedAt: null,
           student: {
             userId: user.id,
@@ -81,20 +106,21 @@ export async function updateStudentComment(formData: FormData) {
         },
       });
 
-      if (!existingComment) {
-        throw new Error('Comment not found');
+      if (!comment) {
+        return state;
       }
 
-      const comment = await prisma.studentComment.update({
+      const result = await prisma.studentComment.update({
         where: {
-          id: commentId,
+          id: comment.id,
         },
         data: {
           content,
         },
       });
 
-      return comment;
+      state.success = true;
+      return state;
     },
   );
 }

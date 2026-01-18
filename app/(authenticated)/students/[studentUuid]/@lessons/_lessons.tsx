@@ -28,7 +28,7 @@ import CreateLessonModal from '@/components/lesson/create-lesson-modal';
 import { useParams } from 'next/navigation';
 
 export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeFormat: TimeFormat }) {
-  const { studentId } = useParams();
+  const { studentUuid } = useParams<{ studentUuid: string }>();
 
   const [selectedSession, setSelectedSession] = React.useState<string | null>(null);
   const [isLessonCreating, setIsLessonCreating]
@@ -43,7 +43,7 @@ export default function Lessons({ lessons, timeFormat }: { lessons: any[]; timeF
             레슨 추가
           </Button>
           <CreateLessonModal
-            studentId={Number(studentId)}
+            studentUuid={studentUuid}
           />
         </Modal>
       </div>

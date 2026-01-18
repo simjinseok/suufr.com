@@ -403,10 +403,6 @@ export type FeedbackNullableScalarRelationFilter = {
   isNot?: Prisma.FeedbackWhereInput | null
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type FeedbackCreateNestedOneWithoutSessionInput = {
   create?: Prisma.XOR<Prisma.FeedbackCreateWithoutSessionInput, Prisma.FeedbackUncheckedCreateWithoutSessionInput>
   connectOrCreate?: Prisma.FeedbackCreateOrConnectWithoutSessionInput

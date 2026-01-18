@@ -8,9 +8,11 @@ import { StudentStatusValue } from '@prisma/client';
 
 type StudentWithStats = {
   id: number;
+  uuid: string;
   name: string;
   status: StudentStatusValue;
   notes: string;
+  profileImageUrl: string | null;
   nextPaymentAt: Date | null;
   remainingSessionsCount: number;
   completedLessonCount: number;
@@ -24,16 +26,18 @@ type StudentStatusType = {
   notes: string | null;
 };
 
-export default async function Page({ params }: { params: Promise<{ studentId: string }> }) {
-  const { studentId } = await params;
+export default async function Page({ params }: { params: Promise<{ studentUuid: string }> }) {
+  const { studentUuid } = await params;
   const { user } = await getSession();
 
   const [student] = await prisma.$queryRaw<StudentWithStats[]>`
     SELECT
       s.id,
+      s.uuid,
       s.name,
       s.status,
       s.notes,
+      s.profile_image_url AS "profileImageUrl",
       s.next_payment_at AS "nextPaymentAt",
       CAST(COUNT(sess.id) FILTER (
         WHERE sess.is_done = false AND sess.deleted_at IS NULL
@@ -58,10 +62,10 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
     FROM students s
     LEFT JOIN lessons les ON les.student_id = s.id
     LEFT JOIN sessions sess ON sess.lesson_id = les.id
-    WHERE s.id = ${Number(studentId)}
+    WHERE s.uuid = ${studentUuid}::uuid
       AND s.user_id = ${user.id}::uuid
       AND s.deleted_at IS NULL
-    GROUP BY s.id, s.name, s.status, s.notes, s.next_payment_at
+    GROUP BY s.id, s.uuid, s.name, s.status, s.notes, s.next_payment_at
   `;
 
   if (!student) {
@@ -76,7 +80,7 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
       notes: true,
     },
     where: {
-      studentId: Number(studentId),
+      studentId: student.id,
       deletedAt: null,
     },
     orderBy: {

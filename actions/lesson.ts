@@ -21,7 +21,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
     },
     async () => {
       const { user } = await getSession();
-      const { studentId, ...data } = Object.fromEntries(formData.entries());
+      const { studentUuid, ...data } = Object.fromEntries(formData.entries());
 
       const state: CreateLessonState = {
         success: false,
@@ -34,7 +34,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
 
       const student = await prisma.student.findUnique({
         where: {
-          id: Number(studentId),
+          uuid: studentUuid,
           userId: user.id,
           deletedAt: null,
         },

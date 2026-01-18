@@ -4,10 +4,9 @@ import type { StudentStatus } from '@/prisma/generated/enums';
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ studentId: string }> },
+  { params }: { params: Promise<{ studentUuid: string }> },
 ) {
-  const { studentId: _studentId } = await params;
-  const studentId = Number(_studentId);
+  const { studentUuid } = await params;
 
   const session = await getSession();
 
@@ -17,7 +16,7 @@ export async function PUT(
 
   const student = await prisma.student.findUnique({
     where: {
-      id: studentId,
+      uuid: studentUuid,
       userId: session.user.id,
       deletedAt: null,
     },
@@ -42,7 +41,7 @@ export async function PUT(
 
   return Response.json(
     {
-      id: result.id,
+      uuid: result.uuid,
       name: result.name,
       notes: result.notes,
     },
@@ -52,10 +51,9 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ studentId: string }> },
+  { params }: { params: Promise<{ studentUuid: string }> },
 ) {
-  const { studentId: _studentId } = await params;
-  const studentId = Number(_studentId);
+  const { studentUuid } = await params;
 
   const session = await getSession();
 
@@ -65,7 +63,7 @@ export async function DELETE(
 
   const student = await prisma.student.findUnique({
     where: {
-      id: studentId,
+      uuid: studentUuid,
       userId: session.user.id,
       deletedAt: null,
     },

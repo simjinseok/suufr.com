@@ -2,12 +2,16 @@
 import { format } from 'date-fns/format';
 
 import * as React from 'react';
-import {Avatar, Button, ButtonGroup, Card, Dropdown, Header, Modal} from '@heroui/react';
+import { Avatar, Button, ButtonGroup, Card, Dropdown, Header, Modal } from '@heroui/react';
 import { ChevronDownIcon, EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 import EditStudentModal from '@/components/student/edit-student-modal';
 import ChangeStatusModal from './_change-status-modal';
 import StatusModal from './_status-modal';
+
+function getProfileImageUrl(studentUuid: string): string {
+  return `/api/students/${studentUuid}/profile-image.webp`;
+}
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -23,8 +27,11 @@ export default function Student({ student, statuses }) {
   return (
     <div className="mb-3 min-h-20 flex justify-between">
       <div className="flex gap-3">
-        <Avatar>
-          <Avatar.Fallback>{student.name}</Avatar.Fallback>
+        <Avatar size="lg" className="shrink-0">
+          {student.profileImageUrl
+            ? <Avatar.Image src={getProfileImageUrl(student.uuid)} alt={student.name} />
+            : null}
+          <Avatar.Fallback>{student.name.charAt(student.name.length - 1)}</Avatar.Fallback>
         </Avatar>
         <div>
           <StatusBadge status={student.status} />

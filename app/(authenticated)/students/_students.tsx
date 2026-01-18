@@ -10,6 +10,10 @@ import { Avatar, Chip } from '@heroui/react';
 import { ChevronRightIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 
+function getProfileImageUrl(studentUuid: string): string {
+  return `/api/students/${studentUuid}/profile-image.webp`;
+}
+
 export default function Students({ students }: { students: Student[] }) {
   if (students.length === 0) {
     return (
@@ -23,12 +27,15 @@ export default function Students({ students }: { students: Student[] }) {
     <div className="mt-5 space-y-2">
       {students.map(student => (
         <Link
-          key={student.id}
-          href={`/students/${student.id}`}
+          key={student.uuid}
+          href={`/students/${student.uuid}`}
           className="w-full flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm"
         >
           {/* 아바타 */}
-          <Avatar>
+          <Avatar size="lg" className="shrink-0">
+            {student.profileImageUrl
+              ? <Avatar.Image src={getProfileImageUrl(student.uuid)} alt={student.name} loading="lazy" />
+              : null}
             <Avatar.Fallback>{student.name.charAt(student.name.length - 1)}</Avatar.Fallback>
           </Avatar>
 

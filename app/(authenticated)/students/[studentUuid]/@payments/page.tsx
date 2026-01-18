@@ -1,12 +1,21 @@
 import prisma from '@/utils/prisma';
+import { getSession } from '@/utils/auth';
+import { notFound } from 'next/navigation';
 import PaymentsTable from './_payments-table';
 
 export default async function PaymentsPage({
-                                             params,
-                                           }: {
-  params: Promise<{ studentId: string }>;
+  params,
+}: {
+  params: Promise<{ studentUuid: string }>;
 }) {
-  const { studentId } = await params;
+  const { studentUuid } = await params;
+  const { user } = await getSession();
+
+  const student = await prisma.student.findUnique({
+    where: { uuid: studentUuid, userId: user.id, deletedAt: null },
+    select: { id: true },
+  });
+
 
   const lessons = await prisma.lesson.findMany({
     select: {
@@ -25,7 +34,7 @@ export default async function PaymentsPage({
       },
     },
     where: {
-      studentId: Number(studentId),
+      studentId: student.id,
       deletedAt: null,
     },
     orderBy: {

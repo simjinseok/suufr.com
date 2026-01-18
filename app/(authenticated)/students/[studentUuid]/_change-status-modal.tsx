@@ -19,7 +19,7 @@ interface Props {
   isOpen: ModalProps['isOpen'];
   onOpenChange: ModalProps['onOpenChange'];
   student: {
-    id: number;
+    uuid: string;
     status: string;
   };
 }
@@ -58,7 +58,7 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }: Pro
                   id={formId}
                   action={formAction}
                 >
-                  <input type="hidden" name="studentId" value={student.id} />
+                  <input type="hidden" name="studentUuid" value={student.uuid} />
                   <Controller
                     control={control}
                     name="status"

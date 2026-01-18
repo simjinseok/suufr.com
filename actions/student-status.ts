@@ -26,7 +26,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
     },
     async () => {
       const { user } = await getSession();
-      const { studentId, ...data } = Object.fromEntries(formData.entries());
+      const { studentUuid, ...data } = Object.fromEntries(formData.entries());
 
       const state: CreateStudentStatusState = {
         success: false,
@@ -48,7 +48,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
           id: true,
         },
         where: {
-          id: Number(studentId),
+          uuid: studentUuid as string,
           userId: user.id,
           deletedAt: null,
         },
@@ -96,7 +96,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
         });
       });
 
-      revalidatePath('/students/[studentId]', 'page');
+      revalidatePath('/students/[studentUuid]', 'page');
       state.success = true;
       state.message = '수강생의 상태를 변경하였습니다';
       return state;
@@ -166,7 +166,7 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
         },
       });
 
-      revalidatePath('/students/[studentId]', 'page');
+      revalidatePath('/students/[studentUuid]', 'page');
       state.success = true;
       state.message = '수정하였습니다';
       return state;

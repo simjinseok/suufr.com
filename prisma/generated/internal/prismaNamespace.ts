@@ -1198,6 +1198,7 @@ export const StudentScalarFieldEnum = {
   name: 'name',
   notes: 'notes',
   status: 'status',
+  profileImageUrl: 'profileImageUrl',
   nextPaymentAt: 'nextPaymentAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

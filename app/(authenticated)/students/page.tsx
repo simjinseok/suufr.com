@@ -26,9 +26,11 @@ export default async function Page(props: PageProps<'/students'>) {
 
   const students: Student[] = await prisma.$queryRaw`
       SELECT students.id AS id,
+             students.uuid AS uuid,
              students.name AS name,
              students.notes AS notes,
              students.status AS status,
+             students.profile_image_url AS "profileImageUrl",
              students.created_at AS "createdAt",
              CAST(COUNT(DISTINCT sessions.id) FILTER (WHERE sessions.is_done = false AND sessions.deleted_at IS NULL) AS INT) AS "remainingSessionsCount",
              MAX(sessions.session_at) FILTER (WHERE sessions.is_done = true AND sessions.deleted_at IS NULL) AS "lastSessionDate",
@@ -42,7 +44,7 @@ export default async function Page(props: PageProps<'/students'>) {
       WHERE (${status} = '' OR students.status::text = ${status})
         AND (${q} = '' OR students.name ILIKE ${'%' + q + '%'})
         AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL
-      GROUP BY students.id, students.name, students.notes, students.created_at, students.status
+      GROUP BY students.id, students.uuid, students.name, students.notes, students.created_at, students.status
       ORDER BY students.name ASC
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
   `;
