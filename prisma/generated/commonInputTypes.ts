@@ -52,11 +52,11 @@ export type StringFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringFilter<$PrismaModel> | string
 }
 
-export type EnumStudentStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.StudentStatus | Prisma.EnumStudentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel> | $Enums.StudentStatus
+export type EnumStudentStatusValueFilter<$PrismaModel = never> = {
+  equals?: $Enums.StudentStatusValue | Prisma.EnumStudentStatusValueFieldRefInput<$PrismaModel>
+  in?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  notIn?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel> | $Enums.StudentStatusValue
 }
 
 export type DateTimeFilter<$PrismaModel = never> = {
@@ -135,14 +135,14 @@ export type StringWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringFilter<$PrismaModel>
 }
 
-export type EnumStudentStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.StudentStatus | Prisma.EnumStudentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumStudentStatusWithAggregatesFilter<$PrismaModel> | $Enums.StudentStatus
+export type EnumStudentStatusValueWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.StudentStatusValue | Prisma.EnumStudentStatusValueFieldRefInput<$PrismaModel>
+  in?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  notIn?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumStudentStatusValueWithAggregatesFilter<$PrismaModel> | $Enums.StudentStatusValue
   _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel>
 }
 
 export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -255,11 +255,11 @@ export type NestedStringFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringFilter<$PrismaModel> | string
 }
 
-export type NestedEnumStudentStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.StudentStatus | Prisma.EnumStudentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel> | $Enums.StudentStatus
+export type NestedEnumStudentStatusValueFilter<$PrismaModel = never> = {
+  equals?: $Enums.StudentStatusValue | Prisma.EnumStudentStatusValueFieldRefInput<$PrismaModel>
+  in?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  notIn?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel> | $Enums.StudentStatusValue
 }
 
 export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -342,14 +342,14 @@ export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringFilter<$PrismaModel>
 }
 
-export type NestedEnumStudentStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.StudentStatus | Prisma.EnumStudentStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.StudentStatus[] | Prisma.ListEnumStudentStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumStudentStatusWithAggregatesFilter<$PrismaModel> | $Enums.StudentStatus
+export type NestedEnumStudentStatusValueWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.StudentStatusValue | Prisma.EnumStudentStatusValueFieldRefInput<$PrismaModel>
+  in?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  notIn?: $Enums.StudentStatusValue[] | Prisma.ListEnumStudentStatusValueFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumStudentStatusValueWithAggregatesFilter<$PrismaModel> | $Enums.StudentStatusValue
   _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumStudentStatusFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumStudentStatusValueFilter<$PrismaModel>
 }
 
 export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {

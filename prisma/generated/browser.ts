@@ -43,10 +43,10 @@ export type Meeting = Prisma.MeetingModel
  */
 export type StudentComment = Prisma.StudentCommentModel
 /**
- * Model StudentStatusHistory
+ * Model StudentStatus
  * 
  */
-export type StudentStatusHistory = Prisma.StudentStatusHistoryModel
+export type StudentStatus = Prisma.StudentStatusModel
 /**
  * Model SessionShare
  * 

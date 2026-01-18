@@ -2,11 +2,12 @@
 import { format } from 'date-fns/format';
 
 import * as React from 'react';
-import { Avatar, Button, Card } from '@heroui/react';
-import { EditIcon } from 'lucide-react';
+import {Avatar, Button, ButtonGroup, Card, Dropdown, Header, Modal} from '@heroui/react';
+import { ChevronDownIcon, EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 import EditStudentModal from './_edit-student-modal';
 import ChangeStatusModal from './_change-status-modal';
+import StatusModal from './_status-modal';
 
 const PAYMENT_METHODS = {
   card: '카드',
@@ -14,9 +15,10 @@ const PAYMENT_METHODS = {
   cash: '현금',
   none: '미지정',
 };
-export default function Student({ student }) {
+export default function Student({ student, statuses }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [isEditingStatus, setIsEditingStatus] = React.useState(false);
+  const [isStatusHistoryOpen, setIsStatusHistoryOpen] = React.useState(false);
 
   return (
     <div className="mb-3 min-h-20 flex justify-between">
@@ -35,50 +37,82 @@ export default function Student({ student }) {
           <p className="text-sm text-gray-600 font-medium whitespace-pre-wrap">{student.notes}</p>
         </div>
       </div>
-      <div className="flex gap-2">
-        <Button variant="danger-soft" onClick={() => setIsEditingStatus(true)}>상태변경</Button>
-        <Button variant="secondary" onClick={() => setIsEditing(true)}>
-          <EditIcon />
-          수정
-        </Button>
+      <div className="flex items-start gap-2">
+        <ButtonGroup variant="secondary">
+          <Modal>
+            <Button>
+              <EditIcon />
+              수정
+            </Button>
+            <EditStudentModal student={student} />
+          </Modal>
+          <Dropdown>
+            <Button><ChevronDownIcon /></Button>
+            <Dropdown.Popover placement="bottom end">
+              <Dropdown.Menu
+                selectionMode="none"
+                onAction={(key) => {
+                  if (key === 'change-status') {
+                    setIsEditingStatus(true);
+                  }
+                  else if (key === 'change-status-history') {
+                    setIsStatusHistoryOpen(true);
+                  }
+                }}
+              >
+                <Dropdown.Section>
+                  <Header>상태</Header>
+                  <Dropdown.Item id="change-status">
+                    상태변경
+                  </Dropdown.Item>
+                  <Dropdown.Item id="change-status-history">
+                    상태변경내역
+                  </Dropdown.Item>
+                </Dropdown.Section>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
+        </ButtonGroup>
       </div>
-      {isEditing && (
-        <EditStudentModal isOpen={isEditing} onOpenChange={setIsEditing} student={student} />
-      )}
       <ChangeStatusModal
         isOpen={isEditingStatus}
         onOpenChange={setIsEditingStatus}
         student={student}
       />
+      <StatusModal
+        isOpen={isStatusHistoryOpen}
+        onOpenChange={setIsStatusHistoryOpen}
+        statuses={statuses}
+      />
     </div>
   );
 }
 
-function StatusHistories({ student, statusHistories }) {
-  const [editingHistory, setEditingHistory] = React.useState(null);
+function Statuses({ student, statuses }) {
+  const [editingStatus, setEditingStatus] = React.useState(null);
 
   return (
     <React.Fragment>
       <Card>
         <Card.Header className="justify-between">
           <h3 className="text-xl font-bold lg:text-xl">상태 변경 이력</h3>
-          <Button isIconOnly variant="light" onPress={() => setEditingHistory({})}>
+          <Button isIconOnly variant="light" onPress={() => setEditingStatus({})}>
             <EditIcon width={14} height={14} />
           </Button>
         </Card.Header>
         <Card.Content>
           <ol className="flex flex-col gap-3">
-            {statusHistories.map(statusHistory => (
-              <li key={`status-history-${statusHistory.id}`}>
+            {statuses.map(status => (
+              <li key={`status-${status.id}`}>
                 <div className="flex items-center gap-1">
-                  <StatusBadge status={statusHistory.status} />
-                  <p className="text-xs text-gray-500 font-bold">{format(statusHistory.changedAt, 'yyyy-MM-dd')}</p>
+                  <StatusBadge status={status.status} />
+                  <p className="text-xs text-gray-500 font-bold">{format(status.changedAt, 'yyyy-MM-dd')}</p>
                   <div className="grow" />
-                  <Button isIconOnly size="sm" variant="light" onPress={() => setEditingHistory(statusHistory)}>
+                  <Button isIconOnly size="sm" variant="light" onPress={() => setEditingStatus(status)}>
                     <EditIcon size={14} />
                   </Button>
                 </div>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{statusHistory.notes}</p>
+                <p className="mt-1 text-sm whitespace-pre-wrap">{status.notes}</p>
               </li>
             ))}
           </ol>

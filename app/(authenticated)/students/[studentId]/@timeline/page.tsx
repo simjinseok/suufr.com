@@ -8,7 +8,7 @@ export default async function TimelinePage({
 }) {
   const { studentId } = await params;
 
-  const [comments, statusHistories] = await Promise.all([
+  const [comments, statuses] = await Promise.all([
     prisma.studentComment.findMany({
       select: {
         id: true,
@@ -23,7 +23,7 @@ export default async function TimelinePage({
         createdAt: 'desc',
       },
     }),
-    prisma.studentStatusHistory.findMany({
+    prisma.studentStatus.findMany({
       select: {
         id: true,
         changedAt: true,
@@ -40,5 +40,5 @@ export default async function TimelinePage({
     }),
   ]);
 
-  return <Timeline comments={comments} statusHistories={statusHistories} />;
+  return <Timeline comments={comments} statuses={statuses} />;
 }

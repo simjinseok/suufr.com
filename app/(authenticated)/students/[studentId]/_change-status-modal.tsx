@@ -1,16 +1,29 @@
+import type { ModalProps } from '@heroui/react';
+
 import React from 'react';
 import {
   Button,
   Form,
   Modal,
   Select,
-  TextArea, TextField, Label, ListBox,
+  TextArea,
+  TextField,
+  Label,
+  ListBox,
 } from '@heroui/react';
 
-import { createStudentStatusHistory } from '@/actions/student-history';
+import { createStudentStatus } from '@/actions/student-status';
 import { Controller, useForm } from 'react-hook-form';
 
-export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
+interface Props {
+  isOpen: ModalProps['isOpen'];
+  onOpenChange: ModalProps['onOpenChange'];
+  student: {
+    id: number;
+    status: string;
+  };
+}
+export default function ChangeStatusModal({ isOpen, onOpenChange, student }: Props) {
   const formId = React.useId();
 
   const { control } = useForm({
@@ -19,7 +32,7 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }) {
       notes: '',
     },
   });
-  const [state, formAction, isPending] = React.useActionState(createStudentStatusHistory, {});
+  const [state, formAction, isPending] = React.useActionState(createStudentStatus, {});
 
   React.useEffect(() => {
     if (!state.timestamp) return;

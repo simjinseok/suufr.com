@@ -49,7 +49,7 @@ export async function createStudent(prevState: any, formData: FormData) {
           },
         });
 
-        await tx.studentStatusHistory.create({
+        await tx.studentStatus.create({
           data: {
             studentId: student.id,
             status: validationResult.data.status,

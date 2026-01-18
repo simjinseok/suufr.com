@@ -4,16 +4,23 @@ import { notFound } from 'next/navigation';
 import Student from './_student';
 import StatsCards from './_stats-cards';
 import { getSession } from '@/utils/auth';
-import { StudentStatus } from '@prisma/client';
+import { StudentStatusValue } from '@prisma/client';
 
 type StudentWithStats = {
   id: number;
   name: string;
-  status: StudentStatus;
+  status: StudentStatusValue;
   notes: string;
   remainingSessionsCount: number;
   completedLessonCount: number;
   unpaidLessonCount: number;
+};
+
+type StudentStatusType = {
+  id: number;
+  status: string;
+  changedAt: Date;
+  notes: string | null;
 };
 
 export default async function Page({ params }: { params: Promise<{ studentId: string }> }) {
@@ -59,6 +66,22 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
     return notFound();
   }
 
+  const statuses = await prisma.studentStatus.findMany({
+    select: {
+      id: true,
+      changedAt: true,
+      status: true,
+      notes: true,
+    },
+    where: {
+      studentId: Number(studentId),
+      deletedAt: null,
+    },
+    orderBy: {
+      changedAt: 'desc',
+    },
+  }) as StudentStatusType[];
+
   const stats = {
     remainingSessionsCount: student.remainingSessionsCount,
     completedLessonCount: student.completedLessonCount,
@@ -67,7 +90,7 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
 
   return (
     <>
-      <Student student={student} />
+      <Student student={student} statuses={statuses} />
       <StatsCards stats={stats} />
     </>
   );

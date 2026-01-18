@@ -9,11 +9,11 @@
 * 🟢 You can import this file directly.
 */
 
-export const StudentStatus = {
+export const StudentStatusValue = {
   pending: 'pending',
   active: 'active',
   paused: 'paused',
   leave: 'leave'
 } as const
 
-export type StudentStatus = (typeof StudentStatus)[keyof typeof StudentStatus]
+export type StudentStatusValue = (typeof StudentStatusValue)[keyof typeof StudentStatusValue]

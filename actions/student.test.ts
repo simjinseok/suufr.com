@@ -26,7 +26,7 @@ describe('createStudent', () => {
         student: {
           create: async () => mockStudent,
         },
-        studentStatusHistory: {
+        studentStatus: {
           create: async () => ({ id: 1, studentId: 1, status: 'pending', notes: '신규 수강생 등록' }),
         },
       };
@@ -57,7 +57,7 @@ describe('createStudent', () => {
     expect(result.errors.name).toBeDefined();
   });
 
-  it('트랜잭션으로 StudentStatusHistory도 함께 생성한다', async () => {
+  it('트랜잭션으로 StudentStatus도 함께 생성한다', async () => {
     const mockStudent = {
       id: 1,
       userId: 'user-1',
@@ -80,7 +80,7 @@ describe('createStudent', () => {
             return mockStudent;
           },
         },
-        studentStatusHistory: {
+        studentStatus: {
           create: async () => {
             historyCreated = true;
             return { id: 1, studentId: 1, status: 'active', notes: '신규 수강생 등록' };

@@ -13,10 +13,10 @@ import {
   Textarea,
 } from '@heroui/react';
 
-import { createStudentStatusHistory, updateStudentStatusHistory } from '@/actions/student-history';
+import { createStudentStatus, updateStudentStatus } from '@/actions/student-status';
 import StatusBadge from '@/components/status-badge';
 
-export default function StudentStatusModal({ isOpen, onClose, student, statusHistory }) {
+export default function StudentStatusModal({ isOpen, onClose, student, studentStatus }) {
   const formId = React.useId();
 
   const [isPending, startTransition] = React.useTransition();
@@ -25,12 +25,12 @@ export default function StudentStatusModal({ isOpen, onClose, student, statusHis
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     startTransition(async () => {
-      const result = statusHistory ? await updateStudentStatusHistory({}, formData) : await createStudentStatusHistory({}, formData);
+      const result = studentStatus ? await updateStudentStatus({}, formData) : await createStudentStatus({}, formData);
       if (result.success) {
         onClose();
       }
     });
-  }, [statusHistory]);
+  }, [studentStatus, onClose]);
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
@@ -43,15 +43,15 @@ export default function StudentStatusModal({ isOpen, onClose, student, statusHis
                 id={formId}
                 onSubmit={onSubmit}
               >
-                {statusHistory
+                {studentStatus
                   ? (
-                      <input type="hidden" name="studentStatusHistoryId" value={statusHistory.id} />
+                      <input type="hidden" name="studentStatusId" value={studentStatus.id} />
                     )
                   : (<input type="hidden" name="studentId" value={student.id} />)}
                 <div className="w-full">
-                  {statusHistory
+                  {studentStatus
                     ? (
-                        <StatusBadge status={statusHistory.status} />
+                        <StatusBadge status={studentStatus.status} />
                       )
                     : (
                         <Select
@@ -72,7 +72,7 @@ export default function StudentStatusModal({ isOpen, onClose, student, statusHis
                   className="mt-4"
                   name="notes"
                   label="참고사항"
-                  defaultValue={statusHistory?.notes}
+                  defaultValue={studentStatus?.notes}
                   rows={5}
                 />
               </Form>

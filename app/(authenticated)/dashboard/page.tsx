@@ -56,7 +56,7 @@ export default async function Page() {
         createdAt: 'desc',
       },
     }),
-    prisma.studentStatusHistory.count({
+    prisma.studentStatus.count({
       where: {
         student: {
           userId: user.id,

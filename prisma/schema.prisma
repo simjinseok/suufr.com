@@ -8,18 +8,18 @@ datasource db {
 }
 
 model Student {
-  id              Int                    @id @default(autoincrement())
-  uuid            String                 @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  name            String
-  notes           String
-  status          StudentStatus          @default(pending)
-  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(0)
-  userId          String                 @map("user_id") @db.Uuid
-  lessons         Lesson[]
-  comments        StudentComment[]
-  statusHistories StudentStatusHistory[]
+  id        Int                  @id @default(autoincrement())
+  uuid      String               @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name      String
+  notes     String
+  status    StudentStatusValue   @default(pending)
+  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime             @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?            @map("deleted_at") @db.Timestamptz(0)
+  userId    String               @map("user_id") @db.Uuid
+  lessons   Lesson[]
+  comments  StudentComment[]
+  statuses  StudentStatus[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
@@ -87,20 +87,20 @@ model StudentComment {
   @@map("student_comments")
 }
 
-model StudentStatusHistory {
-  id        Int           @id @default(autoincrement())
-  uuid      String        @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  status    StudentStatus
+model StudentStatus {
+  id        Int                @id @default(autoincrement())
+  uuid      String             @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  status    StudentStatusValue
   notes     String?
-  changedAt DateTime      @default(now()) @map("changed_at") @db.Timestamptz(0)
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(0)
-  studentId Int           @map("student_id")
-  student   Student       @relation(fields: [studentId], references: [id])
+  changedAt DateTime           @default(now()) @map("changed_at") @db.Timestamptz(0)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(0)
+  studentId Int                @map("student_id")
+  student   Student            @relation(fields: [studentId], references: [id])
 
   @@index([studentId, changedAt, deletedAt])
-  @@map("student_status_histories")
+  @@map("student_statuses")
 }
 
 model SessionShare {
@@ -155,11 +155,13 @@ model Lesson {
   @@map("lessons")
 }
 
-enum StudentStatus {
+enum StudentStatusValue {
   pending
   active
   paused
   leave
+
+  @@map("StudentStatus")
 }
 
 model UserSettings {

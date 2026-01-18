@@ -389,7 +389,7 @@ export const ModelName = {
   Payment: 'Payment',
   Meeting: 'Meeting',
   StudentComment: 'StudentComment',
-  StudentStatusHistory: 'StudentStatusHistory',
+  StudentStatus: 'StudentStatus',
   SessionShare: 'SessionShare',
   Session: 'Session',
   Lesson: 'Lesson',
@@ -409,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "student" | "feedback" | "payment" | "meeting" | "studentComment" | "studentStatusHistory" | "sessionShare" | "session" | "lesson" | "userSettings"
+    modelProps: "student" | "feedback" | "payment" | "meeting" | "studentComment" | "studentStatus" | "sessionShare" | "session" | "lesson" | "userSettings"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -783,77 +783,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    StudentStatusHistory: {
-      payload: Prisma.$StudentStatusHistoryPayload<ExtArgs>
-      fields: Prisma.StudentStatusHistoryFieldRefs
+    StudentStatus: {
+      payload: Prisma.$StudentStatusPayload<ExtArgs>
+      fields: Prisma.StudentStatusFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.StudentStatusHistoryFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload> | null
+          args: Prisma.StudentStatusFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.StudentStatusHistoryFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         findFirst: {
-          args: Prisma.StudentStatusHistoryFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload> | null
+          args: Prisma.StudentStatusFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.StudentStatusHistoryFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         findMany: {
-          args: Prisma.StudentStatusHistoryFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>[]
+          args: Prisma.StudentStatusFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>[]
         }
         create: {
-          args: Prisma.StudentStatusHistoryCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         createMany: {
-          args: Prisma.StudentStatusHistoryCreateManyArgs<ExtArgs>
+          args: Prisma.StudentStatusCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.StudentStatusHistoryCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>[]
+          args: Prisma.StudentStatusCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>[]
         }
         delete: {
-          args: Prisma.StudentStatusHistoryDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         update: {
-          args: Prisma.StudentStatusHistoryUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         deleteMany: {
-          args: Prisma.StudentStatusHistoryDeleteManyArgs<ExtArgs>
+          args: Prisma.StudentStatusDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.StudentStatusHistoryUpdateManyArgs<ExtArgs>
+          args: Prisma.StudentStatusUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.StudentStatusHistoryUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>[]
+          args: Prisma.StudentStatusUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>[]
         }
         upsert: {
-          args: Prisma.StudentStatusHistoryUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusHistoryPayload>
+          args: Prisma.StudentStatusUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentStatusPayload>
         }
         aggregate: {
-          args: Prisma.StudentStatusHistoryAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateStudentStatusHistory>
+          args: Prisma.StudentStatusAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStudentStatus>
         }
         groupBy: {
-          args: Prisma.StudentStatusHistoryGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StudentStatusHistoryGroupByOutputType>[]
+          args: Prisma.StudentStatusGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudentStatusGroupByOutputType>[]
         }
         count: {
-          args: Prisma.StudentStatusHistoryCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StudentStatusHistoryCountAggregateOutputType> | number
+          args: Prisma.StudentStatusCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudentStatusCountAggregateOutputType> | number
         }
       }
     }
@@ -1266,7 +1266,7 @@ export const StudentCommentScalarFieldEnum = {
 export type StudentCommentScalarFieldEnum = (typeof StudentCommentScalarFieldEnum)[keyof typeof StudentCommentScalarFieldEnum]
 
 
-export const StudentStatusHistoryScalarFieldEnum = {
+export const StudentStatusScalarFieldEnum = {
   id: 'id',
   uuid: 'uuid',
   status: 'status',
@@ -1278,7 +1278,7 @@ export const StudentStatusHistoryScalarFieldEnum = {
   studentId: 'studentId'
 } as const
 
-export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistoryScalarFieldEnum)[keyof typeof StudentStatusHistoryScalarFieldEnum]
+export type StudentStatusScalarFieldEnum = (typeof StudentStatusScalarFieldEnum)[keyof typeof StudentStatusScalarFieldEnum]
 
 
 export const SessionShareScalarFieldEnum = {
@@ -1395,16 +1395,16 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'StudentStatus'
+ * Reference to a field of type 'StudentStatusValue'
  */
-export type EnumStudentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StudentStatus'>
+export type EnumStudentStatusValueFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StudentStatusValue'>
     
 
 
 /**
- * Reference to a field of type 'StudentStatus[]'
+ * Reference to a field of type 'StudentStatusValue[]'
  */
-export type ListEnumStudentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StudentStatus[]'>
+export type ListEnumStudentStatusValueFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StudentStatusValue[]'>
     
 
 
@@ -1542,7 +1542,7 @@ export type GlobalOmitConfig = {
   payment?: Prisma.PaymentOmit
   meeting?: Prisma.MeetingOmit
   studentComment?: Prisma.StudentCommentOmit
-  studentStatusHistory?: Prisma.StudentStatusHistoryOmit
+  studentStatus?: Prisma.StudentStatusOmit
   sessionShare?: Prisma.SessionShareOmit
   session?: Prisma.SessionOmit
   lesson?: Prisma.LessonOmit

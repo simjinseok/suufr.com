@@ -56,7 +56,7 @@ export const ModelName = {
   Payment: 'Payment',
   Meeting: 'Meeting',
   StudentComment: 'StudentComment',
-  StudentStatusHistory: 'StudentStatusHistory',
+  StudentStatus: 'StudentStatus',
   SessionShare: 'SessionShare',
   Session: 'Session',
   Lesson: 'Lesson',
@@ -153,7 +153,7 @@ export const StudentCommentScalarFieldEnum = {
 export type StudentCommentScalarFieldEnum = (typeof StudentCommentScalarFieldEnum)[keyof typeof StudentCommentScalarFieldEnum]
 
 
-export const StudentStatusHistoryScalarFieldEnum = {
+export const StudentStatusScalarFieldEnum = {
   id: 'id',
   uuid: 'uuid',
   status: 'status',
@@ -165,7 +165,7 @@ export const StudentStatusHistoryScalarFieldEnum = {
   studentId: 'studentId'
 } as const
 
-export type StudentStatusHistoryScalarFieldEnum = (typeof StudentStatusHistoryScalarFieldEnum)[keyof typeof StudentStatusHistoryScalarFieldEnum]
+export type StudentStatusScalarFieldEnum = (typeof StudentStatusScalarFieldEnum)[keyof typeof StudentStatusScalarFieldEnum]
 
 
 export const SessionShareScalarFieldEnum = {

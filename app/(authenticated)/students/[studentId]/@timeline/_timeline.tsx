@@ -17,7 +17,7 @@ import StatusBadge from '@/components/status-badge';
 import { Controller, useForm } from 'react-hook-form';
 
 import { createStudentComment, updateStudentComment, deleteStudentComment } from '@/actions/student-comment';
-import { updateStudentStatusHistory } from '@/actions/student-history';
+import { updateStudentStatus } from '@/actions/student-status';
 
 type Comment = {
   id: number;
@@ -25,7 +25,7 @@ type Comment = {
   createdAt: Date;
 };
 
-type StatusHistory = {
+type StudentStatusType = {
   id: number;
   status: string;
   changedAt: Date;
@@ -34,17 +34,17 @@ type StatusHistory = {
 
 type TimelineItem
   = | { type: 'comment'; data: Comment; timestamp: Date }
-    | { type: 'status'; data: StatusHistory; timestamp: Date };
+    | { type: 'status'; data: StudentStatusType; timestamp: Date };
 
 type Props = {
   comments: Comment[];
-  statusHistories: StatusHistory[];
+  statuses: StudentStatusType[];
 };
 
-export default function Timeline({ comments, statusHistories }: Props) {
+export default function Timeline({ comments, statuses }: Props) {
   const { studentId } = useParams();
   const [editingComment, setEditingComment] = React.useState<Comment | null | 'new'>(null);
-  const [editingStatus, setEditingStatus] = React.useState<StatusHistory | null>(null);
+  const [editingStatus, setEditingStatus] = React.useState<StudentStatusType | null>(null);
 
   const timelineItems: TimelineItem[] = React.useMemo(() => {
     const items: TimelineItem[] = [
@@ -53,7 +53,7 @@ export default function Timeline({ comments, statusHistories }: Props) {
         data: c,
         timestamp: new Date(c.createdAt),
       })),
-      ...statusHistories.map(s => ({
+      ...statuses.map(s => ({
         type: 'status' as const,
         data: s,
         timestamp: new Date(s.changedAt),
@@ -61,7 +61,7 @@ export default function Timeline({ comments, statusHistories }: Props) {
     ];
 
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [comments, statusHistories]);
+  }, [comments, statuses]);
 
   return (
     <div className="space-y-2">
@@ -168,10 +168,10 @@ export default function Timeline({ comments, statusHistories }: Props) {
         comment={editingComment === 'new' ? null : editingComment}
       />
 
-      <StatusHistoryModal
+      <StudentStatusModal
         isOpen={editingStatus !== null}
         onClose={() => setEditingStatus(null)}
-        statusHistory={editingStatus}
+        studentStatus={editingStatus}
       />
     </div>
   );
@@ -281,23 +281,23 @@ function CommentModal({
   );
 }
 
-function StatusHistoryModal({
+function StudentStatusModal({
   isOpen,
   onClose,
-  statusHistory,
+  studentStatus,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  statusHistory: StatusHistory | null;
+  studentStatus: StudentStatusType | null;
 }) {
   const formId = React.useId();
 
   const { control } = useForm({
     values: {
-      notes: statusHistory?.notes,
+      notes: studentStatus?.notes,
     },
   });
-  const [state, formAction, isPending] = React.useActionState(updateStudentStatusHistory, {});
+  const [state, formAction, isPending] = React.useActionState(updateStudentStatus, {});
 
   React.useEffect(() => {
     if (!state.timestamp) {
@@ -308,9 +308,9 @@ function StatusHistoryModal({
       alert('수정하였습니다');
       onClose();
     }
-  }, [state.success, state.timestamp]);
+  }, [state.success, state.timestamp, onClose]);
 
-  if (!statusHistory) return null;
+  if (!studentStatus) return null;
 
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
@@ -325,13 +325,13 @@ function StatusHistoryModal({
                 <Form id={formId} className="p-1" action={formAction}>
                   <input
                     type="hidden"
-                    name="studentStatusHistoryId"
-                    value={statusHistory.id}
+                    name="studentStatusId"
+                    value={studentStatus.id}
                   />
                   <div className="mb-4">
-                    <StatusBadge status={statusHistory.status} />
+                    <StatusBadge status={studentStatus.status} />
                     <span className="ml-2 text-sm text-zinc-500">
-                      {format(new Date(statusHistory.changedAt), 'yyyy-MM-dd HH:mm')}
+                      {format(new Date(studentStatus.changedAt), 'yyyy-MM-dd HH:mm')}
                     </span>
                   </div>
                   <Controller

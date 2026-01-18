@@ -10,15 +10,15 @@ const createSchema = z.object({
   status: z.enum(['pending', 'active', 'paused', 'leave']).optional().default('pending'),
   notes: z.string().optional(),
 });
-export type CreateStudentStatusHistoryState = {
+export type CreateStudentStatusState = {
   success?: boolean;
   message?: string;
   fieldErrors?: Record<string, string | string[]>;
   timestamp?: number;
 };
-export async function createStudentStatusHistory(prevState: CreateStudentStatusHistoryState, formData: FormData) {
+export async function createStudentStatus(prevState: CreateStudentStatusState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'createStudentStatusHistory',
+    'createStudentStatus',
     {
       formData,
       headers: await headers(),
@@ -28,7 +28,7 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
       const { user } = await getSession();
       const { studentId, ...data } = Object.fromEntries(formData.entries());
 
-      const state: CreateStudentStatusHistoryState = {
+      const state: CreateStudentStatusState = {
         success: false,
         timestamp: Date.now(),
       };
@@ -46,7 +46,6 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
       const student = await prisma.student.findFirst({
         select: {
           id: true,
-          status: true,
         },
         where: {
           id: Number(studentId),
@@ -60,15 +59,33 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
         return state;
       }
 
-      const studentStatusHistory = await prisma.$transaction(async (tx) => {
-        const statusHistory = await tx.studentStatusHistory.create({
+      const lastStatus = await prisma.studentStatus.findFirst({
+        select: {
+          status: true,
+        },
+        where: {
+          studentId: student.id,
+          deletedAt: null,
+        },
+        orderBy: {
+          changedAt: 'desc',
+        },
+      });
+
+      if (lastStatus?.status === validationResult.data.status) {
+        state.message = '현재 상태와 동일합니다.';
+        return state;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.studentStatus.create({
           data: {
             studentId: student.id,
             ...validationResult.data,
           },
         });
 
-        const result = await tx.student.update({
+        await tx.student.update({
           where: {
             id: student.id,
           },
@@ -77,8 +94,6 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
             updatedAt: new Date(),
           },
         });
-
-        return statusHistory;
       });
 
       revalidatePath('/students/[studentId]', 'page');
@@ -90,20 +105,20 @@ export async function createStudentStatusHistory(prevState: CreateStudentStatusH
 }
 
 const updateSchema = z.object({
-  studentStatusHistoryId: z.coerce.number(),
+  studentStatusId: z.coerce.number(),
   notes: z.string().optional(),
 });
 
-export type UpdateStudentStatusHistoryState = {
+export type UpdateStudentStatusState = {
   success?: boolean;
   message?: string;
   fieldErrors?: Record<string, string | string[]>;
   timestamp?: number;
 };
 
-export async function updateStudentStatusHistory(prevState: UpdateStudentStatusHistoryState, formData: FormData) {
+export async function updateStudentStatus(prevState: UpdateStudentStatusState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'updateStudentStatusHistory',
+    'updateStudentStatus',
     {
       formData,
       headers: await headers(),
@@ -112,7 +127,7 @@ export async function updateStudentStatusHistory(prevState: UpdateStudentStatusH
     async () => {
       const { user } = await getSession();
 
-      const state: UpdateStudentStatusHistoryState = {
+      const state: UpdateStudentStatusState = {
         success: false,
         timestamp: Date.now(),
       };
@@ -128,23 +143,23 @@ export async function updateStudentStatusHistory(prevState: UpdateStudentStatusH
       }
 
       // 해당 상태 기록이 현재 사용자의 학생에 속하는지 확인
-      const history = await prisma.studentStatusHistory.findUnique({
+      const studentStatus = await prisma.studentStatus.findUnique({
         where: {
-          id: validationResult.data.studentStatusHistoryId,
+          id: validationResult.data.studentStatusId,
         },
         include: {
           student: true,
         },
       });
 
-      if (!history || history.student.userId !== user.id) {
+      if (!studentStatus || studentStatus.student.userId !== user.id) {
         state.message = '권한이 없습니다';
         return state;
       }
 
-      await prisma.studentStatusHistory.update({
+      await prisma.studentStatus.update({
         where: {
-          id: history.id,
+          id: studentStatus.id,
         },
         data: {
           notes: validationResult.data.notes,
