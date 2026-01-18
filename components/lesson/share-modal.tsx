@@ -119,16 +119,6 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                         )}
                       </p>
                     </div>
-
-                    <Button
-                      variant="danger-soft"
-                      className="w-full"
-                      onPress={handleRevokeShare}
-                      isDisabled={isLoading}
-                    >
-                      <Trash2Icon className="size-4 mr-1" />
-                      공유 중지
-                    </Button>
                   </div>
                 ) : (
                   // 활성 공유 링크가 없는 경우
@@ -160,6 +150,16 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                 )}
               </Modal.Body>
               <Modal.Footer>
+                {shareState && (
+                  <Button
+                    variant="danger-soft"
+                    onPress={handleRevokeShare}
+                    isDisabled={isLoading}
+                  >
+                    공유 중지
+                  </Button>
+                )}
+                <div className="grow" />
                 <Button variant="ghost" onPress={close}>
                   닫기
                 </Button>
