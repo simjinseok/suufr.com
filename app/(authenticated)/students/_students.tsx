@@ -1,9 +1,6 @@
 'use client';
 import type { Student } from '@/types/index';
 
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale/ko';
-
 import Link from 'next/link';
 import React from 'react';
 import { Avatar, Chip } from '@heroui/react';

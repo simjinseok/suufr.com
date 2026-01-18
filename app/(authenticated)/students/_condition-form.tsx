@@ -62,7 +62,7 @@ export default function ConditionForm({
           <ListBox>
             <ListBox.Item id="" textValue="전체">전체</ListBox.Item>
             <ListBox.Item id="active" textValue="수강중">수강중</ListBox.Item>
-            <ListBox.Item id="paused" textValue="중단">중단</ListBox.Item>
+            <ListBox.Item id="paused" textValue="일시정지">일시정지</ListBox.Item>
             <ListBox.Item id="leave" textValue="그만둠">그만둠</ListBox.Item>
           </ListBox>
         </Select.Popover>
