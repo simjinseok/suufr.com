@@ -33,6 +33,39 @@ pnpm prisma:deploy    # Deploy migrations (prod)
 - **Auth**: AWS Cognito OAuth (Arctic library)
 - **Monitoring**: Sentry
 
+## Tailwind CSS 4 Guidelines
+
+This project uses **Tailwind CSS 4** with CSS-first configuration. Do NOT use v3 syntax.
+
+**Configuration:**
+- CSS-first setup via `@import "tailwindcss"` in globals.css
+- Theme variables defined in `@theme {}` block
+- No tailwind.config.ts file (not needed in v4)
+
+**Color Usage:**
+- Prefer defined colors (HeroUI semantic + Tailwind palette)
+- HeroUI semantic: `accent`, `danger`, `warning`, `success`, `default`
+- HeroUI soft variants: `bg-accent-soft`, `bg-danger-soft`, `bg-warning-soft`, `bg-success-soft`
+- Tailwind palette: `gray`, `zinc`, `blue`, `green`, `purple`, `violet`, `indigo`, `red`, `amber`, `emerald`
+- Arbitrary values (`bg-[#xxx]`) are acceptable when the design calls for a specific color not in the palette
+
+**v3 → v4 Breaking Changes:**
+| v3 (DO NOT USE) | v4 (USE THIS) |
+|-----------------|---------------|
+| `shadow-sm` | `shadow-xs` |
+| `shadow-md` | `shadow-sm` |
+| `rounded-sm` | `rounded-xs` |
+| `blur-sm` | `blur-xs` |
+| `ring-offset-*` | `inset-ring-*` |
+| `bg-opacity-50` | `bg-black/50` |
+| `decoration-slice` | `box-decoration-slice` |
+| `flex-grow` | `grow` |
+| `flex-shrink` | `shrink` |
+
+**Renamed Utilities:**
+- `overflow-ellipsis` → `text-ellipsis`
+- `decoration-clone` → `box-decoration-clone`
+
 ## Architecture
 
 ```
