@@ -38,7 +38,7 @@ export type OrganizationMinAggregateOutputType = {
   id: number | null
   uuid: string | null
   name: string | null
-  logoUrl: string | null
+  logoImageKey: string | null
   phone: string | null
   address: string | null
   createdAt: Date | null
@@ -50,7 +50,7 @@ export type OrganizationMaxAggregateOutputType = {
   id: number | null
   uuid: string | null
   name: string | null
-  logoUrl: string | null
+  logoImageKey: string | null
   phone: string | null
   address: string | null
   createdAt: Date | null
@@ -62,7 +62,7 @@ export type OrganizationCountAggregateOutputType = {
   id: number
   uuid: number
   name: number
-  logoUrl: number
+  logoImageKey: number
   phone: number
   address: number
   createdAt: number
@@ -84,7 +84,7 @@ export type OrganizationMinAggregateInputType = {
   id?: true
   uuid?: true
   name?: true
-  logoUrl?: true
+  logoImageKey?: true
   phone?: true
   address?: true
   createdAt?: true
@@ -96,7 +96,7 @@ export type OrganizationMaxAggregateInputType = {
   id?: true
   uuid?: true
   name?: true
-  logoUrl?: true
+  logoImageKey?: true
   phone?: true
   address?: true
   createdAt?: true
@@ -108,7 +108,7 @@ export type OrganizationCountAggregateInputType = {
   id?: true
   uuid?: true
   name?: true
-  logoUrl?: true
+  logoImageKey?: true
   phone?: true
   address?: true
   createdAt?: true
@@ -207,7 +207,7 @@ export type OrganizationGroupByOutputType = {
   id: number
   uuid: string
   name: string
-  logoUrl: string | null
+  logoImageKey: string | null
   phone: string | null
   address: string | null
   createdAt: Date
@@ -242,7 +242,7 @@ export type OrganizationWhereInput = {
   id?: Prisma.IntFilter<"Organization"> | number
   uuid?: Prisma.UuidFilter<"Organization"> | string
   name?: Prisma.StringFilter<"Organization"> | string
-  logoUrl?: Prisma.StringNullableFilter<"Organization"> | string | null
+  logoImageKey?: Prisma.StringNullableFilter<"Organization"> | string | null
   phone?: Prisma.StringNullableFilter<"Organization"> | string | null
   address?: Prisma.StringNullableFilter<"Organization"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
@@ -257,7 +257,7 @@ export type OrganizationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -275,7 +275,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.OrganizationWhereInput[]
   NOT?: Prisma.OrganizationWhereInput | Prisma.OrganizationWhereInput[]
   name?: Prisma.StringFilter<"Organization"> | string
-  logoUrl?: Prisma.StringNullableFilter<"Organization"> | string | null
+  logoImageKey?: Prisma.StringNullableFilter<"Organization"> | string | null
   phone?: Prisma.StringNullableFilter<"Organization"> | string | null
   address?: Prisma.StringNullableFilter<"Organization"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
@@ -290,7 +290,7 @@ export type OrganizationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -310,7 +310,7 @@ export type OrganizationScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Organization"> | number
   uuid?: Prisma.UuidWithAggregatesFilter<"Organization"> | string
   name?: Prisma.StringWithAggregatesFilter<"Organization"> | string
-  logoUrl?: Prisma.StringNullableWithAggregatesFilter<"Organization"> | string | null
+  logoImageKey?: Prisma.StringNullableWithAggregatesFilter<"Organization"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Organization"> | string | null
   address?: Prisma.StringNullableWithAggregatesFilter<"Organization"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Organization"> | Date | string
@@ -321,7 +321,7 @@ export type OrganizationScalarWhereWithAggregatesInput = {
 export type OrganizationCreateInput = {
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -336,7 +336,7 @@ export type OrganizationUncheckedCreateInput = {
   id?: number
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -350,7 +350,7 @@ export type OrganizationUncheckedCreateInput = {
 export type OrganizationUpdateInput = {
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -365,7 +365,7 @@ export type OrganizationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -380,7 +380,7 @@ export type OrganizationCreateManyInput = {
   id?: number
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -391,7 +391,7 @@ export type OrganizationCreateManyInput = {
 export type OrganizationUpdateManyMutationInput = {
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,7 +403,7 @@ export type OrganizationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -415,7 +415,7 @@ export type OrganizationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  logoUrl?: Prisma.SortOrder
+  logoImageKey?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -431,7 +431,7 @@ export type OrganizationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  logoUrl?: Prisma.SortOrder
+  logoImageKey?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -443,7 +443,7 @@ export type OrganizationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  logoUrl?: Prisma.SortOrder
+  logoImageKey?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   address?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -529,7 +529,7 @@ export type OrganizationUpdateOneRequiredWithoutMeetingsNestedInput = {
 export type OrganizationCreateWithoutMembersInput = {
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -543,7 +543,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   id?: number
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -572,7 +572,7 @@ export type OrganizationUpdateToOneWithWhereWithoutMembersInput = {
 export type OrganizationUpdateWithoutMembersInput = {
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -586,7 +586,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -599,7 +599,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
 export type OrganizationCreateWithoutStudentsInput = {
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -613,7 +613,7 @@ export type OrganizationUncheckedCreateWithoutStudentsInput = {
   id?: number
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -642,7 +642,7 @@ export type OrganizationUpdateToOneWithWhereWithoutStudentsInput = {
 export type OrganizationUpdateWithoutStudentsInput = {
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -656,7 +656,7 @@ export type OrganizationUncheckedUpdateWithoutStudentsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -669,7 +669,7 @@ export type OrganizationUncheckedUpdateWithoutStudentsInput = {
 export type OrganizationCreateWithoutMeetingsInput = {
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -683,7 +683,7 @@ export type OrganizationUncheckedCreateWithoutMeetingsInput = {
   id?: number
   uuid?: string
   name: string
-  logoUrl?: string | null
+  logoImageKey?: string | null
   phone?: string | null
   address?: string | null
   createdAt?: Date | string
@@ -712,7 +712,7 @@ export type OrganizationUpdateToOneWithWhereWithoutMeetingsInput = {
 export type OrganizationUpdateWithoutMeetingsInput = {
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -726,7 +726,7 @@ export type OrganizationUncheckedUpdateWithoutMeetingsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   uuid?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -789,7 +789,7 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   uuid?: boolean
   name?: boolean
-  logoUrl?: boolean
+  logoImageKey?: boolean
   phone?: boolean
   address?: boolean
   createdAt?: boolean
@@ -805,7 +805,7 @@ export type OrganizationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   uuid?: boolean
   name?: boolean
-  logoUrl?: boolean
+  logoImageKey?: boolean
   phone?: boolean
   address?: boolean
   createdAt?: boolean
@@ -817,7 +817,7 @@ export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   uuid?: boolean
   name?: boolean
-  logoUrl?: boolean
+  logoImageKey?: boolean
   phone?: boolean
   address?: boolean
   createdAt?: boolean
@@ -829,7 +829,7 @@ export type OrganizationSelectScalar = {
   id?: boolean
   uuid?: boolean
   name?: boolean
-  logoUrl?: boolean
+  logoImageKey?: boolean
   phone?: boolean
   address?: boolean
   createdAt?: boolean
@@ -837,7 +837,7 @@ export type OrganizationSelectScalar = {
   deletedAt?: boolean
 }
 
-export type OrganizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "logoUrl" | "phone" | "address" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["organization"]>
+export type OrganizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "logoImageKey" | "phone" | "address" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["organization"]>
 export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   students?: boolean | Prisma.Organization$studentsArgs<ExtArgs>
@@ -858,7 +858,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     id: number
     uuid: string
     name: string
-    logoUrl: string | null
+    logoImageKey: string | null
     phone: string | null
     address: string | null
     createdAt: Date
@@ -1293,7 +1293,7 @@ export interface OrganizationFieldRefs {
   readonly id: Prisma.FieldRef<"Organization", 'Int'>
   readonly uuid: Prisma.FieldRef<"Organization", 'String'>
   readonly name: Prisma.FieldRef<"Organization", 'String'>
-  readonly logoUrl: Prisma.FieldRef<"Organization", 'String'>
+  readonly logoImageKey: Prisma.FieldRef<"Organization", 'String'>
   readonly phone: Prisma.FieldRef<"Organization", 'String'>
   readonly address: Prisma.FieldRef<"Organization", 'String'>
   readonly createdAt: Prisma.FieldRef<"Organization", 'DateTime'>

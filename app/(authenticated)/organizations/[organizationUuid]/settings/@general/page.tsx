@@ -21,6 +21,8 @@ export default async function GeneralSettingsPage({
         name: organization.name,
         phone: organization.phone || '',
         address: organization.address || '',
+        logoImageKey: organization.logoImageKey || null,
+        logoUrl: organization.logoUrl || null,
       }}
     />
   );

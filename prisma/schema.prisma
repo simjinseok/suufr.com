@@ -9,15 +9,15 @@ datasource db {
 
 // Organization (과외방)
 model Organization {
-  id        Int       @id @default(autoincrement())
-  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  name      String // 상호명
-  logoUrl   String?   @map("logo_url")
-  phone     String? // 연락처
-  address   String? // 주소 (지도용)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name          String // 상호명
+  logoImageKey  String?   @map("logo_image_key")
+  phone         String? // 연락처
+  address       String? // 주소 (지도용)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   members  OrganizationMember[]
   students Student[]

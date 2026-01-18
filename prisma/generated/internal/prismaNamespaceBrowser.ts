@@ -86,7 +86,7 @@ export const OrganizationScalarFieldEnum = {
   id: 'id',
   uuid: 'uuid',
   name: 'name',
-  logoUrl: 'logoUrl',
+  logoImageKey: 'logoImageKey',
   phone: 'phone',
   address: 'address',
   createdAt: 'createdAt',

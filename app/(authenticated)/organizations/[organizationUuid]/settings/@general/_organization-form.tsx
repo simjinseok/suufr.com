@@ -12,6 +12,7 @@ import {
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { updateOrganization } from '@/actions/organization';
+import OrganizationLogoUpload from '@/components/organization/logo-upload';
 
 type Props = {
   organizationUuid: string;
@@ -19,6 +20,8 @@ type Props = {
     name: string;
     phone: string;
     address: string;
+    logoImageKey: string | null;
+    logoUrl: string | null;
   };
 };
 
@@ -31,6 +34,12 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
       fields: initialData,
     },
   );
+
+  const [logoImageKey, setLogoImageKey] = React.useState<string | null>(null);
+  const [logoImagePublicId, setLogoImagePublicId] = React.useState<string | null>(null);
+
+  // state가 업데이트되면 로고 URL도 업데이트
+  const currentLogoUrl = state.fields?.logoUrl || initialData.logoUrl;
 
   const { control } = useForm({
     values: {
@@ -57,6 +66,16 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
           {state.message}
         </div>
       )}
+
+      <OrganizationLogoUpload
+        value={logoImageKey}
+        onChange={setLogoImageKey}
+        onPublicIdChange={setLogoImagePublicId}
+        currentImageUrl={currentLogoUrl}
+        disabled={isPending}
+      />
+      <input type="hidden" name="logoImageKey" value={logoImageKey || ''} />
+      <input type="hidden" name="logoImagePublicId" value={logoImagePublicId || ''} />
 
       <Controller
         control={control}
