@@ -2,7 +2,6 @@
 import * as React from 'react';
 import {
   Button,
-  Checkbox,
   DateField,
   DateInputGroup,
   Form,
@@ -24,7 +23,6 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
   const defaultDuration = useDefaultDuration();
   const { control } = useForm({
     values: {
-      isDone: false,
       sessionAt: toCalendarDateTime(today('Asia/Seoul')),
       duration: defaultDuration,
       notes: '',
@@ -57,20 +55,6 @@ export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
               <Modal.Body>
                 <Form id={formId} className="p-1 flex flex-col gap-4" action={formAction}>
                   <input type="hidden" name="lessonId" value={lesson.id} />
-                  <Controller
-                    control={control}
-                    name="isDone"
-                    render={({ field: { name, value, onChange } }) => (
-                      <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Content>
-                          완료여부
-                        </Checkbox.Content>
-                      </Checkbox>
-                    )}
-                  />
                   <Controller
                     control={control}
                     name="sessionAt"
