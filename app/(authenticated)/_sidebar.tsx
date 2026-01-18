@@ -17,7 +17,6 @@ import {
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
-import { OrganizationSwitcher } from '@/components/organization-switcher';
 import type { OrganizationRole } from '@/prisma/generated/client';
 
 type OrganizationItem = {
@@ -47,10 +46,24 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
     : null;
   const memberInitial = membership.name.charAt(membership.name.length - 1);
 
-  const handleOrgSelect = (key: string | number) => {
-    const selectedOrg = organizations.find(org => org.uuid === key);
-    if (selectedOrg && selectedOrg.id !== currentOrg.id) {
-      window.location.href = `/api/switch-organization/${selectedOrg.uuid}`;
+  const handleMobileAction = (key: string | number) => {
+    const keyStr = String(key);
+
+    if (keyStr === 'settings') {
+      window.location.href = '/settings';
+    }
+    else if (keyStr === 'org-settings') {
+      window.location.href = `/organizations/${currentOrg.uuid}/settings`;
+    }
+    else if (keyStr === 'logout') {
+      window.location.href = '/auth/logout';
+    }
+    else {
+      // 조직 선택
+      const selectedOrg = organizations.find(org => org.uuid === keyStr);
+      if (selectedOrg && selectedOrg.id !== currentOrg.id) {
+        window.location.href = `/api/switch-organization/${selectedOrg.uuid}`;
+      }
     }
   };
   const sidebarContent = (
@@ -66,11 +79,8 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
           <h1 className="text-lg font-semibold text-gray-900 tracking-tight">스프</h1>
         </div>
       </div>
-      <div className="px-3 pb-2">
-        <OrganizationSwitcher currentOrg={currentOrg} organizations={organizations} />
-      </div>
       <AppNavigation />
-      <UserMenu currentOrg={currentOrg} membership={membership} />
+      <UserMenu currentOrg={currentOrg} organizations={organizations} membership={membership} />
     </>
   );
 
@@ -85,85 +95,73 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
           >
             <span className="text-xs font-bold text-white">스</span>
           </div>
-          {/* 모바일 조직 선택기 */}
-          <Dropdown>
-            <Button variant="ghost" className="h-8 px-2 gap-1.5">
-              <div className="w-5 h-5 rounded bg-linear-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
-                <BuildingIcon className="w-3 h-3 text-indigo-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900 max-w-24 truncate">
-                {currentOrg.name}
-              </span>
-              <ChevronsUpDownIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            </Button>
-            <Dropdown.Popover placement="bottom start">
-              <Dropdown.Menu
-                aria-label="조직 선택"
-                onAction={handleOrgSelect}
-                selectionMode="single"
-                selectedKeys={new Set([currentOrg.uuid])}
-              >
-                {organizations.map((org) => (
-                  <Dropdown.Item
-                    key={org.uuid}
-                    id={org.uuid}
-                    textValue={org.name}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
-                        <BuildingIcon className="w-3 h-3 text-indigo-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Label className="truncate">{org.name}</Label>
-                      </div>
-                      {org.id === currentOrg.id && (
-                        <CheckIcon className="w-4 h-4 text-indigo-600 shrink-0" />
-                      )}
-                    </div>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
+          <h1 className="text-base font-semibold text-gray-900 tracking-tight">스프</h1>
         </div>
 
         <div className="flex items-center gap-1">
-          {/* 유저 프로필 드롭다운 */}
+          {/* 유저 프로필 + 조직 선택 통합 드롭다운 */}
           <Dropdown>
-            <Button variant="ghost" isIconOnly size="sm">
-              <Avatar size="xs">
+            <Button variant="ghost" className="h-auto py-1.5 px-2 gap-2">
+              <Avatar className="size-6">
                 {profileImageUrl ? (
                   <Avatar.Image src={profileImageUrl} alt={membership.name} />
                 ) : null}
-                <Avatar.Fallback>{memberInitial}</Avatar.Fallback>
+                <Avatar.Fallback className="text-[10px]">{memberInitial}</Avatar.Fallback>
               </Avatar>
+              <div className="text-left">
+                <p className="text-xs font-medium text-gray-900 max-w-20 truncate leading-tight">
+                  {membership.name}
+                </p>
+                <p className="text-[10px] text-gray-500 max-w-20 truncate leading-tight">
+                  {currentOrg.name}
+                </p>
+              </div>
+              <ChevronsUpDownIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             </Button>
-            <Dropdown.Popover placement="bottom">
-              <Dropdown.Menu aria-label="유저 메뉴">
+            <Dropdown.Popover placement="bottom end">
+              <Dropdown.Menu aria-label="사용자 메뉴" onAction={handleMobileAction}>
+                <Dropdown.Section title="과외방">
+                  {organizations.map((org) => (
+                    <Dropdown.Item
+                      key={org.uuid}
+                      id={org.uuid}
+                      textValue={org.name}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
+                          <BuildingIcon className="w-3 h-3 text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <Label className="truncate">{org.name}</Label>
+                        </div>
+                        {org.id === currentOrg.id && (
+                          <CheckIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+                        )}
+                      </div>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Section>
+                <Separator />
                 {currentOrg.role === 'owner' && (
-                  <Dropdown.Item
-                    id="org-settings"
-                    href={`/organizations/${currentOrg.uuid}/settings`}
-                    textValue="과외방 설정"
-                  >
+                  <Dropdown.Item id="org-settings" textValue="학원 설정">
                     <div>
                       <BuildingIcon strokeWidth={1.5} className="size-5" />
                     </div>
                     <div>
-                      <Label>과외방 설정</Label>
+                      <Label>학원 설정</Label>
                     </div>
                   </Dropdown.Item>
                 )}
-                <Dropdown.Item id="settings" href="/settings" textValue="설정">
+                <Dropdown.Item id="settings" textValue="계정 설정">
                   <div>
                     <SettingsIcon strokeWidth={1.5} className="size-5" />
                   </div>
                   <div>
-                    <Label>설정</Label>
+                    <Label>계정 설정</Label>
                   </div>
                 </Dropdown.Item>
                 <Separator />
-                <Dropdown.Item id="logout" href="/auth/logout" textValue="로그아웃">
+                <Dropdown.Item id="logout" textValue="로그아웃">
                   <div>
                     <LogOutIcon strokeWidth={1.5} className="size-5" />
                   </div>
