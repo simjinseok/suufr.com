@@ -11,12 +11,16 @@ export default async function LessonsPage({
 }: {
   params: Promise<{ studentUuid: string }>;
 }) {
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { user, organization } = session;
   const settings = await getUserSettings(user.id);
   const { studentUuid } = await params;
 
   const student = await prisma.student.findUnique({
-    where: { uuid: studentUuid, userId: user.id, deletedAt: null },
+    where: { uuid: studentUuid, organizationId: organization.id, deletedAt: null },
     select: { id: true },
   });
 

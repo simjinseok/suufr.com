@@ -19,7 +19,9 @@ model Organization {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  members OrganizationMember[]
+  members  OrganizationMember[]
+  students Student[]
+  meetings Meeting[]
 
   @@map("organizations")
 }
@@ -62,6 +64,9 @@ model OrganizationMember {
   // 상태 변경 이력
   statuses MemberStatus[]
 
+  // 담당 수업
+  lessons Lesson[]
+
   @@unique([organizationId, name]) // 같은 조직 내 이름 중복 방지
   @@index([organizationId, role, deletedAt])
   @@map("organization_members")
@@ -69,15 +74,15 @@ model OrganizationMember {
 
 // 멤버 상태 변경 이력
 model MemberStatus {
-  id        Int               @id @default(autoincrement())
-  uuid      String            @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  id        Int                @id @default(autoincrement())
+  uuid      String             @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   status    MemberStatusValue
   notes     String? // 상태 변경 사유
-  changedAt DateTime          @default(now()) @map("changed_at") @db.Timestamptz(0)
-  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime?         @map("deleted_at") @db.Timestamptz(0)
-  memberId  Int               @map("member_id")
+  changedAt DateTime           @default(now()) @map("changed_at") @db.Timestamptz(0)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(0)
+  memberId  Int                @map("member_id")
   member    OrganizationMember @relation(fields: [memberId], references: [id])
 
   @@index([memberId, changedAt, deletedAt])
@@ -85,22 +90,27 @@ model MemberStatus {
 }
 
 model Student {
-  id              Int                  @id @default(autoincrement())
-  uuid            String               @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  id              Int                @id @default(autoincrement())
+  uuid            String             @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name            String
   notes           String
-  status          StudentStatusValue   @default(pending)
-  profileImageKey String?              @map("profile_image_key")
-  nextPaymentAt   DateTime?            @map("next_payment_at") @db.Date
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt       DateTime?            @map("deleted_at") @db.Timestamptz(0)
-  userId          String               @map("user_id") @db.Uuid
-  lessons         Lesson[]
-  comments        StudentComment[]
-  statuses        StudentStatus[]
+  status          StudentStatusValue @default(pending)
+  profileImageKey String?            @map("profile_image_key")
+  nextPaymentAt   DateTime?          @map("next_payment_at") @db.Date
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt       DateTime?          @map("deleted_at") @db.Timestamptz(0)
+  userId          String             @map("user_id") @db.Uuid // 유지 (추후 제거)
 
-  @@index([userId, name, status, deletedAt])
+  // 조직
+  organizationId Int          @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  lessons  Lesson[]
+  comments StudentComment[]
+  statuses StudentStatus[]
+
+  @@index([organizationId, name, status, deletedAt])
   @@map("students")
 }
 
@@ -140,7 +150,7 @@ model Meeting {
   uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name      String
   notes     String?
-  userId    String    @map("user_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid // 유지 (추후 제거)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
@@ -148,7 +158,11 @@ model Meeting {
   isDone    Boolean   @default(false) @map("is_done")
   phone     String?
 
-  @@index([userId, name, isDone, deletedAt])
+  // 조직
+  organizationId Int          @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, name, isDone, deletedAt])
   @@map("meetings")
 }
 
@@ -217,20 +231,26 @@ model Session {
 }
 
 model Lesson {
-  id        Int            @id @default(autoincrement())
-  uuid      String         @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   title     String
   notes     String
-  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime?      @map("deleted_at") @db.Timestamptz(0)
-  studentId Int            @map("student_id")
-  student   Student        @relation(fields: [studentId], references: [id], map: "syllabuses_student_id_fkey")
-  payment   Payment?
-  shares    SessionShare[]
-  sessions  Session[]
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  studentId Int       @map("student_id")
+  student   Student   @relation(fields: [studentId], references: [id], map: "syllabuses_student_id_fkey")
+
+  // 수업 담당자
+  memberId Int                @map("member_id")
+  member   OrganizationMember @relation(fields: [memberId], references: [id])
+
+  payment  Payment?
+  shares   SessionShare[]
+  sessions Session[]
 
   @@index([studentId, createdAt, deletedAt])
+  @@index([memberId, createdAt, deletedAt])
   @@map("lessons")
 }
 

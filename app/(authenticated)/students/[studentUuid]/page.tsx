@@ -32,7 +32,11 @@ type StudentStatusType = {
 
 export default async function Page({ params }: { params: Promise<{ studentUuid: string }> }) {
   const { studentUuid } = await params;
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { organization } = session;
 
   const [student] = await prisma.$queryRaw<StudentWithStats[]>`
     SELECT
@@ -67,7 +71,7 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
     LEFT JOIN lessons les ON les.student_id = s.id
     LEFT JOIN sessions sess ON sess.lesson_id = les.id
     WHERE s.uuid = ${studentUuid}::uuid
-      AND s.user_id = ${user.id}::uuid
+      AND s.organization_id = ${organization.id}
       AND s.deleted_at IS NULL
     GROUP BY s.id, s.uuid, s.name, s.status, s.notes, s.next_payment_at
   `;

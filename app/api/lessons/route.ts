@@ -7,14 +7,14 @@ export async function GET(request: Request) {
 
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       id: studentId,
-      userId: session.user.id,
+      organizationId: session.organization.id,
       deletedAt: null,
     },
   });
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       id: lessonId,
       deletedAt: null,
       student: {
-        userId: session.user.id,
+        organizationId: session.organization.id,
       },
     },
   });

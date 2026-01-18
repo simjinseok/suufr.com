@@ -12,10 +12,14 @@ describe('createStudent', () => {
   it('유효한 데이터로 학생을 생성한다', async () => {
     const mockStudent = {
       id: 1,
+      uuid: 'student-uuid-1',
       userId: 'user-1',
+      organizationId: 1,
       name: '홍길동',
       notes: '테스트 메모',
       status: 'pending' as const,
+      profileImageKey: null,
+      nextPaymentAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
@@ -111,10 +115,14 @@ describe('updateStudent', () => {
   it('존재하는 학생 정보를 수정한다', async () => {
     const mockStudent = {
       id: 1,
+      uuid: 'student-uuid-1',
       userId: 'user-1',
+      organizationId: 1,
       name: '홍길동',
       notes: '기존 메모',
       status: 'active' as const,
+      profileImageKey: null,
+      nextPaymentAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
@@ -183,10 +191,14 @@ describe('removeStudent', () => {
   it('학생을 soft delete 한다', async () => {
     const mockStudent = {
       id: 1,
+      uuid: 'student-uuid-1',
       userId: 'user-1',
+      organizationId: 1,
       name: '홍길동',
       notes: '',
       status: 'active' as const,
+      profileImageKey: null,
+      nextPaymentAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,

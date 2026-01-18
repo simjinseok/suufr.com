@@ -19,7 +19,11 @@ export default async function Page({ searchParams }: any) {
   const { page: _page, edit: _edit } = await searchParams;
   const page = _page > 0 ? Number(_page) : 1;
 
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { organization } = session;
 
   const meetings: TMeeting[] = await prisma.meeting.findMany({
     skip: (page - 1) * PAGE_SIZE,
@@ -33,7 +37,7 @@ export default async function Page({ searchParams }: any) {
       meetingAt: true,
     },
     where: {
-      userId: user.id,
+      organizationId: organization.id,
       deletedAt: null,
     },
     orderBy: {
@@ -42,7 +46,7 @@ export default async function Page({ searchParams }: any) {
   });
   const meetingsCount = await prisma.meeting.count({
     where: {
-      userId: user.id,
+      organizationId: organization.id,
       deletedAt: null,
     },
   });

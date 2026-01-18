@@ -14,6 +14,12 @@ export type Session = {
     name: string;
     role: OrganizationRole;
   };
+  membership: {
+    id: number;
+    uuid: string;
+    name: string;
+    role: OrganizationRole;
+  };
   organizations: Array<{
     id: number;
     uuid: string;
@@ -57,6 +63,7 @@ export async function getSession(): Promise<Session | null> {
         name: payload.name,
       },
       organization: null as unknown as Session['organization'],
+      membership: null as unknown as Session['membership'],
       organizations: [],
     };
   }
@@ -97,6 +104,14 @@ export async function getSession(): Promise<Session | null> {
       name: currentMembership?.name ?? payload.name,
     },
     organization: currentOrg,
+    membership: currentMembership
+      ? {
+          id: currentMembership.id,
+          uuid: currentMembership.uuid,
+          name: currentMembership.name,
+          role: currentMembership.role,
+        }
+      : (null as unknown as Session['membership']),
     organizations,
   };
 }

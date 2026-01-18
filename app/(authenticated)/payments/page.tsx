@@ -34,7 +34,11 @@ type Props = {
 export default async function Page({ searchParams }: Props) {
   const { view: _view, date: _date } = await searchParams;
 
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { organization } = session;
 
   const view: PaymentView = _view === 'yearly' ? 'yearly' : 'monthly';
 
@@ -51,7 +55,7 @@ export default async function Page({ searchParams }: Props) {
     lesson: {
       deletedAt: null,
       student: {
-        userId: user.id,
+        organizationId: organization.id,
         deletedAt: null,
       },
     },

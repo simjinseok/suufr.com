@@ -64,19 +64,20 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         return state;
       }
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         state.message = '로그인이 필요합니다';
         return state;
       }
+      const { organization } = session;
 
       const lesson = await prisma.lesson.findUnique({
         where: {
           id: Number(lessonId),
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
       });
@@ -134,18 +135,19 @@ export async function removePayment(prevState: any, formData: FormData) {
     async () => {
       const lessonId = Number(formData.get('lessonId'));
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         return { success: false };
       }
+      const { organization } = session;
 
       const lesson = await prisma.lesson.findUnique({
         where: {
           id: lessonId,
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
       });
@@ -169,7 +171,7 @@ export async function removePayment(prevState: any, formData: FormData) {
           id: payment.id,
           lesson: {
             student: {
-              userId: user.id,
+              organizationId: organization.id,
             },
           },
         },

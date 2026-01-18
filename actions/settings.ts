@@ -67,11 +67,12 @@ export async function updateSettings(prevState: UpdateSettingsState, formData: F
         timestamp: Date.now(),
       };
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user?.id) {
+      if (!session?.user?.id) {
         return state;
       }
+      const { user } = session;
 
       const validationResult = updateSettingsSchema.safeParse(data);
       if (!validationResult.success) {

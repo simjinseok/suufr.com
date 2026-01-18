@@ -26,7 +26,11 @@ const loadSearchParams = createLoader({
 export default async function Page(props: PageProps<'/students'>) {
   const { page, status, q } = await loadSearchParams(props.searchParams);
 
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { organization } = session;
 
   const students: Student[] = await prisma.$queryRaw`
       SELECT students.id AS id,
@@ -47,7 +51,7 @@ export default async function Page(props: PageProps<'/students'>) {
                LEFT JOIN sessions ON sessions.lesson_id = lessons.id
       WHERE (${status} = '' OR students.status::text = ${status})
         AND (${q} = '' OR students.name ILIKE ${'%' + q + '%'})
-        AND students.user_id = ${user.id}::uuid AND students.deleted_at IS NULL
+        AND students.organization_id = ${organization.id} AND students.deleted_at IS NULL
       GROUP BY students.id, students.uuid, students.name, students.notes, students.created_at, students.status
       ORDER BY students.name ASC
       OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
@@ -63,7 +67,7 @@ export default async function Page(props: PageProps<'/students'>) {
   const studentCount: number = await prisma.student.count({
     where: {
       deletedAt: null,
-      userId: user.id,
+      organizationId: organization.id,
       ...(status && { status }),
       ...(q && { name: { contains: q, mode: 'insensitive' } }),
     },

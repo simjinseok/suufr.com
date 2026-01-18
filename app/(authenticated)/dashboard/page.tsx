@@ -15,7 +15,11 @@ import { getSession } from '@/utils/auth';
 import DashboardCards from './_dashboard-cards';
 
 export default async function Page() {
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { organization } = session;
 
   const currentDate = new Date();
   const [
@@ -25,7 +29,7 @@ export default async function Page() {
   ] = await Promise.all([
     prisma.student.count({
       where: {
-        userId: user.id,
+        organizationId: organization.id,
         deletedAt: null,
         status: 'active',
       },
@@ -44,7 +48,7 @@ export default async function Page() {
       },
       where: {
         student: {
-          userId: user.id,
+          organizationId: organization.id,
         },
         deletedAt: null,
         OR: [
@@ -59,7 +63,7 @@ export default async function Page() {
     prisma.studentStatus.count({
       where: {
         student: {
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
         status: 'leave',
@@ -79,18 +83,18 @@ export default async function Page() {
       />
 
       <React.Suspense>
-        <NotCheckedMeetings user={user} />
+        <NotCheckedMeetings organizationId={organization.id} />
       </React.Suspense>
     </div>
   );
 }
 
-async function NotCheckedMeetings({ user }: any) {
+async function NotCheckedMeetings({ organizationId }: { organizationId: number }) {
   const meetings = await prisma.meeting.findMany({
     where: {
       isDone: false,
       deletedAt: null,
-      userId: user.id,
+      organizationId,
     },
     orderBy: {
       meetingAt: 'asc',

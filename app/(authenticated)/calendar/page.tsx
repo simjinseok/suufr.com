@@ -11,7 +11,11 @@ import Calendar from './_calendar';
 export type CalendarView = 'month' | 'week' | 'day';
 
 export default async function Page(props: PageProps<'/calendar'>) {
-  const { user } = await getSession();
+  const session = await getSession();
+  if (!session?.organization) {
+    return null;
+  }
+  const { user, organization } = session;
   const settings = await getUserSettings(user.id);
 
   const { date, view: viewParam } = await props.searchParams;
@@ -61,7 +65,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
       deletedAt: null,
       lesson: {
         student: {
-          userId: user.id,
+          organizationId: organization.id,
         },
       },
     },

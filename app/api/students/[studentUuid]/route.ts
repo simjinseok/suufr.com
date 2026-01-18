@@ -10,14 +10,14 @@ export async function PUT(
 
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       uuid: studentUuid,
-      userId: session.user.id,
+      organizationId: session.organization.id,
       deletedAt: null,
     },
   });
@@ -57,14 +57,14 @@ export async function DELETE(
 
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
   const student = await prisma.student.findUnique({
     where: {
       uuid: studentUuid,
-      userId: session.user.id,
+      organizationId: session.organization.id,
       deletedAt: null,
     },
   });

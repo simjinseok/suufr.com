@@ -24,7 +24,7 @@ export async function createStudent(prevState: any, formData: FormData) {
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
 
       const data = Object.fromEntries(formData);
       const obj: Record<string, any> = {
@@ -36,6 +36,12 @@ export async function createStudent(prevState: any, formData: FormData) {
         },
         errors: [],
       };
+
+      if (!session?.organization) {
+        return obj;
+      }
+      const { user, organization } = session;
+
       const validationResult = createStudentSchema.safeParse(data);
       if (!validationResult.success) {
         obj.errors = z.flattenError(validationResult.error).fieldErrors;
@@ -45,7 +51,8 @@ export async function createStudent(prevState: any, formData: FormData) {
       await prisma.$transaction(async (tx) => {
         const student = await tx.student.create({
           data: {
-            userId: user.id,
+            userId: user.id, // 유지 (추후 제거)
+            organizationId: organization.id,
             ...validationResult.data,
           },
         });
@@ -88,7 +95,7 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
       const { studentUuid, profileImageKey: rawProfileImageUrl, profileImagePublicId: rawPublicId, ...data } = formEntries;
       let profileImageKey = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
@@ -98,14 +105,15 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         timestamp: Date.now(),
       };
 
-      if (!user) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const student = await prisma.student.findUnique({
         where: {
           uuid: studentUuid as string,
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });
@@ -174,16 +182,17 @@ export default async function removeStudent(formData: FormData) {
     async () => {
       const studentUuid = formData.get('studentUuid') as string;
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         return { success: false };
       }
+      const { organization } = session;
 
       const student = await prisma.student.findUnique({
         where: {
           uuid: studentUuid,
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });

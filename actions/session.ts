@@ -42,7 +42,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
       };
 
       const session = await getSession();
-      if (!session?.user) {
+      if (!session?.organization) {
         return state;
       }
 
@@ -51,7 +51,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
           id: Number(lessonId),
           deletedAt: null,
           student: {
-            userId: session.user.id,
+            organizationId: session.organization.id,
           },
         },
       });
@@ -122,7 +122,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       };
 
       const session = await getSession();
-      if (!session?.user) {
+      if (!session?.organization) {
         return state;
       }
 
@@ -141,7 +141,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
           lesson: {
             deletedAt: null,
             student: {
-              userId: session.user.id,
+              organizationId: session.organization.id,
               deletedAt: null,
             },
           },
@@ -158,7 +158,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
           id: Number(sessionId),
           lesson: {
             student: {
-              userId: session.user.id,
+              organizationId: session.organization.id,
             },
           },
         },
@@ -217,7 +217,7 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
       };
 
       const session = await getSession();
-      if (!session?.user) {
+      if (!session?.organization) {
         return state;
       }
 
@@ -230,7 +230,7 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
           lesson: {
             deletedAt: null,
             student: {
-              userId: session.user.id,
+              organizationId: session.organization.id,
             },
           },
         },
@@ -246,7 +246,7 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
           lesson: {
             deletedAt: null,
             student: {
-              userId: session.user.id,
+              organizationId: session.organization.id,
             },
           },
         },
@@ -286,7 +286,7 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
       };
 
       const session = await getSession();
-      if (!session?.user) {
+      if (!session?.organization) {
         return state;
       }
 
@@ -301,7 +301,7 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
           lesson: {
             deletedAt: null,
             student: {
-              userId: session.user.id,
+              organizationId: session.organization.id,
             },
           },
         },

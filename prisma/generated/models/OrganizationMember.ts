@@ -270,6 +270,7 @@ export type OrganizationMemberWhereInput = {
   userId?: Prisma.UuidNullableFilter<"OrganizationMember"> | string | null
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   statuses?: Prisma.MemberStatusListRelationFilter
+  lessons?: Prisma.LessonListRelationFilter
 }
 
 export type OrganizationMemberOrderByWithRelationInput = {
@@ -286,6 +287,7 @@ export type OrganizationMemberOrderByWithRelationInput = {
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
   statuses?: Prisma.MemberStatusOrderByRelationAggregateInput
+  lessons?: Prisma.LessonOrderByRelationAggregateInput
 }
 
 export type OrganizationMemberWhereUniqueInput = Prisma.AtLeast<{
@@ -306,6 +308,7 @@ export type OrganizationMemberWhereUniqueInput = Prisma.AtLeast<{
   organizationId?: Prisma.IntFilter<"OrganizationMember"> | number
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   statuses?: Prisma.MemberStatusListRelationFilter
+  lessons?: Prisma.LessonListRelationFilter
 }, "id" | "uuid" | "userId" | "organizationId_name">
 
 export type OrganizationMemberOrderByWithAggregationInput = {
@@ -356,6 +359,7 @@ export type OrganizationMemberCreateInput = {
   userId?: string | null
   organization: Prisma.OrganizationCreateNestedOneWithoutMembersInput
   statuses?: Prisma.MemberStatusCreateNestedManyWithoutMemberInput
+  lessons?: Prisma.LessonCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberUncheckedCreateInput = {
@@ -371,6 +375,7 @@ export type OrganizationMemberUncheckedCreateInput = {
   organizationId: number
   userId?: string | null
   statuses?: Prisma.MemberStatusUncheckedCreateNestedManyWithoutMemberInput
+  lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberUpdateInput = {
@@ -385,6 +390,7 @@ export type OrganizationMemberUpdateInput = {
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutMembersNestedInput
   statuses?: Prisma.MemberStatusUpdateManyWithoutMemberNestedInput
+  lessons?: Prisma.LessonUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberUncheckedUpdateInput = {
@@ -400,6 +406,7 @@ export type OrganizationMemberUncheckedUpdateInput = {
   organizationId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statuses?: Prisma.MemberStatusUncheckedUpdateManyWithoutMemberNestedInput
+  lessons?: Prisma.LessonUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberCreateManyInput = {
@@ -578,6 +585,20 @@ export type OrganizationMemberUpdateOneRequiredWithoutStatusesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationMemberUpdateToOneWithWhereWithoutStatusesInput, Prisma.OrganizationMemberUpdateWithoutStatusesInput>, Prisma.OrganizationMemberUncheckedUpdateWithoutStatusesInput>
 }
 
+export type OrganizationMemberCreateNestedOneWithoutLessonsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationMemberCreateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedCreateWithoutLessonsInput>
+  connectOrCreate?: Prisma.OrganizationMemberCreateOrConnectWithoutLessonsInput
+  connect?: Prisma.OrganizationMemberWhereUniqueInput
+}
+
+export type OrganizationMemberUpdateOneRequiredWithoutLessonsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationMemberCreateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedCreateWithoutLessonsInput>
+  connectOrCreate?: Prisma.OrganizationMemberCreateOrConnectWithoutLessonsInput
+  upsert?: Prisma.OrganizationMemberUpsertWithoutLessonsInput
+  connect?: Prisma.OrganizationMemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationMemberUpdateToOneWithWhereWithoutLessonsInput, Prisma.OrganizationMemberUpdateWithoutLessonsInput>, Prisma.OrganizationMemberUncheckedUpdateWithoutLessonsInput>
+}
+
 export type OrganizationMemberCreateWithoutOrganizationInput = {
   uuid?: string
   name: string
@@ -589,6 +610,7 @@ export type OrganizationMemberCreateWithoutOrganizationInput = {
   deletedAt?: Date | string | null
   userId?: string | null
   statuses?: Prisma.MemberStatusCreateNestedManyWithoutMemberInput
+  lessons?: Prisma.LessonCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberUncheckedCreateWithoutOrganizationInput = {
@@ -603,6 +625,7 @@ export type OrganizationMemberUncheckedCreateWithoutOrganizationInput = {
   deletedAt?: Date | string | null
   userId?: string | null
   statuses?: Prisma.MemberStatusUncheckedCreateNestedManyWithoutMemberInput
+  lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberCreateOrConnectWithoutOrganizationInput = {
@@ -659,6 +682,7 @@ export type OrganizationMemberCreateWithoutStatusesInput = {
   deletedAt?: Date | string | null
   userId?: string | null
   organization: Prisma.OrganizationCreateNestedOneWithoutMembersInput
+  lessons?: Prisma.LessonCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberUncheckedCreateWithoutStatusesInput = {
@@ -673,6 +697,7 @@ export type OrganizationMemberUncheckedCreateWithoutStatusesInput = {
   deletedAt?: Date | string | null
   organizationId: number
   userId?: string | null
+  lessons?: Prisma.LessonUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type OrganizationMemberCreateOrConnectWithoutStatusesInput = {
@@ -702,6 +727,7 @@ export type OrganizationMemberUpdateWithoutStatusesInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutMembersNestedInput
+  lessons?: Prisma.LessonUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberUncheckedUpdateWithoutStatusesInput = {
@@ -716,6 +742,81 @@ export type OrganizationMemberUncheckedUpdateWithoutStatusesInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   organizationId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lessons?: Prisma.LessonUncheckedUpdateManyWithoutMemberNestedInput
+}
+
+export type OrganizationMemberCreateWithoutLessonsInput = {
+  uuid?: string
+  name: string
+  role?: $Enums.OrganizationRole
+  status?: $Enums.MemberStatusValue
+  profileImageKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  userId?: string | null
+  organization: Prisma.OrganizationCreateNestedOneWithoutMembersInput
+  statuses?: Prisma.MemberStatusCreateNestedManyWithoutMemberInput
+}
+
+export type OrganizationMemberUncheckedCreateWithoutLessonsInput = {
+  id?: number
+  uuid?: string
+  name: string
+  role?: $Enums.OrganizationRole
+  status?: $Enums.MemberStatusValue
+  profileImageKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  organizationId: number
+  userId?: string | null
+  statuses?: Prisma.MemberStatusUncheckedCreateNestedManyWithoutMemberInput
+}
+
+export type OrganizationMemberCreateOrConnectWithoutLessonsInput = {
+  where: Prisma.OrganizationMemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationMemberCreateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedCreateWithoutLessonsInput>
+}
+
+export type OrganizationMemberUpsertWithoutLessonsInput = {
+  update: Prisma.XOR<Prisma.OrganizationMemberUpdateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedUpdateWithoutLessonsInput>
+  create: Prisma.XOR<Prisma.OrganizationMemberCreateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedCreateWithoutLessonsInput>
+  where?: Prisma.OrganizationMemberWhereInput
+}
+
+export type OrganizationMemberUpdateToOneWithWhereWithoutLessonsInput = {
+  where?: Prisma.OrganizationMemberWhereInput
+  data: Prisma.XOR<Prisma.OrganizationMemberUpdateWithoutLessonsInput, Prisma.OrganizationMemberUncheckedUpdateWithoutLessonsInput>
+}
+
+export type OrganizationMemberUpdateWithoutLessonsInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumOrganizationRoleFieldUpdateOperationsInput | $Enums.OrganizationRole
+  status?: Prisma.EnumMemberStatusValueFieldUpdateOperationsInput | $Enums.MemberStatusValue
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutMembersNestedInput
+  statuses?: Prisma.MemberStatusUpdateManyWithoutMemberNestedInput
+}
+
+export type OrganizationMemberUncheckedUpdateWithoutLessonsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumOrganizationRoleFieldUpdateOperationsInput | $Enums.OrganizationRole
+  status?: Prisma.EnumMemberStatusValueFieldUpdateOperationsInput | $Enums.MemberStatusValue
+  profileImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  organizationId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statuses?: Prisma.MemberStatusUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberCreateManyOrganizationInput = {
@@ -742,6 +843,7 @@ export type OrganizationMemberUpdateWithoutOrganizationInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statuses?: Prisma.MemberStatusUpdateManyWithoutMemberNestedInput
+  lessons?: Prisma.LessonUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberUncheckedUpdateWithoutOrganizationInput = {
@@ -756,6 +858,7 @@ export type OrganizationMemberUncheckedUpdateWithoutOrganizationInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statuses?: Prisma.MemberStatusUncheckedUpdateManyWithoutMemberNestedInput
+  lessons?: Prisma.LessonUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type OrganizationMemberUncheckedUpdateManyWithoutOrganizationInput = {
@@ -778,10 +881,12 @@ export type OrganizationMemberUncheckedUpdateManyWithoutOrganizationInput = {
 
 export type OrganizationMemberCountOutputType = {
   statuses: number
+  lessons: number
 }
 
 export type OrganizationMemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   statuses?: boolean | OrganizationMemberCountOutputTypeCountStatusesArgs
+  lessons?: boolean | OrganizationMemberCountOutputTypeCountLessonsArgs
 }
 
 /**
@@ -801,6 +906,13 @@ export type OrganizationMemberCountOutputTypeCountStatusesArgs<ExtArgs extends r
   where?: Prisma.MemberStatusWhereInput
 }
 
+/**
+ * OrganizationMemberCountOutputType without action
+ */
+export type OrganizationMemberCountOutputTypeCountLessonsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LessonWhereInput
+}
+
 
 export type OrganizationMemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -816,6 +928,7 @@ export type OrganizationMemberSelect<ExtArgs extends runtime.Types.Extensions.In
   userId?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   statuses?: boolean | Prisma.OrganizationMember$statusesArgs<ExtArgs>
+  lessons?: boolean | Prisma.OrganizationMember$lessonsArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationMemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["organizationMember"]>
 
@@ -867,6 +980,7 @@ export type OrganizationMemberOmit<ExtArgs extends runtime.Types.Extensions.Inte
 export type OrganizationMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   statuses?: boolean | Prisma.OrganizationMember$statusesArgs<ExtArgs>
+  lessons?: boolean | Prisma.OrganizationMember$lessonsArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationMemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrganizationMemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -881,6 +995,7 @@ export type $OrganizationMemberPayload<ExtArgs extends runtime.Types.Extensions.
   objects: {
     organization: Prisma.$OrganizationPayload<ExtArgs>
     statuses: Prisma.$MemberStatusPayload<ExtArgs>[]
+    lessons: Prisma.$LessonPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1290,6 +1405,7 @@ export interface Prisma__OrganizationMemberClient<T, Null = never, ExtArgs exten
   readonly [Symbol.toStringTag]: "PrismaPromise"
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   statuses<T extends Prisma.OrganizationMember$statusesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationMember$statusesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberStatusPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  lessons<T extends Prisma.OrganizationMember$lessonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationMember$lessonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LessonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1747,6 +1863,30 @@ export type OrganizationMember$statusesArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.MemberStatusScalarFieldEnum | Prisma.MemberStatusScalarFieldEnum[]
+}
+
+/**
+ * OrganizationMember.lessons
+ */
+export type OrganizationMember$lessonsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Lesson
+   */
+  select?: Prisma.LessonSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Lesson
+   */
+  omit?: Prisma.LessonOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LessonInclude<ExtArgs> | null
+  where?: Prisma.LessonWhereInput
+  orderBy?: Prisma.LessonOrderByWithRelationInput | Prisma.LessonOrderByWithRelationInput[]
+  cursor?: Prisma.LessonWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LessonScalarFieldEnum | Prisma.LessonScalarFieldEnum[]
 }
 
 /**

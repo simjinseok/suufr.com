@@ -5,7 +5,7 @@ import MeetingSchema from '@/schemas/meeting';
 export async function POST(req: Request) {
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
@@ -19,7 +19,8 @@ export async function POST(req: Request) {
       isDone: schemaData.isDone,
       meetingAt: schemaData.meetingAt,
       notes: schemaData.notes,
-      userId: session.user.id,
+      userId: session.user.id, // 유지 (추후 제거)
+      organizationId: session.organization.id,
     },
   });
 

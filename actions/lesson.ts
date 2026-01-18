@@ -10,7 +10,7 @@ import { getSession } from '@/utils/auth';
 import { ServerActionState } from '@/types/index';
 import { getUserSettings } from './settings';
 
-type CreateLessonState = ServerActionState;
+type CreateLessonState = ServerActionState<null>;
 export async function createLesson(prevState: CreateLessonState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createLesson',
@@ -20,7 +20,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
       const { studentUuid, ...data } = Object.fromEntries(formData.entries());
 
       const state: CreateLessonState = {
@@ -28,14 +28,15 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
         timestamp: Date.now(),
       };
 
-      if (!user?.id) {
+      if (!session?.organization || !session?.membership) {
         return state;
       }
+      const { user, organization, membership } = session;
 
       const student = await prisma.student.findUnique({
         where: {
-          uuid: studentUuid,
-          userId: user.id,
+          uuid: studentUuid as string,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });
@@ -66,6 +67,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
             title: (formData.get('title') as string) || '',
             notes: (formData.get('notes') as string) || '',
             studentId: student.id,
+            memberId: membership.id,
           },
         });
 
@@ -131,11 +133,12 @@ export async function updateLesson(state: UpdateLessonState, formData: FormData)
         },
         timestamp: Date.now(),
       };
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const validationResult = updateLessonSchema.safeParse(data);
       if (!validationResult.success) {
@@ -148,7 +151,7 @@ export async function updateLesson(state: UpdateLessonState, formData: FormData)
           id: Number(lessonId),
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
       });
@@ -162,7 +165,7 @@ export async function updateLesson(state: UpdateLessonState, formData: FormData)
           id: lesson.id,
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
         data: {
@@ -195,18 +198,19 @@ export async function removeLesson(prevState: any, formData: FormData) {
         success: false,
         timestamp: Date.now(),
       };
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const lesson = await prisma.lesson.findUnique({
         where: {
           id: lessonId,
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
         include: {

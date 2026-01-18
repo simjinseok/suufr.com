@@ -28,10 +28,12 @@ export type AggregateMeeting = {
 
 export type MeetingAvgAggregateOutputType = {
   id: number | null
+  organizationId: number | null
 }
 
 export type MeetingSumAggregateOutputType = {
   id: number | null
+  organizationId: number | null
 }
 
 export type MeetingMinAggregateOutputType = {
@@ -46,6 +48,7 @@ export type MeetingMinAggregateOutputType = {
   meetingAt: Date | null
   isDone: boolean | null
   phone: string | null
+  organizationId: number | null
 }
 
 export type MeetingMaxAggregateOutputType = {
@@ -60,6 +63,7 @@ export type MeetingMaxAggregateOutputType = {
   meetingAt: Date | null
   isDone: boolean | null
   phone: string | null
+  organizationId: number | null
 }
 
 export type MeetingCountAggregateOutputType = {
@@ -74,16 +78,19 @@ export type MeetingCountAggregateOutputType = {
   meetingAt: number
   isDone: number
   phone: number
+  organizationId: number
   _all: number
 }
 
 
 export type MeetingAvgAggregateInputType = {
   id?: true
+  organizationId?: true
 }
 
 export type MeetingSumAggregateInputType = {
   id?: true
+  organizationId?: true
 }
 
 export type MeetingMinAggregateInputType = {
@@ -98,6 +105,7 @@ export type MeetingMinAggregateInputType = {
   meetingAt?: true
   isDone?: true
   phone?: true
+  organizationId?: true
 }
 
 export type MeetingMaxAggregateInputType = {
@@ -112,6 +120,7 @@ export type MeetingMaxAggregateInputType = {
   meetingAt?: true
   isDone?: true
   phone?: true
+  organizationId?: true
 }
 
 export type MeetingCountAggregateInputType = {
@@ -126,6 +135,7 @@ export type MeetingCountAggregateInputType = {
   meetingAt?: true
   isDone?: true
   phone?: true
+  organizationId?: true
   _all?: true
 }
 
@@ -227,6 +237,7 @@ export type MeetingGroupByOutputType = {
   meetingAt: Date
   isDone: boolean
   phone: string | null
+  organizationId: number
   _count: MeetingCountAggregateOutputType | null
   _avg: MeetingAvgAggregateOutputType | null
   _sum: MeetingSumAggregateOutputType | null
@@ -264,6 +275,8 @@ export type MeetingWhereInput = {
   meetingAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
   isDone?: Prisma.BoolFilter<"Meeting"> | boolean
   phone?: Prisma.StringNullableFilter<"Meeting"> | string | null
+  organizationId?: Prisma.IntFilter<"Meeting"> | number
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
 }
 
 export type MeetingOrderByWithRelationInput = {
@@ -278,6 +291,8 @@ export type MeetingOrderByWithRelationInput = {
   meetingAt?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
 }
 
 export type MeetingWhereUniqueInput = Prisma.AtLeast<{
@@ -295,6 +310,8 @@ export type MeetingWhereUniqueInput = Prisma.AtLeast<{
   meetingAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
   isDone?: Prisma.BoolFilter<"Meeting"> | boolean
   phone?: Prisma.StringNullableFilter<"Meeting"> | string | null
+  organizationId?: Prisma.IntFilter<"Meeting"> | number
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
 }, "id" | "uuid">
 
 export type MeetingOrderByWithAggregationInput = {
@@ -309,6 +326,7 @@ export type MeetingOrderByWithAggregationInput = {
   meetingAt?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   _count?: Prisma.MeetingCountOrderByAggregateInput
   _avg?: Prisma.MeetingAvgOrderByAggregateInput
   _max?: Prisma.MeetingMaxOrderByAggregateInput
@@ -331,6 +349,7 @@ export type MeetingScalarWhereWithAggregatesInput = {
   meetingAt?: Prisma.DateTimeWithAggregatesFilter<"Meeting"> | Date | string
   isDone?: Prisma.BoolWithAggregatesFilter<"Meeting"> | boolean
   phone?: Prisma.StringNullableWithAggregatesFilter<"Meeting"> | string | null
+  organizationId?: Prisma.IntWithAggregatesFilter<"Meeting"> | number
 }
 
 export type MeetingCreateInput = {
@@ -344,6 +363,7 @@ export type MeetingCreateInput = {
   meetingAt: Date | string
   isDone?: boolean
   phone?: string | null
+  organization: Prisma.OrganizationCreateNestedOneWithoutMeetingsInput
 }
 
 export type MeetingUncheckedCreateInput = {
@@ -358,6 +378,7 @@ export type MeetingUncheckedCreateInput = {
   meetingAt: Date | string
   isDone?: boolean
   phone?: string | null
+  organizationId: number
 }
 
 export type MeetingUpdateInput = {
@@ -371,6 +392,7 @@ export type MeetingUpdateInput = {
   meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutMeetingsNestedInput
 }
 
 export type MeetingUncheckedUpdateInput = {
@@ -385,6 +407,7 @@ export type MeetingUncheckedUpdateInput = {
   meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type MeetingCreateManyInput = {
@@ -399,6 +422,7 @@ export type MeetingCreateManyInput = {
   meetingAt: Date | string
   isDone?: boolean
   phone?: string | null
+  organizationId: number
 }
 
 export type MeetingUpdateManyMutationInput = {
@@ -426,6 +450,17 @@ export type MeetingUncheckedUpdateManyInput = {
   meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organizationId?: Prisma.IntFieldUpdateOperationsInput | number
+}
+
+export type MeetingListRelationFilter = {
+  every?: Prisma.MeetingWhereInput
+  some?: Prisma.MeetingWhereInput
+  none?: Prisma.MeetingWhereInput
+}
+
+export type MeetingOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type MeetingCountOrderByAggregateInput = {
@@ -440,10 +475,12 @@ export type MeetingCountOrderByAggregateInput = {
   meetingAt?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MeetingAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MeetingMaxOrderByAggregateInput = {
@@ -458,6 +495,7 @@ export type MeetingMaxOrderByAggregateInput = {
   meetingAt?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MeetingMinOrderByAggregateInput = {
@@ -472,14 +510,184 @@ export type MeetingMinOrderByAggregateInput = {
   meetingAt?: Prisma.SortOrder
   isDone?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
 }
 
 export type MeetingSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
+}
+
+export type MeetingCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput> | Prisma.MeetingCreateWithoutOrganizationInput[] | Prisma.MeetingUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MeetingCreateOrConnectWithoutOrganizationInput | Prisma.MeetingCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.MeetingCreateManyOrganizationInputEnvelope
+  connect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+}
+
+export type MeetingUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput> | Prisma.MeetingCreateWithoutOrganizationInput[] | Prisma.MeetingUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MeetingCreateOrConnectWithoutOrganizationInput | Prisma.MeetingCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.MeetingCreateManyOrganizationInputEnvelope
+  connect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+}
+
+export type MeetingUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput> | Prisma.MeetingCreateWithoutOrganizationInput[] | Prisma.MeetingUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MeetingCreateOrConnectWithoutOrganizationInput | Prisma.MeetingCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.MeetingUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.MeetingUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.MeetingCreateManyOrganizationInputEnvelope
+  set?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  disconnect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  delete?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  connect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  update?: Prisma.MeetingUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.MeetingUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.MeetingUpdateManyWithWhereWithoutOrganizationInput | Prisma.MeetingUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.MeetingScalarWhereInput | Prisma.MeetingScalarWhereInput[]
+}
+
+export type MeetingUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput> | Prisma.MeetingCreateWithoutOrganizationInput[] | Prisma.MeetingUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.MeetingCreateOrConnectWithoutOrganizationInput | Prisma.MeetingCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.MeetingUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.MeetingUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.MeetingCreateManyOrganizationInputEnvelope
+  set?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  disconnect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  delete?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  connect?: Prisma.MeetingWhereUniqueInput | Prisma.MeetingWhereUniqueInput[]
+  update?: Prisma.MeetingUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.MeetingUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.MeetingUpdateManyWithWhereWithoutOrganizationInput | Prisma.MeetingUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.MeetingScalarWhereInput | Prisma.MeetingScalarWhereInput[]
 }
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type MeetingCreateWithoutOrganizationInput = {
+  uuid?: string
+  name: string
+  notes?: string | null
+  userId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  meetingAt: Date | string
+  isDone?: boolean
+  phone?: string | null
+}
+
+export type MeetingUncheckedCreateWithoutOrganizationInput = {
+  id?: number
+  uuid?: string
+  name: string
+  notes?: string | null
+  userId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  meetingAt: Date | string
+  isDone?: boolean
+  phone?: string | null
+}
+
+export type MeetingCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.MeetingWhereUniqueInput
+  create: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput>
+}
+
+export type MeetingCreateManyOrganizationInputEnvelope = {
+  data: Prisma.MeetingCreateManyOrganizationInput | Prisma.MeetingCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type MeetingUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.MeetingWhereUniqueInput
+  update: Prisma.XOR<Prisma.MeetingUpdateWithoutOrganizationInput, Prisma.MeetingUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.MeetingCreateWithoutOrganizationInput, Prisma.MeetingUncheckedCreateWithoutOrganizationInput>
+}
+
+export type MeetingUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.MeetingWhereUniqueInput
+  data: Prisma.XOR<Prisma.MeetingUpdateWithoutOrganizationInput, Prisma.MeetingUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type MeetingUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.MeetingScalarWhereInput
+  data: Prisma.XOR<Prisma.MeetingUpdateManyMutationInput, Prisma.MeetingUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type MeetingScalarWhereInput = {
+  AND?: Prisma.MeetingScalarWhereInput | Prisma.MeetingScalarWhereInput[]
+  OR?: Prisma.MeetingScalarWhereInput[]
+  NOT?: Prisma.MeetingScalarWhereInput | Prisma.MeetingScalarWhereInput[]
+  id?: Prisma.IntFilter<"Meeting"> | number
+  uuid?: Prisma.UuidFilter<"Meeting"> | string
+  name?: Prisma.StringFilter<"Meeting"> | string
+  notes?: Prisma.StringNullableFilter<"Meeting"> | string | null
+  userId?: Prisma.UuidFilter<"Meeting"> | string
+  createdAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Meeting"> | Date | string | null
+  meetingAt?: Prisma.DateTimeFilter<"Meeting"> | Date | string
+  isDone?: Prisma.BoolFilter<"Meeting"> | boolean
+  phone?: Prisma.StringNullableFilter<"Meeting"> | string | null
+  organizationId?: Prisma.IntFilter<"Meeting"> | number
+}
+
+export type MeetingCreateManyOrganizationInput = {
+  id?: number
+  uuid?: string
+  name: string
+  notes?: string | null
+  userId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  meetingAt: Date | string
+  isDone?: boolean
+  phone?: string | null
+}
+
+export type MeetingUpdateWithoutOrganizationInput = {
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type MeetingUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type MeetingUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  uuid?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  meetingAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isDone?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -496,6 +704,8 @@ export type MeetingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   meetingAt?: boolean
   isDone?: boolean
   phone?: boolean
+  organizationId?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["meeting"]>
 
 export type MeetingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -510,6 +720,8 @@ export type MeetingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   meetingAt?: boolean
   isDone?: boolean
   phone?: boolean
+  organizationId?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["meeting"]>
 
 export type MeetingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -524,6 +736,8 @@ export type MeetingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   meetingAt?: boolean
   isDone?: boolean
   phone?: boolean
+  organizationId?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["meeting"]>
 
 export type MeetingSelectScalar = {
@@ -538,13 +752,25 @@ export type MeetingSelectScalar = {
   meetingAt?: boolean
   isDone?: boolean
   phone?: boolean
+  organizationId?: boolean
 }
 
-export type MeetingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "userId" | "createdAt" | "updatedAt" | "deletedAt" | "meetingAt" | "isDone" | "phone", ExtArgs["result"]["meeting"]>
+export type MeetingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "name" | "notes" | "userId" | "createdAt" | "updatedAt" | "deletedAt" | "meetingAt" | "isDone" | "phone" | "organizationId", ExtArgs["result"]["meeting"]>
+export type MeetingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+}
+export type MeetingIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+}
+export type MeetingIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+}
 
 export type $MeetingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Meeting"
-  objects: {}
+  objects: {
+    organization: Prisma.$OrganizationPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     uuid: string
@@ -557,6 +783,7 @@ export type $MeetingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     meetingAt: Date
     isDone: boolean
     phone: string | null
+    organizationId: number
   }, ExtArgs["result"]["meeting"]>
   composites: {}
 }
@@ -951,6 +1178,7 @@ readonly fields: MeetingFieldRefs;
  */
 export interface Prisma__MeetingClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -991,6 +1219,7 @@ export interface MeetingFieldRefs {
   readonly meetingAt: Prisma.FieldRef<"Meeting", 'DateTime'>
   readonly isDone: Prisma.FieldRef<"Meeting", 'Boolean'>
   readonly phone: Prisma.FieldRef<"Meeting", 'String'>
+  readonly organizationId: Prisma.FieldRef<"Meeting", 'Int'>
 }
     
 
@@ -1007,6 +1236,10 @@ export type MeetingFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
   /**
    * Filter, which Meeting to fetch.
    */
@@ -1026,6 +1259,10 @@ export type MeetingFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
+  /**
    * Filter, which Meeting to fetch.
    */
   where: Prisma.MeetingWhereUniqueInput
@@ -1043,6 +1280,10 @@ export type MeetingFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
   /**
    * Filter, which Meeting to fetch.
    */
@@ -1092,6 +1333,10 @@ export type MeetingFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
+  /**
    * Filter, which Meeting to fetch.
    */
   where?: Prisma.MeetingWhereInput
@@ -1140,6 +1385,10 @@ export type MeetingFindManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
+  /**
    * Filter, which Meetings to fetch.
    */
   where?: Prisma.MeetingWhereInput
@@ -1183,6 +1432,10 @@ export type MeetingCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
+  /**
    * The data needed to create a Meeting.
    */
   data: Prisma.XOR<Prisma.MeetingCreateInput, Prisma.MeetingUncheckedCreateInput>
@@ -1216,6 +1469,10 @@ export type MeetingCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    */
   data: Prisma.MeetingCreateManyInput | Prisma.MeetingCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1230,6 +1487,10 @@ export type MeetingUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
   /**
    * The data needed to update a Meeting.
    */
@@ -1282,6 +1543,10 @@ export type MeetingUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many Meetings to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1296,6 +1561,10 @@ export type MeetingUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
   /**
    * The filter to search for the Meeting to update in case it exists.
    */
@@ -1322,6 +1591,10 @@ export type MeetingDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
   /**
    * Filter which Meeting to delete.
    */
@@ -1354,4 +1627,8 @@ export type MeetingDefaultArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Meeting
    */
   omit?: Prisma.MeetingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MeetingInclude<ExtArgs> | null
 }

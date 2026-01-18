@@ -25,7 +25,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
       const { studentUuid, ...data } = Object.fromEntries(formData.entries());
 
       const state: CreateStudentStatusState = {
@@ -33,9 +33,10 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
         timestamp: Date.now(),
       };
 
-      if (!user) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const validationResult = createSchema.safeParse(data);
       if (!validationResult.success) {
@@ -49,7 +50,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
         },
         where: {
           uuid: studentUuid as string,
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });
@@ -125,16 +126,17 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
 
       const state: UpdateStudentStatusState = {
         success: false,
         timestamp: Date.now(),
       };
 
-      if (!user) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const validationResult = updateSchema.safeParse(Object.fromEntries(formData));
       if (!validationResult.success) {
@@ -142,7 +144,7 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
         return state;
       }
 
-      // 해당 상태 기록이 현재 사용자의 학생에 속하는지 확인
+      // 해당 상태 기록이 현재 조직의 학생에 속하는지 확인
       const studentStatus = await prisma.studentStatus.findUnique({
         where: {
           id: validationResult.data.studentStatusId,
@@ -152,7 +154,7 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
         },
       });
 
-      if (!studentStatus || studentStatus.student.userId !== user.id) {
+      if (!studentStatus || studentStatus.student.organizationId !== organization.id) {
         state.message = '권한이 없습니다';
         return state;
       }

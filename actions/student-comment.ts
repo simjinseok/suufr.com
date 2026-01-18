@@ -19,11 +19,12 @@ export async function createStudentComment(prevState: CreateStudentCommentState,
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         throw new Error('Unauthorized');
       }
+      const { organization } = session;
 
       const state: CreateStudentCommentState = {
         success: false,
@@ -35,11 +36,11 @@ export async function createStudentComment(prevState: CreateStudentCommentState,
       const studentUuid = formData.get('studentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
-      // 학생이 현재 사용자의 것인지 확인
+      // 학생이 현재 조직의 것인지 확인
       const student = await prisma.student.findFirst({
         where: {
           uuid: studentUuid,
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });
@@ -75,11 +76,12 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         throw new Error('Unauthorized');
       }
+      const { organization } = session;
 
       const state: UpdateStudentCommentState = {
         success: false,
@@ -92,13 +94,13 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
       const commentUuid = formData.get('commentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
-      // 코멘트가 현재 사용자의 것인지 확인
+      // 코멘트가 현재 조직의 것인지 확인
       const comment = await prisma.studentComment.findFirst({
         where: {
           uuid: commentUuid,
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
         include: {
@@ -133,19 +135,20 @@ export async function deleteStudentComment(commentId: number) {
       recordResponse: true,
     },
     async () => {
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user) {
+      if (!session?.organization) {
         throw new Error('Unauthorized');
       }
+      const { organization } = session;
 
-      // 코멘트가 현재 사용자의 것인지 확인
+      // 코멘트가 현재 조직의 것인지 확인
       const existingComment = await prisma.studentComment.findFirst({
         where: {
           id: commentId,
           deletedAt: null,
           student: {
-            userId: user.id,
+            organizationId: organization.id,
           },
         },
       });

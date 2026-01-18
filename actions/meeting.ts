@@ -45,11 +45,12 @@ export async function createMeeting(prevState: CreateMeetingState, formData: For
         timestamp: Date.now(),
       };
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user?.id) {
+      if (!session?.organization) {
         return state;
       }
+      const { user, organization } = session;
 
       const validationResult = createMeetingSchema.safeParse(data);
       if (!validationResult.success) {
@@ -61,7 +62,8 @@ export async function createMeeting(prevState: CreateMeetingState, formData: For
 
       await prisma.meeting.create({
         data: {
-          userId: user.id,
+          userId: user.id, // 유지 (추후 제거)
+          organizationId: organization.id,
           name: validationResult.data.name,
           meetingAt,
           phone: validationResult.data.phone || null,
@@ -118,11 +120,12 @@ export async function updateMeeting(prevState: UpdateMeetingState, formData: For
         timestamp: Date.now(),
       };
 
-      const { user } = await getSession();
+      const session = await getSession();
 
-      if (!user?.id) {
+      if (!session?.organization) {
         return state;
       }
+      const { organization } = session;
 
       const validationResult = updateMeetingSchema.safeParse(data);
       if (!validationResult.success) {
@@ -133,7 +136,7 @@ export async function updateMeeting(prevState: UpdateMeetingState, formData: For
       const meeting = await prisma.meeting.findUnique({
         where: {
           id: meetingId,
-          userId: user.id,
+          organizationId: organization.id,
           deletedAt: null,
         },
       });

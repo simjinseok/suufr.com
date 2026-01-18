@@ -10,7 +10,7 @@ export async function GET(
 
   const session = await getSession();
 
-  if (!session?.user) {
+  if (!session?.organization) {
     return new Response('', { status: 401 });
   }
 
@@ -21,7 +21,7 @@ export async function GET(
       lesson: {
         deletedAt: null,
         student: {
-          userId: session.user.id,
+          organizationId: session.organization.id,
           deletedAt: null,
         },
       },
