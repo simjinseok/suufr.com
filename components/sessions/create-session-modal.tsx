@@ -17,7 +17,7 @@ import { CalendarIcon } from 'lucide-react';
 import { createSession } from '@/actions/session';
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 
-export default function AddSessionModal({ isOpen, onOpenChange, lesson }) {
+export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const defaultDuration = useDefaultDuration();

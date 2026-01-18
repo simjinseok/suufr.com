@@ -21,7 +21,7 @@ import { Divider } from '@/components/divider';
 import React from 'react';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
 import EditLessonModal from '@/components/lesson/edit-lesson-modal';
-import AddSessionModal from '@/components/sessions/add-session-modal';
+import CreateSessionModal from '@/components/sessions/create-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
 import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
@@ -271,7 +271,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
       )}
 
       {isLessonCreating && (
-        <AddSessionModal
+        <CreateSessionModal
           isOpen={isLessonCreating !== null}
           onOpenChange={setIsLessonCreating.bind(null, null)}
           lesson={isLessonCreating}
