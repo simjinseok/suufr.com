@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Button, Modal } from '@heroui/react';
-import CreateStudentModal from './_create-student-modal';
+import CreateStudentModal from '@/components/student/create-student-modal';
 
 export default function NewStudentModal() {
 

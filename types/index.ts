@@ -4,6 +4,7 @@ export type TUserSettings = {
   userId: string;
   timeFormat: TimeFormat;
   defaultDuration: number;
+  autoUpdateNextPaymentAt: boolean;
 };
 
 export type Student = {
@@ -11,6 +12,7 @@ export type Student = {
   name: string;
   notes: string;
   status: string;
+  nextPaymentAt?: Date | null;
   createdAt?: Date;
   completedSessionsCount?: number;
   sessionsCount?: number;

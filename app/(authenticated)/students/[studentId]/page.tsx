@@ -11,6 +11,7 @@ type StudentWithStats = {
   name: string;
   status: StudentStatusValue;
   notes: string;
+  nextPaymentAt: Date | null;
   remainingSessionsCount: number;
   completedLessonCount: number;
   unpaidLessonCount: number;
@@ -33,6 +34,7 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
       s.name,
       s.status,
       s.notes,
+      s.next_payment_at AS "nextPaymentAt",
       CAST(COUNT(sess.id) FILTER (
         WHERE sess.is_done = false AND sess.deleted_at IS NULL
       ) AS INT) AS "remainingSessionsCount",
@@ -59,7 +61,7 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
     WHERE s.id = ${Number(studentId)}
       AND s.user_id = ${user.id}::uuid
       AND s.deleted_at IS NULL
-    GROUP BY s.id, s.name, s.status, s.notes
+    GROUP BY s.id, s.name, s.status, s.notes, s.next_payment_at
   `;
 
   if (!student) {
@@ -86,6 +88,7 @@ export default async function Page({ params }: { params: Promise<{ studentId: st
     remainingSessionsCount: student.remainingSessionsCount,
     completedLessonCount: student.completedLessonCount,
     unpaidLessonCount: student.unpaidLessonCount,
+    nextPaymentAt: student.nextPaymentAt,
   };
 
   return (

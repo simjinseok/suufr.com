@@ -17,7 +17,7 @@ import {
   TagGroup,
 } from '@heroui/react';
 import { CalendarIcon, HelpCircleIcon } from 'lucide-react';
-import { now } from '@internationalized/date';
+import { now, toCalendarDate } from '@internationalized/date';
 
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 
@@ -26,6 +26,7 @@ export interface ScheduleSettings {
   count: number;
   duration: number;
   days: Set<string>;
+  nextPaymentDate: ZonedDateTime | null;
 }
 
 interface Props {
@@ -58,34 +59,41 @@ interface ContentProps {
 function Content({ close, onConfirm, settings }: ContentProps) {
   const hourCycle = useHourCycle();
   const defaultDuration = useDefaultDuration();
-  const [date, setDate] = React.useState<ZonedDateTime | null>(settings?.date ?? now('Asia/Seoul'));
+  const [date, setDate] = React.useState<ZonedDateTime | null>(settings?.date ?? now('Asia/Seoul').set({ minute: 0, second: 0, millisecond: 0 }));
   const [count, setCount] = React.useState(settings?.count ?? 4);
   const [duration, setDuration] = React.useState(settings?.duration ?? defaultDuration);
   const [days, setDays] = React.useState<Set<string>>(settings?.days ?? new Set());
 
-  const lessons = React.useMemo(() => {
-    if (!date || days.size === 0) return [];
+  const { lessons, nextPaymentDate } = React.useMemo(() => {
+    if (!date || days.size === 0) return { lessons: [], nextPaymentDate: null };
 
     const result: ZonedDateTime[] = [];
     const selectedDays = Array.from(days).map(d => Number(d)).sort((a, b) => a - b);
 
     let currentDate = date;
+    let nextPayment: ZonedDateTime | null = null;
 
-    while (result.length < count) {
+    // count개 수업 + 다음결제예정일(count+1번째)까지 계산
+    while (nextPayment === null) {
       const dayOfWeek = currentDate.toDate().getDay();
 
       if (selectedDays.includes(dayOfWeek)) {
-        result.push(currentDate);
+        if (result.length < count) {
+          result.push(currentDate);
+        } else {
+          // count + 1번째는 다음결제예정일
+          nextPayment = currentDate;
+        }
       }
 
       currentDate = currentDate.add({ days: 1 });
     }
 
-    return result;
+    return { lessons: result, nextPaymentDate: nextPayment };
   }, [date, count, days]);
 
   const handleConfirm = () => {
-    onConfirm(lessons, { date, count, duration, days });
+    onConfirm(lessons, { date, count, duration, days, nextPaymentDate });
     close();
   };
 
@@ -97,7 +105,16 @@ function Content({ close, onConfirm, settings }: ContentProps) {
       <Modal.Body>
         <Surface className="p-3 flex flex-col gap-3 rounded-xl">
           <div className="flex gap-3">
-            <DateField value={date} granularity="day" onChange={setDate} hideTimeZone>
+            <DateField
+              value={date ? toCalendarDate(date) : null}
+              granularity="day"
+              onChange={(newDate) => {
+                if (newDate) {
+                  setDate(prev => prev?.set({ year: newDate.year, month: newDate.month, day: newDate.day }) ?? null);
+                }
+              }}
+              hideTimeZone
+            >
               <Label>기준 날짜</Label>
               <DateInputGroup>
                 <DateInputGroup.Prefix>
@@ -150,38 +167,6 @@ function Content({ close, onConfirm, settings }: ContentProps) {
             </TagGroup.List>
           </TagGroup>
         </Surface>
-
-        {!settings && Array.isArray(lessons) && lessons.length > 0 && (
-          <Surface className="p-3 flex flex-col gap-2 rounded-xl" variant="secondary">
-            <p className="text-sm font-medium text-neutral-500">
-              생성될 수업 (
-              {lessons.length}
-              개)
-            </p>
-            <div className="flex flex-col gap-1">
-              {lessons.map((lesson, idx) => (
-                <DateField
-                  key={`lesson-${lesson.toString()}`}
-                  aria-label={`${idx + 1}번째 수업`}
-                  className="tabular-nums"
-                  value={lesson}
-                  hourCycle={hourCycle}
-                  isReadOnly
-                  hideTimeZone
-                >
-                  <DateInputGroup>
-                    <DateInputGroup.Input>
-                      {segment => <DateInputGroup.Segment segment={segment} />}
-                    </DateInputGroup.Input>
-                    <DateInputGroup.Suffix>
-                      <Chip color="accent">{lesson.toDate().toLocaleDateString('ko-KR', { weekday: 'long' })}</Chip>
-                    </DateInputGroup.Suffix>
-                  </DateInputGroup>
-                </DateField>
-              ))}
-            </div>
-          </Surface>
-        )}
       </Modal.Body>
       <Modal.Footer>
         <Button variant="ghost" onClick={close}>취소</Button>

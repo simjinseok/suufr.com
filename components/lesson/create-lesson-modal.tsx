@@ -149,6 +149,7 @@ function Content({ close, studentId }: ContentProps) {
               ? (
                   <Surface className="p-2 flex flex-col gap-1 rounded-xl" variant="secondary">
                     <input type="hidden" name="lessonDuration" value={scheduleSettings?.duration ?? ''} />
+                    <input type="hidden" name="nextPaymentAt" value={scheduleSettings?.nextPaymentDate?.toString() ?? ''} />
                     {scheduledLessons.map((lesson, idx) => (
                       <DateField
                         key={`lesson-${lesson.toString()}`}

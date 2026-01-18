@@ -25,6 +25,7 @@ export default async function SharedLessonPage({
           student: {
             select: {
               name: true,
+              nextPaymentAt: true,
             },
           },
           payment: {

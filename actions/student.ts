@@ -70,6 +70,7 @@ export async function createStudent(prevState: any, formData: FormData) {
 const updateStudentSchema = z.object({
   name: z.string().min(1),
   notes: z.string(),
+  nextPaymentAt: z.string().optional(),
 });
 
 type UpdateStudentState = ServerActionState<{
@@ -113,12 +114,14 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         return state;
       }
 
+      const { nextPaymentAt, ...restData } = validationResult.data;
       const result = await prisma.student.update({
         where: {
           id: student.id,
         },
         data: {
-          ...validationResult.data,
+          ...restData,
+          nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('Asia/Seoul') : null,
           updatedAt: new Date(),
         },
       });

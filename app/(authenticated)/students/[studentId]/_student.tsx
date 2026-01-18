@@ -5,7 +5,7 @@ import * as React from 'react';
 import {Avatar, Button, ButtonGroup, Card, Dropdown, Header, Modal} from '@heroui/react';
 import { ChevronDownIcon, EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
-import EditStudentModal from './_edit-student-modal';
+import EditStudentModal from '@/components/student/edit-student-modal';
 import ChangeStatusModal from './_change-status-modal';
 import StatusModal from './_status-modal';
 
@@ -85,40 +85,5 @@ export default function Student({ student, statuses }) {
         statuses={statuses}
       />
     </div>
-  );
-}
-
-function Statuses({ student, statuses }) {
-  const [editingStatus, setEditingStatus] = React.useState(null);
-
-  return (
-    <React.Fragment>
-      <Card>
-        <Card.Header className="justify-between">
-          <h3 className="text-xl font-bold lg:text-xl">상태 변경 이력</h3>
-          <Button isIconOnly variant="light" onPress={() => setEditingStatus({})}>
-            <EditIcon width={14} height={14} />
-          </Button>
-        </Card.Header>
-        <Card.Content>
-          <ol className="flex flex-col gap-3">
-            {statuses.map(status => (
-              <li key={`status-${status.id}`}>
-                <div className="flex items-center gap-1">
-                  <StatusBadge status={status.status} />
-                  <p className="text-xs text-gray-500 font-bold">{format(status.changedAt, 'yyyy-MM-dd')}</p>
-                  <div className="grow" />
-                  <Button isIconOnly size="sm" variant="light" onPress={() => setEditingStatus(status)}>
-                    <EditIcon size={14} />
-                  </Button>
-                </div>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{status.notes}</p>
-              </li>
-            ))}
-          </ol>
-        </Card.Content>
-      </Card>
-
-    </React.Fragment>
   );
 }

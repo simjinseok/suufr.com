@@ -85,6 +85,7 @@ export const StudentScalarFieldEnum = {
   name: 'name',
   notes: 'notes',
   status: 'status',
+  nextPaymentAt: 'nextPaymentAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
@@ -216,6 +217,7 @@ export const UserSettingsScalarFieldEnum = {
   userId: 'userId',
   timeFormat: 'timeFormat',
   defaultDuration: 'defaultDuration',
+  autoUpdateNextPaymentAt: 'autoUpdateNextPaymentAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

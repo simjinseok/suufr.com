@@ -8,18 +8,19 @@ datasource db {
 }
 
 model Student {
-  id        Int                  @id @default(autoincrement())
-  uuid      String               @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  name      String
-  notes     String
-  status    StudentStatusValue   @default(pending)
-  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime             @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime?            @map("deleted_at") @db.Timestamptz(0)
-  userId    String               @map("user_id") @db.Uuid
-  lessons   Lesson[]
-  comments  StudentComment[]
-  statuses  StudentStatus[]
+  id            Int                  @id @default(autoincrement())
+  uuid          String               @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name          String
+  notes         String
+  status        StudentStatusValue   @default(pending)
+  nextPaymentAt DateTime?            @map("next_payment_at") @db.Date
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt     DateTime             @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt     DateTime?            @map("deleted_at") @db.Timestamptz(0)
+  userId        String               @map("user_id") @db.Uuid
+  lessons       Lesson[]
+  comments      StudentComment[]
+  statuses      StudentStatus[]
 
   @@index([userId, name, status, deletedAt])
   @@map("students")
@@ -165,11 +166,12 @@ enum StudentStatusValue {
 }
 
 model UserSettings {
-  userId          String   @id @map("user_id") @db.Uuid
-  timeFormat      String   @default("24h") @map("time_format")
-  defaultDuration Int      @default(50) @map("default_duration")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+  userId                    String   @id @map("user_id") @db.Uuid
+  timeFormat                String   @default("24h") @map("time_format")
+  defaultDuration           Int      @default(50) @map("default_duration")
+  autoUpdateNextPaymentAt   Boolean  @default(true) @map("auto_update_next_payment_at")
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 
   @@map("user_settings")
 }

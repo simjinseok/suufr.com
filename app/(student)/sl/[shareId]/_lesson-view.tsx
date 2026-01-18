@@ -1,12 +1,18 @@
 'use client';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale/ko';
 
-import dayjs from 'dayjs';
+import * as React from 'react';
 import { CircleIcon, CircleCheckBigIcon, CheckCircle2Icon, AlertCircleIcon } from 'lucide-react';
 
-type Props = {
+interface Props {
   lesson: {
     title: string;
     notes: string;
+    student?: {
+      name: string;
+      nextPaymentAt: Date | null;
+    } | null;
     payment?: {
       id: number;
     } | null;
@@ -40,10 +46,19 @@ export default function LessonView({ lesson }: Props) {
               </span>
             )
           : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                <AlertCircleIcon className="size-3.5" />
-                결제필요
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                  <AlertCircleIcon className="size-3.5" />
+                  결제필요
+                </span>
+                {lesson.student?.nextPaymentAt && (
+                  <span className="text-xs text-gray-500">
+                    다음결제예정일:
+                    {' '}
+                    {format(lesson.student.nextPaymentAt, 'M월 d일', { locale: ko })}
+                  </span>
+                )}
+              </div>
             )}
       </div>
       <hr className="my-4 h-px border-none w-full bg-gray-200" />
@@ -72,7 +87,7 @@ export default function LessonView({ lesson }: Props) {
                     </div>
                     <div className="flex-1">
                       <p className="tabular-nums font-medium">
-                        {dayjs(session.sessionAt).format('YYYY-MM-DD HH:mm')}
+                        {format(session.sessionAt, 'yyyy-MM-dd HH:mm', { locale: ko })}
                       </p>
                       {session.feedback?.notes && (
                         <div className="mt-2 pl-3 border-l-2 border-blue-300">

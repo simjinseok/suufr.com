@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Form, Button, NumberField, Surface, Tabs } from '@heroui/react';
+import { Form, Button, NumberField, Surface, Switch, Tabs } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { updateSettings } from '@/actions/settings';
@@ -13,6 +13,7 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
     values: {
       timeFormat: settings.timeFormat,
       defaultDuration: settings.defaultDuration,
+      autoUpdateNextPaymentAt: settings.autoUpdateNextPaymentAt,
     },
   });
 
@@ -20,6 +21,7 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
     fields: {
       timeFormat: settings.timeFormat,
       defaultDuration: settings.defaultDuration,
+      autoUpdateNextPaymentAt: settings.autoUpdateNextPaymentAt,
     },
   });
 
@@ -93,6 +95,34 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
                     <NumberField.IncrementButton />
                   </NumberField.Group>
                 </NumberField>
+              )}
+            />
+          </div>
+
+          <div className="flex justify-between items-center gap-2">
+            <div>
+              <h2 className="text-lg font-semibold">다음 결제 예정일 자동 업데이트</h2>
+              <p className="mt-1 text-sm text-gray-500">레슨 추가 시 마지막 수업의 다음 회차를 다음 결제 예정일로 자동 설정합니다.</p>
+            </div>
+            <Controller
+              control={control}
+              name="autoUpdateNextPaymentAt"
+              render={({ field: { name, value, onChange } }) => (
+                <React.Fragment>
+                  <Switch
+                    name={name}
+                    value="on"
+                    isSelected={value}
+                    onChange={onChange}
+                    aria-label="다음 결제 예정일 자동 업데이트"
+                  >
+                    <Switch.Control>
+                      <Switch.Thumb>
+                        <Switch.Icon />
+                      </Switch.Thumb>
+                    </Switch.Control>
+                  </Switch>
+                </React.Fragment>
               )}
             />
           </div>

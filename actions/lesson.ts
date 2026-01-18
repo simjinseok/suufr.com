@@ -8,6 +8,7 @@ import prisma from '@/utils/prisma';
 import { parseZonedDateTime } from '@internationalized/date';
 import { getSession } from '@/utils/auth';
 import { ServerActionState } from '@/types/index';
+import { getUserSettings } from './settings';
 
 type CreateLessonState = ServerActionState;
 export async function createLesson(prevState: CreateLessonState, formData: FormData) {
@@ -54,6 +55,9 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
       // 수업 시간 (분)
       const lessonDuration = parseInt(formData.get('lessonDuration') as string, 10) || 60;
 
+      // 다음결제예정일
+      const nextPaymentAtStr = formData.get('nextPaymentAt') as string;
+
       // 트랜잭션으로 lesson과 session들을 함께 생성
       await prisma.$transaction(async (tx) => {
         // lesson 생성
@@ -78,6 +82,19 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
               };
             }),
           });
+        }
+
+        // 다음결제예정일 업데이트 (설정에 따라)
+        if (nextPaymentAtStr) {
+          const settings = await getUserSettings(user.id);
+          if (settings.autoUpdateNextPaymentAt) {
+            await tx.student.update({
+              where: { id: student.id },
+              data: {
+                nextPaymentAt: parseZonedDateTime(nextPaymentAtStr).toDate(),
+              },
+            });
+          }
         }
       });
       revalidatePath('/lessons', 'page');

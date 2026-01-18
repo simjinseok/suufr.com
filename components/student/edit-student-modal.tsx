@@ -1,10 +1,13 @@
 'use client';
 import type { ModalProps } from '@heroui/react';
+import type { CalendarDate } from '@internationalized/date';
 
 import React from 'react';
 
 import {
   Button,
+  DateField,
+  DateInputGroup,
   FieldError,
   Form,
   Modal,
@@ -14,6 +17,8 @@ import {
   TextField,
   Label,
 } from '@heroui/react';
+import { CalendarIcon } from 'lucide-react';
+import { fromDate, toCalendarDate } from '@internationalized/date';
 
 import { updateStudent } from '@/actions/student';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,11 +34,19 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
   const formRef = React.useRef<HTMLFormElement>(null);
   const allowResetRef = React.useRef<boolean>(false);
 
-  const { control } = useForm({
+  const { control } = useForm<{
+    id: number;
+    name: string;
+    notes: string;
+    nextPaymentAt: CalendarDate | null;
+  }>({
     values: {
       id: student.id,
       name: student.name,
       notes: student.notes,
+      nextPaymentAt: student.nextPaymentAt
+        ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
+        : null,
     },
   });
 
@@ -107,6 +120,30 @@ export default function EditStudentModal({ isOpen, onOpenChange, student }: Prop
                           rows={5}
                         />
                       </TextField>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="nextPaymentAt"
+                    render={({ field: { name, value, onChange } }) => (
+                      <DateField
+                        className="mt-4"
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        granularity="day"
+                        hideTimeZone
+                      >
+                        <Label>다음결제예정일</Label>
+                        <DateInputGroup>
+                          <DateInputGroup.Input>
+                            {segment => <DateInputGroup.Segment segment={segment} />}
+                          </DateInputGroup.Input>
+                          <DateInputGroup.Suffix>
+                            <CalendarIcon className="size-4" />
+                          </DateInputGroup.Suffix>
+                        </DateInputGroup>
+                      </DateField>
                     )}
                   />
 
