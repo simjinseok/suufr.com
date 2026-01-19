@@ -1,14 +1,12 @@
 import 'dotenv/config';
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
-  // Specifies the location of your schema file
   schema: 'prisma/schema.prisma',
 
   datasource: {
-    // Retrieves the database connection URL from environment variables
-    url: env('POSTGRES_PRISMA_URL'),
-    // Optionally support a shadow database URL if present
-    // shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+    // process.env 사용 - env() 헬퍼는 없으면 에러 발생
+    // generate는 DB 연결 안 하므로 빈 문자열도 OK
+    url: process.env.POSTGRES_PRISMA_URL ?? '',
   },
 });
