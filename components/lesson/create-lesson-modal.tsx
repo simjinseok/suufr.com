@@ -1,6 +1,6 @@
 'use client';
 import type { ZonedDateTime } from '@internationalized/date';
-import { Description, ModalProps, TimeField, Tooltip } from '@heroui/react';
+import { Description, ModalProps, Popover, TimeField, Tooltip } from '@heroui/react';
 
 import * as React from 'react';
 import {
@@ -25,6 +25,7 @@ import { now, toCalendarDate } from '@internationalized/date';
 import { createLesson } from '@/actions/lesson';
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 import Stepper from '@/components/stepper';
+import { Calendar } from '@/components/calendar';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -63,7 +64,7 @@ function Content({ close, studentUuid }: ContentProps) {
 
   // Step 2 data
   const [date, setDate] = React.useState<ZonedDateTime | null>(
-    now('Asia/Seoul').set({ minute: 0, second: 0, millisecond: 0 })
+    now('Asia/Seoul').set({ minute: 0, second: 0, millisecond: 0 }),
   );
   const [count, setCount] = React.useState(4);
   const [duration, setDuration] = React.useState(defaultDuration);
@@ -84,7 +85,8 @@ function Content({ close, studentUuid }: ContentProps) {
       if (selectedDays.includes(dayOfWeek)) {
         if (result.length < count) {
           result.push(currentDate);
-        } else {
+        }
+        else {
           nextPayment = currentDate;
         }
       }
@@ -161,14 +163,35 @@ function Content({ close, studentUuid }: ContentProps) {
                   hideTimeZone
                 >
                   <Label>기준 날짜</Label>
-                  <DateInputGroup>
-                    <DateInputGroup.Prefix>
-                      <CalendarIcon className="size-4" />
-                    </DateInputGroup.Prefix>
-                    <DateInputGroup.Input>
-                      {segment => <DateInputGroup.Segment segment={segment} />}
-                    </DateInputGroup.Input>
-                  </DateInputGroup>
+                  <div className="flex items-center gap-1">
+                    <Popover>
+                      <Button
+                        className="rounded-field"
+                        size="sm"
+                        isIconOnly
+                        variant="tertiary"
+                      >
+                        <CalendarIcon className="size-4" />
+                      </Button>
+                      <Popover.Content>
+                        <Popover.Dialog>
+                          <Calendar
+                            value={date ? toCalendarDate(date) : null}
+                            onChange={(newDate) => {
+                              if (newDate) {
+                                setDate(prev => prev?.set({ year: newDate.year, month: newDate.month, day: newDate.day }) ?? null);
+                              }
+                            }}
+                          />
+                        </Popover.Dialog>
+                      </Popover.Content>
+                    </Popover>
+                    <DateInputGroup>
+                      <DateInputGroup.Input>
+                        {segment => <DateInputGroup.Segment segment={segment} />}
+                      </DateInputGroup.Input>
+                    </DateInputGroup>
+                  </div>
                 </DateField>
                 <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={setDate} hideTimeZone>
                   <Label>시간</Label>
