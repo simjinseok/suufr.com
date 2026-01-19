@@ -51,7 +51,7 @@ function Content({ studentUuid, close }) {
   return (
     <React.Fragment>
       <Modal.Header>
-        <Modal.Heading>'코멘트 추가'</Modal.Heading>
+        <Modal.Heading>코멘트 추가</Modal.Heading>
       </Modal.Header>
       <Modal.Body>
         <Form id={formId} action={formAction} className="p-1" validationErrors={state.fieldErrors}>
