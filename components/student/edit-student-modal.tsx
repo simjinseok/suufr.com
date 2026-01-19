@@ -113,39 +113,42 @@ function Content({ student, close }: ContentProps) {
               />
             )}
           />
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { name, value, onChange } }) => (
-              <TextField
-                name={name}
-                value={value}
-                onChange={onChange}
-                isReadOnly={isPending}
-              >
-                <Label>이름</Label>
-                <Input autoComplete="off" />
-                <FieldError />
-              </TextField>
-            )}
-          />
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { name, value, onChange } }) => (
-              <TextField
-                className="mt-4"
-                name={name}
-                value={value}
-                onChange={onChange}
-                isReadOnly={isPending}
-              >
-                <Label>연락처</Label>
-                <Input type="tel" autoComplete="off" />
-                <FieldError />
-              </TextField>
-            )}
-          />
+          <div className="mt-4 flex gap-3">
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { name, value, onChange } }) => (
+                <TextField
+                  className="w-2/5"
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  isReadOnly={isPending}
+                >
+                  <Label>이름</Label>
+                  <Input autoComplete="off" />
+                  <FieldError />
+                </TextField>
+              )}
+            />
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field: { name, value, onChange } }) => (
+                <TextField
+                  className="shrink w-3/5"
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  isReadOnly={isPending}
+                >
+                  <Label>연락처</Label>
+                  <Input className="w-full" type="tel" autoComplete="off" />
+                  <FieldError />
+                </TextField>
+              )}
+            />
+          </div>
           <Controller
             control={control}
             name="email"
