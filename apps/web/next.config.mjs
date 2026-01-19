@@ -1,7 +1,13 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { withSentryConfig } from '@sentry/nextjs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -27,6 +33,11 @@ export default withSentryConfig(nextConfig, {
 
   // Hides source maps from generated client bundles
   hideSourceMaps: true,
+
+  // Delete source maps after uploading to Sentry
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
 
   // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
   // See the following for more information:

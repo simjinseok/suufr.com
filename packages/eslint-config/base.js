@@ -1,14 +1,9 @@
-import { FlatCompat } from '@eslint/eslintrc';
 import stylistic from '@stylistic/eslint-plugin';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
-import nextPlugin from '@next/eslint-plugin-next';
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
-
-export default [
+/** @type {import('eslint').Linter.Config[]} */
+export const baseConfig = [
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -16,9 +11,6 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true,
-        },
         project: './tsconfig.json',
       },
     },
@@ -33,17 +25,15 @@ export default [
       '@typescript-eslint/no-non-null-assertion': 'warn',
     },
   },
-  {
-    plugins: { next: nextPlugin },
-  },
   stylistic.configs.customize({
     semi: true,
     indent: 2,
-    jsx: true,
   }),
   {
     rules: {
-      '@stlyistic/arrow-parens': 'off',
+      '@stylistic/arrow-parens': 'off',
     },
   },
 ];
+
+export default baseConfig;

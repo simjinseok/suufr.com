@@ -1,0 +1,53 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10 --activate
+
+  pre_build:
+    commands:
+      - node --version
+      - pnpm --version
+      - pnpm install --frozen-lockfile
+
+  build:
+    commands:
+      - pnpm turbo build --filter=web
+
+  post_build:
+    commands:
+      - cd apps/web
+      - cp -r .next/static .next/standalone/apps/web/.next/static
+      - cp -r public .next/standalone/apps/web/public 2>/dev/null || true
+      - cp -r .ebextensions .next/standalone/apps/web/
+      - mkdir -p .next/standalone/apps/web/.platform
+      - cp -r .platform/. .next/standalone/apps/web/.platform/ 2>/dev/null || true
+      - cp -r prisma .next/standalone/apps/web/
+      - cp Procfile .next/standalone/apps/web/
+      - cp prisma.config.mjs .next/standalone/apps/web/
+      - cp .npmrc .next/standalone/apps/web/ 2>/dev/null || true
+
+artifacts:
+  base-directory: apps/web/.next/standalone/apps/web
+  files:
+    - .next/**/*
+    - .platform/**/*
+    - .ebextensions/*
+    - prisma/**/*
+    - server.js
+    - package.json
+    - prisma.config.mjs
+    - Procfile
+    - public/**/*
+  discard-paths: no
+
+cache:
+  paths:
+    - node_modules/**/*
+    - apps/web/node_modules/**/*
+    - apps/web/.next/cache/**/*
+    - /root/.local/share/pnpm/store/**/*
