@@ -31,6 +31,8 @@ phases:
       - cp Procfile .next/standalone/apps/web/
       - cp prisma.config.mjs .next/standalone/apps/web/
       - cp .npmrc .next/standalone/apps/web/ 2>/dev/null || true
+      # npm error Unsupported URL Type "workspace:": workspace:* 오류 때문에 devDependencies 제거
+      - node -e "const pkg=require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('.next/standalone/apps/web/package.json', JSON.stringify(pkg, null, 2))"
 
 artifacts:
   base-directory: apps/web/.next/standalone/apps/web
