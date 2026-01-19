@@ -30,6 +30,8 @@ phases:
       - cp Procfile .next/standalone/apps/web/
       - cp prisma.config.mjs .next/standalone/apps/web/
       - cp .npmrc .next/standalone/apps/web/ 2>/dev/null || true
+      # npm에서 workspace:* 를 읽을 수 없다고 오류가 발생함
+      - node -e "const fs=require('fs'),p='.next/standalone/apps/web/package.json',j=JSON.parse(fs.readFileSync(p));delete j.devDependencies;fs.writeFileSync(p,JSON.stringify(j,null,2))"
 
 artifacts:
   base-directory: apps/web/.next/standalone/apps/web
