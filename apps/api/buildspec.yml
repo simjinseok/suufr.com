@@ -32,7 +32,7 @@ phases:
         cp -r .ebextensions deploy/ && \
         mkdir -p deploy/.platform && \
         cp -r .platform/. deploy/.platform/ 2>/dev/null || true
-        node -e "const pkg=require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('.next/standalone/apps/web/package.json', JSON.stringify(pkg, null, 2))"
+        node -e "const pkg=require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('deploy/package.json', JSON.stringify(pkg, null, 2))"
       # 루트에서 production dependencies만 추출
 #      - pnpm deploy --filter=api --prod apps/api/deploy
 
