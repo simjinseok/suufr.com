@@ -214,7 +214,7 @@ function DatePickerField({ name, value, onChange }) {
           >
             <CalendarIcon className="size-4" />
           </Button>
-          <Popover.Content>
+          <Popover.Content placement="bottom left">
             <Popover.Dialog>
               <Calendar
                 value={value}

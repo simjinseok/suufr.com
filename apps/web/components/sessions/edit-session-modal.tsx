@@ -51,6 +51,7 @@ function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const [selectedTab, setSelectedTab] = React.useState<'basic' | 'memo' | 'feedback'>('basic');
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
@@ -140,7 +141,7 @@ function Content({ session, close }: ContentProps) {
                   >
                     <Label>날짜</Label>
                     <div className="flex items-center gap-1">
-                      <Popover>
+                      <Popover isOpen={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <Button
                           className="rounded-field"
                           size="sm"
@@ -149,13 +150,14 @@ function Content({ session, close }: ContentProps) {
                         >
                           <CalendarIcon className="size-4" />
                         </Button>
-                        <Popover.Content>
+                        <Popover.Content placement="bottom left">
                           <Popover.Dialog>
                             <Calendar
                               value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
                               onChange={(newDate) => {
                                 if (newDate) {
                                   onChange(newDate.toDate('Asia/Seoul'));
+                                  setIsCalendarOpen(false);
                                 }
                               }}
                             />

@@ -61,6 +61,7 @@ function Content({ close, studentUuid }: ContentProps) {
   const defaultDuration = useDefaultDuration();
 
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   // Step 2 data
   const [date, setDate] = React.useState<ZonedDateTime | null>(
@@ -164,7 +165,7 @@ function Content({ close, studentUuid }: ContentProps) {
                 >
                   <Label>기준 날짜</Label>
                   <div className="flex items-center gap-1">
-                    <Popover>
+                    <Popover isOpen={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                       <Button
                         className="rounded-field"
                         size="sm"
@@ -173,13 +174,14 @@ function Content({ close, studentUuid }: ContentProps) {
                       >
                         <CalendarIcon className="size-4" />
                       </Button>
-                      <Popover.Content>
+                      <Popover.Content placement="bottom left">
                         <Popover.Dialog>
                           <Calendar
                             value={date ? toCalendarDate(date) : null}
                             onChange={(newDate) => {
                               if (newDate) {
                                 setDate(prev => prev?.set({ year: newDate.year, month: newDate.month, day: newDate.day }) ?? null);
+                                setIsCalendarOpen(false);
                               }
                             }}
                           />
