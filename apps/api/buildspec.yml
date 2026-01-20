@@ -25,6 +25,8 @@ phases:
         cd apps/api && \
         mkdir -p deploy && \
         cp -r dist deploy/ && \
+        cp -r prisma deploy/ && \
+        cp prisma.config.mjs deploy/ && \
         cp package.json deploy/ && \
         cp Procfile deploy/ && \
         cp -r .ebextensions deploy/ 2>/dev/null || true && \
@@ -38,6 +40,8 @@ artifacts:
   base-directory: apps/api/deploy
   files:
     - dist/**/*
+    - prisma/**/*
+    - prisma.config.mjs
     - .platform/**/*
     - .ebextensions/*
     - package.json
