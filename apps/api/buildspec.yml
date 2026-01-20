@@ -21,17 +21,15 @@ phases:
 
   post_build:
     commands:
-      # 모든 명령을 &&로 연결하여 동일 쉘에서 실행
       - |
         cd apps/api && \
         mkdir -p deploy && \
         cp -r dist deploy/ && \
-        cp -r prisma/generated deploy/prisma/ && \
         cp package.json deploy/ && \
         cp Procfile deploy/ && \
-        cp -r .ebextensions deploy/ && \
+        cp -r .ebextensions deploy/ 2>/dev/null || true && \
         mkdir -p deploy/.platform && \
-        cp -r .platform/. deploy/.platform/ 2>/dev/null || true
+        cp -r .platform/. deploy/.platform/ 2>/dev/null || true && \
         node -e "const pkg=require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('deploy/package.json', JSON.stringify(pkg, null, 2))"
       # 루트에서 production dependencies만 추출
 #      - pnpm deploy --filter=api --prod apps/api/deploy
@@ -40,7 +38,6 @@ artifacts:
   base-directory: apps/api/deploy
   files:
     - dist/**/*
-    - prisma/**/*
     - .platform/**/*
     - .ebextensions/*
     - package.json

@@ -1,11 +1,12 @@
 {
   "extends": "@suufr/typescript-config/nestjs.json",
   "compilerOptions": {
+    "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@prisma/generated/*": ["prisma/generated/*"]
+      "@prisma/generated/*": ["src/generated/prisma/*"]
     }
   },
-  "include": ["src/**/*", "prisma/generated/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
