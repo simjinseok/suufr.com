@@ -1,0 +1,53 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10 --activate
+
+  pre_build:
+    commands:
+      - node --version
+      - pnpm --version
+      - pnpm install --frozen-lockfile
+      - pnpm --filter=api prisma:generate   # 빌드 전에 Prisma 생성
+
+  build:
+    commands:
+      - pnpm turbo build --filter=api
+
+  post_build:
+    commands:
+      # 모든 명령을 &&로 연결하여 동일 쉘에서 실행
+      - |
+        cd apps/api && \
+        mkdir -p deploy && \
+        cp -r dist deploy/ && \
+        cp -r prisma/generated deploy/prisma/ && \
+        cp package.json deploy/ && \
+        cp Procfile deploy/ && \
+        cp -r .ebextensions deploy/ && \
+        mkdir -p deploy/.platform && \
+        cp -r .platform/. deploy/.platform/ 2>/dev/null || true
+      # 루트에서 production dependencies만 추출
+      - pnpm deploy --filter=api --prod apps/api/deploy
+
+artifacts:
+  base-directory: apps/api/deploy
+  files:
+    - dist/**/*
+    - prisma/**/*
+    - .platform/**/*
+    - .ebextensions/*
+    - package.json
+    - Procfile
+  discard-paths: no
+
+cache:
+  paths:
+    - node_modules/**/*
+    - apps/*/node_modules/**/*
+    - .pnpm-store/**/*
