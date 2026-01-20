@@ -3,11 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Public } from '../common/decorators/public.decorator';
 
 @Public()
-@Controller('health')
+@Controller()
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
+  root() {
+    return { status: 'ok' };
+  }
+
+  @Get('health')
   async check() {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
