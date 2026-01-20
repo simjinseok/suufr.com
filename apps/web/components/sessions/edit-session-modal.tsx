@@ -130,11 +130,7 @@ function Content({ session, close }: ContentProps) {
                     name={name}
                     granularity="day"
                     value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
-                    onChange={(date) => {
-                      if (date) {
-                        onChange(date.toDate('Asia/Seoul'));
-                      }
-                    }}
+                    onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
                     hourCycle={hourCycle}
                     hideTimeZone
                     isRequired
@@ -175,11 +171,7 @@ function Content({ session, close }: ContentProps) {
                     hourCycle={hourCycle}
                     granularity="minute"
                     value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
-                    onChange={(newDate) => {
-                      if (newDate) {
-                        onChange(newDate.toDate('Asia/Seoul'));
-                      }
-                    }}
+                    onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
                     hideTimeZone
                   >
                     <Label>시간</Label>

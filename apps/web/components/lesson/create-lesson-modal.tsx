@@ -154,13 +154,9 @@ function Content({ close, studentUuid }: ContentProps) {
             <Surface className="p-3 flex flex-col gap-3 rounded-xl">
               <div className="flex gap-3">
                 <DateField
-                  value={date ? toCalendarDate(date) : null}
+                  value={toCalendarDate(date!)}
                   granularity="day"
-                  onChange={(newDate) => {
-                    if (newDate) {
-                      setDate(prev => prev?.set({ year: newDate.year, month: newDate.month, day: newDate.day }) ?? null);
-                    }
-                  }}
+                  onChange={(v) => v && setDate(prev => prev?.set({ year: v.year, month: v.month, day: v.day }) ?? null)}
                   hideTimeZone
                 >
                   <Label>기준 날짜</Label>
@@ -177,10 +173,10 @@ function Content({ close, studentUuid }: ContentProps) {
                       <Popover.Content placement="bottom left">
                         <Popover.Dialog>
                           <Calendar
-                            value={date ? toCalendarDate(date) : null}
-                            onChange={(newDate) => {
-                              if (newDate) {
-                                setDate(prev => prev?.set({ year: newDate.year, month: newDate.month, day: newDate.day }) ?? null);
+                            value={toCalendarDate(date!)}
+                            onChange={(v) => {
+                              if (v) {
+                                setDate(prev => prev?.set({ year: v.year, month: v.month, day: v.day }) ?? null);
                                 setIsCalendarOpen(false);
                               }
                             }}
@@ -195,7 +191,7 @@ function Content({ close, studentUuid }: ContentProps) {
                     </DateInputGroup>
                   </div>
                 </DateField>
-                <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={setDate} hideTimeZone>
+                <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={(v) => v && setDate(v)} hideTimeZone>
                   <Label>시간</Label>
                   <DateInputGroup>
                     <DateInputGroup.Input>
