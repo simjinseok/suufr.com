@@ -1,5 +1,5 @@
 'use client';
-import type { ModalProps } from '@heroui/react';
+import { ModalProps, Popover, TimeField } from '@heroui/react';
 
 import * as React from 'react';
 import {
@@ -16,12 +16,13 @@ import {
   TextArea,
   TextField,
 } from '@heroui/react';
-import { fromDate, toCalendarDateTime } from '@internationalized/date';
+import { fromDate, toCalendarDate, toCalendarDateTime } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { updateSession, removeSession } from '@/actions/session';
 import { TSession } from '@/types/index';
 import { useHourCycle } from '@/contexts/time-format';
+import { Calendar } from '@/components/calendar';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -49,7 +50,7 @@ interface ContentProps {
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
-  const [selectedTab, setSelectedTab] = React.useState<'memo' | 'feedback'>('memo');
+  const [selectedTab, setSelectedTab] = React.useState<'basic' | 'memo' | 'feedback'>('basic');
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
@@ -104,83 +105,112 @@ function Content({ session, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="sessionId" value={session.id} />
-          <Controller
-            control={control}
-            name="isDone"
-            render={({ field: { name, value, onChange } }) => (
-              <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Checkbox.Content>
-                  <Label>완료여부</Label>
-                </Checkbox.Content>
-              </Checkbox>
-            )}
-          />
-          <Controller
-            control={control}
-            name="sessionAt"
-            render={({ field: { name, value, onChange } }) => (
-              <DateField
-                name={name}
-                granularity="minute"
-                value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
-                onChange={(date) => {
-                  if (date) {
-                    onChange(date.toDate('Asia/Seoul'));
-                  }
-                }}
-                hourCycle={hourCycle}
-                hideTimeZone
-                isRequired
-              >
-                <Label>날짜</Label>
-                <DateInputGroup>
-                  <DateInputGroup.Prefix>
-                    <CalendarIcon className="size-4" />
-                  </DateInputGroup.Prefix>
-                  <DateInputGroup.Input>
-                    {segment => <DateInputGroup.Segment segment={segment} />}
-                  </DateInputGroup.Input>
-                </DateInputGroup>
-              </DateField>
-            )}
-          />
-          <Controller
-            control={control}
-            name="duration"
-            render={({ field: { name, value, onChange } }) => (
-              <NumberField
-                name={name}
-                value={value}
-                onChange={onChange}
-                minValue={5}
-                step={5}
-              >
-                <Label>수업 시간 (분)</Label>
-                <NumberField.Group>
-                  <NumberField.DecrementButton />
-                  <NumberField.Input />
-                  <NumberField.IncrementButton />
-                </NumberField.Group>
-              </NumberField>
-            )}
-          />
-          <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as 'memo' | 'feedback')}>
-            <Tabs.ListContainer>
-              <Tabs.List>
-                <Tabs.Tab id="memo">
-                  메모
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab id="feedback" isDisabled={!isDoneValue}>
-                  피드백
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+          <React.Activity mode={selectedTab === 'basic' ? 'visible' : 'hidden'}>
+            <Controller
+              control={control}
+              name="isDone"
+              render={({ field: { name, value, onChange } }) => (
+                <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label>완료여부</Label>
+                  </Checkbox.Content>
+                </Checkbox>
+              )}
+            />
+            <Controller
+              control={control}
+              name="sessionAt"
+              render={({ field: { name, value, onChange } }) => (
+                <div className="flex gap-1">
+                  <DateField
+                    name={name}
+                    granularity="day"
+                    value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                    onChange={(date) => {
+                      if (date) {
+                        onChange(date.toDate('Asia/Seoul'));
+                      }
+                    }}
+                    hourCycle={hourCycle}
+                    hideTimeZone
+                    isRequired
+                  >
+                    <Label>날짜</Label>
+                    <div className="flex items-center gap-1">
+                      <Popover>
+                        <Button
+                          className="rounded-field"
+                          size="sm"
+                          isIconOnly
+                          variant="tertiary"
+                        >
+                          <CalendarIcon className="size-4" />
+                        </Button>
+                        <Popover.Content>
+                          <Popover.Dialog>
+                            <Calendar
+                              value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                              onChange={(newDate) => {
+                                if (newDate) {
+                                  onChange(newDate.toDate('Asia/Seoul'));
+                                }
+                              }}
+                            />
+                          </Popover.Dialog>
+                        </Popover.Content>
+                      </Popover>
+                      <DateInputGroup>
+                        <DateInputGroup.Input>
+                          {segment => <DateInputGroup.Segment segment={segment} />}
+                        </DateInputGroup.Input>
+                      </DateInputGroup>
+                    </div>
+                  </DateField>
+                  <TimeField
+                    hourCycle={hourCycle}
+                    granularity="minute"
+                    value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                    onChange={(newDate) => {
+                      if (newDate) {
+                        onChange(newDate.toDate('Asia/Seoul'));
+                      }
+                    }}
+                    hideTimeZone
+                  >
+                    <Label>시간</Label>
+                    <DateInputGroup>
+                      <DateInputGroup.Input>
+                        {segment => <DateInputGroup.Segment segment={segment} />}
+                      </DateInputGroup.Input>
+                    </DateInputGroup>
+                  </TimeField>
+                </div>
+              )}
+            />
+            <Controller
+              control={control}
+              name="duration"
+              render={({ field: { name, value, onChange } }) => (
+                <NumberField
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  minValue={5}
+                  step={5}
+                >
+                  <Label>수업 시간 (분)</Label>
+                  <NumberField.Group>
+                    <NumberField.DecrementButton />
+                    <NumberField.Input />
+                    <NumberField.IncrementButton />
+                  </NumberField.Group>
+                </NumberField>
+              )}
+            />
+          </React.Activity>
 
           <React.Activity mode={selectedTab === 'memo' ? 'visible' : 'hidden'}>
             <Controller
@@ -214,6 +244,28 @@ function Content({ session, close }: ContentProps) {
             />
           </React.Activity>
         </Form>
+        <Tabs
+          className="mt-4"
+          selectedKey={selectedTab}
+          onSelectionChange={(key) => setSelectedTab(key as 'basic' | 'memo' | 'feedback')}
+        >
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="basic">
+                기본정보
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab id="memo">
+                수업내용
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab id="feedback" isDisabled={!isDoneValue}>
+                피드백
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
       </Modal.Body>
       <Modal.Footer>
         <RemoveButton sessionId={session.id} onSuccess={close} />
