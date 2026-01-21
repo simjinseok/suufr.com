@@ -4,7 +4,7 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/jwt.strategy';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('students')
 export class StudentsController {

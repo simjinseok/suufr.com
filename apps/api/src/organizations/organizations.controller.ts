@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Post, Param, Body } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { UpdateOrganizationDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/jwt.strategy';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('organizations')
 export class OrganizationsController {

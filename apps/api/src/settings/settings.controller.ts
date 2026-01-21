@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Body } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { UpdateSettingsDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/jwt.strategy';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('settings')
 export class SettingsController {

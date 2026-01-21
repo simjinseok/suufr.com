@@ -1,6 +1,7 @@
 import type { Student } from '@/types/index';
 
 import prisma from '@/utils/prisma';
+import { cookies } from 'next/headers';
 import { createLoader, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs/server';
 function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
   if (!key) return null;
@@ -26,11 +27,23 @@ const loadSearchParams = createLoader({
 export default async function Page(props: PageProps<'/students'>) {
   const { page, status, q } = await loadSearchParams(props.searchParams);
 
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access_token')?.value;
+
   const session = await getSession();
   if (!session?.organization) {
     return null;
   }
+  console.log('???', accessToken);
   const { organization } = session;
+  const response = await fetch(`${process.env.API_URL}/api/students`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  console.log('response', response);
+  const result = await response.json();
+  console.log('dhkt', session, result);
 
   const students: Student[] = await prisma.$queryRaw`
       SELECT students.id AS id,

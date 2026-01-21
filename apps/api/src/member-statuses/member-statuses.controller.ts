@@ -2,7 +2,7 @@ import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { MemberStatusesService } from './member-statuses.service';
 import { CreateMemberStatusDto, UpdateMemberStatusDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/jwt.strategy';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller()
 export class MemberStatusesController {

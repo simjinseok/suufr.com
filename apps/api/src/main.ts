@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // Enable raw body for DAV requests
+    rawBody: true,
+  });
 
   app.enableCors({
     origin: process.env.WEB_URL || 'http://localhost:3000',
@@ -14,7 +17,7 @@ async function bootstrap() {
     exclude: [
       { path: '', method: RequestMethod.GET },
       { path: 'dav', method: RequestMethod.ALL },
-      { path: 'dav/(.*)', method: RequestMethod.ALL },
+      { path: 'dav/{*path}', method: RequestMethod.ALL },
       { path: '.well-known/caldav', method: RequestMethod.ALL },
       { path: '.well-known/carddav', method: RequestMethod.ALL },
     ],

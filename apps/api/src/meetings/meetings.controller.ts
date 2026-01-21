@@ -3,7 +3,7 @@ import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto, UpdateMeetingDto } from './dto';
 import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../auth/jwt.strategy';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('meetings')
 export class MeetingsController {

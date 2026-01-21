@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthenticatedUser } from './jwt.strategy';
+import { AuthenticatedUser } from './guards/jwt-auth.guard';
 
 @Injectable()
 export class AuthService {
