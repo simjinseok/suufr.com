@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, UpdatePaymentDto } from './dto';
+import { CreatePaymentDto, UpdatePaymentDto, ListPaymentsQueryDto } from './dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -8,38 +10,42 @@ export class PaymentsController {
 
   @Get()
   findAll(
-    @Query('organizationId') organizationId?: number,
-    @Query('memberId') memberId?: number,
-    @Query('year') year?: number,
-    @Query('month') month?: number,
+    @Query() query: ListPaymentsQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.paymentsService.findAll(organizationId, memberId, year, month);
+    return this.paymentsService.findAll(query, user.userId);
   }
 
   @Get(':uuid')
-  findOne(@Param('uuid') uuid: string) {
-    return this.paymentsService.findOne(uuid);
+  findOne(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.paymentsService.findOne(uuid, user.userId);
   }
 
   @Post()
   create(
     @Body() createPaymentDto: CreatePaymentDto,
-    @Query('organizationId') organizationId: number,
-    @Query('memberId') memberId: number,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.paymentsService.create(createPaymentDto, organizationId, memberId);
+    return this.paymentsService.create(createPaymentDto, user.userId);
   }
 
   @Patch(':uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() updatePaymentDto: UpdatePaymentDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.paymentsService.update(uuid, updatePaymentDto);
+    return this.paymentsService.update(uuid, updatePaymentDto, user.userId);
   }
 
   @Delete(':uuid')
-  remove(@Param('uuid') uuid: string) {
-    return this.paymentsService.remove(uuid);
+  remove(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.paymentsService.remove(uuid, user.userId);
   }
 }
