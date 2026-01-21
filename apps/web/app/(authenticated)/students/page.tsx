@@ -34,16 +34,16 @@ export default async function Page(props: PageProps<'/students'>) {
   if (!session?.organization) {
     return null;
   }
-  console.log('???', accessToken);
+  // console.log('???', accessToken);
   const { organization } = session;
-  const response = await fetch(`${process.env.API_URL}/api/students`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  console.log('response', response);
-  const result = await response.json();
-  console.log('dhkt', session, result);
+  //const response = await fetch(`${process.env.API_URL}/api/students`, {
+  //  headers: {
+  //    Authorization: `Bearer ${accessToken}`,
+  //  },
+  //});
+  //console.log('response', response);
+  //const result = await response.json();
+  //console.log('dhkt', session, result);
 
   const students: Student[] = await prisma.$queryRaw`
       SELECT students.id AS id,
