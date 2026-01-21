@@ -1,6 +1,5 @@
-import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
-import { notFound } from 'next/navigation';
+import { studentCommentsApi } from '@/utils/api';
 import Comments from './_comments';
 
 export default async function CommentsPage({
@@ -9,28 +8,13 @@ export default async function CommentsPage({
   params: Promise<{ studentUuid: string }>;
 }) {
   const { studentUuid } = await params;
-  const { user } = await getSession();
+  const session = await getSession();
 
-  const student = await prisma.student.findUnique({
-    where: { uuid: studentUuid, userId: user.id, deletedAt: null },
-    select: { id: true },
-  });
+  if (!session?.organization) {
+    return null;
+  }
 
-  const comments = await prisma.studentComment.findMany({
-    select: {
-      id: true,
-      uuid: true,
-      content: true,
-      createdAt: true,
-    },
-    where: {
-      studentId: student?.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+  const { data: comments } = await studentCommentsApi.listByStudent(studentUuid);
 
   return <Comments comments={comments} studentUuid={studentUuid} />;
 }

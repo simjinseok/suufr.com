@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { ListStudentsQueryDto } from './dto/list-students-query.dto';
 import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
@@ -11,8 +12,11 @@ export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 
   @Get()
-  findAll(@CurrentOrganization() org: CurrentOrganizationData) {
-    return this.studentsService.findAll(org.organization.id);
+  findAll(
+    @Query() query: ListStudentsQueryDto,
+    @CurrentOrganization() org: CurrentOrganizationData,
+  ) {
+    return this.studentsService.findAll(org.organization.id, query);
   }
 
   @Get(':uuid')
@@ -21,6 +25,14 @@ export class StudentsController {
     @CurrentOrganization() org: CurrentOrganizationData,
   ) {
     return this.studentsService.findOne(uuid, org.organization.id);
+  }
+
+  @Get(':uuid/stats')
+  getStats(
+    @Param('uuid') uuid: string,
+    @CurrentOrganization() org: CurrentOrganizationData,
+  ) {
+    return this.studentsService.getStats(uuid, org.organization.id);
   }
 
   @Post()

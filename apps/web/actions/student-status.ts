@@ -1,10 +1,10 @@
 'use server';
-import prisma from '@/utils/prisma';
 import { revalidatePath } from 'next/cache';
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { getSession } from '@/utils/auth';
+import { studentStatusesApi } from '@/utils/api';
 
 const createSchema = z.object({
   status: z.enum(['pending', 'active', 'paused', 'leave']).optional().default('pending'),
@@ -36,7 +36,6 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
       if (!session?.organization) {
         return state;
       }
-      const { organization } = session;
 
       const validationResult = createSchema.safeParse(data);
       if (!validationResult.success) {
@@ -44,57 +43,17 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
         return state;
       }
 
-      const student = await prisma.student.findFirst({
-        select: {
-          id: true,
-        },
-        where: {
-          uuid: studentUuid as string,
-          organizationId: organization.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!student) {
-        state.message = '수강생 정보를 찾을 수 없습니다.';
-        return state;
-      }
-
-      const lastStatus = await prisma.studentStatus.findFirst({
-        select: {
-          status: true,
-        },
-        where: {
-          studentId: student.id,
-          deletedAt: null,
-        },
-        orderBy: {
-          changedAt: 'desc',
-        },
-      });
+      const { data: statuses } = await studentStatusesApi.listByStudent(studentUuid as string);
+      const lastStatus = statuses[0];
 
       if (lastStatus?.status === validationResult.data.status) {
         state.message = '현재 상태와 동일합니다.';
         return state;
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.studentStatus.create({
-          data: {
-            studentId: student.id,
-            ...validationResult.data,
-          },
-        });
-
-        await tx.student.update({
-          where: {
-            id: student.id,
-          },
-          data: {
-            status: validationResult.data.status,
-            updatedAt: new Date(),
-          },
-        });
+      await studentStatusesApi.create(studentUuid as string, {
+        status: validationResult.data.status,
+        notes: validationResult.data.notes,
       });
 
       revalidatePath('/students/[studentUuid]', 'page');
@@ -106,7 +65,7 @@ export async function createStudentStatus(prevState: CreateStudentStatusState, f
 }
 
 const updateSchema = z.object({
-  studentStatusId: z.coerce.number(),
+  studentStatusUuid: z.string(),
   notes: z.string().optional(),
 });
 
@@ -136,7 +95,6 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
       if (!session?.organization) {
         return state;
       }
-      const { organization } = session;
 
       const validationResult = updateSchema.safeParse(Object.fromEntries(formData));
       if (!validationResult.success) {
@@ -144,28 +102,8 @@ export async function updateStudentStatus(prevState: UpdateStudentStatusState, f
         return state;
       }
 
-      // 해당 상태 기록이 현재 조직의 학생에 속하는지 확인
-      const studentStatus = await prisma.studentStatus.findUnique({
-        where: {
-          id: validationResult.data.studentStatusId,
-        },
-        include: {
-          student: true,
-        },
-      });
-
-      if (!studentStatus || studentStatus.student.organizationId !== organization.id) {
-        state.message = '권한이 없습니다';
-        return state;
-      }
-
-      await prisma.studentStatus.update({
-        where: {
-          id: studentStatus.id,
-        },
-        data: {
-          notes: validationResult.data.notes,
-        },
+      await studentStatusesApi.update(validationResult.data.studentStatusUuid, {
+        notes: validationResult.data.notes,
       });
 
       revalidatePath('/students/[studentUuid]', 'page');

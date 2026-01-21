@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsDateString, Allow } from 'class-validator';
 
 export class UpdateStudentDto {
   @IsString()
@@ -20,4 +20,8 @@ export class UpdateStudentDto {
   @IsDateString()
   @IsOptional()
   nextPaymentAt?: string;
+
+  @Allow()
+  @IsOptional()
+  profileImageKey?: string | null;
 }

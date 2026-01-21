@@ -6,9 +6,9 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
-import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
 import { moveImage, deleteImage } from '@/utils/cloudinary';
+import { studentsApi, studentStatusesApi } from '@/utils/api';
 
 const createStudentSchema = z.object({
   name: z.string().trim().min(1, { error: '이름을 입력해주세요' }),
@@ -40,7 +40,6 @@ export async function createStudent(prevState: any, formData: FormData) {
       if (!session?.organization) {
         return obj;
       }
-      const { user, organization } = session;
 
       const validationResult = createStudentSchema.safeParse(data);
       if (!validationResult.success) {
@@ -48,24 +47,14 @@ export async function createStudent(prevState: any, formData: FormData) {
         return obj;
       }
 
-      await prisma.$transaction(async (tx) => {
-        const student = await tx.student.create({
-          data: {
-            userId: user.id, // 유지 (추후 제거)
-            organizationId: organization.id,
-            ...validationResult.data,
-          },
-        });
+      const { data: student } = await studentsApi.create({
+        name: validationResult.data.name,
+        notes: validationResult.data.notes,
+      });
 
-        await tx.studentStatus.create({
-          data: {
-            studentId: student.id,
-            status: validationResult.data.status,
-            notes: '신규 수강생 등록',
-          },
-        });
-
-        return student;
+      await studentStatusesApi.create(student.uuid, {
+        status: validationResult.data.status,
+        notes: '신규 수강생 등록',
       });
 
       revalidatePath('/students', 'page');
@@ -110,19 +99,8 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
       if (!session?.organization) {
         return state;
       }
-      const { organization } = session;
 
-      const student = await prisma.student.findUnique({
-        where: {
-          uuid: studentUuid as string,
-          organizationId: organization.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!student) {
-        return state;
-      }
+      const { data: student } = await studentsApi.get(studentUuid as string);
 
       const validationResult = updateStudentSchema.safeParse({
         ...data,
@@ -146,17 +124,10 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         }
       }
 
-      await prisma.student.update({
-        where: {
-          id: student.id,
-        },
-        data: {
-          ...restData,
-          profileImageKey: finalProfileImageKey,
-          // 날짜만 저장하는 필드라서 UTC로 저장해야함. 아니면 하루가 깍임
-          nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('UTC') : null,
-          updatedAt: new Date(),
-        },
+      await studentsApi.update(studentUuid as string, {
+        ...restData,
+        profileImageKey: finalProfileImageKey,
+        nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('UTC').toISOString() : undefined,
       });
 
       // 새 이미지가 저장된 경우, 이전 이미지 삭제
@@ -189,28 +160,8 @@ export default async function removeStudent(formData: FormData) {
       if (!session?.organization) {
         return { success: false };
       }
-      const { organization } = session;
 
-      const student = await prisma.student.findUnique({
-        where: {
-          uuid: studentUuid,
-          organizationId: organization.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!student) {
-        return { success: false };
-      }
-
-      await prisma.student.update({
-        where: {
-          id: student.id,
-        },
-        data: {
-          deletedAt: new Date(),
-        },
-      });
+      await studentsApi.remove(studentUuid);
 
       revalidatePath('/students', 'page');
       return {

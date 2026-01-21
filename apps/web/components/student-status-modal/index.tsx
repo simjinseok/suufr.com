@@ -45,9 +45,9 @@ export default function StudentStatusModal({ isOpen, onClose, student, studentSt
               >
                 {studentStatus
                   ? (
-                      <input type="hidden" name="studentStatusId" value={studentStatus.id} />
+                      <input type="hidden" name="studentStatusUuid" value={studentStatus.uuid} />
                     )
-                  : (<input type="hidden" name="studentId" value={student.id} />)}
+                  : (<input type="hidden" name="studentUuid" value={student.uuid} />)}
                 <div className="w-full">
                   {studentStatus
                     ? (

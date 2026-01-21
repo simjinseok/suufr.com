@@ -1,21 +1,18 @@
-import type { Student } from '@/types/index';
-
-import prisma from '@/utils/prisma';
-import { cookies } from 'next/headers';
 import { createLoader, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs/server';
-function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
-  if (!key) return null;
-  return `/assets/${folder}/${key}.webp`;
-}
 
 import Link from 'next/link';
-import React from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 import ConditionForm from './_condition-form';
 import NewStudent from './_new-student';
 import Students from './_students';
 import { getSession } from '@/utils/auth';
+import { studentsApi } from '@/utils/api';
+
+function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
+  if (!key) return null;
+  return `/assets/${folder}/${key}.webp`;
+}
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -24,61 +21,26 @@ const loadSearchParams = createLoader({
   status: parseAsStringEnum(['', 'pending', 'active', 'paused', 'leave']).withDefault('active'),
   q: parseAsString.withDefault(''),
 });
+
 export default async function Page(props: PageProps<'/students'>) {
   const { page, status, q } = await loadSearchParams(props.searchParams);
-
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('access_token')?.value;
 
   const session = await getSession();
   if (!session?.organization) {
     return null;
   }
-  // console.log('???', accessToken);
-  const { organization } = session;
-  //const response = await fetch(`${process.env.API_URL}/api/students`, {
-  //  headers: {
-  //    Authorization: `Bearer ${accessToken}`,
-  //  },
-  //});
-  //console.log('response', response);
-  //const result = await response.json();
-  //console.log('dhkt', session, result);
 
-  const students: Student[] = await prisma.$queryRaw`
-      SELECT students.id AS id,
-             students.uuid AS uuid,
-             students.name AS name,
-             students.notes AS notes,
-             students.status AS status,
-             students.profile_image_key AS "profileImageKey",
-             students.created_at AS "createdAt"
-      FROM students
-               LEFT JOIN lessons ON lessons.student_id = students.id AND lessons.deleted_at IS NULL
-               LEFT JOIN sessions ON sessions.lesson_id = lessons.id
-      WHERE (${status} = '' OR students.status::text = ${status})
-        AND (${q} = '' OR students.name ILIKE ${'%' + q + '%'})
-        AND students.organization_id = ${organization.id} AND students.deleted_at IS NULL
-      GROUP BY students.id, students.uuid, students.name, students.notes, students.created_at, students.status
-      ORDER BY students.name ASC
-      OFFSET ${(page - 1) * PAGE_SIZE} LIMIT ${PAGE_SIZE};
-  `;
+  const { data: students, meta } = await studentsApi.list({
+    page,
+    limit: PAGE_SIZE,
+    status,
+    q,
+  });
 
-  // profileImageKey → profileImageUrl 변환 (key는 클라이언트에 노출하지 않음)
   const studentsWithImageUrl = students.map(({ profileImageKey, ...student }) => ({
     ...student,
     profileImageUrl: buildAssetUrl(profileImageKey ?? null, 'student'),
   }));
-
-  console.log(studentsWithImageUrl);
-  const studentCount: number = await prisma.student.count({
-    where: {
-      deletedAt: null,
-      organizationId: organization.id,
-      ...(status && { status }),
-      ...(q && { name: { contains: q, mode: 'insensitive' } }),
-    },
-  });
 
   return (
     <div className="mt-3">
@@ -109,7 +71,7 @@ export default async function Page(props: PageProps<'/students'>) {
             이전 페이지
           </Link>
         )}
-        {(studentCount > (page * PAGE_SIZE)) && (
+        {(meta.totalCount > (page * PAGE_SIZE)) && (
           <Link
             className="flex items-center"
             href={{

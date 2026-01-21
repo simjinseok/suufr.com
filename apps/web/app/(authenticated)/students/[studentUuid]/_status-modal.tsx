@@ -14,8 +14,9 @@ import { updateStudentStatus } from '@/actions/student-status';
 
 type StudentStatusType = {
   id: number;
+  uuid: string;
   status: 'active' | 'pending' | 'paused' | 'leave';
-  changedAt: Date;
+  changedAt: string;
   notes: string | null;
 };
 
@@ -141,8 +142,8 @@ function EditStatusModal({
                 <Form id={formId} className="p-1" action={formAction}>
                   <input
                     type="hidden"
-                    name="studentStatusId"
-                    value={studentStatus.id}
+                    name="studentStatusUuid"
+                    value={studentStatus.uuid}
                   />
                   <div className="mb-4">
                     <StatusBadge status={studentStatus.status} />

@@ -16,8 +16,9 @@ import EditStudentCommentModal from '@/components/student/edit-student-comment-m
 
 type Comment = {
   id: number;
+  uuid: string;
   content: string;
-  createdAt: Date;
+  createdAt: string;
 };
 
 type Props = {
@@ -86,7 +87,7 @@ export default function Comments({ comments, studentUuid }: Props) {
                           comment={comment}
                         />
                       </Modal>
-                      <DeleteCommentButton commentId={comment.id} />
+                      <DeleteCommentButton commentUuid={comment.uuid} />
                     </div>
                   </div>
                 </div>
@@ -97,7 +98,7 @@ export default function Comments({ comments, studentUuid }: Props) {
   );
 }
 
-function DeleteCommentButton({ commentId }: { commentId: number }) {
+function DeleteCommentButton({ commentUuid }: { commentUuid: string }) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
@@ -105,7 +106,7 @@ function DeleteCommentButton({ commentId }: { commentId: number }) {
     if (!confirm('코멘트를 삭제하시겠습니까?')) return;
 
     startTransition(async () => {
-      await deleteStudentComment(commentId);
+      await deleteStudentComment(commentUuid);
       router.refresh();
     });
   };

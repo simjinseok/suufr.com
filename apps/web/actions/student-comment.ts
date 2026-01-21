@@ -1,11 +1,11 @@
 'use server';
 
-import prisma from '@/utils/prisma';
 import { revalidatePath } from 'next/cache';
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { getSession } from '@/utils/auth';
 import { ServerActionState } from '@/types/index';
+import { studentCommentsApi } from '@/utils/api';
 
 type CreateStudentCommentState = ServerActionState<{
   content: string;
@@ -24,7 +24,6 @@ export async function createStudentComment(prevState: CreateStudentCommentState,
       if (!session?.organization) {
         throw new Error('Unauthorized');
       }
-      const { organization } = session;
 
       const state: CreateStudentCommentState = {
         success: false,
@@ -36,25 +35,7 @@ export async function createStudentComment(prevState: CreateStudentCommentState,
       const studentUuid = formData.get('studentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
-      // 학생이 현재 조직의 것인지 확인
-      const student = await prisma.student.findFirst({
-        where: {
-          uuid: studentUuid,
-          organizationId: organization.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!student) {
-        return state;
-      }
-
-      const comment = await prisma.studentComment.create({
-        data: {
-          content,
-          studentId: student.id,
-        },
-      });
+      await studentCommentsApi.create(studentUuid, { content });
 
       revalidatePath(`/students/[studentUuid]/@comments`)
       state.success = true;
@@ -81,7 +62,6 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
       if (!session?.organization) {
         throw new Error('Unauthorized');
       }
-      const { organization } = session;
 
       const state: UpdateStudentCommentState = {
         success: false,
@@ -94,32 +74,7 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
       const commentUuid = formData.get('commentUuid') as string;
       const content = (formData.get('content') as string) || '';
 
-      // 코멘트가 현재 조직의 것인지 확인
-      const comment = await prisma.studentComment.findFirst({
-        where: {
-          uuid: commentUuid,
-          deletedAt: null,
-          student: {
-            organizationId: organization.id,
-          },
-        },
-        include: {
-          student: true,
-        },
-      });
-
-      if (!comment) {
-        return state;
-      }
-
-      const result = await prisma.studentComment.update({
-        where: {
-          id: comment.id,
-        },
-        data: {
-          content,
-        },
-      });
+      await studentCommentsApi.update(commentUuid, { content });
 
       state.success = true;
       return state;
@@ -127,7 +82,7 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
   );
 }
 
-export async function deleteStudentComment(commentId: number) {
+export async function deleteStudentComment(commentUuid: string) {
   return await Sentry.withServerActionInstrumentation(
     'deleteStudentComment',
     {
@@ -140,34 +95,10 @@ export async function deleteStudentComment(commentId: number) {
       if (!session?.organization) {
         throw new Error('Unauthorized');
       }
-      const { organization } = session;
 
-      // 코멘트가 현재 조직의 것인지 확인
-      const existingComment = await prisma.studentComment.findFirst({
-        where: {
-          id: commentId,
-          deletedAt: null,
-          student: {
-            organizationId: organization.id,
-          },
-        },
-      });
+      await studentCommentsApi.remove(commentUuid);
 
-      if (!existingComment) {
-        throw new Error('Comment not found');
-      }
-
-      // 소프트 삭제
-      await prisma.studentComment.update({
-        where: {
-          id: commentId,
-        },
-        data: {
-          deletedAt: new Date(),
-        },
-      });
-
-      revalidatePath(`/students/${existingComment.studentId}`);
+      revalidatePath(`/students/[studentUuid]/@comments`);
 
       return { success: true };
     },
