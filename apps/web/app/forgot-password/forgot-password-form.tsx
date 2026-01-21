@@ -73,7 +73,7 @@ export default function ForgotPasswordForm() {
                 isRequired
               >
                 <Label>이메일</Label>
-                <Input type="email" placeholder="email@example.com" />
+                <Input variant="secondary" type="email" placeholder="email@example.com" />
                 <FieldError />
               </TextField>
             )}

@@ -69,6 +69,7 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }: Pro
                         onChange={onChange}
                         disabledKeys={[student.status]}
                         isDisabled={isPending}
+                        variant="secondary"
                       >
                         <Label>상태</Label>
                         <Select.Trigger>
@@ -93,6 +94,7 @@ export default function ChangeStatusModal({ isOpen, onOpenChange, student }: Pro
                       <TextField className="mt-4" name={name} value={value} onChange={onChange}>
                         <Label>참고사항</Label>
                         <TextArea
+                          variant="secondary"
                           rows={5}
                         />
                       </TextField>

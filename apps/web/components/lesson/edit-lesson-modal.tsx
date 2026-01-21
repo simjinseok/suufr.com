@@ -20,8 +20,8 @@ import { updateLesson, removeLesson } from '@/actions/lesson';
 import { Controller, useForm } from 'react-hook-form';
 
 interface Props {
-  isOpen: ModalProps['isOpen'];
-  onOpenChange: ModalProps['onOpenChange'];
+  isOpen?: ModalProps['isOpen'];
+  onOpenChange?: ModalProps['onOpenChange'];
   lesson: TLesson;
 }
 export default function EditLessonModal({ lesson, isOpen, onOpenChange }: Props) {
@@ -80,14 +80,14 @@ function Content({ lesson, close }: ContentProps) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="lessonId" value={lesson.id} />
+          <input type="hidden" name="lessonUuid" value={lesson.uuid} />
           <Controller
             control={control}
             name="title"
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>제목</Label>
-                <Input />
+                <Input variant="secondary" />
                 <FieldError />
               </TextField>
             )}
@@ -98,7 +98,7 @@ function Content({ lesson, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>메모</Label>
-                <TextArea rows={5} className="resize-none" />
+                <TextArea variant="secondary" rows={5} className="resize-none" />
                 <Description>레슨 내용은 수강생에게 보여지지 않습니다.</Description>
                 <FieldError />
               </TextField>

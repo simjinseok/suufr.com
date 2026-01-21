@@ -88,7 +88,7 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
             isRequired
           >
             <Label>상호명</Label>
-            <Input type="text" placeholder="과외방 이름" />
+            <Input variant="secondary" type="text" placeholder="과외방 이름" />
             <FieldError />
           </TextField>
         )}
@@ -104,7 +104,7 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
             onChange={onChange}
           >
             <Label>연락처</Label>
-            <Input type="tel" placeholder="010-0000-0000" />
+            <Input variant="secondary" type="tel" placeholder="010-0000-0000" />
             <FieldError />
           </TextField>
         )}
@@ -120,7 +120,7 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
             onChange={onChange}
           >
             <Label>주소</Label>
-            <TextArea placeholder="과외 장소 주소 (선택)" />
+            <TextArea variant="secondary" placeholder="과외 장소 주소 (선택)" />
             <FieldError />
           </TextField>
         )}

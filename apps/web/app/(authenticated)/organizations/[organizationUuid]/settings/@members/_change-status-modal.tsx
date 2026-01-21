@@ -87,6 +87,7 @@ export default function ChangeStatusModal({
                     name="status"
                     render={({ field: { name, value, onChange } }) => (
                       <Select
+                        variant="secondary"
                         name={name}
                         selectedKey={value}
                         onSelectionChange={key => onChange(key as string)}
@@ -114,7 +115,7 @@ export default function ChangeStatusModal({
                     render={({ field: { name, value, onChange } }) => (
                       <TextField className="mt-4" name={name} value={value} onChange={onChange}>
                         <Label>사유 (선택)</Label>
-                        <TextArea rows={3} placeholder="상태 변경 사유를 입력하세요" />
+                        <TextArea variant="secondary" rows={3} placeholder="상태 변경 사유를 입력하세요" />
                       </TextField>
                     )}
                   />

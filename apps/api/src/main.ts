@@ -6,6 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     // Enable raw body for DAV requests
     rawBody: true,
+    logger: ['error', 'warn', 'log'],
   });
 
   app.enableCors({
@@ -16,8 +17,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api', {
     exclude: [
       { path: '', method: RequestMethod.GET },
-      { path: 'dav', method: RequestMethod.ALL },
-      { path: 'dav/{*path}', method: RequestMethod.ALL },
       { path: '.well-known/caldav', method: RequestMethod.ALL },
       { path: '.well-known/carddav', method: RequestMethod.ALL },
     ],

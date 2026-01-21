@@ -51,7 +51,6 @@ function Content({ comment, close }: ContentProps) {
     }
   }, [state.success, state.timestamp]);
 
-  console.log(comment)
   return (
     <React.Fragment>
       <Modal.Header>
@@ -66,7 +65,7 @@ function Content({ comment, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>내용</Label>
-                <TextArea rows={5} />
+                <TextArea variant="secondary" rows={5} />
               </TextField>
             )}
           />

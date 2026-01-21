@@ -9,7 +9,7 @@ export default function Heading() {
     <div className="flex justify-between">
       <h1 className="text-2xl font-bold">상담 내역</h1>
       <Modal>
-        <Button>추가</Button>
+        <Button variant="secondary">추가</Button>
         <CreateMeetingModal />
       </Modal>
     </div>

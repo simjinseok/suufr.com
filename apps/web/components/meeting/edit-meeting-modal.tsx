@@ -97,7 +97,7 @@ function Content({ meeting, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange} isRequired>
                 <Label>이름</Label>
-                <Input autoComplete="off" />
+                <Input variant="secondary" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}
@@ -110,7 +110,7 @@ function Content({ meeting, close }: ContentProps) {
             defaultValue={fromDate(new Date(meeting.meetingAt), getLocalTimeZone())}
           >
             <Label>날짜</Label>
-            <DateInputGroup>
+            <DateInputGroup variant="secondary">
               <DateInputGroup.Input>
                 {segment => <DateInputGroup.Segment segment={segment} />}
               </DateInputGroup.Input>
@@ -123,7 +123,7 @@ function Content({ meeting, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>연락처</Label>
-                <Input type="tel" autoComplete="off" />
+                <Input variant="secondary" type="tel" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}
@@ -148,7 +148,7 @@ function Content({ meeting, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>메모</Label>
-                <TextArea rows={3} className="resize-none" />
+                <TextArea variant="secondary" rows={3} className="resize-none" />
                 <FieldError />
               </TextField>
             )}

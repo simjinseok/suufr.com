@@ -85,6 +85,7 @@ function Content({ userEmail, close }: ContentProps) {
               <Label className="text-sm text-gray-500 mb-1">토큰</Label>
               <div className="flex items-center gap-2">
                 <Input
+                  variant="secondary"
                   value={state.token}
                   readOnly
                   className="font-mono text-sm"
@@ -160,7 +161,7 @@ function Content({ userEmail, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange} isRequired>
                 <Label>토큰 이름</Label>
-                <Input placeholder="예: iPhone, MacBook" />
+                <Input variant="secondary" placeholder="예: iPhone, MacBook" />
                 <FieldError />
               </TextField>
             )}

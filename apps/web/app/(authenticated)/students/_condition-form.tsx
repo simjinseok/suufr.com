@@ -44,6 +44,7 @@ export default function ConditionForm({
         </InputGroup>
       </TextField>
       <Select
+        variant="secondary"
         className="w-28"
         name="status"
         aria-label="상태"

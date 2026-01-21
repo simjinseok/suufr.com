@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import Providers from './_providers';
 
 export const metadata: Metadata = {
   title: '스프',
@@ -14,9 +15,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: LayoutProps<'/'>) {
   return (
     <html lang="ko">
       <head>
@@ -26,7 +25,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

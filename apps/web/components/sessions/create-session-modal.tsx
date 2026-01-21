@@ -97,7 +97,7 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
                                 </Popover.Dialog>
                               </Popover.Content>
                             </Popover>
-                            <DateInputGroup>
+                            <DateInputGroup variant="secondary">
                               <DateInputGroup.Input>
                                 {segment => <DateInputGroup.Segment segment={segment} />}
                               </DateInputGroup.Input>
@@ -112,7 +112,7 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
                           hideTimeZone
                         >
                           <Label>시간</Label>
-                          <DateInputGroup>
+                          <DateInputGroup variant="secondary">
                             <DateInputGroup.Input>
                               {segment => <DateInputGroup.Segment segment={segment} />}
                             </DateInputGroup.Input>
@@ -126,6 +126,7 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
                     name="duration"
                     render={({ field: { name, value, onChange } }) => (
                       <NumberField
+                        variant="secondary"
                         name={name}
                         value={value}
                         onChange={onChange}
@@ -151,7 +152,7 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
                         onChange={onChange}
                       >
                         <Label>메모</Label>
-                        <TextArea rows={5} className="resize-none" />
+                        <TextArea variant="secondary" rows={5} className="resize-none" />
                       </TextField>
                     )}
                   />

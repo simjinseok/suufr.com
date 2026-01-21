@@ -40,16 +40,16 @@ export default function Student({ student, statuses }) {
         </div>
       </div>
       <div className="flex items-start gap-2">
-        <ButtonGroup variant="secondary">
+        <ButtonGroup>
           <Modal>
-            <Button>
+            <Button variant="secondary">
               <EditIcon />
               수정
             </Button>
             <EditStudentModal student={student} />
           </Modal>
           <Dropdown>
-            <Button><ChevronDownIcon /></Button>
+            <Button variant="secondary"><ChevronDownIcon /></Button>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu
                 selectionMode="none"

@@ -105,7 +105,7 @@ function Content({ session, close }: ContentProps) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="sessionId" value={session.id} />
+          <input type="hidden" name="sessionUuid" value={session.uuid} />
           <React.Activity mode={selectedTab === 'basic' ? 'visible' : 'hidden'}>
             <Controller
               control={control}
@@ -129,7 +129,7 @@ function Content({ session, close }: ContentProps) {
                   <DateField
                     name={name}
                     granularity="day"
-                    value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
                     onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
                     hourCycle={hourCycle}
                     hideTimeZone
@@ -149,7 +149,7 @@ function Content({ session, close }: ContentProps) {
                         <Popover.Content placement="bottom left">
                           <Popover.Dialog>
                             <Calendar
-                              value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                              value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
                               onChange={(newDate) => {
                                 if (newDate) {
                                   onChange(newDate.toDate('Asia/Seoul'));
@@ -160,7 +160,7 @@ function Content({ session, close }: ContentProps) {
                           </Popover.Dialog>
                         </Popover.Content>
                       </Popover>
-                      <DateInputGroup>
+                      <DateInputGroup variant="secondary">
                         <DateInputGroup.Input>
                           {segment => <DateInputGroup.Segment segment={segment} />}
                         </DateInputGroup.Input>
@@ -170,12 +170,12 @@ function Content({ session, close }: ContentProps) {
                   <TimeField
                     hourCycle={hourCycle}
                     granularity="minute"
-                    value={toCalendarDateTime(fromDate(value, 'Asia/Seoul'))}
+                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
                     onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
                     hideTimeZone
                   >
                     <Label>시간</Label>
-                    <DateInputGroup>
+                    <DateInputGroup variant="secondary">
                       <DateInputGroup.Input>
                         {segment => <DateInputGroup.Segment segment={segment} />}
                       </DateInputGroup.Input>
@@ -194,6 +194,7 @@ function Content({ session, close }: ContentProps) {
                   onChange={onChange}
                   minValue={5}
                   step={5}
+                  variant="secondary"
                 >
                   <Label>수업 시간 (분)</Label>
                   <NumberField.Group>
@@ -217,7 +218,7 @@ function Content({ session, close }: ContentProps) {
                   onChange={onChange}
                 >
                   <Label className="sr-only">메모</Label>
-                  <TextArea rows={5} className="resize-none" />
+                  <TextArea variant="secondary" rows={5} className="resize-none" />
                   <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
                 </TextField>
               )}
@@ -231,7 +232,7 @@ function Content({ session, close }: ContentProps) {
               render={({ field: { name, value, onChange } }) => (
                 <TextField name={name} value={value} onChange={onChange}>
                   <Label className="sr-only">피드백</Label>
-                  <TextArea rows={5} className="resize-none" />
+                  <TextArea variant="secondary" rows={5} className="resize-none" />
                   <Description>수강생에게 보여줄 피드백입니다</Description>
                 </TextField>
               )}

@@ -8,7 +8,7 @@ export default async function PaymentsPage({
 }) {
   const { studentUuid } = await params;
 
-  const response = await lessonsApi.list({ studentUuid, limit: 1000 });
+  const response = await lessonsApi.list({ studentUuid, limit: 100 });
 
   const lessons = response.data.map(lesson => ({
     id: lesson.id,

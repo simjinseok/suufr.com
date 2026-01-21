@@ -72,7 +72,7 @@ export default function SignupForm() {
                 isRequired
               >
                 <Label>이름</Label>
-                <Input type="text" placeholder="홍길동" />
+                <Input variant="secondary" type="text" placeholder="홍길동" />
                 <FieldError />
               </TextField>
             )}
@@ -89,7 +89,7 @@ export default function SignupForm() {
                 isRequired
               >
                 <Label>이메일</Label>
-                <Input type="email" placeholder="email@example.com" />
+                <Input variant="secondary" type="email" placeholder="email@example.com" />
                 <FieldError />
               </TextField>
             )}
@@ -106,7 +106,7 @@ export default function SignupForm() {
                 isRequired
               >
                 <Label>비밀번호</Label>
-                <Input type="password" placeholder="8자 이상" />
+                <Input variant="secondary" type="password" placeholder="8자 이상" />
                 <FieldError />
               </TextField>
             )}
@@ -123,7 +123,7 @@ export default function SignupForm() {
                 isRequired
               >
                 <Label>비밀번호 확인</Label>
-                <Input type="password" placeholder="비밀번호 재입력" />
+                <Input variant="secondary" type="password" placeholder="비밀번호 재입력" />
                 <FieldError />
               </TextField>
             )}

@@ -126,7 +126,7 @@ function Content({ student, close }: ContentProps) {
                   isReadOnly={isPending}
                 >
                   <Label>이름</Label>
-                  <Input autoComplete="off" />
+                  <Input variant="secondary" autoComplete="off" />
                   <FieldError />
                 </TextField>
               )}
@@ -143,7 +143,7 @@ function Content({ student, close }: ContentProps) {
                   isReadOnly={isPending}
                 >
                   <Label>연락처</Label>
-                  <Input className="w-full" type="tel" autoComplete="off" />
+                  <Input variant="secondary" className="w-full" type="tel" autoComplete="off" />
                   <FieldError />
                 </TextField>
               )}
@@ -161,7 +161,7 @@ function Content({ student, close }: ContentProps) {
                 isReadOnly={isPending}
               >
                 <Label>이메일</Label>
-                <Input type="email" autoComplete="off" />
+                <Input variant="secondary" type="email" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}
@@ -173,6 +173,7 @@ function Content({ student, close }: ContentProps) {
               <TextField className="mt-4" name={name} value={value} onChange={onChange}>
                 <Label>참고사항</Label>
                 <TextArea
+                  variant="secondary"
                   rows={5}
                 />
               </TextField>
@@ -191,7 +192,7 @@ function Content({ student, close }: ContentProps) {
                 hideTimeZone
               >
                 <Label>다음결제예정일</Label>
-                <DateInputGroup>
+                <DateInputGroup variant="secondary">
                   <DateInputGroup.Input>
                     {segment => <DateInputGroup.Segment segment={segment} />}
                   </DateInputGroup.Input>

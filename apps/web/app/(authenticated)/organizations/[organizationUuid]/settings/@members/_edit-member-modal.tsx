@@ -140,7 +140,7 @@ function Content({ organizationUuid, member, close, onMemberUpdated }: ContentPr
                 className="mt-4"
               >
                 <Label>멤버 이름</Label>
-                <Input autoComplete="off" />
+                <Input variant="secondary" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}

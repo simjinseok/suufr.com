@@ -46,7 +46,7 @@ export default function Meetings({ meetings }) {
             <TableCell className="whitespace-pre">{meeting.notes}</TableCell>
             <TableCell>
               <Modal>
-                <Button>수정</Button>
+                <Button variant="secondary">수정</Button>
                 <EditMeetingModal
                   meeting={meeting}
                 />

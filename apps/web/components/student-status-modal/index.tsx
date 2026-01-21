@@ -55,6 +55,7 @@ export default function StudentStatusModal({ isOpen, onClose, student, studentSt
                       )
                     : (
                         <Select
+                          variant="secondary"
                           name="status"
                           label="상태"
                           defaultSelectedKeys={[student?.status || 'active']}

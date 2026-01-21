@@ -103,6 +103,7 @@ export default function LoginForm() {
                 >
                   <Label>MFA 코드</Label>
                   <Input
+                    variant="secondary"
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
@@ -169,7 +170,7 @@ export default function LoginForm() {
                 isRequired
               >
                 <Label>이메일</Label>
-                <Input type="email" placeholder="email@example.com" />
+                <Input variant="secondary" type="email" placeholder="email@example.com" />
                 <FieldError />
               </TextField>
             )}
@@ -186,7 +187,7 @@ export default function LoginForm() {
                 isRequired
               >
                 <Label>비밀번호</Label>
-                <Input type="password" placeholder="비밀번호" />
+                <Input variant="secondary" type="password" placeholder="비밀번호" />
                 <FieldError />
               </TextField>
             )}

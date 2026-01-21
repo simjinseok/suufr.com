@@ -1,4 +1,6 @@
 'use client';
+import type { ModalProps } from '@heroui/react';
+import type { TLesson } from '@/types/index';
 
 import * as React from 'react';
 import {
@@ -10,12 +12,12 @@ import {
   Input,
 } from '@heroui/react';
 import { CopyIcon, CheckIcon, LinkIcon } from 'lucide-react';
-import type { TLesson } from '@/types/index';
+
 import { createLessonShare, deleteLessonShare } from '@/actions/lesson';
 
 type Props = {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen?: ModalProps['isOpen'];
+  onOpenChange?: ModalProps['onOpenChange'];
   lesson: TLesson;
 };
 
@@ -27,7 +29,7 @@ type ShareState = {
 export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
   const activeShare = lesson?.shares?.[0];
   const [shareState, setShareState] = React.useState<ShareState>(
-    activeShare ? { shareId: activeShare.shareId, expiresAt: activeShare.expiresAt.toString() } : null
+    activeShare ? { shareId: activeShare.shareId, expiresAt: activeShare.expiresAt.toString() } : null,
   );
   const [isLoading, setIsLoading] = React.useState(false);
   const [expireDays, setExpireDays] = React.useState(60);
@@ -75,7 +77,7 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
   const shareUrl = shareState ? `https://suufr.com/sl/${shareState.shareId}` : '';
 
   return (
-    <Modal.Backdrop>
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
@@ -106,11 +108,11 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                         <Button variant="secondary" onPress={handleCopy}>
                           {copied
                             ? (
-                              <CheckIcon className="size-4" />
-                            )
+                                <CheckIcon className="size-4" />
+                              )
                             : (
-                              <CopyIcon className="size-4" />
-                            )}
+                                <CopyIcon className="size-4" />
+                              )}
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -126,6 +128,7 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                   // 활성 공유 링크가 없는 경우
                   <div className="p-1 space-y-4">
                     <NumberField
+                      variant="secondary"
                       value={expireDays}
                       minValue={1}
                       maxValue={120}

@@ -116,7 +116,7 @@ function Content({ organizationUuid, close, onMemberAdded }: ContentProps) {
                 className="mt-4"
               >
                 <Label>멤버 이름</Label>
-                <Input autoComplete="off" placeholder="이름을 입력하세요" />
+                <Input variant="secondary" autoComplete="off" placeholder="이름을 입력하세요" />
                 <FieldError />
               </TextField>
             )}

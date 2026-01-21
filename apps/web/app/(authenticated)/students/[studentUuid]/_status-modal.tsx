@@ -157,7 +157,7 @@ function EditStatusModal({
                     render={({ field: { name, value, onChange } }) => (
                       <TextField name={name} value={value} onChange={onChange}>
                         <Label>메모</Label>
-                        <TextArea rows={5} />
+                        <TextArea variant="secondary" rows={5} />
                       </TextField>
                     )}
                   />

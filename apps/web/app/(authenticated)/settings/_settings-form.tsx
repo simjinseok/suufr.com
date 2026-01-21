@@ -77,6 +77,7 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
               name="defaultDuration"
               render={({ field: { name, value, onChange } }) => (
                 <NumberField
+                  variant="secondary"
                   name={name}
                   value={value}
                   onChange={onChange}

@@ -60,44 +60,38 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                           <Modal>
                             {lesson.payment
                               ? (
-                                  <Modal.Trigger>
-                                    <Chip size="sm" variant="soft">
-                                      {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
-                                      {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
-                                      {numberToHangulMixed(lesson.payment.amount)}
-                                      원
-                                    </Chip>
-                                  </Modal.Trigger>
+                                  <Button size="sm" variant="outline">
+                                    {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
+                                    {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
+                                    {numberToHangulMixed(lesson.payment.amount)}
+                                    원
+                                  </Button>
                                 )
                               : (
-                                  <Modal.Trigger>
-                                    <Chip size="sm" variant="soft" color="danger">
-                                      <BanknoteXIcon className="size-3" />
-                                      결제필요
-                                    </Chip>
-                                  </Modal.Trigger>
+                                  <Button size="sm" variant="danger-soft">
+                                    <BanknoteXIcon className="size-3" />
+                                    결제필요
+                                  </Button>
                                 )}
                             <PaymentModal lesson={lesson} />
                           </Modal>
                           <Modal>
-                            <Modal.Trigger>
-                              <Chip size="sm" variant={lesson.shares?.length ? 'soft' : 'secondary'} color="accent">
-                                {lesson.shares?.length ? <GlobeIcon className="size-3" /> : <LockIcon className="size-3" />}
-                                {lesson.shares?.length ? '공유중' : '공유'}
-                              </Chip>
-                            </Modal.Trigger>
+                            <Button size="sm" variant="secondary">
+                              {lesson.shares?.length ? <GlobeIcon className="size-3" /> : <LockIcon className="size-3" />}
+                              {lesson.shares?.length ? '공유중' : '공유'}
+                            </Button>
                             <ShareModal lesson={lesson} />
                           </Modal>
                         </div>
-                        <ButtonGroup variant="secondary" size="sm">
+                        <ButtonGroup variant="secondary">
                           <Modal>
-                            <Button>수정</Button>
+                            <Button variant="secondary">수정</Button>
                             <EditLessonModal lesson={lesson} />
                           </Modal>
                           <Dropdown>
-                            <Button>
+                            <Button variant="secondary">
                               <ChevronDownIcon />
                             </Button>
                             <Dropdown.Popover placement="bottom end">

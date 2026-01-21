@@ -70,7 +70,7 @@ export default function ResetPasswordForm() {
               isRequired
             >
               <Label>이메일</Label>
-              <Input type="email" placeholder="email@example.com" />
+              <Input variant="secondary" type="email" placeholder="email@example.com" />
               <FieldError />
             </TextField>
           )}
@@ -88,6 +88,7 @@ export default function ResetPasswordForm() {
             >
               <Label>인증코드</Label>
               <Input
+                variant="secondary"
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
@@ -110,7 +111,7 @@ export default function ResetPasswordForm() {
               isRequired
             >
               <Label>새 비밀번호</Label>
-              <Input type="password" placeholder="8자 이상" />
+              <Input variant="secondary" type="password" placeholder="8자 이상" />
               <FieldError />
             </TextField>
           )}
@@ -127,7 +128,7 @@ export default function ResetPasswordForm() {
               isRequired
             >
               <Label>새 비밀번호 확인</Label>
-              <Input type="password" placeholder="비밀번호 재입력" />
+              <Input variant="secondary" type="password" placeholder="비밀번호 재입력" />
               <FieldError />
             </TextField>
           )}

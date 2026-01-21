@@ -53,7 +53,7 @@ export default async function Page({ searchParams }: Props) {
   const response = await paymentsApi.list({
     year,
     month: view === 'monthly' ? month : undefined,
-    limit: 1000,
+    limit: 100,
   });
 
   const payments = response.data.map(p => ({

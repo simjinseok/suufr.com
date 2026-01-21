@@ -81,7 +81,7 @@ function VerifyEmailForm() {
               isRequired
             >
               <Label>이메일</Label>
-              <Input type="email" placeholder="email@example.com" />
+              <Input variant="secondary" type="email" placeholder="email@example.com" />
               <FieldError />
             </TextField>
           )}
@@ -99,6 +99,7 @@ function VerifyEmailForm() {
             >
               <Label>인증코드</Label>
               <Input
+                variant="secondary"
                 type="text"
                 inputMode="numeric"
                 maxLength={6}

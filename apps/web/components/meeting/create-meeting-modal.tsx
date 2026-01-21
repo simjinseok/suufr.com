@@ -84,7 +84,7 @@ function Content({ close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange} isRequired>
                 <Label>이름</Label>
-                <Input />
+                <Input variant="secondary" />
                 <FieldError />
               </TextField>
             )}
@@ -96,7 +96,7 @@ function Content({ close }: ContentProps) {
             hourCycle={hourCycle}
           >
             <Label>날짜</Label>
-            <DateInputGroup>
+            <DateInputGroup variant="secondary">
               <DateInputGroup.Input>
                 {segment => <DateInputGroup.Segment segment={segment} />}
               </DateInputGroup.Input>
@@ -109,7 +109,7 @@ function Content({ close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>연락처</Label>
-                <Input type="tel" />
+                <Input variant="secondary" type="tel" />
                 <FieldError />
               </TextField>
             )}
@@ -120,7 +120,7 @@ function Content({ close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>메모</Label>
-                <TextArea rows={3} className="resize-none" />
+                <TextArea variant="secondary" rows={3} className="resize-none" />
                 <FieldError />
               </TextField>
             )}

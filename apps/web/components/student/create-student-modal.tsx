@@ -94,12 +94,13 @@ function Content({ close }: ContentProps) {
                 isReadOnly={isPending}
               >
                 <Label>이름</Label>
-                <Input />
+                <Input variant="secondary" />
                 <FieldError />
               </TextField>
             )}
           />
           <Select
+            variant="secondary"
             className="mt-4"
             name="status"
             defaultValue={state.fields.status}
@@ -130,6 +131,7 @@ function Content({ close }: ContentProps) {
           <TextField className="mt-4" name="notes" defaultValue={state.fields.notes}>
             <Label>참고사항</Label>
             <TextArea
+              variant="secondary"
               rows={5}
             />
           </TextField>

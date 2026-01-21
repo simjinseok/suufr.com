@@ -139,12 +139,12 @@ function Content({ close, studentUuid }: ContentProps) {
           <div className="flex flex-col gap-4" hidden={currentStep !== 0}>
             <TextField name="title">
               <Label>제목</Label>
-              <Input />
+              <Input variant="secondary" />
             </TextField>
 
             <TextField name="notes">
               <Label>내용</Label>
-              <TextArea placeholder="레슨 내용" />
+              <TextArea variant="secondary" placeholder="레슨 내용" />
               <Description>레슨 내용을 입력해보세요. 수강생에겐 보여지지 않습니다.</Description>
             </TextField>
           </div>
@@ -184,7 +184,7 @@ function Content({ close, studentUuid }: ContentProps) {
                         </Popover.Dialog>
                       </Popover.Content>
                     </Popover>
-                    <DateInputGroup>
+                    <DateInputGroup variant="secondary">
                       <DateInputGroup.Input>
                         {segment => <DateInputGroup.Segment segment={segment} />}
                       </DateInputGroup.Input>
@@ -193,7 +193,7 @@ function Content({ close, studentUuid }: ContentProps) {
                 </DateField>
                 <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={(v) => v && setDate(v)} hideTimeZone>
                   <Label>시간</Label>
-                  <DateInputGroup>
+                  <DateInputGroup variant="secondary">
                     <DateInputGroup.Input>
                       {segment => <DateInputGroup.Segment segment={segment} />}
                     </DateInputGroup.Input>
@@ -202,7 +202,7 @@ function Content({ close, studentUuid }: ContentProps) {
               </div>
 
               <div className="flex gap-3">
-                <NumberField value={duration} minValue={5} step={5} onChange={value => setDuration(value)}>
+                <NumberField variant="secondary" value={duration} minValue={5} step={5} onChange={value => setDuration(value)}>
                   <Label>수업 시간 (분)</Label>
                   <NumberField.Group>
                     <NumberField.DecrementButton />
@@ -210,7 +210,7 @@ function Content({ close, studentUuid }: ContentProps) {
                     <NumberField.IncrementButton />
                   </NumberField.Group>
                 </NumberField>
-                <NumberField value={count} minValue={1} maxValue={20} onChange={value => setCount(value)}>
+                <NumberField variant="secondary" value={count} minValue={1} maxValue={20} onChange={value => setCount(value)}>
                   <Label>수업 횟수</Label>
                   <NumberField.Group>
                     <NumberField.DecrementButton />
@@ -259,7 +259,7 @@ function Content({ close, studentUuid }: ContentProps) {
                       isReadOnly
                       hideTimeZone
                     >
-                      <DateInputGroup>
+                      <DateInputGroup variant="secondary">
                         <DateInputGroup.Input>
                           {segment => <DateInputGroup.Segment segment={segment} />}
                         </DateInputGroup.Input>

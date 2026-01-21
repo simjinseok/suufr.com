@@ -49,7 +49,7 @@ function Content({ close, lesson }) {
 
   const { control } = useForm({
     values: {
-      paidAt: lesson?.payment ? toCalendarDate(fromDate(lesson.payment.paidAt, 'Asia/Seoul')) : today(getLocalTimeZone()),
+      paidAt: lesson?.payment ? toCalendarDate(fromDate(new Date(lesson.payment.paidAt), 'Asia/Seoul')) : today(getLocalTimeZone()),
       amount: lesson?.payment?.amount || 0,
       paymentMethod: lesson?.payment?.paymentMethod || 'card',
       notes: lesson?.payment?.notes || '',
@@ -97,6 +97,7 @@ function Content({ close, lesson }) {
             name="amount"
             render={({ field: { name, value, onChange } }) => (
               <NumberField
+                variant="secondary"
                 name={name}
                 value={value}
                 onInput={(event) => {
@@ -120,6 +121,7 @@ function Content({ close, lesson }) {
             name="paymentMethod"
             render={({ field: { name, value, onChange } }) => (
               <Select
+                variant="secondary"
                 name={name}
                 value={value}
                 onChange={onChange}
@@ -172,7 +174,7 @@ function Content({ close, lesson }) {
                 onChange={onChange}
               >
                 <Label>메모</Label>
-                <TextArea rows={3} className="resize-none" />
+                <TextArea variant="secondary" rows={3} className="resize-none" />
               </TextField>
             )}
           />
@@ -225,7 +227,7 @@ function DatePickerField({ name, value, onChange }) {
             </Popover.Dialog>
           </Popover.Content>
         </Popover>
-        <DateInputGroup>
+        <DateInputGroup variant="secondary">
           <DateInputGroup.Input>
             {segment => <DateInputGroup.Segment segment={segment} />}
           </DateInputGroup.Input>
