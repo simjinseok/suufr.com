@@ -10,7 +10,15 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: [
+      { path: '', method: RequestMethod.GET },
+      { path: 'dav', method: RequestMethod.ALL },
+      { path: 'dav/(.*)', method: RequestMethod.ALL },
+      { path: '.well-known/caldav', method: RequestMethod.ALL },
+      { path: '.well-known/carddav', method: RequestMethod.ALL },
+    ],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
