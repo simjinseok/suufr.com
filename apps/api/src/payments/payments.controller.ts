@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto, UpdatePaymentDto } from './dto';
-import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 
 @Controller('payments')
 export class PaymentsController {
@@ -9,43 +8,38 @@ export class PaymentsController {
 
   @Get()
   findAll(
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @Query('organizationId') organizationId?: number,
+    @Query('memberId') memberId?: number,
     @Query('year') year?: number,
     @Query('month') month?: number,
   ) {
-    return this.paymentsService.findAll(org.organization.id, org.member.id, year, month);
+    return this.paymentsService.findAll(organizationId, memberId, year, month);
   }
 
   @Get(':uuid')
-  findOne(
-    @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
-  ) {
-    return this.paymentsService.findOne(uuid, org.organization.id, org.member.id);
+  findOne(@Param('uuid') uuid: string) {
+    return this.paymentsService.findOne(uuid);
   }
 
   @Post()
   create(
     @Body() createPaymentDto: CreatePaymentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @Query('organizationId') organizationId: number,
+    @Query('memberId') memberId: number,
   ) {
-    return this.paymentsService.create(createPaymentDto, org.organization.id, org.member.id);
+    return this.paymentsService.create(createPaymentDto, organizationId, memberId);
   }
 
   @Patch(':uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() updatePaymentDto: UpdatePaymentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
   ) {
-    return this.paymentsService.update(uuid, updatePaymentDto, org.organization.id, org.member.id);
+    return this.paymentsService.update(uuid, updatePaymentDto);
   }
 
   @Delete(':uuid')
-  remove(
-    @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
-  ) {
-    return this.paymentsService.remove(uuid, org.organization.id, org.member.id);
+  remove(@Param('uuid') uuid: string) {
+    return this.paymentsService.remove(uuid);
   }
 }

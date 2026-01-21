@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboardData(organizationId: number, memberId: number) {
+  async getDashboardData(organizationId?: number, memberId?: number) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -14,20 +14,20 @@ export class DashboardService {
       // 1. Active student count
       this.prisma.student.count({
         where: {
-          organizationId,
           deletedAt: null,
           status: 'active',
+          ...(organizationId && { organizationId }),
         },
       }),
 
       // 2. Not paid lessons (lessons without payment or with deleted payment)
       this.prisma.lesson.findMany({
         where: {
-          memberId,
           deletedAt: null,
+          ...(memberId && { memberId }),
           student: {
-            organizationId,
             deletedAt: null,
+            ...(organizationId && { organizationId }),
           },
           OR: [
             { payment: null },
@@ -58,8 +58,8 @@ export class DashboardService {
           },
           deletedAt: null,
           student: {
-            organizationId,
             deletedAt: null,
+            ...(organizationId && { organizationId }),
           },
         },
       }),
@@ -67,9 +67,9 @@ export class DashboardService {
       // 4. Unchecked meetings
       this.prisma.meeting.findMany({
         where: {
-          organizationId,
           isDone: false,
           deletedAt: null,
+          ...(organizationId && { organizationId }),
         },
         select: {
           uuid: true,

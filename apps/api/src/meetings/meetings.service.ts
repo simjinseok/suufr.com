@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
@@ -7,11 +7,11 @@ import { UpdateMeetingDto } from './dto/update-meeting.dto';
 export class MeetingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId: number) {
+  async findAll(organizationId?: number) {
     const meetings = await this.prisma.meeting.findMany({
       where: {
-        organizationId,
         deletedAt: null,
+        ...(organizationId && { organizationId }),
       },
       orderBy: { meetingAt: 'desc' },
     });
@@ -19,17 +19,13 @@ export class MeetingsService {
     return { success: true, data: meetings };
   }
 
-  async findOne(uuid: string, organizationId: number) {
+  async findOne(uuid: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { uuid },
     });
 
     if (!meeting || meeting.deletedAt) {
       throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
-
-    if (meeting.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
     }
 
     return { success: true, data: meeting };
@@ -51,17 +47,13 @@ export class MeetingsService {
     return { success: true, data: meeting };
   }
 
-  async update(uuid: string, dto: UpdateMeetingDto, organizationId: number) {
+  async update(uuid: string, dto: UpdateMeetingDto) {
     const existing = await this.prisma.meeting.findUnique({
       where: { uuid },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
-
-    if (existing.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const meeting = await this.prisma.meeting.update({
@@ -78,17 +70,13 @@ export class MeetingsService {
     return { success: true, data: meeting };
   }
 
-  async remove(uuid: string, organizationId: number) {
+  async remove(uuid: string) {
     const existing = await this.prisma.meeting.findUnique({
       where: { uuid },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
-
-    if (existing.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
     }
 
     await this.prisma.meeting.update({

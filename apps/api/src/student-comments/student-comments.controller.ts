@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
 import { StudentCommentsService } from './student-comments.service';
 import { CreateStudentCommentDto, UpdateStudentCommentDto } from './dto';
-import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller()
 export class StudentCommentsController {
@@ -10,34 +11,34 @@ export class StudentCommentsController {
   @Get('students/:studentUuid/comments')
   findByStudent(
     @Param('studentUuid') studentUuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentCommentsService.findByStudent(studentUuid, org.organization.id);
+    return this.studentCommentsService.findByStudent(studentUuid, user.userId);
   }
 
   @Post('students/:studentUuid/comments')
   create(
     @Param('studentUuid') studentUuid: string,
     @Body() dto: CreateStudentCommentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentCommentsService.create(studentUuid, dto, org.organization.id);
+    return this.studentCommentsService.create(studentUuid, dto, user.userId);
   }
 
   @Patch('student-comments/:uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() dto: UpdateStudentCommentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentCommentsService.update(uuid, dto, org.organization.id);
+    return this.studentCommentsService.update(uuid, dto, user.userId);
   }
 
   @Delete('student-comments/:uuid')
   remove(
     @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentCommentsService.remove(uuid, org.organization.id);
+    return this.studentCommentsService.remove(uuid, user.userId);
   }
 }

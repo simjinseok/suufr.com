@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import prisma from '@/utils/prisma';
 import type { OrganizationRole } from '@/prisma/generated/client';
 
 export type Session = {
@@ -13,14 +12,14 @@ export type Session = {
     uuid: string;
     name: string;
     role: OrganizationRole;
-  };
+  } | null;
   membership: {
     id: number;
     uuid: string;
     name: string;
     role: OrganizationRole;
     profileImageKey: string | null;
-  };
+  } | null;
   organizations: Array<{
     id: number;
     uuid: string;
@@ -28,6 +27,8 @@ export type Session = {
     role: OrganizationRole;
   }>;
 };
+
+const API_URL = process.env.API_URL || 'http://localhost:5001';
 
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
@@ -37,83 +38,54 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
 
-  // JWT payload 디코딩 (header.payload.signature 중 payload 부분)
-  const payload = JSON.parse(
-    Buffer.from(accessToken.split('.')[1], 'base64').toString(),
-  );
-
-  const userId = payload.sub;
-
-  // OrganizationMember 조회 (userId로 직접)
-  const memberships = await prisma.organizationMember.findMany({
-    where: {
-      userId,
-      deletedAt: null,
-    },
-    include: {
-      organization: true,
-    },
-  });
-
-  // 멤버십이 없으면 아직 프로비저닝 전 (로그인 성공 직후)
-  if (memberships.length === 0) {
-    return {
-      user: {
-        id: userId,
-        email: payload.email,
-        name: payload.name,
+  try {
+    const res = await fetch(`${API_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-      organization: null as unknown as Session['organization'],
-      membership: null as unknown as Session['membership'],
-      organizations: [],
-    };
-  }
+      cache: 'no-store',
+    });
 
-  // UserSettings 조회
-  const settings = await prisma.userSettings.findUnique({
-    where: { userId },
-  });
-
-  // 멤버십 목록을 organization 정보로 변환
-  const organizations = memberships.map(membership => ({
-    id: membership.organization.id,
-    uuid: membership.organization.uuid,
-    name: membership.organization.name,
-    role: membership.role,
-  }));
-
-  // 현재 조직 결정 (settings.currentOrganizationId 또는 첫 번째 멤버십)
-  let currentOrg = organizations[0];
-  if (settings?.currentOrganizationId) {
-    const found = organizations.find(
-      org => org.id === settings.currentOrganizationId,
-    );
-    if (found) {
-      currentOrg = found;
+    if (!res.ok) {
+      return null;
     }
+
+    const data = await res.json();
+    const organizations = data.organizations ?? [];
+
+    // 쿠키에서 선택된 organization id 읽기
+    const savedOrgId = cookieStore.get('organization_id')?.value;
+    let selectedOrg = savedOrgId
+      ? organizations.find((org: { id: number }) => org.id === Number(savedOrgId))
+      : null;
+
+    // 없거나 찾을 수 없으면 첫 번째 organization 선택
+    if (!selectedOrg && organizations.length > 0) {
+      selectedOrg = organizations[0];
+    }
+
+    return {
+      user: data.user,
+      organization: selectedOrg
+        ? {
+            id: selectedOrg.id,
+            uuid: selectedOrg.uuid,
+            name: selectedOrg.name,
+            role: selectedOrg.role,
+          }
+        : null,
+      membership: selectedOrg
+        ? {
+            id: selectedOrg.membershipId,
+            uuid: selectedOrg.membershipUuid,
+            name: selectedOrg.membershipName,
+            role: selectedOrg.role,
+            profileImageKey: selectedOrg.profileImageKey,
+          }
+        : null,
+      organizations,
+    };
+  } catch {
+    return null;
   }
-
-  // 현재 멤버십에서 사용자 이름 가져오기
-  const currentMembership = memberships.find(
-    m => m.organization.id === currentOrg.id,
-  );
-
-  return {
-    user: {
-      id: userId,
-      email: payload.email,
-      name: currentMembership?.name ?? payload.name,
-    },
-    organization: currentOrg,
-    membership: currentMembership
-      ? {
-          id: currentMembership.id,
-          uuid: currentMembership.uuid,
-          name: currentMembership.name,
-          role: currentMembership.role,
-          profileImageKey: currentMembership.profileImageKey,
-        }
-      : (null as unknown as Session['membership']),
-    organizations,
-  };
 }

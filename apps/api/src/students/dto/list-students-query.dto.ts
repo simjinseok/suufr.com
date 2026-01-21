@@ -1,7 +1,16 @@
-import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, Max, IsEnum, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListStudentsQueryDto {
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    return String(value).split(',').map(v => v.trim()).filter(v => v);
+  })
+  @IsArray()
+  @IsString({ each: true })
+  organizationUuids?: string[];
+
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()

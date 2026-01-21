@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -8,16 +8,16 @@ import { UpsertFeedbackDto } from './dto/feedback.dto';
 export class SessionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId: number, memberId: number) {
+  async findAll(organizationId?: number, memberId?: number) {
     const sessions = await this.prisma.session.findMany({
       where: {
         deletedAt: null,
         lesson: {
-          memberId,
           deletedAt: null,
+          ...(memberId && { memberId }),
           student: {
-            organizationId,
             deletedAt: null,
+            ...(organizationId && { organizationId }),
           },
         },
       },
@@ -33,7 +33,7 @@ export class SessionsService {
     return { success: true, data: sessions };
   }
 
-  async findOne(uuid: string, organizationId: number, memberId: number) {
+  async findOne(uuid: string) {
     const session = await this.prisma.session.findUnique({
       where: { uuid },
       include: {
@@ -48,33 +48,16 @@ export class SessionsService {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    if (session.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (session.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
-    }
-
     return { success: true, data: session };
   }
 
   async create(dto: CreateSessionDto, organizationId: number, memberId: number) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { uuid: dto.lessonUuid },
-      include: { student: true },
     });
 
     if (!lesson || lesson.deletedAt) {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
-    }
-
-    if (lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const session = await this.prisma.session.create({
@@ -95,26 +78,13 @@ export class SessionsService {
     return { success: true, data: session };
   }
 
-  async update(uuid: string, dto: UpdateSessionDto, organizationId: number, memberId: number) {
+  async update(uuid: string, dto: UpdateSessionDto) {
     const existing = await this.prisma.session.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-      },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    if (existing.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const session = await this.prisma.session.update({
@@ -136,26 +106,13 @@ export class SessionsService {
     return { success: true, data: session };
   }
 
-  async remove(uuid: string, organizationId: number, memberId: number) {
+  async remove(uuid: string) {
     const existing = await this.prisma.session.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-      },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    if (existing.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     await this.prisma.session.update({
@@ -166,26 +123,13 @@ export class SessionsService {
     return { success: true };
   }
 
-  async markDone(uuid: string, isDone: boolean, organizationId: number, memberId: number) {
+  async markDone(uuid: string, isDone: boolean) {
     const existing = await this.prisma.session.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-      },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    if (existing.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const session = await this.prisma.session.update({
@@ -202,27 +146,14 @@ export class SessionsService {
     return { success: true, data: session };
   }
 
-  async upsertFeedback(uuid: string, dto: UpsertFeedbackDto, organizationId: number, memberId: number) {
+  async upsertFeedback(uuid: string, dto: UpsertFeedbackDto) {
     const session = await this.prisma.session.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-        feedback: true,
-      },
+      include: { feedback: true },
     });
 
     if (!session || session.deletedAt) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    if (session.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (session.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     let feedback;
@@ -244,27 +175,14 @@ export class SessionsService {
     return { success: true, data: feedback };
   }
 
-  async deleteFeedback(uuid: string, organizationId: number, memberId: number) {
+  async deleteFeedback(uuid: string) {
     const session = await this.prisma.session.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-        feedback: true,
-      },
+      include: { feedback: true },
     });
 
     if (!session || session.deletedAt) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    if (session.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (session.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     if (!session.feedback) {

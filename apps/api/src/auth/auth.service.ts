@@ -78,4 +78,28 @@ export class AuthService {
 
     return null;
   }
+
+  async getUserOrganizations(userId: string) {
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        organization: { deletedAt: null },
+      },
+      include: {
+        organization: true,
+      },
+    });
+
+    return memberships.map(m => ({
+      id: m.organization.id,
+      uuid: m.organization.uuid,
+      name: m.organization.name,
+      role: m.role,
+      membershipId: m.id,
+      membershipUuid: m.uuid,
+      membershipName: m.name,
+      profileImageKey: m.profileImageKey,
+    }));
+  }
 }

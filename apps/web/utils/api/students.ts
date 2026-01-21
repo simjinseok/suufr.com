@@ -2,6 +2,7 @@ import { apiClient } from '../api-client';
 import type { Student } from '@/types/index';
 
 type ListStudentsParams = {
+  organizationUuids?: string[];
   page?: number;
   limit?: number;
   status?: string;
@@ -48,7 +49,7 @@ type StudentStatsResponse = {
 };
 
 export const studentsApi = {
-  list: (params?: ListStudentsParams) =>
+  list: (params: ListStudentsParams) =>
     apiClient<ListStudentsResponse>('/api/students', { params }),
 
   get: (uuid: string) =>
@@ -57,8 +58,8 @@ export const studentsApi = {
   getStats: (uuid: string) =>
     apiClient<StudentStatsResponse>(`/api/students/${uuid}/stats`),
 
-  create: (data: CreateStudentData) =>
-    apiClient<StudentResponse>('/api/students', { method: 'POST', body: data }),
+  create: (organizationUuid: string, data: CreateStudentData) =>
+    apiClient<StudentResponse>('/api/students', { method: 'POST', body: { ...data, organizationUuid } }),
 
   update: (uuid: string, data: UpdateStudentData) =>
     apiClient<StudentResponse>(`/api/students/${uuid}`, { method: 'PATCH', body: data }),

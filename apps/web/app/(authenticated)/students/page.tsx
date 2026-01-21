@@ -31,6 +31,7 @@ export default async function Page(props: PageProps<'/students'>) {
   }
 
   const { data: students, meta } = await studentsApi.list({
+    organizationUuids: [session.organization.uuid],
     page,
     limit: PAGE_SIZE,
     status,

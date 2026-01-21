@@ -47,7 +47,7 @@ export async function createStudent(prevState: any, formData: FormData) {
         return obj;
       }
 
-      const { data: student } = await studentsApi.create({
+      const { data: student } = await studentsApi.create(session.organization.uuid, {
         name: validationResult.data.name,
         notes: validationResult.data.notes,
       });

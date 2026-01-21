@@ -1,6 +1,9 @@
-import { IsString, IsOptional, IsEmail, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsDateString, IsUUID } from 'class-validator';
 
 export class CreateStudentDto {
+  @IsUUID()
+  organizationUuid!: string;
+
   @IsString()
   name!: string;
 

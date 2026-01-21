@@ -7,7 +7,15 @@ import { UpdateStudentCommentDto } from './dto/update-student-comment.dto';
 export class StudentCommentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByStudent(studentUuid: string, organizationId: number) {
+  private async checkMembership(userId: string, organizationId: number) {
+    const member = await this.prisma.organizationMember.findFirst({
+      where: { userId, organizationId, deletedAt: null },
+    });
+    if (!member) throw new ForbiddenException('Access denied');
+    return member;
+  }
+
+  async findByStudent(studentUuid: string, userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { uuid: studentUuid },
     });
@@ -16,9 +24,7 @@ export class StudentCommentsService {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
 
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, student.organizationId);
 
     const comments = await this.prisma.studentComment.findMany({
       where: {
@@ -31,7 +37,7 @@ export class StudentCommentsService {
     return { success: true, data: comments };
   }
 
-  async create(studentUuid: string, dto: CreateStudentCommentDto, organizationId: number) {
+  async create(studentUuid: string, dto: CreateStudentCommentDto, userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { uuid: studentUuid },
     });
@@ -40,9 +46,7 @@ export class StudentCommentsService {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
 
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, student.organizationId);
 
     const comment = await this.prisma.studentComment.create({
       data: {
@@ -54,7 +58,7 @@ export class StudentCommentsService {
     return { success: true, data: comment };
   }
 
-  async update(uuid: string, dto: UpdateStudentCommentDto, organizationId: number) {
+  async update(uuid: string, dto: UpdateStudentCommentDto, userId: string) {
     const comment = await this.prisma.studentComment.findUnique({
       where: { uuid },
       include: { student: true },
@@ -64,9 +68,7 @@ export class StudentCommentsService {
       throw new NotFoundException(`Comment with UUID ${uuid} not found`);
     }
 
-    if (comment.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, comment.student.organizationId);
 
     const updated = await this.prisma.studentComment.update({
       where: { uuid },
@@ -78,7 +80,7 @@ export class StudentCommentsService {
     return { success: true, data: updated };
   }
 
-  async remove(uuid: string, organizationId: number) {
+  async remove(uuid: string, userId: string) {
     const comment = await this.prisma.studentComment.findUnique({
       where: { uuid },
       include: { student: true },
@@ -88,9 +90,7 @@ export class StudentCommentsService {
       throw new NotFoundException(`Comment with UUID ${uuid} not found`);
     }
 
-    if (comment.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, comment.student.organizationId);
 
     await this.prisma.studentComment.update({
       where: { uuid },

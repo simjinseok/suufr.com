@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { StudentStatusesService } from './student-statuses.service';
 import { CreateStudentStatusDto, UpdateStudentStatusDto } from './dto';
-import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller()
 export class StudentStatusesController {
@@ -10,26 +11,26 @@ export class StudentStatusesController {
   @Get('students/:studentUuid/statuses')
   findByStudent(
     @Param('studentUuid') studentUuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentStatusesService.findByStudent(studentUuid, org.organization.id);
+    return this.studentStatusesService.findByStudent(studentUuid, user.userId);
   }
 
   @Post('students/:studentUuid/statuses')
   create(
     @Param('studentUuid') studentUuid: string,
     @Body() dto: CreateStudentStatusDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentStatusesService.create(studentUuid, dto, org.organization.id);
+    return this.studentStatusesService.create(studentUuid, dto, user.userId);
   }
 
   @Patch('student-statuses/:uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() dto: UpdateStudentStatusDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentStatusesService.update(uuid, dto, org.organization.id);
+    return this.studentStatusesService.update(uuid, dto, user.userId);
   }
 }

@@ -7,7 +7,21 @@ import { UpdateStudentStatusDto } from './dto/update-student-status.dto';
 export class StudentStatusesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByStudent(studentUuid: string, organizationId: number) {
+  private async checkMembership(userId: string, organizationId: number) {
+    const member = await this.prisma.organizationMember.findFirst({
+      where: { userId, organizationId, deletedAt: null },
+    });
+    if (!member) throw new ForbiddenException('Access denied');
+    return member;
+  }
+
+  private async checkOwnership(userId: string, organizationId: number) {
+    const member = await this.checkMembership(userId, organizationId);
+    if (member.role !== 'owner') throw new ForbiddenException('Owner permission required');
+    return member;
+  }
+
+  async findByStudent(studentUuid: string, userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { uuid: studentUuid },
     });
@@ -16,9 +30,7 @@ export class StudentStatusesService {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
 
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, student.organizationId);
 
     const statuses = await this.prisma.studentStatus.findMany({
       where: {
@@ -31,7 +43,7 @@ export class StudentStatusesService {
     return { success: true, data: statuses };
   }
 
-  async create(studentUuid: string, dto: CreateStudentStatusDto, organizationId: number) {
+  async create(studentUuid: string, dto: CreateStudentStatusDto, userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { uuid: studentUuid },
     });
@@ -40,11 +52,8 @@ export class StudentStatusesService {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
 
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkOwnership(userId, student.organizationId);
 
-    // Create status history and update student status
     const [status] = await this.prisma.$transaction([
       this.prisma.studentStatus.create({
         data: {
@@ -63,7 +72,7 @@ export class StudentStatusesService {
     return { success: true, data: status };
   }
 
-  async update(uuid: string, dto: UpdateStudentStatusDto, organizationId: number) {
+  async update(uuid: string, dto: UpdateStudentStatusDto, userId: string) {
     const status = await this.prisma.studentStatus.findUnique({
       where: { uuid },
       include: { student: true },
@@ -73,9 +82,7 @@ export class StudentStatusesService {
       throw new NotFoundException(`Status with UUID ${uuid} not found`);
     }
 
-    if (status.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkOwnership(userId, status.student.organizationId);
 
     const updated = await this.prisma.studentStatus.update({
       where: { uuid },

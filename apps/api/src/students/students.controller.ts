@@ -3,7 +3,6 @@ import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { ListStudentsQueryDto } from './dto/list-students-query.dto';
-import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
@@ -14,50 +13,49 @@ export class StudentsController {
   @Get()
   findAll(
     @Query() query: ListStudentsQueryDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.findAll(org.organization.id, query);
+    return this.studentsService.findAll(query, user.userId);
   }
 
   @Get(':uuid')
   findOne(
     @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.findOne(uuid, org.organization.id);
+    return this.studentsService.findOne(uuid, user.userId);
   }
 
   @Get(':uuid/stats')
   getStats(
     @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.getStats(uuid, org.organization.id);
+    return this.studentsService.getStats(uuid, user.userId);
   }
 
   @Post()
   create(
     @Body() createStudentDto: CreateStudentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.create(createStudentDto, org.organization.id, user.userId);
+    return this.studentsService.create(createStudentDto, user.userId);
   }
 
   @Patch(':uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() updateStudentDto: UpdateStudentDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.update(uuid, updateStudentDto, org.organization.id);
+    return this.studentsService.update(uuid, updateStudentDto, user.userId);
   }
 
   @Delete(':uuid')
   remove(
     @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.studentsService.remove(uuid, org.organization.id);
+    return this.studentsService.remove(uuid, user.userId);
   }
 }

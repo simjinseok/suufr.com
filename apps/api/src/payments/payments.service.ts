@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -7,15 +7,15 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId: number, memberId: number, year?: number, month?: number) {
+  async findAll(organizationId?: number, memberId?: number, year?: number, month?: number) {
     const whereClause: Record<string, unknown> = {
       deletedAt: null,
       lesson: {
-        memberId,
         deletedAt: null,
+        ...(memberId && { memberId }),
         student: {
-          organizationId,
           deletedAt: null,
+          ...(organizationId && { organizationId }),
         },
       },
     };
@@ -50,7 +50,7 @@ export class PaymentsService {
     return { success: true, data: payments };
   }
 
-  async findOne(uuid: string, organizationId: number, memberId: number) {
+  async findOne(uuid: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { uuid },
       include: {
@@ -62,14 +62,6 @@ export class PaymentsService {
 
     if (!payment || payment.deletedAt) {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
-    }
-
-    if (payment.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (payment.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     return { success: true, data: payment };
@@ -86,14 +78,6 @@ export class PaymentsService {
 
     if (!lesson || lesson.deletedAt) {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
-    }
-
-    if (lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     if (lesson.payment && !lesson.payment.deletedAt) {
@@ -118,26 +102,13 @@ export class PaymentsService {
     return { success: true, data: payment };
   }
 
-  async update(uuid: string, dto: UpdatePaymentDto, organizationId: number, memberId: number) {
+  async update(uuid: string, dto: UpdatePaymentDto) {
     const existing = await this.prisma.payment.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-      },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
-    }
-
-    if (existing.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const payment = await this.prisma.payment.update({
@@ -158,26 +129,13 @@ export class PaymentsService {
     return { success: true, data: payment };
   }
 
-  async remove(uuid: string, organizationId: number, memberId: number) {
+  async remove(uuid: string) {
     const existing = await this.prisma.payment.findUnique({
       where: { uuid },
-      include: {
-        lesson: {
-          include: { student: true },
-        },
-      },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
-    }
-
-    if (existing.lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     await this.prisma.payment.update({

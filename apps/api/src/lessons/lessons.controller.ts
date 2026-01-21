@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto, UpdateLessonDto } from './dto';
-import { CurrentOrganization, CurrentOrganizationData } from '../common/decorators/current-organization.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('lessons')
@@ -9,8 +8,11 @@ export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
 
   @Get()
-  findAll(@CurrentOrganization() org: CurrentOrganizationData) {
-    return this.lessonsService.findAll(org.organization.id, org.member.id);
+  findAll(
+    @Query('organizationId') organizationId?: number,
+    @Query('memberId') memberId?: number,
+  ) {
+    return this.lessonsService.findAll(organizationId, memberId);
   }
 
   @Get('share/:shareId')
@@ -20,43 +22,34 @@ export class LessonsController {
   }
 
   @Get(':uuid')
-  findOne(
-    @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
-  ) {
-    return this.lessonsService.findOne(uuid, org.organization.id, org.member.id);
+  findOne(@Param('uuid') uuid: string) {
+    return this.lessonsService.findOne(uuid);
   }
 
   @Post()
   create(
     @Body() createLessonDto: CreateLessonDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
+    @Query('organizationId') organizationId: number,
+    @Query('memberId') memberId: number,
   ) {
-    return this.lessonsService.create(createLessonDto, org.organization.id, org.member.id);
+    return this.lessonsService.create(createLessonDto, organizationId, memberId);
   }
 
   @Patch(':uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() updateLessonDto: UpdateLessonDto,
-    @CurrentOrganization() org: CurrentOrganizationData,
   ) {
-    return this.lessonsService.update(uuid, updateLessonDto, org.organization.id, org.member.id);
+    return this.lessonsService.update(uuid, updateLessonDto);
   }
 
   @Delete(':uuid')
-  remove(
-    @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
-  ) {
-    return this.lessonsService.remove(uuid, org.organization.id, org.member.id);
+  remove(@Param('uuid') uuid: string) {
+    return this.lessonsService.remove(uuid);
   }
 
   @Post(':uuid/share')
-  createShare(
-    @Param('uuid') uuid: string,
-    @CurrentOrganization() org: CurrentOrganizationData,
-  ) {
-    return this.lessonsService.createShare(uuid, org.organization.id, org.member.id);
+  createShare(@Param('uuid') uuid: string) {
+    return this.lessonsService.createShare(uuid);
   }
 }

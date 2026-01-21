@@ -6,7 +6,7 @@ const API_URL = process.env.API_URL!;
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
-  params?: Record<string, string | number | undefined>;
+  params?: Record<string, string | number | string[] | number[] | undefined>;
 };
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -20,7 +20,11 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {
-        searchParams.set(key, String(value));
+        if (Array.isArray(value)) {
+          searchParams.set(key, value.join(','));
+        } else {
+          searchParams.set(key, String(value));
+        }
       }
     }
     const queryString = searchParams.toString();

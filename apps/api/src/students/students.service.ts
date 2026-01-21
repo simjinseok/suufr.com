@@ -9,12 +9,57 @@ import { Prisma } from '@prisma/generated/client';
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId: number, query: ListStudentsQueryDto) {
+  private async checkMembership(userId: string, organizationId: number) {
+    const member = await this.prisma.organizationMember.findFirst({
+      where: {
+        userId,
+        organizationId,
+        deletedAt: null,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return member;
+  }
+
+  private async checkOwnership(userId: string, organizationId: number) {
+    const member = await this.checkMembership(userId, organizationId);
+
+    if (member.role !== 'owner') {
+      throw new ForbiddenException('Owner permission required');
+    }
+
+    return member;
+  }
+
+  async findAll(query: ListStudentsQueryDto, userId: string) {
+    // 사용자가 속한 모든 organization 조회
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { userId, deletedAt: null, organization: { deletedAt: null } },
+      include: { organization: { select: { id: true, uuid: true } } },
+    });
+    const userOrgUuids = memberships.map(m => m.organization.uuid);
+    const userOrgIds = memberships.map(m => m.organizationId);
+
+    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    let orgIds: number[];
+    if (query.organizationUuids && query.organizationUuids.length > 0) {
+      const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
+      orgIds = memberships
+        .filter(m => filteredUuids.includes(m.organization.uuid))
+        .map(m => m.organizationId);
+    } else {
+      orgIds = userOrgIds;
+    }
+
     const { page = 1, limit = 20, status, q } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.StudentWhereInput = {
-      organizationId,
+      organizationId: { in: orgIds },
       deletedAt: null,
       ...(status && { status: status as any }),
       ...(q && { name: { contains: q, mode: 'insensitive' } }),
@@ -42,7 +87,7 @@ export class StudentsService {
     };
   }
 
-  async findOne(uuid: string, organizationId: number) {
+  async findOne(uuid: string, userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { uuid },
     });
@@ -51,14 +96,22 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkMembership(userId, student.organizationId);
 
     return { success: true, data: student };
   }
 
-  async create(dto: CreateStudentDto, organizationId: number, userId: string) {
+  async create(dto: CreateStudentDto, userId: string) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { uuid: dto.organizationUuid },
+    });
+
+    if (!organization || organization.deletedAt) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    await this.checkOwnership(userId, organization.id);
+
     const student = await this.prisma.student.create({
       data: {
         name: dto.name,
@@ -66,7 +119,7 @@ export class StudentsService {
         phone: dto.phone,
         email: dto.email,
         nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
-        organizationId,
+        organizationId: organization.id,
         userId,
       },
     });
@@ -74,7 +127,7 @@ export class StudentsService {
     return { success: true, data: student };
   }
 
-  async update(uuid: string, dto: UpdateStudentDto, organizationId: number) {
+  async update(uuid: string, dto: UpdateStudentDto, userId: string) {
     const existing = await this.prisma.student.findUnique({
       where: { uuid },
     });
@@ -83,9 +136,7 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    if (existing.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkOwnership(userId, existing.organizationId);
 
     const student = await this.prisma.student.update({
       where: { uuid },
@@ -104,7 +155,7 @@ export class StudentsService {
     return { success: true, data: student, oldProfileImageKey: existing.profileImageKey };
   }
 
-  async remove(uuid: string, organizationId: number) {
+  async remove(uuid: string, userId: string) {
     const existing = await this.prisma.student.findUnique({
       where: { uuid },
     });
@@ -113,9 +164,7 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    if (existing.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
+    await this.checkOwnership(userId, existing.organizationId);
 
     await this.prisma.student.update({
       where: { uuid },
@@ -125,7 +174,17 @@ export class StudentsService {
     return { success: true };
   }
 
-  async getStats(uuid: string, organizationId: number) {
+  async getStats(uuid: string, userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { uuid },
+    });
+
+    if (!student || student.deletedAt) {
+      throw new NotFoundException(`Student with UUID ${uuid} not found`);
+    }
+
+    await this.checkMembership(userId, student.organizationId);
+
     type StatsResult = {
       remainingSessionsCount: number;
       completedLessonCount: number;
@@ -158,15 +217,10 @@ export class StudentsService {
       LEFT JOIN lessons les ON les.student_id = s.id
       LEFT JOIN sessions sess ON sess.lesson_id = les.id
       WHERE s.uuid = ${uuid}::uuid
-        AND s.organization_id = ${organizationId}
         AND s.deleted_at IS NULL
       GROUP BY s.id
     `;
 
-    if (!stats) {
-      throw new NotFoundException(`Student with UUID ${uuid} not found`);
-    }
-
-    return { success: true, data: stats };
+    return { success: true, data: stats ?? { remainingSessionsCount: 0, completedLessonCount: 0, unpaidLessonCount: 0 } };
   }
 }

@@ -16,14 +16,14 @@ function generateShareId(): string {
 export class LessonsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId: number, memberId: number) {
+  async findAll(organizationId?: number, memberId?: number) {
     const lessons = await this.prisma.lesson.findMany({
       where: {
-        memberId,
         deletedAt: null,
+        ...(memberId && { memberId }),
         student: {
-          organizationId,
           deletedAt: null,
+          ...(organizationId && { organizationId }),
         },
       },
       include: {
@@ -40,7 +40,7 @@ export class LessonsService {
     return { success: true, data: lessons };
   }
 
-  async findOne(uuid: string, organizationId: number, memberId: number) {
+  async findOne(uuid: string) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { uuid },
       include: {
@@ -62,29 +62,16 @@ export class LessonsService {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
     }
 
-    if (lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
-    }
-
     return { success: true, data: lesson };
   }
 
   async create(dto: CreateLessonDto, organizationId: number, memberId: number) {
-    // Find student by UUID
     const student = await this.prisma.student.findUnique({
       where: { uuid: dto.studentUuid },
     });
 
     if (!student || student.deletedAt) {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
-    }
-
-    if (student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const lesson = await this.prisma.lesson.create({
@@ -115,22 +102,13 @@ export class LessonsService {
     return { success: true, data: lesson };
   }
 
-  async update(uuid: string, dto: UpdateLessonDto, organizationId: number, memberId: number) {
+  async update(uuid: string, dto: UpdateLessonDto) {
     const existing = await this.prisma.lesson.findUnique({
       where: { uuid },
-      include: { student: true },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
-    }
-
-    if (existing.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const lesson = await this.prisma.lesson.update({
@@ -152,22 +130,13 @@ export class LessonsService {
     return { success: true, data: lesson };
   }
 
-  async remove(uuid: string, organizationId: number, memberId: number) {
+  async remove(uuid: string) {
     const existing = await this.prisma.lesson.findUnique({
       where: { uuid },
-      include: { student: true },
     });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
-    }
-
-    if (existing.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (existing.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     await this.prisma.lesson.update({
@@ -178,22 +147,13 @@ export class LessonsService {
     return { success: true };
   }
 
-  async createShare(uuid: string, organizationId: number, memberId: number, expiresInDays = 7) {
+  async createShare(uuid: string, expiresInDays = 7) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { uuid },
-      include: { student: true },
     });
 
     if (!lesson || lesson.deletedAt) {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
-    }
-
-    if (lesson.student.organizationId !== organizationId) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    if (lesson.memberId !== memberId) {
-      throw new ForbiddenException('Access denied');
     }
 
     const shareId = generateShareId();
