@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
-import { CreateSessionDto, UpdateSessionDto, UpsertFeedbackDto } from './dto';
+import { CreateSessionDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQueryDto } from './dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
 @Controller('sessions')
 export class SessionsController {
@@ -8,57 +10,68 @@ export class SessionsController {
 
   @Get()
   findAll(
-    @Query('organizationId') organizationId?: number,
-    @Query('memberId') memberId?: number,
+    @Query() query: ListSessionsQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.findAll(organizationId, memberId);
+    return this.sessionsService.findAll(query, user.userId);
   }
 
   @Get(':uuid')
-  findOne(@Param('uuid') uuid: string) {
-    return this.sessionsService.findOne(uuid);
+  findOne(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.findOne(uuid, user.userId);
   }
 
   @Post()
   create(
     @Body() createSessionDto: CreateSessionDto,
-    @Query('organizationId') organizationId: number,
-    @Query('memberId') memberId: number,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.create(createSessionDto, organizationId, memberId);
+    return this.sessionsService.create(createSessionDto, user.userId);
   }
 
   @Patch(':uuid')
   update(
     @Param('uuid') uuid: string,
     @Body() updateSessionDto: UpdateSessionDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.update(uuid, updateSessionDto);
+    return this.sessionsService.update(uuid, updateSessionDto, user.userId);
   }
 
   @Delete(':uuid')
-  remove(@Param('uuid') uuid: string) {
-    return this.sessionsService.remove(uuid);
+  remove(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.remove(uuid, user.userId);
   }
 
   @Patch(':uuid/done')
   markDone(
     @Param('uuid') uuid: string,
     @Body('isDone') isDone: boolean,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.markDone(uuid, isDone ?? true);
+    return this.sessionsService.markDone(uuid, isDone ?? true, user.userId);
   }
 
   @Post(':uuid/feedback')
   upsertFeedback(
     @Param('uuid') uuid: string,
     @Body() dto: UpsertFeedbackDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.upsertFeedback(uuid, dto);
+    return this.sessionsService.upsertFeedback(uuid, dto, user.userId);
   }
 
   @Delete(':uuid/feedback')
-  deleteFeedback(@Param('uuid') uuid: string) {
-    return this.sessionsService.deleteFeedback(uuid);
+  deleteFeedback(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.deleteFeedback(uuid, user.userId);
   }
 }
