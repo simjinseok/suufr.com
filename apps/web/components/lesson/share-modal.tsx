@@ -9,8 +9,9 @@ import {
   TextField,
   Input,
 } from '@heroui/react';
-import { CopyIcon, CheckIcon, LinkIcon, Trash2Icon } from 'lucide-react';
+import { CopyIcon, CheckIcon, LinkIcon } from 'lucide-react';
 import type { TLesson } from '@/types/index';
+import { createLessonShare, deleteLessonShare } from '@/actions/lesson';
 
 type Props = {
   isOpen: boolean;
@@ -19,16 +20,15 @@ type Props = {
 };
 
 type ShareState = {
-  hasActiveShare: boolean;
-  share: {
-    shareId: string;
-    expiresAt: string;
-    url: string;
-  } | null;
-};
+  shareId: string;
+  expiresAt: string;
+} | null;
 
 export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
-  const [shareState, setShareState] = React.useState<ShareState | null>(lesson?.shares?.[0]);
+  const activeShare = lesson?.shares?.[0];
+  const [shareState, setShareState] = React.useState<ShareState>(
+    activeShare ? { shareId: activeShare.shareId, expiresAt: activeShare.expiresAt.toString() } : null
+  );
   const [isLoading, setIsLoading] = React.useState(false);
   const [expireDays, setExpireDays] = React.useState(60);
   const [copied, setCopied] = React.useState(false);
@@ -37,31 +37,31 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
   const handleCreateShare = React.useCallback(async () => {
     setIsLoading(true);
     const formData = new FormData();
+    formData.set('lessonUuid', lesson.uuid);
     formData.set('expireDays', String(expireDays));
 
-    const response = await fetch(`/api/lessons/${lesson.id}/share`, {
-      method: 'POST',
-      body: formData,
-    });
+    const result = await createLessonShare({ success: false, timestamp: 0 }, formData);
 
-    if (response.ok) {
-      const data = await response.json();
-      setShareState(data);
+    if (result.success && result.shareId && result.expiresAt) {
+      setShareState({ shareId: result.shareId, expiresAt: result.expiresAt });
     }
     setIsLoading(false);
-  }, [lesson.id, expireDays]);
+  }, [lesson.uuid, expireDays]);
 
   // 공유 링크 무효화
   const handleRevokeShare = React.useCallback(async () => {
     if (!confirm('공유 링크를 무효화하시겠습니까?')) return;
+    if (!shareState) return;
 
     setIsLoading(true);
-    await fetch(`/api/lessons/${lesson.id}/share`, {
-      method: 'DELETE',
-    });
-    setShareState({ hasActiveShare: false, share: null });
+    const formData = new FormData();
+    formData.set('lessonUuid', lesson.uuid);
+    formData.set('shareId', shareState.shareId);
+
+    await deleteLessonShare({ success: false, timestamp: 0 }, formData);
+    setShareState(null);
     setIsLoading(false);
-  }, [lesson.id]);
+  }, [lesson.uuid, shareState]);
 
   // 클립보드 복사
   const handleCopy = React.useCallback(async () => {
@@ -71,6 +71,8 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
       setTimeout(() => setCopied(false), 2000);
     }
   }, [shareState]);
+
+  const shareUrl = shareState ? `https://suufr.com/sl/${shareState.shareId}` : '';
 
   return (
     <Modal.Backdrop>
@@ -96,7 +98,7 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                         <TextField className="flex-1">
                           <Label className="text-xs text-gray-500">공유 링크</Label>
                           <Input
-                            value={`https://suufr.com/sl/${shareState.shareId}`}
+                            value={shareUrl}
                             readOnly
                             className="mt-1"
                           />

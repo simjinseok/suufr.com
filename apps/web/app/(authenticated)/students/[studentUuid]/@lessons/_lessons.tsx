@@ -60,14 +60,16 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                           <Modal>
                             {lesson.payment
                               ? (
-                                  <Chip size="sm" variant="soft">
-                                    {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
-                                    {numberToHangulMixed(lesson.payment.amount)}
-                                    원
-                                  </Chip>
+                                  <Modal.Trigger>
+                                    <Chip size="sm" variant="soft">
+                                      {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
+                                      {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
+                                      {numberToHangulMixed(lesson.payment.amount)}
+                                      원
+                                    </Chip>
+                                  </Modal.Trigger>
                                 )
                               : (
                                   <Modal.Trigger>

@@ -4,10 +4,10 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
-import prisma from '@/utils/prisma';
 import { parseZonedDateTime } from '@internationalized/date';
 import { getSession } from '@/utils/auth';
 import { ServerActionState } from '@/types/index';
+import { meetingsApi } from '@/utils/api/meetings';
 
 type CreateMeetingState = ServerActionState<{
   name: string;
@@ -50,7 +50,7 @@ export async function createMeeting(prevState: CreateMeetingState, formData: For
       if (!session?.organization) {
         return state;
       }
-      const { user, organization } = session;
+      const { organization } = session;
 
       const validationResult = createMeetingSchema.safeParse(data);
       if (!validationResult.success) {
@@ -60,16 +60,13 @@ export async function createMeeting(prevState: CreateMeetingState, formData: For
 
       const meetingAt = parseZonedDateTime(validationResult.data.meetingAt).toDate();
 
-      await prisma.meeting.create({
-        data: {
-          userId: user.id, // 유지 (추후 제거)
-          organizationId: organization.id,
-          name: validationResult.data.name,
-          meetingAt,
-          phone: validationResult.data.phone || null,
-          notes: validationResult.data.notes || null,
-          isDone: false,
-        },
+      await meetingsApi.create({
+        organizationUuid: organization.uuid,
+        name: validationResult.data.name,
+        meetingAt: meetingAt.toISOString(),
+        phone: validationResult.data.phone || undefined,
+        notes: validationResult.data.notes || undefined,
+        isDone: false,
       });
 
       revalidatePath('/meetings', 'page');
@@ -105,7 +102,7 @@ export async function updateMeeting(prevState: UpdateMeetingState, formData: For
       recordResponse: true,
     },
     async () => {
-      const meetingId = Number(formData.get('meetingId'));
+      const meetingUuid = formData.get('meetingUuid') as string;
       const data = Object.fromEntries(formData.entries());
 
       const state: UpdateMeetingState = {
@@ -125,7 +122,6 @@ export async function updateMeeting(prevState: UpdateMeetingState, formData: For
       if (!session?.organization) {
         return state;
       }
-      const { organization } = session;
 
       const validationResult = updateMeetingSchema.safeParse(data);
       if (!validationResult.success) {
@@ -133,32 +129,14 @@ export async function updateMeeting(prevState: UpdateMeetingState, formData: For
         return state;
       }
 
-      const meeting = await prisma.meeting.findUnique({
-        where: {
-          id: meetingId,
-          organizationId: organization.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!meeting) {
-        return state;
-      }
-
       const meetingAt = parseZonedDateTime(validationResult.data.meetingAt).toDate();
 
-      await prisma.meeting.update({
-        where: {
-          id: meeting.id,
-        },
-        data: {
-          name: validationResult.data.name,
-          meetingAt,
-          phone: validationResult.data.phone || null,
-          notes: validationResult.data.notes || null,
-          isDone: validationResult.data.isDone === 'on',
-          updatedAt: new Date(),
-        },
+      await meetingsApi.update(meetingUuid, {
+        name: validationResult.data.name,
+        meetingAt: meetingAt.toISOString(),
+        phone: validationResult.data.phone || undefined,
+        notes: validationResult.data.notes || undefined,
+        isDone: validationResult.data.isDone === 'on',
       });
 
       revalidatePath('/meetings', 'page');

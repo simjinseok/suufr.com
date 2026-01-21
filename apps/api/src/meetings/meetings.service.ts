@@ -1,25 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
+import { ListMeetingsQueryDto } from './dto/list-meetings-query.dto';
+import { Prisma } from '@prisma/generated/client';
 
 @Injectable()
 export class MeetingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(organizationId?: number) {
-    const meetings = await this.prisma.meeting.findMany({
+  private async checkOwnership(userId: string, organizationId: number) {
+    const member = await this.prisma.organizationMember.findFirst({
       where: {
+        userId,
+        organizationId,
         deletedAt: null,
-        ...(organizationId && { organizationId }),
       },
-      orderBy: { meetingAt: 'desc' },
     });
 
-    return { success: true, data: meetings };
+    if (!member) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    if (member.role !== 'owner') {
+      throw new ForbiddenException('Owner permission required');
+    }
+
+    return member;
   }
 
-  async findOne(uuid: string) {
+  private async getMeetingWithOrganization(uuid: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { uuid },
     });
@@ -28,10 +38,84 @@ export class MeetingsService {
       throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
     }
 
+    return meeting;
+  }
+
+  async findAll(query: ListMeetingsQueryDto, userId: string) {
+    // 사용자가 owner인 모든 organization 조회
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { userId, deletedAt: null, role: 'owner', organization: { deletedAt: null } },
+      include: { organization: { select: { id: true, uuid: true } } },
+    });
+    const userOrgUuids = memberships.map(m => m.organization.uuid);
+    const userOrgIds = memberships.map(m => m.organizationId);
+
+    // organizationUuids가 지정되면 사용자가 owner인 organization만 필터링
+    let orgIds: number[];
+    if (query.organizationUuids && query.organizationUuids.length > 0) {
+      const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
+      orgIds = memberships
+        .filter(m => filteredUuids.includes(m.organization.uuid))
+        .map(m => m.organizationId);
+    }
+    else {
+      orgIds = userOrgIds;
+    }
+
+    const { page = 1, limit = 20, dateFrom, dateTo } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.MeetingWhereInput = {
+      deletedAt: null,
+      organizationId: { in: orgIds },
+      ...(dateFrom || dateTo) && {
+        meetingAt: {
+          ...(dateFrom && { gte: new Date(dateFrom) }),
+          ...(dateTo && { lte: new Date(dateTo) }),
+        },
+      },
+    };
+
+    const [meetings, totalCount] = await Promise.all([
+      this.prisma.meeting.findMany({
+        where,
+        orderBy: { meetingAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.meeting.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: meetings,
+      meta: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    };
+  }
+
+  async findOne(uuid: string, userId: string) {
+    const meeting = await this.getMeetingWithOrganization(uuid);
+    await this.checkOwnership(userId, meeting.organizationId);
+
     return { success: true, data: meeting };
   }
 
-  async create(dto: CreateMeetingDto, organizationId: number, userId: string) {
+  async create(dto: CreateMeetingDto, userId: string) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { uuid: dto.organizationUuid },
+    });
+
+    if (!organization || organization.deletedAt) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    await this.checkOwnership(userId, organization.id);
+
     const meeting = await this.prisma.meeting.create({
       data: {
         name: dto.name,
@@ -39,7 +123,7 @@ export class MeetingsService {
         meetingAt: new Date(dto.meetingAt),
         phone: dto.phone,
         isDone: dto.isDone ?? false,
-        organizationId,
+        organizationId: organization.id,
         userId,
       },
     });
@@ -47,16 +131,11 @@ export class MeetingsService {
     return { success: true, data: meeting };
   }
 
-  async update(uuid: string, dto: UpdateMeetingDto) {
-    const existing = await this.prisma.meeting.findUnique({
-      where: { uuid },
-    });
+  async update(uuid: string, dto: UpdateMeetingDto, userId: string) {
+    const meeting = await this.getMeetingWithOrganization(uuid);
+    await this.checkOwnership(userId, meeting.organizationId);
 
-    if (!existing || existing.deletedAt) {
-      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
-
-    const meeting = await this.prisma.meeting.update({
+    const updatedMeeting = await this.prisma.meeting.update({
       where: { uuid },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
@@ -67,17 +146,12 @@ export class MeetingsService {
       },
     });
 
-    return { success: true, data: meeting };
+    return { success: true, data: updatedMeeting };
   }
 
-  async remove(uuid: string) {
-    const existing = await this.prisma.meeting.findUnique({
-      where: { uuid },
-    });
-
-    if (!existing || existing.deletedAt) {
-      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
+  async remove(uuid: string, userId: string) {
+    const meeting = await this.getMeetingWithOrganization(uuid);
+    await this.checkOwnership(userId, meeting.organizationId);
 
     await this.prisma.meeting.update({
       where: { uuid },

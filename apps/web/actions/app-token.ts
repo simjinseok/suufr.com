@@ -3,37 +3,24 @@ import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
-import prisma from '@/utils/prisma';
-import { getSession } from '@/utils/auth';
-import { generateAppToken, hashToken } from '@/utils/app-token';
 import { createAppTokenSchema } from '@/schemas/app-token';
 import type { ServerActionState } from '@/types/index';
 import type { TAppToken } from '@/types/index';
+import { appTokensApi } from '@/utils/api/app-tokens';
 
 export async function listAppTokens(): Promise<TAppToken[]> {
-  const session = await getSession();
-
-  if (!session?.user?.id) {
+  try {
+    const response = await appTokensApi.list();
+    return response.data.map(token => ({
+      uuid: token.uuid,
+      name: token.name,
+      lastUsedAt: token.lastUsedAt ? new Date(token.lastUsedAt) : null,
+      createdAt: new Date(token.createdAt),
+    }));
+  }
+  catch {
     return [];
   }
-
-  const tokens = await prisma.appToken.findMany({
-    where: {
-      userId: session.user.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  return tokens.map(token => ({
-    id: token.id,
-    uuid: token.uuid,
-    name: token.name,
-    lastUsedAt: token.lastUsedAt,
-    createdAt: token.createdAt,
-  }));
 }
 
 type CreateAppTokenState = ServerActionState<{
@@ -64,13 +51,6 @@ export async function createAppToken(
         timestamp: Date.now(),
       };
 
-      const session = await getSession();
-
-      if (!session?.user?.id) {
-        state.message = '로그인이 필요합니다';
-        return state;
-      }
-
       const validationResult = createAppTokenSchema.safeParse(data);
       if (!validationResult.success) {
         const errors = validationResult.error.flatten().fieldErrors;
@@ -83,30 +63,27 @@ export async function createAppToken(
         return state;
       }
 
-      const token = generateAppToken();
-      const tokenHash = hashToken(token);
+      try {
+        const response = await appTokensApi.create({ name: validationResult.data.name });
 
-      await prisma.appToken.create({
-        data: {
-          name: validationResult.data.name,
-          tokenHash,
-          userId: session.user.id,
-        },
-      });
+        revalidatePath('/settings', 'page');
 
-      revalidatePath('/settings', 'page');
-
-      state.success = true;
-      state.message = '앱 토큰이 생성되었습니다';
-      state.token = token;
-      return state;
+        state.success = true;
+        state.message = '앱 토큰이 생성되었습니다';
+        state.token = response.data.token;
+        return state;
+      }
+      catch {
+        state.message = '앱 토큰 생성에 실패했습니다';
+        return state;
+      }
     },
   );
 }
 
 type RevokeAppTokenState = ServerActionState<Record<string, never>>;
 
-export async function revokeAppToken(tokenId: number): Promise<RevokeAppTokenState> {
+export async function revokeAppToken(uuid: string): Promise<RevokeAppTokenState> {
   return await Sentry.withServerActionInstrumentation(
     'revokeAppToken',
     {
@@ -119,36 +96,19 @@ export async function revokeAppToken(tokenId: number): Promise<RevokeAppTokenSta
         timestamp: Date.now(),
       };
 
-      const session = await getSession();
+      try {
+        await appTokensApi.remove(uuid);
 
-      if (!session?.user?.id) {
-        state.message = '로그인이 필요합니다';
+        revalidatePath('/settings', 'page');
+
+        state.success = true;
+        state.message = '앱 토큰이 삭제되었습니다';
         return state;
       }
-
-      const token = await prisma.appToken.findFirst({
-        where: {
-          id: tokenId,
-          userId: session.user.id,
-          deletedAt: null,
-        },
-      });
-
-      if (!token) {
+      catch {
         state.message = '토큰을 찾을 수 없습니다';
         return state;
       }
-
-      await prisma.appToken.update({
-        where: { id: tokenId },
-        data: { deletedAt: new Date() },
-      });
-
-      revalidatePath('/settings', 'page');
-
-      state.success = true;
-      state.message = '앱 토큰이 삭제되었습니다';
-      return state;
     },
   );
 }

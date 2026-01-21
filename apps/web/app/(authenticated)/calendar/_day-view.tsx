@@ -3,7 +3,8 @@ import React from 'react';
 import { formatTime } from '@/utils/time-format';
 
 interface Lesson {
-  id: string;
+  id: number;
+  uuid: string;
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
@@ -33,9 +34,9 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
     <div className="bg-white divide-y divide-zinc-200">
       {lessons.map(lesson => (
         <button
-          key={lesson.id}
+          key={lesson.uuid}
           type="button"
-          onClick={() => onSessionClick?.(lesson.id)}
+          onClick={() => onSessionClick?.(lesson.uuid)}
           className="w-full flex items-center gap-4 py-4 px-4 hover:bg-zinc-50 transition-colors text-left cursor-pointer"
         >
           {/* Time */}

@@ -51,7 +51,8 @@ export class StudentsService {
       orgIds = memberships
         .filter(m => filteredUuids.includes(m.organization.uuid))
         .map(m => m.organizationId);
-    } else {
+    }
+    else {
       orgIds = userOrgIds;
     }
 

@@ -68,7 +68,8 @@ export class PaymentsService {
       orgIds = memberships
         .filter(m => filteredUuids.includes(m.organization.uuid))
         .map(m => m.organizationId);
-    } else {
+    }
+    else {
       orgIds = userOrgIds;
     }
 
@@ -91,7 +92,8 @@ export class PaymentsService {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59, 999);
       where.paidAt = { gte: startDate, lte: endDate };
-    } else if (year !== undefined) {
+    }
+    else if (year !== undefined) {
       const startDate = new Date(year, 0, 1);
       const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
       where.paidAt = { gte: startDate, lte: endDate };

@@ -2,7 +2,7 @@
 
 import { ChevronsUpDownIcon, BuildingIcon, CheckIcon } from 'lucide-react';
 import { Button, Dropdown, Label } from '@heroui/react';
-import type { OrganizationRole } from '@/prisma/generated/client';
+import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;

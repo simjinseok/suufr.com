@@ -1,5 +1,5 @@
-import prisma from '@/utils/prisma';
 import { notFound } from 'next/navigation';
+import { lessonsApi } from '@/utils/api';
 import LessonView from './_lesson-view';
 
 export const dynamic = 'force-dynamic';
@@ -16,68 +16,20 @@ export default async function SharedLessonPage({
 }) {
   const { shareId } = await params;
 
-  const share = await prisma.sessionShare.findUnique({
-    where: {
-      shareId,
-      deletedAt: null,
-      expiresAt: {
-        gt: new Date(),
-      },
-    },
-    include: {
-      lesson: {
-        include: {
-          student: {
-            select: {
-              name: true,
-              nextPaymentAt: true,
-            },
-          },
-          member: {
-            select: {
-              name: true,
-              profileImageKey: true,
-              organization: {
-                select: {
-                  name: true,
-                  logoImageKey: true,
-                },
-              },
-            },
-          },
-          payment: {
-            where: {
-              deletedAt: null,
-            },
-            select: {
-              id: true,
-            },
-          },
-          sessions: {
-            where: {
-              deletedAt: null,
-            },
-            orderBy: {
-              sessionAt: 'asc',
-            },
-            include: {
-              feedback: {
-                where: {
-                  deletedAt: null,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!share || !share.lesson) {
+  let share;
+  try {
+    share = await lessonsApi.getByShareId(shareId);
+  } catch {
     notFound();
   }
 
-  const { member } = share.lesson;
+  if (!share?.data?.lesson) {
+    notFound();
+  }
+
+  const { lesson, expiresAt } = share.data;
+  const { member } = lesson;
+
   const teacher = member ? {
     name: member.name,
     profileImageUrl: buildAssetUrl(member.profileImageKey, 'member'),
@@ -105,12 +57,12 @@ export default async function SharedLessonPage({
           </div>
         )}
 
-        <LessonView lesson={share.lesson} teacher={teacher} />
+        <LessonView lesson={lesson} teacher={teacher} />
 
         <footer className="mt-8 text-center text-sm text-gray-400">
           <p>
             이 링크는{' '}
-            {new Date(share.expiresAt).toLocaleDateString('ko-KR')}까지
+            {new Date(expiresAt).toLocaleDateString('ko-KR')}까지
             유효합니다.
           </p>
         </footer>

@@ -1,11 +1,10 @@
-import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
 import { getUserSettings } from '@/actions/settings';
+import { sessionsApi } from '@/utils/api';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { TZDate } from '@date-fns/tz';
 
-import React from 'react';
 import Calendar from './_calendar';
 
 export type CalendarView = 'month' | 'week' | 'day';
@@ -40,43 +39,25 @@ export default async function Page(props: PageProps<'/calendar'>) {
     calendarEnd = endOfDay(selectedDate) as TZDate;
   }
 
-  const lessons = await prisma.session.findMany({
-    select: {
-      id: true,
-      isDone: true,
-      sessionAt: true,
-      duration: true,
-      notes: true,
-      lesson: {
-        select: {
-          student: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-    where: {
-      sessionAt: {
-        gte: calendarStart,
-        lte: calendarEnd,
-      },
-      deletedAt: null,
-      lesson: {
-        student: {
-          organizationId: organization.id,
-        },
-      },
-    },
-    orderBy: {
-      sessionAt: 'asc',
-    },
+  const { data: lessons } = await sessionsApi.list({
+    organizationUuids: [organization.uuid],
+    dateFrom: calendarStart.toISOString(),
+    dateTo: calendarEnd.toISOString(),
+    limit: 100,
   });
 
   const serializedLessons = lessons.map(lesson => ({
-    ...lesson,
-    sessionAt: lesson.sessionAt.toISOString(),
+    id: lesson.id,
+    uuid: lesson.uuid,
+    isDone: lesson.isDone,
+    sessionAt: lesson.sessionAt,
+    duration: lesson.duration,
+    notes: lesson.notes,
+    lesson: {
+      student: {
+        name: lesson.lesson.student.name,
+      },
+    },
   }));
 
   return (

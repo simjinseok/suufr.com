@@ -16,10 +16,10 @@ interface AppTokensSectionProps {
 export default function AppTokensSection({ tokens, userEmail }: AppTokensSectionProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const handleRevoke = async (tokenId: number, tokenName: string) => {
+  const handleRevoke = async (tokenUuid: string, tokenName: string) => {
     if (!confirm(`"${tokenName}" 토큰을 삭제하시겠습니까?`)) return;
 
-    const result = await revokeAppToken(tokenId);
+    const result = await revokeAppToken(tokenUuid);
     if (result.success) {
       alert(result.message);
     }
@@ -55,7 +55,7 @@ export default function AppTokensSection({ tokens, userEmail }: AppTokensSection
         : (
             <div className="divide-y divide-gray-100">
               {tokens.map(token => (
-                <div key={token.id} className="py-3 flex justify-between items-center">
+                <div key={token.uuid} className="py-3 flex justify-between items-center">
                   <div>
                     <p className="font-medium">{token.name}</p>
                     <p className="text-sm text-gray-500">
@@ -72,7 +72,7 @@ export default function AppTokensSection({ tokens, userEmail }: AppTokensSection
                     variant="ghost"
                     size="sm"
                     className="text-danger"
-                    onClick={() => handleRevoke(token.id, token.name)}
+                    onClick={() => handleRevoke(token.uuid, token.name)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

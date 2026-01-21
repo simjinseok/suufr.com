@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/utils/auth';
-import prisma from '@/utils/prisma';
+import { organizationsApi } from '@/utils/api/organizations';
 
 export async function GET(
   request: Request,
@@ -13,27 +13,19 @@ export async function GET(
 
   const { organizationUuid } = await params;
 
-  // 해당 조직의 멤버인지 확인
-  const membership = await prisma.organizationMember.findFirst({
-    where: {
-      userId: session.user.id,
-      organization: { uuid: organizationUuid },
-      deletedAt: null,
-    },
-    include: {
-      organization: true,
-    },
-  });
-
-  if (!membership) {
+  // 세션의 organizations에서 해당 조직이 있는지 확인
+  const hasAccess = session.organizations?.some(org => org.uuid === organizationUuid);
+  if (!hasAccess) {
     redirect('/dashboard');
   }
 
-  // UserSettings 업데이트
-  await prisma.userSettings.update({
-    where: { userId: session.user.id },
-    data: { currentOrganizationId: membership.organization.id },
-  });
+  // API를 통해 조직 전환 (UserSettings 업데이트)
+  try {
+    await organizationsApi.switch(organizationUuid);
+  }
+  catch {
+    redirect('/dashboard');
+  }
 
   redirect('/dashboard');
 }

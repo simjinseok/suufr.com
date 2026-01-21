@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { refreshAccessToken } from '@/utils/token-refresh';
+import { authApi } from '@/utils/api/auth';
 
 export async function proxy(request: NextRequest) {
   const cookieStore = await cookies();
@@ -13,23 +13,26 @@ export async function proxy(request: NextRequest) {
     const username = cookieStore.get('cognito_username')?.value;
 
     if (refreshToken && username) {
-      const newTokens = await refreshAccessToken(refreshToken, username);
+      try {
+        const result = await authApi.refresh({ refreshToken, username });
 
-      if (newTokens) {
         // 1. Request cookies 업데이트 (서버 컴포넌트용 - 같은 요청 사이클)
-        request.cookies.set('access_token', newTokens.access_token);
+        request.cookies.set('access_token', result.accessToken);
 
         // 2. Response 생성 및 cookies 설정 (브라우저용 - 다음 요청)
         const response = NextResponse.next({
           request: { headers: request.headers },
         });
-        response.cookies.set('access_token', newTokens.access_token, {
+        response.cookies.set('access_token', result.accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
-          maxAge: newTokens.expires_in - 60,
+          maxAge: result.expiresIn - 60,
         });
         return response;
+      }
+      catch {
+        // Refresh failed, redirect to login
       }
     }
 

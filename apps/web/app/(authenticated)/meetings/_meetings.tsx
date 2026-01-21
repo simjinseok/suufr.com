@@ -22,7 +22,7 @@ export default function Meetings({ meetings }) {
       </TableHead>
       <TableBody>
         {meetings.map(meeting => (
-          <TableRow key={`payment-${meeting.id}`}>
+          <TableRow key={meeting.uuid}>
             <TableCell>
               {meeting.isDone
                 ? (

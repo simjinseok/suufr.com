@@ -18,7 +18,8 @@ import { tz } from '@date-fns/tz';
 const TIMEZONE = 'Asia/Seoul';
 
 interface Lesson {
-  id: string;
+  id: number;
+  uuid: string;
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
@@ -113,17 +114,17 @@ export default function MonthView({ lessons, selectedDate, onSessionClick }: Mon
               <div className="space-y-1">
                 {dayLessons.slice(0, 2).map(lesson => (
                   <span
-                    key={lesson.id}
+                    key={lesson.uuid}
                     role="button"
                     tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSessionClick?.(lesson.id);
+                      onSessionClick?.(lesson.uuid);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.stopPropagation();
-                        onSessionClick?.(lesson.id);
+                        onSessionClick?.(lesson.uuid);
                       }
                     }}
                     className={`

@@ -4,34 +4,27 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
-import prisma from '@/utils/prisma';
-import { getSession } from '@/utils/auth';
 import { ServerActionState, TUserSettings } from '@/types/index';
+import { settingsApi } from '@/utils/api/settings';
 
-const DEFAULT_USE_24_HOUR_FORMAT = false;
-const DEFAULT_DURATION = 50;
-const DEFAULT_AUTO_UPDATE_NEXT_PAYMENT_AT = true;
-
-export async function getUserSettings(userId: string): Promise<TUserSettings> {
-  const settings = await prisma.userSettings.findUnique({
-    where: { userId },
-  });
-
-  if (!settings) {
+export async function getUserSettings(): Promise<TUserSettings> {
+  try {
+    const response = await settingsApi.get();
     return {
-      userId,
-      use24HourFormat: DEFAULT_USE_24_HOUR_FORMAT,
-      defaultDuration: DEFAULT_DURATION,
-      autoUpdateNextPaymentAt: DEFAULT_AUTO_UPDATE_NEXT_PAYMENT_AT,
+      userId: response.data.userId,
+      use24HourFormat: response.data.use24HourFormat,
+      defaultDuration: response.data.defaultDuration,
+      autoUpdateNextPaymentAt: response.data.autoUpdateNextPaymentAt,
     };
   }
-
-  return {
-    userId: settings.userId,
-    use24HourFormat: settings.use24HourFormat,
-    defaultDuration: settings.defaultDuration,
-    autoUpdateNextPaymentAt: settings.autoUpdateNextPaymentAt,
-  };
+  catch {
+    return {
+      userId: '',
+      use24HourFormat: false,
+      defaultDuration: 50,
+      autoUpdateNextPaymentAt: true,
+    };
+  }
 }
 
 type UpdateSettingsState = ServerActionState<{
@@ -67,41 +60,30 @@ export async function updateSettings(prevState: UpdateSettingsState, formData: F
         timestamp: Date.now(),
       };
 
-      const session = await getSession();
-
-      if (!session?.user?.id) {
-        return state;
-      }
-      const { user } = session;
-
       const validationResult = updateSettingsSchema.safeParse(data);
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
 
-      await prisma.userSettings.upsert({
-        where: { userId: user.id },
-        update: {
+      try {
+        await settingsApi.update({
           use24HourFormat: validationResult.data.use24HourFormat,
           defaultDuration: validationResult.data.defaultDuration,
           autoUpdateNextPaymentAt: validationResult.data.autoUpdateNextPaymentAt,
-          updatedAt: new Date(),
-        },
-        create: {
-          userId: user.id,
-          use24HourFormat: validationResult.data.use24HourFormat,
-          defaultDuration: validationResult.data.defaultDuration,
-          autoUpdateNextPaymentAt: validationResult.data.autoUpdateNextPaymentAt,
-        },
-      });
+        });
 
-      revalidatePath('/settings', 'page');
-      revalidatePath('/calendar', 'page');
-      revalidatePath('/students', 'layout');
-      state.success = true;
-      state.message = '설정을 저장하였습니다';
-      return state;
+        revalidatePath('/settings', 'page');
+        revalidatePath('/calendar', 'page');
+        revalidatePath('/students', 'layout');
+        state.success = true;
+        state.message = '설정을 저장하였습니다';
+        return state;
+      }
+      catch {
+        state.message = '설정 저장에 실패했습니다';
+        return state;
+      }
     },
   );
 }

@@ -25,8 +25,11 @@ export type Student = {
   payments?: TPayment[];
 };
 
+export type TStudent = Student;
+
 export type TLesson = {
   id: number;
+  uuid: string;
   title: string;
   notes: string;
 
@@ -38,6 +41,7 @@ export type TLesson = {
 
 export type TSession = {
   id: number;
+  uuid: string;
   notes: string;
   isDone: boolean;
   sessionAt: Date;
@@ -54,6 +58,7 @@ export type TFeedback = {
 
 export type TPayment = {
   id: number;
+  uuid: string;
   amount: number;
   notes: string;
   paymentMethod: string;
@@ -62,6 +67,7 @@ export type TPayment = {
 
 export type TMeeting = {
   id: number;
+  uuid: string;
   name: string;
   phone: string | null;
   notes: string | null;
@@ -120,6 +126,7 @@ export type Organization = {
 };
 
 export type MemberStatusValue = 'active' | 'paused' | 'leave';
+export type OrganizationRole = 'owner' | 'teacher';
 
 export type OrganizationMember = {
   id: number;
@@ -141,7 +148,6 @@ export type TMemberStatus = {
 };
 
 export type TAppToken = {
-  id: number;
   uuid: string;
   name: string;
   lastUsedAt: Date | null;

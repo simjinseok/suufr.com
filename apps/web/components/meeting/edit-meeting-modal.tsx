@@ -76,7 +76,7 @@ function Content({ meeting, close }: ContentProps) {
       alert('상담을 수정하였습니다.');
       close();
     }
-  }, [state.timestamp, state.success, close]);
+  }, [state.timestamp, state.success]);
 
   return (
     <React.Fragment>
@@ -90,14 +90,14 @@ function Content({ meeting, close }: ContentProps) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="meetingId" value={meeting.id} />
+          <input type="hidden" name="meetingUuid" value={meeting.uuid} />
           <Controller
             control={control}
             name="name"
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange} isRequired>
                 <Label>이름</Label>
-                <Input />
+                <Input autoComplete="off" />
                 <FieldError />
               </TextField>
             )}
@@ -123,7 +123,7 @@ function Content({ meeting, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>연락처</Label>
-                <Input type="tel" />
+                <Input type="tel" autoComplete="off" />
                 <FieldError />
               </TextField>
             )}

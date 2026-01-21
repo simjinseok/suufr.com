@@ -82,7 +82,8 @@ function Content({ close, lesson }) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="lessonId" value={lesson.id} />
+          <input type="hidden" name="lessonUuid" value={lesson.uuid} />
+          {lesson.payment?.uuid && <input type="hidden" name="paymentUuid" value={lesson.payment.uuid} />}
           <Controller
             control={control}
             name="paidAt"
@@ -178,8 +179,8 @@ function Content({ close, lesson }) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        {payment && (
-          <RemoveButton lessonId={lesson.id} />
+        {payment?.uuid && (
+          <RemoveButton paymentUuid={payment.uuid} />
         )}
         <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>
@@ -234,7 +235,7 @@ function DatePickerField({ name, value, onChange }) {
   );
 }
 
-function RemoveButton({ lessonId }) {
+function RemoveButton({ paymentUuid }: { paymentUuid: string }) {
   const formId = React.useId();
   const [state, formAction, isPending] = React.useActionState(removePayment, {});
 
@@ -263,7 +264,7 @@ function RemoveButton({ lessonId }) {
                 </Modal.Header>
                 <Modal.Body>
                   <Form id={formId} action={formAction}>
-                    <input type="hidden" name="lessonId" value={lessonId} />
+                    <input type="hidden" name="paymentUuid" value={paymentUuid} />
                     <p>결제내역을 삭제합니다</p>
                   </Form>
                 </Modal.Body>

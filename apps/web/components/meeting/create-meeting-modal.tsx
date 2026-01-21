@@ -64,7 +64,7 @@ function Content({ close }: ContentProps) {
       alert('상담을 추가하였습니다.');
       close();
     }
-  }, [state.timestamp, state.success, close]);
+  }, [state.timestamp, state.success]);
 
   return (
     <React.Fragment>

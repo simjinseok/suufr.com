@@ -12,7 +12,7 @@ import ChangeStatusModal from './_change-status-modal';
 import StatusHistoryModal from './_status-history-modal';
 import AddMemberModal from './_add-member-modal';
 import EditMemberModal from './_edit-member-modal';
-import type { MemberStatusValue } from '@/prisma/generated/client';
+import type { MemberStatusValue } from '@/types';
 
 type Member = {
   id: number;

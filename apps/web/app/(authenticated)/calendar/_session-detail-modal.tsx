@@ -5,11 +5,13 @@ import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
 import { Button, Modal, Spinner } from '@heroui/react';
 import { CheckCircle, Circle, MessageSquare } from 'lucide-react';
+import { getSessionDetail } from '@/actions/session';
 
 const TIMEZONE = 'Asia/Seoul';
 
 type SessionData = {
   id: number;
+  uuid: string;
   sessionAt: string;
   isDone: boolean;
   notes: string;
@@ -25,17 +27,17 @@ type ModalData = {
 };
 
 interface Props {
-  sessionId: string | null;
+  sessionUuid: string | null;
   onClose: () => void;
 }
 
-export default function SessionDetailModal({ sessionId, onClose }: Props) {
+export default function SessionDetailModal({ sessionUuid, onClose }: Props) {
   const [data, setData] = React.useState<ModalData | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!sessionId) {
+    if (!sessionUuid) {
       setData(null);
       return;
     }
@@ -43,17 +45,16 @@ export default function SessionDetailModal({ sessionId, onClose }: Props) {
     setIsLoading(true);
     setError(null);
 
-    fetch(`/api/sessions/${sessionId}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
+    getSessionDetail(sessionUuid)
+      .then(result => {
+        if (!result) throw new Error('Failed to fetch');
+        setData(result);
       })
-      .then(setData)
       .catch(() => setError('데이터를 불러오지 못했습니다'))
       .finally(() => setIsLoading(false));
-  }, [sessionId]);
+  }, [sessionUuid]);
 
-  const isOpen = sessionId !== null;
+  const isOpen = sessionUuid !== null;
 
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>

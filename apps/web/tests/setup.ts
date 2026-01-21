@@ -25,12 +25,6 @@ vi.mock('@sentry/nextjs', () => ({
   ),
 }));
 
-// Mock prisma
-vi.mock('@/utils/prisma', async () => {
-  const { prismaMock } = await import('./mocks/prisma');
-  return { default: prismaMock };
-});
-
 // Mock auth
 vi.mock('@/utils/auth', async () => {
   const { mockGetSession } = await import('./mocks/auth');

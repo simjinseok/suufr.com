@@ -1,6 +1,4 @@
-import prisma from '@/utils/prisma';
-import { getSession } from '@/utils/auth';
-import { notFound } from 'next/navigation';
+import { lessonsApi } from '@/utils/api/lessons';
 import PaymentsTable from './_payments-table';
 
 export default async function PaymentsPage({
@@ -9,44 +7,25 @@ export default async function PaymentsPage({
   params: Promise<{ studentUuid: string }>;
 }) {
   const { studentUuid } = await params;
-  const { user } = await getSession();
 
-  const student = await prisma.student.findUnique({
-    where: { uuid: studentUuid, userId: user.id, deletedAt: null },
-    select: { id: true },
-  });
+  const response = await lessonsApi.list({ studentUuid, limit: 1000 });
 
-
-  const lessons = await prisma.lesson.findMany({
-    select: {
-      id: true,
-      title: true,
-      createdAt: true,
-      payment: {
-        select: {
-          id: true,
-          amount: true,
-          paymentMethod: true,
-          paidAt: true,
-          notes: true,
-          deletedAt: true,
-        },
-      },
-    },
-    where: {
-      studentId: student.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  // 삭제된 payment는 null로 처리
-  const processedLessons = lessons.map((lesson) => ({
-    ...lesson,
-    payment: lesson.payment?.deletedAt ? null : lesson.payment,
+  const lessons = response.data.map(lesson => ({
+    id: lesson.id,
+    uuid: lesson.uuid,
+    title: lesson.title,
+    createdAt: new Date(lesson.sessions[0]?.sessionAt || Date.now()),
+    payment: lesson.payment && lesson.payment.paidAt
+      ? {
+          id: lesson.payment.id,
+          uuid: lesson.payment.uuid,
+          amount: lesson.payment.amount,
+          paymentMethod: lesson.payment.paymentMethod,
+          paidAt: new Date(lesson.payment.paidAt),
+          notes: lesson.payment.notes,
+        }
+      : null,
   }));
 
-  return <PaymentsTable lessons={processedLessons} />;
+  return <PaymentsTable lessons={lessons} />;
 }

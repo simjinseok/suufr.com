@@ -1,3 +1,12 @@
 export { studentsApi } from './students';
 export { studentStatusesApi } from './student-statuses';
 export { studentCommentsApi } from './student-comments';
+export { lessonsApi } from './lessons';
+export { sessionsApi } from './sessions';
+export { settingsApi } from './settings';
+export { appTokensApi } from './app-tokens';
+export { paymentsApi } from './payments';
+export { dashboardApi } from './dashboard';
+export { membersApi } from './members';
+export { memberStatusesApi } from './member-statuses';
+export { organizationsApi } from './organizations';

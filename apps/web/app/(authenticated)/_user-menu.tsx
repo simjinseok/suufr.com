@@ -2,7 +2,7 @@
 
 import { LogOutIcon, SettingsIcon, ShieldIcon, BuildingIcon, CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
-import type { OrganizationRole } from '@/prisma/generated/client';
+import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;

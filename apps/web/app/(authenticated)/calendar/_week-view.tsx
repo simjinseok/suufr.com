@@ -16,7 +16,8 @@ import { formatTime } from '@/utils/time-format';
 const TIMEZONE = 'Asia/Seoul';
 
 interface Lesson {
-  id: string;
+  id: number;
+  uuid: string;
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
@@ -98,11 +99,11 @@ export default function WeekView({ lessons, selectedDate, onSessionClick, use24H
                 <div className="flex flex-wrap gap-2">
                   {dayLessons.map(lesson => (
                     <button
-                      key={lesson.id}
+                      key={lesson.uuid}
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSessionClick?.(lesson.id);
+                        onSessionClick?.(lesson.uuid);
                       }}
                       className={`text-sm px-3 py-1.5 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity ${
                         lesson.isDone

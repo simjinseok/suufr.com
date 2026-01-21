@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import type { OrganizationRole } from '@/prisma/generated/client';
 
 export type Session = {
   user: {
@@ -11,20 +10,17 @@ export type Session = {
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
   } | null;
   membership: {
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
     profileImageKey: string | null;
   } | null;
   organizations: Array<{
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
   }>;
 };
 

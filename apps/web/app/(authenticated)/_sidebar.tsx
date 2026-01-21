@@ -18,7 +18,7 @@ import {
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
-import type { OrganizationRole } from '@/prisma/generated/client';
+import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;
@@ -240,7 +240,8 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
 
       {/* 데스크탑 고정 사이드바 */}
       <aside
-        className="hidden sm:flex w-72 flex-col rounded-2xl
+        className="hidden sm:flex w-72 shrink-0 flex-col rounded-2xl
+                   sticky top-4 h-[calc(100dvh-2rem)] self-start
                    bg-white/70 backdrop-blur-xl
                    border border-white/60
                    shadow-[0_8px_32px_rgba(0,0,0,0.08)]"

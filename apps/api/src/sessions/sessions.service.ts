@@ -79,7 +79,8 @@ export class SessionsService {
       orgIds = memberships
         .filter(m => filteredUuids.includes(m.organization.uuid))
         .map(m => m.organizationId);
-    } else {
+    }
+    else {
       orgIds = userOrgIds;
     }
 
@@ -95,7 +96,8 @@ export class SessionsService {
       });
       if (lesson && !lesson.deletedAt && orgIds.includes(lesson.student.organizationId)) {
         lessonId = lesson.id;
-      } else {
+      }
+      else {
         return {
           success: true,
           data: [],
@@ -273,7 +275,8 @@ export class SessionsService {
         where: { id: session.feedback.id },
         data: { notes: dto.notes },
       });
-    } else {
+    }
+    else {
       feedback = await this.prisma.feedback.create({
         data: {
           notes: dto.notes,

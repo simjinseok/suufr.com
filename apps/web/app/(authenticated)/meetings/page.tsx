@@ -1,20 +1,19 @@
-import type { TMeeting } from '@/types/index';
-
-import prisma from '@/utils/prisma';
-import { getSession } from '@/utils/auth';
-
 import React from 'react';
 import Link from 'next/link';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react';
+import { getSession } from '@/utils/auth';
+import { meetingsApi } from '@/utils/api/meetings';
+
 import Edit from './_edit';
 import Heading from './_heading';
 import Meetings from './_meetings';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
+
 export default async function Page({ searchParams }: any) {
   const { page: _page, edit: _edit } = await searchParams;
   const page = _page > 0 ? Number(_page) : 1;
@@ -25,34 +24,17 @@ export default async function Page({ searchParams }: any) {
   }
   const { organization } = session;
 
-  const meetings: TMeeting[] = await prisma.meeting.findMany({
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-    select: {
-      id: true,
-      name: true,
-      isDone: true,
-      phone: true,
-      notes: true,
-      meetingAt: true,
-    },
-    where: {
-      organizationId: organization.id,
-      deletedAt: null,
-    },
-    orderBy: {
-      meetingAt: 'desc',
-    },
-  });
-  const meetingsCount = await prisma.meeting.count({
-    where: {
-      organizationId: organization.id,
-      deletedAt: null,
-    },
+  const response = await meetingsApi.list({
+    organizationUuids: [organization.uuid],
+    page,
+    limit: PAGE_SIZE,
   });
 
+  const meetings = response.data;
+  const meetingsCount = response.meta.totalCount;
+
   const editingMeeting = _edit
-    ? meetings.find(m => m.id === Number(_edit))
+    ? meetings.find(m => m.uuid === _edit)
     : null;
 
   return (

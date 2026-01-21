@@ -84,7 +84,8 @@ export class LessonsService {
       orgIds = memberships
         .filter(m => filteredUuids.includes(m.organization.uuid))
         .map(m => m.organizationId);
-    } else {
+    }
+    else {
       orgIds = userOrgIds;
     }
 
@@ -99,7 +100,8 @@ export class LessonsService {
       });
       if (student && !student.deletedAt && orgIds.includes(student.organizationId)) {
         studentId = student.id;
-      } else {
+      }
+      else {
         // student가 없거나 권한이 없으면 빈 결과 반환
         return {
           success: true,
@@ -291,11 +293,36 @@ export class LessonsService {
       include: {
         lesson: {
           include: {
-            student: true,
+            student: {
+              select: {
+                name: true,
+                nextPaymentAt: true,
+              },
+            },
+            member: {
+              select: {
+                name: true,
+                profileImageKey: true,
+                organization: {
+                  select: {
+                    name: true,
+                    logoImageKey: true,
+                  },
+                },
+              },
+            },
+            payment: {
+              where: { deletedAt: null },
+              select: { id: true },
+            },
             sessions: {
               where: { deletedAt: null },
               orderBy: { sessionAt: 'asc' },
-              include: { feedback: true },
+              include: {
+                feedback: {
+                  where: { deletedAt: null },
+                },
+              },
             },
           },
         },
@@ -314,6 +341,12 @@ export class LessonsService {
       throw new NotFoundException('Lesson not found');
     }
 
-    return { success: true, data: share.lesson };
+    return {
+      success: true,
+      data: {
+        lesson: share.lesson,
+        expiresAt: share.expiresAt,
+      },
+    };
   }
 }

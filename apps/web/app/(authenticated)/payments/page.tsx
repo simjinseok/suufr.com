@@ -1,20 +1,15 @@
 import type { PaymentView } from '@/types/index';
 
-import prisma from '@/utils/prisma';
-
-import { getSession } from '@/utils/auth';
+import { paymentsApi } from '@/utils/api/payments';
 
 import React from 'react';
 
-import Filter from './_filter';
 import ViewTabs from './_view-tabs';
 import MonthlyView from './_monthly-view';
 import YearlyView from './_yearly-view';
 import {
   groupPaymentsByMonth,
   groupPaymentsByYear,
-  getMonthRange,
-  getYearRange,
   getPrevMonth,
   getNextMonth, getPrevYear, getNextYear,
 } from '@/utils/payment-stats';
@@ -31,54 +26,47 @@ type Props = {
   }>;
 };
 
+function parseDateParam(date: string | undefined): { year: number; month: number } {
+  if (!date) {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  }
+
+  const parts = date.split('-');
+  if (parts.length >= 2) {
+    return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10) };
+  }
+  if (parts.length === 1) {
+    return { year: parseInt(parts[0], 10), month: 1 };
+  }
+
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
 export default async function Page({ searchParams }: Props) {
   const { view: _view, date: _date } = await searchParams;
 
-  const session = await getSession();
-  if (!session?.organization) {
-    return null;
-  }
-  const { organization } = session;
-
   const view: PaymentView = _view === 'yearly' ? 'yearly' : 'monthly';
+  const { year, month } = parseDateParam(_date);
 
-  const { from, to } = view === 'monthly'
-    ? getMonthRange(_date)
-    : getYearRange(_date);
-
-  const where = {
-    deletedAt: null,
-    paidAt: {
-      gte: from,
-      lte: to,
-    },
-    lesson: {
-      deletedAt: null,
-      student: {
-        organizationId: organization.id,
-        deletedAt: null,
-      },
-    },
-  };
-
-  const payments = await prisma.payment.findMany({
-    where,
-    include: {
-      lesson: {
-        include: {
-          student: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      paidAt: 'desc',
-    },
+  const response = await paymentsApi.list({
+    year,
+    month: view === 'monthly' ? month : undefined,
+    limit: 1000,
   });
+
+  const payments = response.data.map(p => ({
+    ...p,
+    paidAt: new Date(p.paidAt),
+    lesson: {
+      ...p.lesson,
+      student: {
+        id: p.lesson.student.id,
+        name: p.lesson.student.name,
+      },
+    },
+  }));
 
   const monthlyStats = groupPaymentsByMonth(payments);
   const yearlyStats = groupPaymentsByYear(payments);
@@ -97,8 +85,8 @@ export default async function Page({ searchParams }: Props) {
   const nextDate = view === 'monthly' ? getNextMonth(_date) : getNextYear(_date);
 
   const displayDate = view === 'monthly'
-    ? `${from.getFullYear()}년 ${from.getMonth() + 1}월`
-    : `${from.getFullYear()}년`;
+    ? `${year}년 ${month}월`
+    : `${year}년`;
 
   return (
     <div>

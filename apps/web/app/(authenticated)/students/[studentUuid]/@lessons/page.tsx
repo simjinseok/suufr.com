@@ -1,7 +1,6 @@
-import prisma from '@/utils/prisma';
 import { getSession } from '@/utils/auth';
 import { getUserSettings } from '@/actions/settings';
-import { notFound } from 'next/navigation';
+import { lessonsApi } from '@/utils/api';
 
 import Lessons from './_lessons';
 
@@ -19,86 +18,10 @@ export default async function LessonsPage({
   const settings = await getUserSettings(user.id);
   const { studentUuid } = await params;
 
-  const student = await prisma.student.findUnique({
-    where: { uuid: studentUuid, organizationId: organization.id, deletedAt: null },
-    select: { id: true },
-  });
-
-  const page = 1;
-  const lessons = await prisma.lesson.findMany({
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-    select: {
-      id: true,
-      title: true,
-      notes: true,
-      student: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      sessions: {
-        select: {
-          id: true,
-          notes: true,
-          sessionAt: true,
-          duration: true,
-          isDone: true,
-          feedback: {
-            select: {
-              id: true,
-              notes: true,
-            },
-            where: {
-              deletedAt: null,
-            },
-          },
-        },
-        where: {
-          deletedAt: null,
-        },
-        orderBy: {
-          sessionAt: 'asc',
-        },
-      },
-      payment: {
-        select: {
-          id: true,
-          amount: true,
-          paymentMethod: true,
-          paidAt: true,
-          notes: true,
-        },
-        where: {
-          deletedAt: null,
-        },
-      },
-      shares: {
-        select: {
-          id: true,
-          shareId: true,
-          expiresAt: true,
-        },
-        where: {
-          deletedAt: null,
-          expiresAt: {
-            gt: new Date(),
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 1,
-      },
-    },
-    where: {
-      deletedAt: null,
-      studentId: student.id,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
+  const { data: lessons } = await lessonsApi.list({
+    organizationUuids: [organization.uuid],
+    studentUuid,
+    limit: PAGE_SIZE,
   });
 
   return <Lessons lessons={lessons} use24HourFormat={settings.use24HourFormat} />;

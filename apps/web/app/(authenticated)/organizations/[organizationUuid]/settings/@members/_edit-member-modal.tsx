@@ -13,7 +13,7 @@ import {
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 import type { ModalProps } from '@heroui/react';
-import type { OrganizationRole, MemberStatusValue } from '@/prisma/generated/client';
+import type { OrganizationRole, MemberStatusValue } from '@/types';
 import { updateMember } from '@/actions/member';
 import MemberProfileImageUpload from '@/components/member/profile-image-upload';
 

@@ -1,6 +1,9 @@
-import { IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsBoolean, IsUUID } from 'class-validator';
 
 export class CreateMeetingDto {
+  @IsUUID()
+  organizationUuid!: string;
+
   @IsString()
   name!: string;
 

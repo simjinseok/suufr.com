@@ -24,7 +24,8 @@ import DayView from './_day-view';
 import SessionDetailModal from './_session-detail-modal';
 
 interface Lesson {
-  id: string;
+  id: number;
+  uuid: string;
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
@@ -48,7 +49,7 @@ export default function Calendar({ lessons, selectedDate, view, use24HourFormat 
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateObj = new TZDate(selectedDate + 'T00:00:00', TIMEZONE);
-  const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
+  const [selectedSessionUuid, setSelectedSessionUuid] = React.useState<string | null>(null);
 
   const goToDate = (date: Date, newView?: CalendarView) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -138,7 +139,7 @@ export default function Calendar({ lessons, selectedDate, view, use24HourFormat 
           </Button>
         </div>
         <div className="rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <DayView lessons={dayLessons} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />
+          <DayView lessons={dayLessons} onSessionClick={setSelectedSessionUuid} use24HourFormat={use24HourFormat} />
         </div>
       </div>
 
@@ -185,19 +186,19 @@ export default function Calendar({ lessons, selectedDate, view, use24HourFormat 
         {/* View content */}
         <div className="rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
           {view === 'month' && (
-            <MonthView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} />
+            <MonthView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionUuid} />
           )}
           {view === 'week' && (
-            <WeekView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />
+            <WeekView lessons={lessons} selectedDate={dateObj} onSessionClick={setSelectedSessionUuid} use24HourFormat={use24HourFormat} />
           )}
-          {view === 'day' && <DayView lessons={lessons} onSessionClick={setSelectedSessionId} use24HourFormat={use24HourFormat} />}
+          {view === 'day' && <DayView lessons={lessons} onSessionClick={setSelectedSessionUuid} use24HourFormat={use24HourFormat} />}
         </div>
       </div>
 
       {/* Session Detail Modal */}
       <SessionDetailModal
-        sessionId={selectedSessionId}
-        onClose={() => setSelectedSessionId(null)}
+        sessionUuid={selectedSessionUuid}
+        onClose={() => setSelectedSessionUuid(null)}
       />
     </div>
   );
