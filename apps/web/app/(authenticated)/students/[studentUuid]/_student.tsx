@@ -6,6 +6,7 @@ import { Avatar, Button, ButtonGroup, Card, Dropdown, Header, Modal } from '@her
 import { ChevronDownIcon, EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 import EditStudentModal from '@/components/student/edit-student-modal';
+import EditProfileImageModal from '@/components/student/edit-profile-image-modal';
 import ChangeStatusModal from './_change-status-modal';
 import StatusModal from './_status-modal';
 
@@ -16,6 +17,7 @@ const PAYMENT_METHODS = {
   none: '미지정',
 };
 export default function Student({ student, statuses }) {
+  const [isEditingProfileImage, setIsEditingProfileImage] = React.useState(false);
   const [isEditingStatus, setIsEditingStatus] = React.useState(false);
   const [isStatusHistoryOpen, setIsStatusHistoryOpen] = React.useState(false);
 
@@ -54,7 +56,10 @@ export default function Student({ student, statuses }) {
               <Dropdown.Menu
                 selectionMode="none"
                 onAction={(key) => {
-                  if (key === 'change-status') {
+                  if (key === 'change-profile-image') {
+                    setIsEditingProfileImage(true);
+                  }
+                  else if (key === 'change-status') {
                     setIsEditingStatus(true);
                   }
                   else if (key === 'change-status-history') {
@@ -62,6 +67,11 @@ export default function Student({ student, statuses }) {
                   }
                 }}
               >
+                <Dropdown.Section>
+                  <Dropdown.Item id="change-profile-image">
+                    프로필사진 변경
+                  </Dropdown.Item>
+                </Dropdown.Section>
                 <Dropdown.Section>
                   <Header>상태</Header>
                   <Dropdown.Item id="change-status">
@@ -76,6 +86,11 @@ export default function Student({ student, statuses }) {
           </Dropdown>
         </ButtonGroup>
       </div>
+      <EditProfileImageModal
+        isOpen={isEditingProfileImage}
+        onOpenChange={setIsEditingProfileImage}
+        student={student}
+      />
       <ChangeStatusModal
         isOpen={isEditingStatus}
         onOpenChange={setIsEditingStatus}

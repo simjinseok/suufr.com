@@ -23,7 +23,6 @@ import { fromDate, toCalendarDate } from '@internationalized/date';
 import { updateStudent } from '@/actions/student';
 import { useForm, Controller } from 'react-hook-form';
 import { Student } from '@/types/index';
-import ProfileImageUpload from '@/components/student/profile-image-upload';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -51,12 +50,11 @@ interface ContentProps {
 function Content({ student, close }: ContentProps) {
   const formId = React.useId();
 
-  const { control, watch } = useForm<{
+  const { control } = useForm<{
     id: number;
     name: string;
     notes: string;
     nextPaymentAt: CalendarDate | null;
-    profileImageKey: string | null;
     phone: string;
     email: string;
   }>({
@@ -67,13 +65,10 @@ function Content({ student, close }: ContentProps) {
       nextPaymentAt: student.nextPaymentAt
         ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
         : null,
-      profileImageKey: student.profileImageKey ?? null,
       phone: student.phone ?? '',
       email: student.email ?? '',
     },
   });
-
-  const watchName = watch('name');
 
   const [state, formAction, isPending] = React.useActionState(updateStudent, {});
 
@@ -101,19 +96,7 @@ function Content({ student, close }: ContentProps) {
           validationErrors={state?.fieldErrors}
         >
           <input type="hidden" name="studentUuid" value={student.uuid} />
-          <Controller
-            control={control}
-            name="profileImageKey"
-            render={({ field: { value, onChange } }) => (
-              <ProfileImageUpload
-                name={watchName}
-                value={value}
-                onChange={onChange}
-                disabled={isPending}
-              />
-            )}
-          />
-          <div className="mt-4 flex gap-3">
+          <div className="flex gap-3">
             <Controller
               control={control}
               name="name"

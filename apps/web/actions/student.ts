@@ -144,6 +144,79 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
   );
 }
 
+const updateStudentProfileImageSchema = z.object({
+  profileImageKey: z.string().nullable().optional(),
+});
+
+type UpdateStudentProfileImageState = ServerActionState<{
+  profileImageKey: string | null;
+}>;
+export async function updateStudentProfileImage(prevState: UpdateStudentProfileImageState, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'updateStudentProfileImage',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const session = await getSession();
+      const formEntries = Object.fromEntries(formData.entries());
+      const { studentUuid, profileImageKey: rawProfileImageUrl, profileImagePublicId: rawPublicId } = formEntries;
+      let profileImageKey = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
+      const publicId = typeof rawPublicId === 'string' && rawPublicId !== '' ? rawPublicId : null;
+      const state: UpdateStudentProfileImageState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
+      if (!session?.organization) {
+        return state;
+      }
+
+      const { data: student } = await studentsApi.get(studentUuid as string);
+
+      const validationResult = updateStudentProfileImageSchema.safeParse({
+        profileImageKey,
+      });
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
+      // 새 이미지가 임시 폴더에 업로드된 경우 정식 폴더로 이동
+      let finalProfileImageKey = student.profileImageKey; // 기존 값 유지
+      const oldImageKey = student.profileImageKey;
+
+      if (publicId?.startsWith('suufr/temp/')) {
+        const newKey = await moveImage(publicId);
+        if (newKey) {
+          finalProfileImageKey = newKey;
+        }
+      }
+      else if (profileImageKey === null || profileImageKey === '') {
+        // 이미지 제거
+        finalProfileImageKey = null;
+      }
+
+      await studentsApi.update(studentUuid as string, {
+        profileImageKey: finalProfileImageKey,
+      });
+
+      // 새 이미지가 저장된 경우 또는 이미지가 제거된 경우, 이전 이미지 삭제
+      if (finalProfileImageKey !== oldImageKey && oldImageKey) {
+        await deleteImage(oldImageKey, 'students');
+      }
+
+      revalidatePath('/students', 'page');
+      revalidatePath('/students/[studentUuid]', 'page');
+      state.success = true;
+      state.message = '프로필 사진을 변경하였습니다.';
+      return state;
+    },
+  );
+}
+
 export default async function removeStudent(formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeStudent',
