@@ -172,7 +172,7 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
 
       await sessionsApi.remove(sessionUuid);
 
-      revalidatePath('/sessions', 'page');
+      revalidatePath('/(authenticated)/students/[studentUuid]/@lessons', 'page');
       revalidatePath('/lessons', 'page');
 
       state.success = true;

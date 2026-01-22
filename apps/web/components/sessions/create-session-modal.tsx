@@ -58,7 +58,7 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
               </Modal.Header>
               <Modal.Body>
                 <Form id={formId} className="p-1 flex flex-col gap-4" action={formAction}>
-                  <input type="hidden" name="lessonId" value={lesson.id} />
+                  <input type="hidden" name="lessonUuid" value={lesson.uuid} />
                   <Controller
                     control={control}
                     name="sessionAt"

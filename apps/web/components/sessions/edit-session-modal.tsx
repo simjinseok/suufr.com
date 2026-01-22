@@ -274,7 +274,7 @@ function Content({ session, close }: ContentProps) {
         </Tabs>
       </Modal.Body>
       <Modal.Footer>
-        <RemoveButton sessionId={session.id} onSuccess={close} />
+        <RemoveButton sessionUuid={session.uuid} onSuccess={close} />
         <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>닫기</Button>
         <Button type="submit" form={formId} variant="primary" isPending={isPending}>저장</Button>
@@ -284,10 +284,10 @@ function Content({ session, close }: ContentProps) {
 }
 
 interface RemoveButtonProps {
-  sessionId: Props['session']['id'];
+  sessionUuid: Props['session']['uuid'];
   onSuccess: () => void;
 }
-function RemoveButton({ sessionId, onSuccess }: RemoveButtonProps) {
+function RemoveButton({ sessionUuid, onSuccess }: RemoveButtonProps) {
   const [state, formAction, isPending] = React.useActionState(removeSession, {});
 
   React.useEffect(() => {
@@ -316,7 +316,7 @@ function RemoveButton({ sessionId, onSuccess }: RemoveButtonProps) {
                 <Modal.Footer>
                   <Button variant="ghost" isDisabled={isPending} onClick={close}>취소</Button>
                   <Form action={formAction}>
-                    <input type="hidden" name="sessionId" value={sessionId} />
+                    <input type="hidden" name="sessionUuid" value={sessionUuid} />
                     <Button type="submit" variant="danger" isPending={isPending}>삭제</Button>
                   </Form>
                 </Modal.Footer>
