@@ -34,7 +34,6 @@ type DashboardResponse = {
 
 type DashboardParams = {
   organizationId?: number;
-  memberId?: number;
 };
 
 export const dashboardApi = {

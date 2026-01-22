@@ -5,7 +5,7 @@ import 'server-only';
  * process.env.CLOUDINARY_CLOUD_NAME 접근
  */
 
-type FolderType = 'students' | 'members' | 'organizations';
+type FolderType = 'students' | 'organizations';
 
 type BuildOptions = {
   width?: number;
@@ -18,7 +18,7 @@ type BuildOptions = {
  * 랜덤 키 + 폴더 타입으로 Cloudinary URL 생성
  *
  * @param key - 랜덤 키 (UUID)
- * @param folder - 폴더 타입 ('students' | 'members')
+ * @param folder - 폴더 타입 ('students' | 'organizations')
  * @param options - 이미지 옵션
  */
 export function buildCloudinaryUrl(
@@ -61,6 +61,6 @@ export function extractKeyFromUrl(url: string | null): string | null {
 
   // Cloudinary URL에서 키 추출
   // 예: https://res.cloudinary.com/xxx/image/upload/suufr/students/abc.jpg -> abc
-  const match = url.match(/suufr\/(?:students|members|organizations)\/([^.]+)/);
+  const match = url.match(/suufr\/(?:students|organizations)\/([^.]+)/);
   return match ? match[1] : null;
 }

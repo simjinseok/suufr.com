@@ -7,6 +7,4 @@ export { settingsApi } from './settings';
 export { appTokensApi } from './app-tokens';
 export { paymentsApi } from './payments';
 export { dashboardApi } from './dashboard';
-export { membersApi } from './members';
-export { memberStatusesApi } from './member-statuses';
 export { organizationsApi } from './organizations';

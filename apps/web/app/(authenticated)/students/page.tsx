@@ -9,7 +9,7 @@ import Students from './_students';
 import { getSession } from '@/utils/auth';
 import { studentsApi } from '@/utils/api';
 
-function buildAssetUrl(key: string | null, folder: 'student' | 'member'): string | null {
+function buildAssetUrl(key: string | null, folder: 'student'): string | null {
   if (!key) return null;
   return `/assets/${folder}/${key}.webp`;
 }

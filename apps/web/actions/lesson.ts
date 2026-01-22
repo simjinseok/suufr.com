@@ -28,7 +28,7 @@ export async function createLesson(prevState: CreateLessonState, formData: FormD
         timestamp: Date.now(),
       };
 
-      if (!session?.organization || !session?.membership) {
+      if (!session?.organization) {
         return state;
       }
       const { user } = session;

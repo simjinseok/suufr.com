@@ -62,21 +62,6 @@ export async function moveImage(publicId: string): Promise<string | null> {
   }
 }
 
-export async function moveMemberImage(publicId: string): Promise<string | null> {
-  const key = randomUUID();
-  const newPublicId = `suufr/members/${key}`;
-
-  try {
-    await cloudinary.uploader.rename(publicId, newPublicId, {
-      invalidate: true,
-    });
-    return key;
-  } catch (error) {
-    console.error('Move member image error:', error);
-    return null;
-  }
-}
-
 export async function moveOrganizationLogo(publicId: string): Promise<string | null> {
   const key = randomUUID();
   const newPublicId = `suufr/organizations/${key}`;
@@ -96,9 +81,9 @@ export async function moveOrganizationLogo(publicId: string): Promise<string | n
  * Cloudinary에서 이미지 삭제
  *
  * @param key - 이미지 키 (UUID)
- * @param folder - 폴더 타입 ('students' | 'members' | 'organizations')
+ * @param folder - 폴더 타입 ('students' | 'organizations')
  */
-export async function deleteImage(key: string, folder: 'students' | 'members' | 'organizations'): Promise<boolean> {
+export async function deleteImage(key: string, folder: 'students' | 'organizations'): Promise<boolean> {
   const publicId = `suufr/${folder}/${key}`;
 
   try {

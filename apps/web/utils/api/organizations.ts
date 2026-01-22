@@ -9,20 +9,6 @@ type Organization = {
   logoImageKey: string | null;
   profileName: string | null;
   profileImageKey: string | null;
-  role?: 'owner' | 'teacher';
-};
-
-type Member = {
-  id: number;
-  uuid: string;
-  name: string;
-  role: 'owner' | 'teacher';
-  status: 'active' | 'paused' | 'leave';
-  userId: string | null;
-};
-
-type OrganizationWithMembers = Organization & {
-  members: Member[];
 };
 
 type ListOrganizationsResponse = {
@@ -32,7 +18,7 @@ type ListOrganizationsResponse = {
 
 type OrganizationResponse = {
   success: boolean;
-  data: OrganizationWithMembers;
+  data: Organization;
 };
 
 type UpdateOrganizationData = {
@@ -41,14 +27,6 @@ type UpdateOrganizationData = {
   address?: string;
   profileName?: string;
   profileImageKey?: string;
-};
-
-type SwitchOrganizationResponse = {
-  success: boolean;
-  data: {
-    organization: Organization;
-    member: Member;
-  };
 };
 
 export const organizationsApi = {
@@ -60,7 +38,4 @@ export const organizationsApi = {
 
   update: (uuid: string, data: UpdateOrganizationData) =>
     apiClient<OrganizationResponse>(`/api/organizations/${uuid}`, { method: 'PATCH', body: data }),
-
-  switch: (uuid: string) =>
-    apiClient<SwitchOrganizationResponse>(`/api/organizations/${uuid}/switch`, { method: 'POST' }),
 };
