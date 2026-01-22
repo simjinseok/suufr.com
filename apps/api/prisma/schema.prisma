@@ -20,7 +20,9 @@ model Organization {
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
 
   // 소유자 (개인용)
-  userId String? @map("user_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  profileName     String    @map("profile_name") // 프로필 이름
+  profileImageKey String?   @map("profile_image_key") // 프로필 이미지
 
   members  OrganizationMember[] // TODO: 추후 제거 예정
   students Student[]
