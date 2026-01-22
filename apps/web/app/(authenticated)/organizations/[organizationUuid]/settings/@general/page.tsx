@@ -23,6 +23,9 @@ export default async function GeneralSettingsPage({
         address: organization.address || '',
         logoImageKey: organization.logoImageKey || null,
         logoUrl: organization.logoUrl || null,
+        profileName: organization.profileName || null,
+        profileImageKey: organization.profileImageKey || null,
+        profileImageUrl: organization.profileImageUrl || null,
       }}
     />
   );

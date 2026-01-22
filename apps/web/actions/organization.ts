@@ -18,6 +18,9 @@ type UpdateOrganizationFields = {
   address?: string;
   logoImageKey?: string | null;
   logoUrl?: string | null;
+  profileName?: string | null;
+  profileImageKey?: string | null;
+  profileImageUrl?: string | null;
 };
 type UpdateOrganizationState = ServerActionState<UpdateOrganizationFields>;
 
@@ -32,6 +35,7 @@ export async function updateOrganization(
     async () => {
       const data = Object.fromEntries(formData);
       const logoImageKey = (data.logoImageKey as string) || null;
+      const profileImageKey = (data.profileImageKey as string) || null;
       const state: UpdateOrganizationState = {
         success: false,
         fields: {
@@ -40,6 +44,9 @@ export async function updateOrganization(
           address: (data.address as string) || undefined,
           logoImageKey,
           logoUrl: null,
+          profileName: (data.profileName as string) || null,
+          profileImageKey,
+          profileImageUrl: null,
         },
         timestamp: Date.now(),
       };
@@ -55,6 +62,8 @@ export async function updateOrganization(
           name: validation.data.name,
           phone: validation.data.phone || undefined,
           address: validation.data.address || undefined,
+          profileName: validation.data.profileName || undefined,
+          profileImageKey: validation.data.profileImageKey || undefined,
         });
 
         revalidatePath(`/organizations/${organizationUuid}/settings`);
@@ -64,6 +73,9 @@ export async function updateOrganization(
           ...state.fields,
           logoImageKey: response.data.logoImageKey,
           logoUrl: buildAssetUrl(response.data.logoImageKey, 'organization'),
+          profileName: response.data.profileName,
+          profileImageKey: response.data.profileImageKey,
+          profileImageUrl: buildAssetUrl(response.data.profileImageKey, 'organization'),
         };
       }
       catch (error: any) {
@@ -84,6 +96,7 @@ export async function getOrganization(organizationUuid: string) {
     return {
       ...organization,
       logoUrl: buildAssetUrl(organization.logoImageKey, 'organization'),
+      profileImageUrl: buildAssetUrl(organization.profileImageKey, 'organization'),
     };
   }
   catch {

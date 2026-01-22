@@ -13,6 +13,7 @@ import {
 import { Controller, useForm } from 'react-hook-form';
 import { updateOrganization } from '@/actions/organization';
 import OrganizationLogoUpload from '@/components/organization/logo-upload';
+import ProfileImageUpload from '@/components/organization/profile-image-upload';
 
 type Props = {
   organizationUuid: string;
@@ -22,6 +23,9 @@ type Props = {
     address: string;
     logoImageKey: string | null;
     logoUrl: string | null;
+    profileName: string | null;
+    profileImageKey: string | null;
+    profileImageUrl: string | null;
   };
 };
 
@@ -37,15 +41,19 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
 
   const [logoImageKey, setLogoImageKey] = React.useState<string | null>(null);
   const [logoImagePublicId, setLogoImagePublicId] = React.useState<string | null>(null);
+  const [profileImageKey, setProfileImageKey] = React.useState<string | null>(null);
+  const [profileImagePublicId, setProfileImagePublicId] = React.useState<string | null>(null);
 
-  // state가 업데이트되면 로고 URL도 업데이트
+  // state가 업데이트되면 이미지 URL도 업데이트
   const currentLogoUrl = state.fields?.logoUrl || initialData.logoUrl;
+  const currentProfileImageUrl = state.fields?.profileImageUrl || initialData.profileImageUrl;
 
   const { control } = useForm({
     values: {
       name: state.fields?.name || initialData.name,
       phone: state.fields?.phone || initialData.phone,
       address: state.fields?.address || initialData.address,
+      profileName: state.fields?.profileName || initialData.profileName || '',
     },
   });
 
@@ -125,6 +133,37 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
           </TextField>
         )}
       />
+
+      <div className="border-t border-gray-200 pt-6 mt-2">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">선생님 프로필</h3>
+        <div className="flex flex-col gap-6">
+          <ProfileImageUpload
+            value={profileImageKey}
+            onChange={setProfileImageKey}
+            onPublicIdChange={setProfileImagePublicId}
+            currentImageUrl={currentProfileImageUrl}
+            disabled={isPending}
+          />
+          <input type="hidden" name="profileImageKey" value={profileImageKey || ''} />
+          <input type="hidden" name="profileImagePublicId" value={profileImagePublicId || ''} />
+
+          <Controller
+            control={control}
+            name="profileName"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                name={name}
+                value={value}
+                onChange={onChange}
+              >
+                <Label>프로필 이름</Label>
+                <Input variant="secondary" type="text" placeholder="학생에게 표시될 이름 (선택)" />
+                <FieldError />
+              </TextField>
+            )}
+          />
+        </div>
+      </div>
 
       <div className="flex justify-end pt-4">
         <Button

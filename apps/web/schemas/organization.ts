@@ -6,4 +6,7 @@ export const updateOrganizationSchema = z.object({
   address: z.string().optional(),
   logoImageKey: z.string().optional(),
   logoImagePublicId: z.string().optional(),
+  profileName: z.string().optional(),
+  profileImageKey: z.string().optional(),
+  profileImagePublicId: z.string().optional(),
 });

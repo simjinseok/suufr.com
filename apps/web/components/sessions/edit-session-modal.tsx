@@ -59,7 +59,7 @@ function Content({ session, close }: ContentProps) {
       sessionAt: session.sessionAt,
       duration: session?.duration,
       notes: session?.notes,
-      feedback: session?.feedback?.notes,
+      feedback: session?.feedback?.notes ?? '',
     },
   });
   const { control, watch } = useForm({
@@ -68,7 +68,7 @@ function Content({ session, close }: ContentProps) {
       sessionAt: state.fields?.sessionAt,
       duration: state.fields?.duration,
       notes: state.fields?.notes,
-      feedback: state.fields?.feedback,
+      feedback: state.fields?.feedback ?? '',
     },
   });
 
@@ -241,7 +241,7 @@ function Content({ session, close }: ContentProps) {
               control={control}
               name="feedback"
               render={({ field: { name, value, onChange } }) => (
-                <TextField name={name} value={value} onChange={onChange}>
+                <TextField name={name} value={value ?? ''} onChange={onChange}>
                   <Label>피드백</Label>
                   <TextArea variant="secondary" rows={5} className="resize-none" />
                   <Description>수강생에게 보여줄 피드백입니다</Description>

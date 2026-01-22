@@ -126,7 +126,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
 
       // feedback 처리: isDone이고 내용이 있으면 upsert, 아니면 삭제
       if (isDone && feedback) {
-        await sessionsApi.upsertFeedback(sessionUuid as string, feedback);
+        await sessionsApi.upsertFeedback(sessionUuid as string, feedback).catch((e) => console.log('fewefw', e));
       } else {
         await sessionsApi.deleteFeedback(sessionUuid as string).catch(() => {
           // feedback이 없을 수 있으므로 에러 무시

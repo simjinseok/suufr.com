@@ -7,6 +7,8 @@ type Organization = {
   phone: string | null;
   address: string | null;
   logoImageKey: string | null;
+  profileName: string | null;
+  profileImageKey: string | null;
   role?: 'owner' | 'teacher';
 };
 
@@ -37,6 +39,8 @@ type UpdateOrganizationData = {
   name?: string;
   phone?: string;
   address?: string;
+  profileName?: string;
+  profileImageKey?: string;
 };
 
 type SwitchOrganizationResponse = {
