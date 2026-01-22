@@ -54,7 +54,7 @@ export default function Student({ student, statuses }) {
           </Modal>
           <Dropdown>
             <Button variant="secondary"><ChevronDownIcon /></Button>
-            <Dropdown.Popover placement="bottom end">
+            <Dropdown.Popover placement="bottom end" className="min-w-40">
               <Dropdown.Menu
                 selectionMode="none"
                 onAction={(key) => {

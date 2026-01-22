@@ -2,7 +2,6 @@
 
 import {
   MenuIcon,
-  UserIcon,
   LogOutIcon,
   HomeIcon,
   BookUserIcon,
@@ -18,34 +17,26 @@ import {
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
-import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;
   uuid: string;
   name: string;
-  role: OrganizationRole;
-};
-
-type MembershipItem = {
-  id: number;
-  uuid: string;
-  name: string;
-  role: OrganizationRole;
+  profileName: string | null;
   profileImageKey: string | null;
 };
 
 type Props = {
   currentOrg: OrganizationItem;
   organizations: OrganizationItem[];
-  membership: MembershipItem;
 };
 
-export function Sidebar({ currentOrg, organizations, membership }: Props) {
-  const profileImageUrl = membership.profileImageKey
-    ? `/assets/member/${membership.profileImageKey}.webp`
+export function Sidebar({ currentOrg, organizations }: Props) {
+  const profileName = currentOrg.profileName ?? currentOrg.name;
+  const profileImageUrl = currentOrg.profileImageKey
+    ? `/assets/organization/${currentOrg.profileImageKey}.webp`
     : null;
-  const memberInitial = membership.name.charAt(membership.name.length - 1);
+  const profileInitial = profileName.charAt(profileName.length - 1);
 
   const handleMobileAction = (key: string | number) => {
     const keyStr = String(key);
@@ -84,7 +75,7 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
         </div>
       </div>
       <AppNavigation />
-      <UserMenu currentOrg={currentOrg} organizations={organizations} membership={membership} />
+      <UserMenu currentOrg={currentOrg} organizations={organizations} />
     </>
   );
 
@@ -108,13 +99,13 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
             <Button variant="ghost" className="h-auto py-1.5 px-2 gap-2">
               <Avatar className="size-6">
                 {profileImageUrl ? (
-                  <Avatar.Image src={profileImageUrl} alt={membership.name} />
+                  <Avatar.Image src={profileImageUrl} alt={profileName} />
                 ) : null}
-                <Avatar.Fallback className="text-[10px]">{memberInitial}</Avatar.Fallback>
+                <Avatar.Fallback className="text-[10px]">{profileInitial}</Avatar.Fallback>
               </Avatar>
               <div className="text-left">
                 <p className="text-xs font-medium text-gray-900 max-w-20 truncate leading-tight">
-                  {membership.name}
+                  {profileName}
                 </p>
                 <p className="text-[10px] text-gray-500 max-w-20 truncate leading-tight">
                   {currentOrg.name}
@@ -122,7 +113,7 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
               </div>
               <ChevronsUpDownIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             </Button>
-            <Dropdown.Popover placement="bottom end">
+            <Dropdown.Popover placement="bottom end" className="min-w-40">
               <Dropdown.Menu aria-label="사용자 메뉴" onAction={handleMobileAction}>
                 <Dropdown.Section>
                   {organizations.map((org) => (
@@ -146,16 +137,14 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
                   ))}
                 </Dropdown.Section>
                 <Separator />
-                {currentOrg.role === 'owner' && (
-                  <Dropdown.Item id="org-settings" textValue="학원 설정">
-                    <div>
-                      <BuildingIcon strokeWidth={1.5} className="size-5" />
-                    </div>
-                    <div>
-                      <Label>학원 설정</Label>
-                    </div>
-                  </Dropdown.Item>
-                )}
+                <Dropdown.Item id="org-settings" textValue="학원 설정">
+                  <div>
+                    <BuildingIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>학원 설정</Label>
+                  </div>
+                </Dropdown.Item>
                 <Dropdown.Item id="settings" textValue="계정 설정">
                   <div>
                     <SettingsIcon strokeWidth={1.5} className="size-5" />
@@ -190,7 +179,7 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
             <Button variant="ghost" isIconOnly size="sm">
               <MenuIcon className="size-5 text-gray-700" />
             </Button>
-            <Dropdown.Popover placement="bottom end" className="w-auto! animate-none!">
+            <Dropdown.Popover placement="bottom end" className="min-w-40 w-auto! animate-none!">
               <Dropdown.Menu aria-label="메뉴">
                 <Dropdown.Item id="dashboard" href="/dashboard" textValue="메인">
                   <div>

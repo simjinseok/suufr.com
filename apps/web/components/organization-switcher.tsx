@@ -2,13 +2,11 @@
 
 import { ChevronsUpDownIcon, BuildingIcon, CheckIcon } from 'lucide-react';
 import { Button, Dropdown, Label } from '@heroui/react';
-import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;
   uuid: string;
   name: string;
-  role: OrganizationRole;
 };
 
 type Props = {
@@ -42,7 +40,7 @@ export function OrganizationSwitcher({ currentOrg, organizations }: Props) {
         </div>
         <ChevronsUpDownIcon className="w-4 h-4 text-gray-400 shrink-0" />
       </Button>
-      <Dropdown.Popover placement="bottom start">
+      <Dropdown.Popover placement="bottom start" className="min-w-40">
         <Dropdown.Menu
           aria-label="조직 선택"
           onAction={handleSelect}

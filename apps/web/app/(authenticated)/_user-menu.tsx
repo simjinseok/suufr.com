@@ -2,36 +2,26 @@
 
 import { LogOutIcon, SettingsIcon, ShieldIcon, BuildingIcon, CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
-import type { OrganizationRole } from '@/types';
 
 type OrganizationItem = {
   id: number;
   uuid: string;
   name: string;
-  role: OrganizationRole;
-};
-
-type MembershipItem = {
-  id: number;
-  uuid: string;
-  name: string;
-  role: OrganizationRole;
+  profileName: string | null;
   profileImageKey: string | null;
 };
 
 type Props = {
   currentOrg: OrganizationItem;
   organizations: OrganizationItem[];
-  membership: MembershipItem;
 };
 
-export function UserMenu({ currentOrg, organizations, membership }: Props) {
-  const isOwner = currentOrg.role === 'owner';
-
-  const profileImageUrl = membership.profileImageKey
-    ? `/assets/member/${membership.profileImageKey}.webp`
+export function UserMenu({ currentOrg, organizations }: Props) {
+  const profileName = currentOrg.profileName ?? currentOrg.name;
+  const profileImageUrl = currentOrg.profileImageKey
+    ? `/assets/organization/${currentOrg.profileImageKey}.webp`
     : null;
-  const memberInitial = membership.name.charAt(membership.name.length - 1);
+  const profileInitial = profileName.charAt(profileName.length - 1);
 
   const handleAction = (key: string | number) => {
     const keyStr = String(key);
@@ -67,13 +57,13 @@ export function UserMenu({ currentOrg, organizations, membership }: Props) {
           <div className="flex items-center gap-3">
             <Avatar size="sm">
               {profileImageUrl ? (
-                <Avatar.Image src={profileImageUrl} alt={membership.name} />
+                <Avatar.Image src={profileImageUrl} alt={profileName} />
               ) : null}
-              <Avatar.Fallback>{memberInitial}</Avatar.Fallback>
+              <Avatar.Fallback>{profileInitial}</Avatar.Fallback>
             </Avatar>
             <div className="text-left min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {membership.name}
+                {profileName}
               </p>
               <p className="text-xs text-gray-500 truncate">
                 {currentOrg.name}
@@ -82,7 +72,7 @@ export function UserMenu({ currentOrg, organizations, membership }: Props) {
           </div>
           <ChevronsUpDownIcon className="w-4 h-4 text-gray-400 shrink-0" />
         </Button>
-        <Dropdown.Popover placement="top start">
+        <Dropdown.Popover placement="top start" className="min-w-40">
           <Dropdown.Menu
             aria-label="사용자 메뉴"
             onAction={handleAction}
@@ -109,19 +99,17 @@ export function UserMenu({ currentOrg, organizations, membership }: Props) {
               ))}
             </Dropdown.Section>
             <Separator />
-            {isOwner && (
-              <Dropdown.Item
-                id="org-settings"
-                textValue="학원 설정"
-              >
-                <div>
-                  <BuildingIcon strokeWidth={1.5} className="size-5" />
-                </div>
-                <div>
-                  <Label>학원 설정</Label>
-                </div>
-              </Dropdown.Item>
-            )}
+            <Dropdown.Item
+              id="org-settings"
+              textValue="학원 설정"
+            >
+              <div>
+                <BuildingIcon strokeWidth={1.5} className="size-5" />
+              </div>
+              <div>
+                <Label>학원 설정</Label>
+              </div>
+            </Dropdown.Item>
             <Dropdown.Item id="settings" textValue="계정 설정">
               <div>
                 <SettingsIcon strokeWidth={1.5} className="size-5" />

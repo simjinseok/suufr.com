@@ -125,27 +125,6 @@ export type Organization = {
   address?: string;
 };
 
-export type MemberStatusValue = 'active' | 'paused' | 'leave';
-export type OrganizationRole = 'owner' | 'teacher';
-
-export type OrganizationMember = {
-  id: number;
-  uuid: string;
-  name: string;
-  role: 'owner' | 'teacher';
-  status: MemberStatusValue;
-  profileImageKey?: string | null;
-  userId?: string;
-  isLinked: boolean;
-};
-
-export type TMemberStatus = {
-  id: number;
-  uuid: string;
-  status: MemberStatusValue;
-  notes: string | null;
-  changedAt: Date;
-};
 
 export type TAppToken = {
   uuid: string;

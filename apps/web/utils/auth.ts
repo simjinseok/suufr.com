@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import type { OrganizationRole } from '@/types';
 
 export type Session = {
   user: {
@@ -11,20 +10,15 @@ export type Session = {
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
-  } | null;
-  membership: {
-    id: number;
-    uuid: string;
-    name: string;
-    role: OrganizationRole;
+    profileName: string | null;
     profileImageKey: string | null;
   } | null;
   organizations: Array<{
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
+    profileName: string | null;
+    profileImageKey: string | null;
   }>;
 };
 
@@ -53,10 +47,10 @@ export async function getSession(): Promise<Session | null> {
     const data = await res.json();
     const organizations = data.organizations ?? [];
 
-    // 쿠키에서 선택된 organization id 읽기
-    const savedOrgId = cookieStore.get('organization_id')?.value;
-    let selectedOrg = savedOrgId
-      ? organizations.find((org: { id: number }) => org.id === Number(savedOrgId))
+    // 쿠키에서 선택된 organization uuid 읽기
+    const savedOrgUuid = cookieStore.get('organization_uuid')?.value;
+    let selectedOrg = savedOrgUuid
+      ? organizations.find((org: { uuid: string }) => org.uuid === savedOrgUuid)
       : null;
 
     // 없거나 찾을 수 없으면 첫 번째 organization 선택
@@ -71,15 +65,7 @@ export async function getSession(): Promise<Session | null> {
             id: selectedOrg.id,
             uuid: selectedOrg.uuid,
             name: selectedOrg.name,
-            role: selectedOrg.role,
-          }
-        : null,
-      membership: selectedOrg
-        ? {
-            id: selectedOrg.membershipId,
-            uuid: selectedOrg.membershipUuid,
-            name: selectedOrg.membershipName,
-            role: selectedOrg.role,
+            profileName: selectedOrg.profileName,
             profileImageKey: selectedOrg.profileImageKey,
           }
         : null,

@@ -94,7 +94,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                             <Button variant="secondary">
                               <ChevronDownIcon />
                             </Button>
-                            <Dropdown.Popover placement="bottom end">
+                            <Dropdown.Popover placement="bottom end" className="min-w-40">
                               <Dropdown.Menu>
                                 <Dropdown.Section>
                                   <Header>수업</Header>
@@ -173,7 +173,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                             <Button>
                               <ChevronDownIcon />
                             </Button>
-                            <Dropdown.Popover placement="bottom end">
+                            <Dropdown.Popover placement="bottom end" className="min-w-40">
                               <Dropdown.Menu>
                                 <Dropdown.Section>
                                   <Header>수업</Header>
