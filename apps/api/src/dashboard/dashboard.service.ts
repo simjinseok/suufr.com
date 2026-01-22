@@ -6,16 +6,15 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDashboardData(userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      select: { organizationId: true, id: true },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true },
     });
 
-    const organizationIds = memberships.map(m => m.organizationId);
-    const memberIds = memberships.map(m => m.id);
+    const organizationIds = organizations.map(o => o.id);
 
-    // 사용자가 속한 organization이 없으면 빈 결과 반환
+    // 사용자가 소유한 organization이 없으면 빈 결과 반환
     if (organizationIds.length === 0) {
       return {
         success: true,
@@ -48,7 +47,6 @@ export class DashboardService {
       this.prisma.lesson.findMany({
         where: {
           deletedAt: null,
-          memberId: { in: memberIds },
           student: {
             deletedAt: null,
             organizationId: { in: organizationIds },

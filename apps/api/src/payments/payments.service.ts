@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -9,55 +9,22 @@ import { Prisma } from '@prisma/generated/client';
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: {
-        userId,
-        organizationId,
-        deletedAt: null,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
-
-  private async getPaymentWithOrganization(uuid: string) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { uuid },
-      include: {
-        lesson: {
-          include: { student: { select: { organizationId: true } } },
-        },
-      },
-    });
-
-    if (!payment || payment.deletedAt) {
-      throw new NotFoundException(`Payment with UUID ${uuid} not found`);
-    }
-
-    return payment;
-  }
-
   async findAll(query: ListPaymentsQueryDto, userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      include: { organization: { select: { id: true, uuid: true } } },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, uuid: true },
     });
-    const userOrgUuids = memberships.map(m => m.organization.uuid);
-    const userOrgIds = memberships.map(m => m.organizationId);
+    const userOrgUuids = organizations.map(o => o.uuid);
+    const userOrgIds = organizations.map(o => o.id);
 
-    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    // organizationUuids가 지정되면 사용자가 소유한 organization만 필터링
     let orgIds: number[];
     if (query.organizationUuids && query.organizationUuids.length > 0) {
       const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
-      orgIds = memberships
-        .filter(m => filteredUuids.includes(m.organization.uuid))
-        .map(m => m.organizationId);
+      orgIds = organizations
+        .filter(o => filteredUuids.includes(o.uuid))
+        .map(o => o.id);
     }
     else {
       orgIds = userOrgIds;
@@ -117,11 +84,15 @@ export class PaymentsService {
   }
 
   async findOne(uuid: string, userId: string) {
-    const payment = await this.getPaymentWithOrganization(uuid);
-    await this.checkMembership(userId, payment.lesson.student.organizationId);
-
-    const fullPayment = await this.prisma.payment.findUnique({
-      where: { uuid },
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
       include: {
         lesson: {
           include: { student: true },
@@ -129,23 +100,29 @@ export class PaymentsService {
       },
     });
 
-    return { success: true, data: fullPayment };
+    if (!payment) {
+      throw new NotFoundException(`Payment with UUID ${uuid} not found`);
+    }
+
+    return { success: true, data: payment };
   }
 
   async create(dto: CreatePaymentDto, userId: string) {
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { uuid: dto.lessonUuid },
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid: dto.lessonUuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
       include: {
         student: true,
         payment: true,
       },
     });
 
-    if (!lesson || lesson.deletedAt) {
+    if (!lesson) {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
     }
-
-    await this.checkMembership(userId, lesson.student.organizationId);
 
     if (lesson.payment && !lesson.payment.deletedAt) {
       throw new ConflictException('Payment already exists for this lesson');
@@ -170,8 +147,20 @@ export class PaymentsService {
   }
 
   async update(uuid: string, dto: UpdatePaymentDto, userId: string) {
-    const payment = await this.getPaymentWithOrganization(uuid);
-    await this.checkMembership(userId, payment.lesson.student.organizationId);
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with UUID ${uuid} not found`);
+    }
 
     const updatedPayment = await this.prisma.payment.update({
       where: { uuid },
@@ -192,8 +181,20 @@ export class PaymentsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const payment = await this.getPaymentWithOrganization(uuid);
-    await this.checkMembership(userId, payment.lesson.student.organizationId);
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with UUID ${uuid} not found`);
+    }
 
     await this.prisma.payment.update({
       where: { uuid },

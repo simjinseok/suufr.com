@@ -24,82 +24,37 @@ export class AuthService {
   }
 
   async getCurrentOrganization(user: AuthenticatedUser) {
-    const settings = await this.getOrCreateUserSettings(user.userId);
-
-    if (settings.currentOrganizationId) {
-      const member = await this.prisma.organizationMember.findFirst({
-        where: {
-          organizationId: settings.currentOrganizationId,
-          userId: user.userId,
-          deletedAt: null,
-        },
-        include: {
-          organization: true,
-        },
-      });
-
-      if (member && !member.organization.deletedAt) {
-        return {
-          organization: member.organization,
-          member,
-        };
-      }
-    }
-
-    // No current organization set or invalid - find first available
-    const firstMember = await this.prisma.organizationMember.findFirst({
+    const organization = await this.prisma.organization.findFirst({
       where: {
         userId: user.userId,
         deletedAt: null,
-        organization: {
-          deletedAt: null,
-        },
-      },
-      include: {
-        organization: true,
       },
       orderBy: {
         createdAt: 'asc',
       },
     });
 
-    if (firstMember) {
-      // Update current organization
-      await this.prisma.userSettings.update({
-        where: { userId: user.userId },
-        data: { currentOrganizationId: firstMember.organizationId },
-      });
-
-      return {
-        organization: firstMember.organization,
-        member: firstMember,
-      };
+    if (organization) {
+      return { organization };
     }
 
     return null;
   }
 
   async getUserOrganizations(userId: string) {
-    const memberships = await this.prisma.organizationMember.findMany({
+    const organizations = await this.prisma.organization.findMany({
       where: {
         userId,
         deletedAt: null,
-        organization: { deletedAt: null },
-      },
-      include: {
-        organization: true,
       },
     });
 
-    return memberships.map(m => ({
-      id: m.organization.id,
-      uuid: m.organization.uuid,
-      name: m.organization.name,
-      role: m.role,
-      membershipId: m.id,
-      membershipUuid: m.uuid,
-      membershipName: m.name,
-      profileImageKey: m.profileImageKey,
+    return organizations.map(o => ({
+      id: o.id,
+      uuid: o.uuid,
+      name: o.name,
+      profileName: o.profileName,
+      profileImageKey: o.profileImageKey,
     }));
   }
 }

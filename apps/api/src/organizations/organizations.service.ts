@@ -7,24 +7,13 @@ export class OrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(userId: string) {
-    const members = await this.prisma.organizationMember.findMany({
+    const organizations = await this.prisma.organization.findMany({
       where: {
         userId,
         deletedAt: null,
-        organization: {
-          deletedAt: null,
-        },
-      },
-      include: {
-        organization: true,
       },
       orderBy: { createdAt: 'asc' },
     });
-
-    const organizations = members.map((m) => ({
-      ...m.organization,
-      role: m.role,
-    }));
 
     return { success: true, data: organizations };
   }
@@ -32,21 +21,14 @@ export class OrganizationsService {
   async findOne(uuid: string, userId: string) {
     const organization = await this.prisma.organization.findUnique({
       where: { uuid },
-      include: {
-        members: {
-          where: { deletedAt: null },
-          orderBy: { createdAt: 'asc' },
-        },
-      },
     });
 
     if (!organization || organization.deletedAt) {
       throw new NotFoundException(`Organization with UUID ${uuid} not found`);
     }
 
-    // Check if user is a member
-    const isMember = organization.members.some((m) => m.userId === userId);
-    if (!isMember) {
+    // Check if user is the owner
+    if (organization.userId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
@@ -56,20 +38,14 @@ export class OrganizationsService {
   async update(uuid: string, dto: UpdateOrganizationDto, userId: string) {
     const organization = await this.prisma.organization.findUnique({
       where: { uuid },
-      include: {
-        members: {
-          where: { deletedAt: null },
-        },
-      },
     });
 
     if (!organization || organization.deletedAt) {
       throw new NotFoundException(`Organization with UUID ${uuid} not found`);
     }
 
-    // Check if user is a member
-    const isMember = organization.members.some((m) => m.userId === userId);
-    if (!isMember) {
+    // Check if user is the owner
+    if (organization.userId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
@@ -79,47 +55,12 @@ export class OrganizationsService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.phone !== undefined && { phone: dto.phone }),
         ...(dto.address !== undefined && { address: dto.address }),
+        ...(dto.profileName !== undefined && { profileName: dto.profileName }),
+        ...(dto.profileImageKey !== undefined && { profileImageKey: dto.profileImageKey }),
       },
     });
 
     return { success: true, data: updated };
   }
 
-  async switchOrganization(uuid: string, userId: string) {
-    const organization = await this.prisma.organization.findUnique({
-      where: { uuid },
-      include: {
-        members: {
-          where: { deletedAt: null },
-        },
-      },
-    });
-
-    if (!organization || organization.deletedAt) {
-      throw new NotFoundException(`Organization with UUID ${uuid} not found`);
-    }
-
-    // Check if user is a member
-    const member = organization.members.find((m) => m.userId === userId);
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    await this.prisma.userSettings.upsert({
-      where: { userId },
-      update: { currentOrganizationId: organization.id },
-      create: {
-        userId,
-        currentOrganizationId: organization.id,
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        organization,
-        member,
-      },
-    };
-  }
 }

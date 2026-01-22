@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
@@ -9,50 +9,22 @@ import { Prisma } from '@prisma/generated/client';
 export class MeetingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: {
-        userId,
-        organizationId,
-        deletedAt: null,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
-
-  private async getMeetingWithOrganization(uuid: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { uuid },
-    });
-
-    if (!meeting || meeting.deletedAt) {
-      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
-    }
-
-    return meeting;
-  }
-
   async findAll(query: ListMeetingsQueryDto, userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      include: { organization: { select: { id: true, uuid: true } } },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, uuid: true },
     });
-    const userOrgUuids = memberships.map(m => m.organization.uuid);
-    const userOrgIds = memberships.map(m => m.organizationId);
+    const userOrgUuids = organizations.map(o => o.uuid);
+    const userOrgIds = organizations.map(o => o.id);
 
-    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    // organizationUuids가 지정되면 사용자가 소유한 organization만 필터링
     let orgIds: number[];
     if (query.organizationUuids && query.organizationUuids.length > 0) {
       const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
-      orgIds = memberships
-        .filter(m => filteredUuids.includes(m.organization.uuid))
-        .map(m => m.organizationId);
+      orgIds = organizations
+        .filter(o => filteredUuids.includes(o.uuid))
+        .map(o => o.id);
     }
     else {
       orgIds = userOrgIds;
@@ -95,22 +67,29 @@ export class MeetingsService {
   }
 
   async findOne(uuid: string, userId: string) {
-    const meeting = await this.getMeetingWithOrganization(uuid);
-    await this.checkMembership(userId, meeting.organizationId);
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
+    }
 
     return { success: true, data: meeting };
   }
 
   async create(dto: CreateMeetingDto, userId: string) {
-    const organization = await this.prisma.organization.findUnique({
-      where: { uuid: dto.organizationUuid },
+    const organization = await this.prisma.organization.findFirst({
+      where: { uuid: dto.organizationUuid, userId, deletedAt: null },
     });
 
-    if (!organization || organization.deletedAt) {
+    if (!organization) {
       throw new NotFoundException('Organization not found');
     }
-
-    await this.checkMembership(userId, organization.id);
 
     const meeting = await this.prisma.meeting.create({
       data: {
@@ -128,8 +107,17 @@ export class MeetingsService {
   }
 
   async update(uuid: string, dto: UpdateMeetingDto, userId: string) {
-    const meeting = await this.getMeetingWithOrganization(uuid);
-    await this.checkMembership(userId, meeting.organizationId);
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
+    }
 
     const updatedMeeting = await this.prisma.meeting.update({
       where: { uuid },
@@ -146,8 +134,17 @@ export class MeetingsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const meeting = await this.getMeetingWithOrganization(uuid);
-    await this.checkMembership(userId, meeting.organizationId);
+    const meeting = await this.prisma.meeting.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
+    });
+
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with UUID ${uuid} not found`);
+    }
 
     await this.prisma.meeting.update({
       where: { uuid },

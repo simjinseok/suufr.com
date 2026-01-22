@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentCommentDto } from './dto/create-student-comment.dto';
 import { UpdateStudentCommentDto } from './dto/update-student-comment.dto';
@@ -7,24 +7,18 @@ import { UpdateStudentCommentDto } from './dto/update-student-comment.dto';
 export class StudentCommentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: { userId, organizationId, deletedAt: null },
-    });
-    if (!member) throw new ForbiddenException('Access denied');
-    return member;
-  }
-
   async findByStudent(studentUuid: string, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid: studentUuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid: studentUuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
-
-    await this.checkMembership(userId, student.organizationId);
 
     const comments = await this.prisma.studentComment.findMany({
       where: {
@@ -38,15 +32,17 @@ export class StudentCommentsService {
   }
 
   async create(studentUuid: string, dto: CreateStudentCommentDto, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid: studentUuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid: studentUuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
-
-    await this.checkMembership(userId, student.organizationId);
 
     const comment = await this.prisma.studentComment.create({
       data: {
@@ -59,16 +55,20 @@ export class StudentCommentsService {
   }
 
   async update(uuid: string, dto: UpdateStudentCommentDto, userId: string) {
-    const comment = await this.prisma.studentComment.findUnique({
-      where: { uuid },
-      include: { student: true },
+    const comment = await this.prisma.studentComment.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: {
+          deletedAt: null,
+          organization: { userId, deletedAt: null },
+        },
+      },
     });
 
-    if (!comment || comment.deletedAt) {
+    if (!comment) {
       throw new NotFoundException(`Comment with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, comment.student.organizationId);
 
     const updated = await this.prisma.studentComment.update({
       where: { uuid },
@@ -81,16 +81,20 @@ export class StudentCommentsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const comment = await this.prisma.studentComment.findUnique({
-      where: { uuid },
-      include: { student: true },
+    const comment = await this.prisma.studentComment.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: {
+          deletedAt: null,
+          organization: { userId, deletedAt: null },
+        },
+      },
     });
 
-    if (!comment || comment.deletedAt) {
+    if (!comment) {
       throw new NotFoundException(`Comment with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, comment.student.organizationId);
 
     await this.prisma.studentComment.update({
       where: { uuid },

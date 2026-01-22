@@ -9,38 +9,22 @@ import { Prisma } from '@prisma/generated/client';
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: {
-        userId,
-        organizationId,
-        deletedAt: null,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
-
   async findAll(query: ListStudentsQueryDto, userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      include: { organization: { select: { id: true, uuid: true } } },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, uuid: true },
     });
-    const userOrgUuids = memberships.map(m => m.organization.uuid);
-    const userOrgIds = memberships.map(m => m.organizationId);
+    const userOrgUuids = organizations.map(o => o.uuid);
+    const userOrgIds = organizations.map(o => o.id);
 
-    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    // organizationUuids가 지정되면 사용자가 소유한 organization만 필터링
     let orgIds: number[];
     if (query.organizationUuids && query.organizationUuids.length > 0) {
       const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
-      orgIds = memberships
-        .filter(m => filteredUuids.includes(m.organization.uuid))
-        .map(m => m.organizationId);
+      orgIds = organizations
+        .filter(o => filteredUuids.includes(o.uuid))
+        .map(o => o.id);
     }
     else {
       orgIds = userOrgIds;
@@ -79,29 +63,29 @@ export class StudentsService {
   }
 
   async findOne(uuid: string, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, student.organizationId);
 
     return { success: true, data: student };
   }
 
   async create(dto: CreateStudentDto, userId: string) {
-    const organization = await this.prisma.organization.findUnique({
-      where: { uuid: dto.organizationUuid },
+    const organization = await this.prisma.organization.findFirst({
+      where: { uuid: dto.organizationUuid, userId, deletedAt: null },
     });
 
-    if (!organization || organization.deletedAt) {
+    if (!organization) {
       throw new NotFoundException('Organization not found');
     }
-
-    await this.checkMembership(userId, organization.id);
 
     const student = await this.prisma.student.create({
       data: {
@@ -119,15 +103,17 @@ export class StudentsService {
   }
 
   async update(uuid: string, dto: UpdateStudentDto, userId: string) {
-    const existing = await this.prisma.student.findUnique({
-      where: { uuid },
+    const existing = await this.prisma.student.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, existing.organizationId);
 
     const student = await this.prisma.student.update({
       where: { uuid },
@@ -147,15 +133,17 @@ export class StudentsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const existing = await this.prisma.student.findUnique({
-      where: { uuid },
+    const existing = await this.prisma.student.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, existing.organizationId);
 
     await this.prisma.student.update({
       where: { uuid },
@@ -166,15 +154,17 @@ export class StudentsService {
   }
 
   async getStats(uuid: string, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, student.organizationId);
 
     type StatsResult = {
       remainingSessionsCount: number;

@@ -12,4 +12,12 @@ export class UpdateOrganizationDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @IsString()
+  @IsOptional()
+  profileName?: string;
+
+  @IsString()
+  @IsOptional()
+  profileImageKey?: string;
 }

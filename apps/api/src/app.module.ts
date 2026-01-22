@@ -9,11 +9,9 @@ import { LessonsModule } from './lessons/lessons.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PaymentsModule } from './payments/payments.module';
 import { OrganizationsModule } from './organizations/organizations.module';
-import { MembersModule } from './members/members.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { StudentStatusesModule } from './student-statuses/student-statuses.module';
 import { StudentCommentsModule } from './student-comments/student-comments.module';
-import { MemberStatusesModule } from './member-statuses/member-statuses.module';
 import { SettingsModule } from './settings/settings.module';
 import { AppTokensModule } from './app-tokens/app-tokens.module';
 
@@ -31,11 +29,9 @@ import { AppTokensModule } from './app-tokens/app-tokens.module';
     SessionsModule,
     PaymentsModule,
     OrganizationsModule,
-    MembersModule,
     MeetingsModule,
     StudentStatusesModule,
     StudentCommentsModule,
-    MemberStatusesModule,
     SettingsModule,
     AppTokensModule,
   ],

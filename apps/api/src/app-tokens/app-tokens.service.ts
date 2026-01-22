@@ -3,8 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppTokenDto } from './dto/create-app-token.dto';
 import * as crypto from 'crypto';
 import { timingSafeEqual } from 'crypto';
-import type { OrganizationRole } from '../generated/prisma/client';
-
 function generateToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -32,7 +30,6 @@ export type DavSession = {
     id: number;
     uuid: string;
     name: string;
-    role: OrganizationRole;
   };
   tokenId: number;
 };
@@ -121,18 +118,15 @@ export class AppTokensService {
       if (!isValid) continue;
 
       // Token is valid, now verify the user has the expected email
-      // Find the user's membership to get organization info
-      const membership = await this.prisma.organizationMember.findFirst({
+      // Find the user's organization
+      const organization = await this.prisma.organization.findFirst({
         where: {
           userId: appToken.userId,
           deletedAt: null,
         },
-        include: {
-          organization: true,
-        },
       });
 
-      if (!membership) continue;
+      if (!organization) continue;
 
       // Update lastUsedAt
       await this.prisma.appToken.update({
@@ -146,10 +140,9 @@ export class AppTokensService {
           email,
         },
         organization: {
-          id: membership.organization.id,
-          uuid: membership.organization.uuid,
-          name: membership.organization.name,
-          role: membership.role,
+          id: organization.id,
+          uuid: organization.uuid,
+          name: organization.name,
         },
         tokenId: appToken.id,
       };

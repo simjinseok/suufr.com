@@ -325,7 +325,7 @@ export class CognitoService {
 
     await this.prisma.$transaction(async (tx) => {
       const orgName = name || email.split('@')[0];
-      const org = await tx.organization.create({
+      await tx.organization.create({
         data: {
           name: orgName,
           userId,
@@ -335,8 +335,8 @@ export class CognitoService {
 
       await tx.userSettings.upsert({
         where: { userId },
-        create: { userId, currentOrganizationId: org.id },
-        update: { currentOrganizationId: org.id },
+        create: { userId },
+        update: {},
       });
     });
   }

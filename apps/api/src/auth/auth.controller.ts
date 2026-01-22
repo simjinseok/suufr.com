@@ -35,7 +35,6 @@ export class AuthController {
         name: user.username,
       },
       organization: orgData?.organization ?? null,
-      membership: orgData?.member ?? null,
       organizations,
       settings,
     };

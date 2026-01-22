@@ -18,51 +18,22 @@ function generateShareId(): string {
 export class LessonsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: {
-        userId,
-        organizationId,
-        deletedAt: null,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
-
-  private async getLessonWithOrganization(uuid: string) {
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { uuid },
-      include: { student: { select: { organizationId: true } } },
-    });
-
-    if (!lesson || lesson.deletedAt) {
-      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
-    }
-
-    return lesson;
-  }
-
   async findAll(query: ListLessonsQueryDto, userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      include: { organization: { select: { id: true, uuid: true } } },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, uuid: true },
     });
-    const userOrgUuids = memberships.map(m => m.organization.uuid);
-    const userOrgIds = memberships.map(m => m.organizationId);
+    const userOrgUuids = organizations.map(o => o.uuid);
+    const userOrgIds = organizations.map(o => o.id);
 
-    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    // organizationUuids가 지정되면 사용자가 소유한 organization만 필터링
     let orgIds: number[];
     if (query.organizationUuids && query.organizationUuids.length > 0) {
       const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
-      orgIds = memberships
-        .filter(m => filteredUuids.includes(m.organization.uuid))
-        .map(m => m.organizationId);
+      orgIds = organizations
+        .filter(o => filteredUuids.includes(o.uuid))
+        .map(o => o.id);
     }
     else {
       orgIds = userOrgIds;
@@ -107,8 +78,13 @@ export class LessonsService {
           sessions: {
             where: { deletedAt: null },
             orderBy: { sessionAt: 'asc' },
+            include: { feedback: true },
           },
-          payment: true,
+          payment: {
+            where: {
+              deletedAt: null,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -130,11 +106,12 @@ export class LessonsService {
   }
 
   async findOne(uuid: string, userId: string) {
-    const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkMembership(userId, lesson.student.organizationId);
-
-    const fullLesson = await this.prisma.lesson.findUnique({
-      where: { uuid },
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
       include: {
         student: true,
         sessions: {
@@ -142,7 +119,9 @@ export class LessonsService {
           orderBy: { sessionAt: 'asc' },
           include: { feedback: true },
         },
-        payment: true,
+        payment: {
+          where: { deletedAt: null },
+        },
         shares: {
           where: { deletedAt: null },
           orderBy: { createdAt: 'desc' },
@@ -150,26 +129,31 @@ export class LessonsService {
       },
     });
 
-    return { success: true, data: fullLesson };
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
+    }
+
+    return { success: true, data: lesson };
   }
 
   async create(dto: CreateLessonDto, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid: dto.studentUuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid: dto.studentUuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
-
-    const member = await this.checkMembership(userId, student.organizationId);
 
     const lesson = await this.prisma.lesson.create({
       data: {
         title: dto.title,
         notes: dto.notes ?? '',
         studentId: student.id,
-        memberId: member.id,
         sessions: dto.sessions
           ? {
               create: dto.sessions.map((s) => ({
@@ -193,8 +177,17 @@ export class LessonsService {
   }
 
   async update(uuid: string, dto: UpdateLessonDto, userId: string) {
-    const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkMembership(userId, lesson.student.organizationId);
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
+    }
 
     const updatedLesson = await this.prisma.lesson.update({
       where: { uuid },
@@ -216,8 +209,17 @@ export class LessonsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkMembership(userId, lesson.student.organizationId);
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
+    }
 
     await this.prisma.lesson.update({
       where: { uuid },
@@ -228,8 +230,17 @@ export class LessonsService {
   }
 
   async createShare(uuid: string, userId: string, expiresInDays = 7) {
-    const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkMembership(userId, lesson.student.organizationId);
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
+    }
 
     const shareId = generateShareId();
     const expiresAt = new Date();
@@ -247,8 +258,17 @@ export class LessonsService {
   }
 
   async deleteShare(uuid: string, shareId: string, userId: string) {
-    const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkMembership(userId, lesson.student.organizationId);
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
+    }
 
     const share = await this.prisma.sessionShare.findFirst({
       where: { shareId, lessonId: lesson.id, deletedAt: null },
@@ -276,16 +296,12 @@ export class LessonsService {
               select: {
                 name: true,
                 nextPaymentAt: true,
-              },
-            },
-            member: {
-              select: {
-                name: true,
-                profileImageKey: true,
                 organization: {
                   select: {
                     name: true,
                     logoImageKey: true,
+                    profileName: true,
+                    profileImageKey: true,
                   },
                 },
               },

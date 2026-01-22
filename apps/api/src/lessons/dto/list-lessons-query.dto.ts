@@ -26,9 +26,5 @@ export class ListLessonsQueryDto {
 
   @IsOptional()
   @IsString()
-  memberUuid?: string;
-
-  @IsOptional()
-  @IsString()
   studentUuid?: string;
 }

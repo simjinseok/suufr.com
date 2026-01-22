@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -10,55 +10,22 @@ import { Prisma } from '@prisma/generated/client';
 export class SessionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: {
-        userId,
-        organizationId,
-        deletedAt: null,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('Access denied');
-    }
-
-    return member;
-  }
-
-  private async getSessionWithOrganization(uuid: string) {
-    const session = await this.prisma.session.findUnique({
-      where: { uuid },
-      include: {
-        lesson: {
-          include: { student: { select: { organizationId: true } } },
-        },
-      },
-    });
-
-    if (!session || session.deletedAt) {
-      throw new NotFoundException(`Session with UUID ${uuid} not found`);
-    }
-
-    return session;
-  }
-
   async findAll(query: ListSessionsQueryDto, userId: string) {
-    // 사용자가 속한 모든 organization 조회
-    const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId, deletedAt: null, organization: { deletedAt: null } },
-      include: { organization: { select: { id: true, uuid: true } } },
+    // 사용자가 소유한 모든 organization 조회
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, uuid: true },
     });
-    const userOrgUuids = memberships.map(m => m.organization.uuid);
-    const userOrgIds = memberships.map(m => m.organizationId);
+    const userOrgUuids = organizations.map(o => o.uuid);
+    const userOrgIds = organizations.map(o => o.id);
 
-    // organizationUuids가 지정되면 사용자가 속한 organization만 필터링
+    // organizationUuids가 지정되면 사용자가 소유한 organization만 필터링
     let orgIds: number[];
     if (query.organizationUuids && query.organizationUuids.length > 0) {
       const filteredUuids = query.organizationUuids.filter(uuid => userOrgUuids.includes(uuid));
-      orgIds = memberships
-        .filter(m => filteredUuids.includes(m.organization.uuid))
-        .map(m => m.organizationId);
+      orgIds = organizations
+        .filter(o => filteredUuids.includes(o.uuid))
+        .map(o => o.id);
     }
     else {
       orgIds = userOrgIds;
@@ -133,11 +100,15 @@ export class SessionsService {
   }
 
   async findOne(uuid: string, userId: string) {
-    const session = await this.getSessionWithOrganization(uuid);
-    await this.checkMembership(userId, session.lesson.student.organizationId);
-
-    const fullSession = await this.prisma.session.findUnique({
-      where: { uuid },
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
       include: {
         lesson: {
           include: { student: true },
@@ -146,20 +117,26 @@ export class SessionsService {
       },
     });
 
-    return { success: true, data: fullSession };
+    if (!session) {
+      throw new NotFoundException(`Session with UUID ${uuid} not found`);
+    }
+
+    return { success: true, data: session };
   }
 
   async create(dto: CreateSessionDto, userId: string) {
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { uuid: dto.lessonUuid },
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        uuid: dto.lessonUuid,
+        deletedAt: null,
+        student: { organization: { userId, deletedAt: null } },
+      },
       include: { student: true },
     });
 
-    if (!lesson || lesson.deletedAt) {
+    if (!lesson) {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
     }
-
-    await this.checkMembership(userId, lesson.student.organizationId);
 
     const session = await this.prisma.session.create({
       data: {
@@ -180,8 +157,20 @@ export class SessionsService {
   }
 
   async update(uuid: string, dto: UpdateSessionDto, userId: string) {
-    const session = await this.getSessionWithOrganization(uuid);
-    await this.checkMembership(userId, session.lesson.student.organizationId);
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with UUID ${uuid} not found`);
+    }
 
     const updatedSession = await this.prisma.session.update({
       where: { uuid },
@@ -203,8 +192,20 @@ export class SessionsService {
   }
 
   async remove(uuid: string, userId: string) {
-    const session = await this.getSessionWithOrganization(uuid);
-    await this.checkMembership(userId, session.lesson.student.organizationId);
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with UUID ${uuid} not found`);
+    }
 
     await this.prisma.session.update({
       where: { uuid },
@@ -215,8 +216,20 @@ export class SessionsService {
   }
 
   async markDone(uuid: string, isDone: boolean, userId: string) {
-    const session = await this.getSessionWithOrganization(uuid);
-    await this.checkMembership(userId, session.lesson.student.organizationId);
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        lesson: {
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session with UUID ${uuid} not found`);
+    }
 
     const updatedSession = await this.prisma.session.update({
       where: { uuid },
@@ -233,21 +246,21 @@ export class SessionsService {
   }
 
   async upsertFeedback(uuid: string, dto: UpsertFeedbackDto, userId: string) {
-    const session = await this.prisma.session.findUnique({
-      where: { uuid },
-      include: {
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
         lesson: {
-          include: { student: { select: { organizationId: true } } },
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
         },
-        feedback: true,
       },
+      include: { feedback: true },
     });
 
-    if (!session || session.deletedAt) {
+    if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     let feedback;
     if (session.feedback) {
@@ -269,21 +282,21 @@ export class SessionsService {
   }
 
   async deleteFeedback(uuid: string, userId: string) {
-    const session = await this.prisma.session.findUnique({
-      where: { uuid },
-      include: {
+    const session = await this.prisma.session.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
         lesson: {
-          include: { student: { select: { organizationId: true } } },
+          deletedAt: null,
+          student: { organization: { userId, deletedAt: null } },
         },
-        feedback: true,
       },
+      include: { feedback: true },
     });
 
-    if (!session || session.deletedAt) {
+    if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
-
-    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     if (!session.feedback) {
       throw new NotFoundException('Feedback not found');

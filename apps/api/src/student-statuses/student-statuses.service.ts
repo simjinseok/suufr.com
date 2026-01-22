@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentStatusDto } from './dto/create-student-status.dto';
 import { UpdateStudentStatusDto } from './dto/update-student-status.dto';
@@ -7,30 +7,18 @@ import { UpdateStudentStatusDto } from './dto/update-student-status.dto';
 export class StudentStatusesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkMembership(userId: string, organizationId: number) {
-    const member = await this.prisma.organizationMember.findFirst({
-      where: { userId, organizationId, deletedAt: null },
-    });
-    if (!member) throw new ForbiddenException('Access denied');
-    return member;
-  }
-
-  private async checkOwnership(userId: string, organizationId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-    if (member.role !== 'owner') throw new ForbiddenException('Owner permission required');
-    return member;
-  }
-
   async findByStudent(studentUuid: string, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid: studentUuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid: studentUuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
-
-    await this.checkMembership(userId, student.organizationId);
 
     const statuses = await this.prisma.studentStatus.findMany({
       where: {
@@ -44,15 +32,17 @@ export class StudentStatusesService {
   }
 
   async create(studentUuid: string, dto: CreateStudentStatusDto, userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { uuid: studentUuid },
+    const student = await this.prisma.student.findFirst({
+      where: {
+        uuid: studentUuid,
+        deletedAt: null,
+        organization: { userId, deletedAt: null },
+      },
     });
 
-    if (!student || student.deletedAt) {
+    if (!student) {
       throw new NotFoundException(`Student with UUID ${studentUuid} not found`);
     }
-
-    await this.checkOwnership(userId, student.organizationId);
 
     const [status] = await this.prisma.$transaction([
       this.prisma.studentStatus.create({
@@ -73,16 +63,20 @@ export class StudentStatusesService {
   }
 
   async update(uuid: string, dto: UpdateStudentStatusDto, userId: string) {
-    const status = await this.prisma.studentStatus.findUnique({
-      where: { uuid },
-      include: { student: true },
+    const status = await this.prisma.studentStatus.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        student: {
+          deletedAt: null,
+          organization: { userId, deletedAt: null },
+        },
+      },
     });
 
-    if (!status || status.deletedAt) {
+    if (!status) {
       throw new NotFoundException(`Status with UUID ${uuid} not found`);
     }
-
-    await this.checkOwnership(userId, status.student.organizationId);
 
     const updated = await this.prisma.studentStatus.update({
       where: { uuid },
