@@ -13,6 +13,5 @@ WHERE m."organization_id" = o."id"
   AND m."role" = 'owner'
   AND m."deleted_at" IS NULL;
 
--- AlterColumn: user_id, profile_name을 필수로 변경
+-- AlterColumn: user_id를 필수로 변경
 ALTER TABLE "organizations" ALTER COLUMN "user_id" SET NOT NULL;
-ALTER TABLE "organizations" ALTER COLUMN "profile_name" SET NOT NULL;
