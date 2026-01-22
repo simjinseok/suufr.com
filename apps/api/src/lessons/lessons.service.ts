@@ -4,12 +4,15 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { ListLessonsQueryDto } from './dto/list-lessons-query.dto';
 import { Prisma } from '@prisma/generated/client';
+import crypto from 'crypto';
 
 function generateShareId(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const length = 8;
+  const bytes = crypto.randomBytes(length);
   let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length];
   }
   return result;
 }
