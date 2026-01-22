@@ -13,6 +13,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
 }
 
 /* PC에서 사이드바 고려한 Modal 가운데 정렬 */
