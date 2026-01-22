@@ -26,7 +26,7 @@ phases:
       - cp -r public .next/standalone/apps/web/public 2>/dev/null || true
       - cp -r .ebextensions .next/standalone/apps/web/
       - mkdir -p .next/standalone/apps/web/.platform
-      - cp -r .platform/. .next/standalone/apps/web/.platform/ 2>/dev/null || true
+      # - cp -r .platform/. .next/standalone/apps/web/.platform/ 2>/dev/null || true
       - cp Procfile .next/standalone/apps/web/
       - cp .npmrc .next/standalone/apps/web/ 2>/dev/null || true
       # npm error Unsupported URL Type "workspace:": workspace:* 오류 때문에 devDependencies 제거
@@ -36,7 +36,7 @@ artifacts:
   base-directory: apps/web/.next/standalone/apps/web
   files:
     - .next/**/*
-    - .platform/**/*
+    # - .platform/**/*
     - .ebextensions/*
     - server.js
     - package.json
