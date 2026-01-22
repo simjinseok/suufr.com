@@ -16,22 +16,22 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.971.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.972.0",
     "@nestjs/common": "^11.1.12",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.12",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.12",
-    "@prisma/adapter-pg": "^7.2.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/adapter-pg": "7.2.0",
+    "@prisma/client": "7.2.0",
     "aws-jwt-verify": "^4.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "fast-xml-parser": "^5.3.3",
-    "pg": "^8.17.1",
-    "prisma": "^7.2.0",
+    "pg": "^8.17.2",
+    "prisma": "7.2.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
