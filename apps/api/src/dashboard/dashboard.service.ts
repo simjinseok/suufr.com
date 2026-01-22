@@ -5,7 +5,31 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboardData(organizationId?: number, memberId?: number) {
+  async getDashboardData(userId: string) {
+    // 사용자가 속한 모든 organization 조회
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { userId, deletedAt: null, organization: { deletedAt: null } },
+      select: { organizationId: true, id: true },
+    });
+
+    const organizationIds = memberships.map(m => m.organizationId);
+    const memberIds = memberships.map(m => m.id);
+
+    // 사용자가 속한 organization이 없으면 빈 결과 반환
+    if (organizationIds.length === 0) {
+      return {
+        success: true,
+        data: {
+          activeStudentCount: 0,
+          notPaidLessons: [],
+          notPaidLessonsCount: 0,
+          leftStudentsCount: 0,
+          uncheckedMeetings: [],
+          uncheckedMeetingsCount: 0,
+        },
+      };
+    }
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -16,7 +40,7 @@ export class DashboardService {
         where: {
           deletedAt: null,
           status: 'active',
-          ...(organizationId && { organizationId }),
+          organizationId: { in: organizationIds },
         },
       }),
 
@@ -24,10 +48,10 @@ export class DashboardService {
       this.prisma.lesson.findMany({
         where: {
           deletedAt: null,
-          ...(memberId && { memberId }),
+          memberId: { in: memberIds },
           student: {
             deletedAt: null,
-            ...(organizationId && { organizationId }),
+            organizationId: { in: organizationIds },
           },
           OR: [
             { payment: null },
@@ -59,7 +83,7 @@ export class DashboardService {
           deletedAt: null,
           student: {
             deletedAt: null,
-            ...(organizationId && { organizationId }),
+            organizationId: { in: organizationIds },
           },
         },
       }),
@@ -69,7 +93,7 @@ export class DashboardService {
         where: {
           isDone: false,
           deletedAt: null,
-          ...(organizationId && { organizationId }),
+          organizationId: { in: organizationIds },
         },
         select: {
           uuid: true,
