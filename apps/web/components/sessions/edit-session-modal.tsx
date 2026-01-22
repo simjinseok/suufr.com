@@ -106,13 +106,13 @@ function Content({ session, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="sessionUuid" value={session.uuid} />
-          <React.Activity mode={selectedTab === 'basic' ? 'visible' : 'hidden'}>
+          <div className="hidden flex-col gap-3 data-[selected=true]:flex" data-selected={selectedTab === 'basic' ? 'true' : undefined}>
             <Controller
               control={control}
               name="isDone"
               render={({ field: { name, value, onChange } }) => (
-                <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on">
-                  <Checkbox.Control>
+                <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on" variant="secondary">
+                  <Checkbox.Control className="size-5">
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Content>
@@ -129,8 +129,13 @@ function Content({ session, close }: ContentProps) {
                   <DateField
                     name={name}
                     granularity="day"
-                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
-                    onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
+                    value={toCalendarDate(fromDate(new Date(value), 'Asia/Seoul'))}
+                    onChange={(v) => {
+                      if (!v) return;
+                      const current = fromDate(new Date(value), 'Asia/Seoul');
+                      const updated = current.set({ year: v.year, month: v.month, day: v.day });
+                      onChange(updated.toDate());
+                    }}
                     hourCycle={hourCycle}
                     hideTimeZone
                     isRequired
@@ -149,10 +154,12 @@ function Content({ session, close }: ContentProps) {
                         <Popover.Content placement="bottom left">
                           <Popover.Dialog>
                             <Calendar
-                              value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
+                              value={toCalendarDate(fromDate(new Date(value), 'Asia/Seoul'))}
                               onChange={(newDate) => {
                                 if (newDate) {
-                                  onChange(newDate.toDate('Asia/Seoul'));
+                                  const current = fromDate(new Date(value), 'Asia/Seoul');
+                                  const updated = current.set({ year: newDate.year, month: newDate.month, day: newDate.day });
+                                  onChange(updated.toDate());
                                   setIsCalendarOpen(false);
                                 }
                               }}
@@ -195,6 +202,7 @@ function Content({ session, close }: ContentProps) {
                   minValue={5}
                   step={5}
                   variant="secondary"
+                  aria-label="수업 시간 (분)"
                 >
                   <Label>수업 시간 (분)</Label>
                   <NumberField.Group>
@@ -205,9 +213,9 @@ function Content({ session, close }: ContentProps) {
                 </NumberField>
               )}
             />
-          </React.Activity>
+          </div>
 
-          <React.Activity mode={selectedTab === 'memo' ? 'visible' : 'hidden'}>
+          <div className="hidden data-[selected=true]:block" data-selected={selectedTab === 'memo' ? 'true' : undefined}>
             <Controller
               control={control}
               name="notes"
@@ -217,27 +225,30 @@ function Content({ session, close }: ContentProps) {
                   value={value}
                   onChange={onChange}
                 >
-                  <Label className="sr-only">메모</Label>
+                  <Label>수업내용</Label>
                   <TextArea variant="secondary" rows={5} className="resize-none" />
                   <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
                 </TextField>
               )}
             />
-          </React.Activity>
+          </div>
 
-          <React.Activity mode={selectedTab === 'feedback' ? 'visible' : 'hidden'}>
+          <div
+            className="hidden data-[selected=true]:block"
+            data-selected={selectedTab === 'feedback' ? 'true' : undefined}
+          >
             <Controller
               control={control}
               name="feedback"
               render={({ field: { name, value, onChange } }) => (
                 <TextField name={name} value={value} onChange={onChange}>
-                  <Label className="sr-only">피드백</Label>
+                  <Label>피드백</Label>
                   <TextArea variant="secondary" rows={5} className="resize-none" />
                   <Description>수강생에게 보여줄 피드백입니다</Description>
                 </TextField>
               )}
             />
-          </React.Activity>
+          </div>
         </Form>
         <Tabs
           className="mt-4"

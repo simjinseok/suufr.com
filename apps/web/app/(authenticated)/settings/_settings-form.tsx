@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Form, Button, NumberField, Surface, Switch } from '@heroui/react';
+import { Form, Button, Label, NumberField, Surface, Switch } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { updateSettings } from '@/actions/settings';
@@ -84,8 +84,8 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
                   minValue={5}
                   maxValue={480}
                   step={5}
-                  aria-label="기본 수업 시간"
                 >
+                  <Label className="sr-only">기본 수업 시간</Label>
                   <NumberField.Group>
                     <NumberField.DecrementButton />
                     <NumberField.Input className="w-16 text-center" />

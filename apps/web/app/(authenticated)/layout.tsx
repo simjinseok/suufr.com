@@ -12,15 +12,15 @@ export default async function AuthenticatedLayout({
   const session = await getSession();
 
   // 세션이 없거나 organization이 없으면 로그인 페이지로
-  // if (!session || !session.organization) {
-  //   redirect('/login');
-  // }
+  if (!session) {
+    redirect('/login');
+  }
 
-  const settings = await getUserSettings(session.user.id);
+  const settings = await getUserSettings();
 
   return (
     <TimeFormatProvider use24HourFormat={settings.use24HourFormat} defaultDuration={settings.defaultDuration}>
-      <div className="flex min-h-dvh bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
+      <div className="flex min-h-dvh bg-linear-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
         <Sidebar
           currentOrg={session.organization}
           organizations={session.organizations}

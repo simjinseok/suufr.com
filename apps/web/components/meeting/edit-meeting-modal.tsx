@@ -133,7 +133,7 @@ function Content({ meeting, close }: ContentProps) {
             name="isDone"
             render={({ field: { name, value, onChange } }) => (
               <Checkbox name={name} isSelected={value} onChange={onChange} value="on">
-                <Checkbox.Control>
+                <Checkbox.Control className="size-5">
                   <Checkbox.Indicator />
                 </Checkbox.Control>
                 <Checkbox.Content>

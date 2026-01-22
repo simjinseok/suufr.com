@@ -124,7 +124,7 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
             </Button>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu aria-label="사용자 메뉴" onAction={handleMobileAction}>
-                <Dropdown.Section title="과외방">
+                <Dropdown.Section>
                   {organizations.map((org) => (
                     <Dropdown.Item
                       key={org.uuid}
@@ -190,7 +190,7 @@ export function Sidebar({ currentOrg, organizations, membership }: Props) {
             <Button variant="ghost" isIconOnly size="sm">
               <MenuIcon className="size-5 text-gray-700" />
             </Button>
-            <Dropdown.Popover placement="bottom end">
+            <Dropdown.Popover placement="bottom end" className="w-auto! animate-none!">
               <Dropdown.Menu aria-label="메뉴">
                 <Dropdown.Item id="dashboard" href="/dashboard" textValue="메인">
                   <div>
