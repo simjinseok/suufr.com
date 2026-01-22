@@ -60,10 +60,10 @@ export class MemberStatusesService {
       throw new NotFoundException(`Member with UUID ${memberUuid} not found`);
     }
 
-    // Check if user is owner of the organization
-    const ownerMember = member.organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can change member status');
+    // Check if user is a member of the organization
+    const isMember = member.organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Create status history and update member status
@@ -107,10 +107,10 @@ export class MemberStatusesService {
       throw new NotFoundException(`Status with UUID ${uuid} not found`);
     }
 
-    // Check if user is owner of the organization
-    const ownerMember = status.member.organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can update member status history');
+    // Check if user is a member of the organization
+    const isMember = status.member.organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     const updated = await this.prisma.memberStatus.update({

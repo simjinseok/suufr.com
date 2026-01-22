@@ -26,26 +26,6 @@ export class SessionsService {
     return member;
   }
 
-  private async checkOwnership(userId: string, organizationId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    if (member.role !== 'owner') {
-      throw new ForbiddenException('Owner permission required');
-    }
-
-    return member;
-  }
-
-  private async checkOwnerOrLessonMember(userId: string, organizationId: number, lessonMemberId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    if (member.role !== 'owner' && member.id !== lessonMemberId) {
-      throw new ForbiddenException('Owner or lesson member permission required');
-    }
-
-    return member;
-  }
-
   private async getSessionWithOrganization(uuid: string) {
     const session = await this.prisma.session.findUnique({
       where: { uuid },
@@ -179,7 +159,7 @@ export class SessionsService {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
     }
 
-    await this.checkOwnership(userId, lesson.student.organizationId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     const session = await this.prisma.session.create({
       data: {
@@ -201,7 +181,7 @@ export class SessionsService {
 
   async update(uuid: string, dto: UpdateSessionDto, userId: string) {
     const session = await this.getSessionWithOrganization(uuid);
-    await this.checkOwnerOrLessonMember(userId, session.lesson.student.organizationId, session.lesson.memberId);
+    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     const updatedSession = await this.prisma.session.update({
       where: { uuid },
@@ -224,7 +204,7 @@ export class SessionsService {
 
   async remove(uuid: string, userId: string) {
     const session = await this.getSessionWithOrganization(uuid);
-    await this.checkOwnership(userId, session.lesson.student.organizationId);
+    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     await this.prisma.session.update({
       where: { uuid },
@@ -236,7 +216,7 @@ export class SessionsService {
 
   async markDone(uuid: string, isDone: boolean, userId: string) {
     const session = await this.getSessionWithOrganization(uuid);
-    await this.checkOwnerOrLessonMember(userId, session.lesson.student.organizationId, session.lesson.memberId);
+    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     const updatedSession = await this.prisma.session.update({
       where: { uuid },
@@ -267,7 +247,7 @@ export class SessionsService {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    await this.checkOwnerOrLessonMember(userId, session.lesson.student.organizationId, session.lesson.memberId);
+    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     let feedback;
     if (session.feedback) {
@@ -303,7 +283,7 @@ export class SessionsService {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    await this.checkOwnerOrLessonMember(userId, session.lesson.student.organizationId, session.lesson.memberId);
+    await this.checkMembership(userId, session.lesson.student.organizationId);
 
     if (!session.feedback) {
       throw new NotFoundException('Feedback not found');

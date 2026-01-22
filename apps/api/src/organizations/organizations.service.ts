@@ -67,10 +67,10 @@ export class OrganizationsService {
       throw new NotFoundException(`Organization with UUID ${uuid} not found`);
     }
 
-    // Check if user is owner
-    const ownerMember = organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can update organization');
+    // Check if user is a member
+    const isMember = organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     const updated = await this.prisma.organization.update({

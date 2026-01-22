@@ -45,10 +45,10 @@ export class MembersService {
       throw new NotFoundException(`Organization with UUID ${organizationUuid} not found`);
     }
 
-    // Check if user is owner
-    const ownerMember = organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can add members');
+    // Check if user is a member
+    const isMember = organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Check for duplicate name
@@ -113,10 +113,10 @@ export class MembersService {
       throw new NotFoundException(`Member with UUID ${uuid} not found`);
     }
 
-    // Check if user is owner of the organization
-    const ownerMember = member.organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can update members');
+    // Check if user is a member of the organization
+    const isMember = member.organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Check for duplicate name if changing
@@ -156,10 +156,10 @@ export class MembersService {
       throw new NotFoundException(`Member with UUID ${uuid} not found`);
     }
 
-    // Check if user is owner of the organization
-    const ownerMember = member.organization.members.find((m) => m.userId === userId && m.role === 'owner');
-    if (!ownerMember) {
-      throw new ForbiddenException('Only owner can remove members');
+    // Check if user is a member of the organization
+    const isMember = member.organization.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Cannot remove self

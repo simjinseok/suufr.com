@@ -25,16 +25,6 @@ export class StudentsService {
     return member;
   }
 
-  private async checkOwnership(userId: string, organizationId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    if (member.role !== 'owner') {
-      throw new ForbiddenException('Owner permission required');
-    }
-
-    return member;
-  }
-
   async findAll(query: ListStudentsQueryDto, userId: string) {
     // 사용자가 속한 모든 organization 조회
     const memberships = await this.prisma.organizationMember.findMany({
@@ -111,7 +101,7 @@ export class StudentsService {
       throw new NotFoundException('Organization not found');
     }
 
-    await this.checkOwnership(userId, organization.id);
+    await this.checkMembership(userId, organization.id);
 
     const student = await this.prisma.student.create({
       data: {
@@ -137,7 +127,7 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    await this.checkOwnership(userId, existing.organizationId);
+    await this.checkMembership(userId, existing.organizationId);
 
     const student = await this.prisma.student.update({
       where: { uuid },
@@ -165,7 +155,7 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    await this.checkOwnership(userId, existing.organizationId);
+    await this.checkMembership(userId, existing.organizationId);
 
     await this.prisma.student.update({
       where: { uuid },

@@ -34,27 +34,6 @@ export class LessonsService {
     return member;
   }
 
-  private async checkOwnership(userId: string, organizationId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    if (member.role !== 'owner') {
-      throw new ForbiddenException('Owner permission required');
-    }
-
-    return member;
-  }
-
-  private async checkOwnerOrLessonMember(userId: string, organizationId: number, lessonMemberId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    // owner이거나 해당 lesson의 담당자인 경우 허용
-    if (member.role !== 'owner' && member.id !== lessonMemberId) {
-      throw new ForbiddenException('Owner or lesson member permission required');
-    }
-
-    return member;
-  }
-
   private async getLessonWithOrganization(uuid: string) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { uuid },
@@ -183,7 +162,7 @@ export class LessonsService {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
 
-    const member = await this.checkOwnership(userId, student.organizationId);
+    const member = await this.checkMembership(userId, student.organizationId);
 
     const lesson = await this.prisma.lesson.create({
       data: {
@@ -215,7 +194,7 @@ export class LessonsService {
 
   async update(uuid: string, dto: UpdateLessonDto, userId: string) {
     const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkOwnership(userId, lesson.student.organizationId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     const updatedLesson = await this.prisma.lesson.update({
       where: { uuid },
@@ -238,7 +217,7 @@ export class LessonsService {
 
   async remove(uuid: string, userId: string) {
     const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkOwnership(userId, lesson.student.organizationId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     await this.prisma.lesson.update({
       where: { uuid },
@@ -250,7 +229,7 @@ export class LessonsService {
 
   async createShare(uuid: string, userId: string, expiresInDays = 7) {
     const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkOwnerOrLessonMember(userId, lesson.student.organizationId, lesson.memberId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     const shareId = generateShareId();
     const expiresAt = new Date();
@@ -269,7 +248,7 @@ export class LessonsService {
 
   async deleteShare(uuid: string, shareId: string, userId: string) {
     const lesson = await this.getLessonWithOrganization(uuid);
-    await this.checkOwnerOrLessonMember(userId, lesson.student.organizationId, lesson.memberId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     const share = await this.prisma.sessionShare.findFirst({
       where: { shareId, lessonId: lesson.id, deletedAt: null },

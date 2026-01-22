@@ -25,16 +25,6 @@ export class PaymentsService {
     return member;
   }
 
-  private async checkOwnership(userId: string, organizationId: number) {
-    const member = await this.checkMembership(userId, organizationId);
-
-    if (member.role !== 'owner') {
-      throw new ForbiddenException('Owner permission required');
-    }
-
-    return member;
-  }
-
   private async getPaymentWithOrganization(uuid: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { uuid },
@@ -155,7 +145,7 @@ export class PaymentsService {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
     }
 
-    await this.checkOwnership(userId, lesson.student.organizationId);
+    await this.checkMembership(userId, lesson.student.organizationId);
 
     if (lesson.payment && !lesson.payment.deletedAt) {
       throw new ConflictException('Payment already exists for this lesson');
@@ -181,7 +171,7 @@ export class PaymentsService {
 
   async update(uuid: string, dto: UpdatePaymentDto, userId: string) {
     const payment = await this.getPaymentWithOrganization(uuid);
-    await this.checkOwnership(userId, payment.lesson.student.organizationId);
+    await this.checkMembership(userId, payment.lesson.student.organizationId);
 
     const updatedPayment = await this.prisma.payment.update({
       where: { uuid },
@@ -203,7 +193,7 @@ export class PaymentsService {
 
   async remove(uuid: string, userId: string) {
     const payment = await this.getPaymentWithOrganization(uuid);
-    await this.checkOwnership(userId, payment.lesson.student.organizationId);
+    await this.checkMembership(userId, payment.lesson.student.organizationId);
 
     await this.prisma.payment.update({
       where: { uuid },
