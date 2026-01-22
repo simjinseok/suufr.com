@@ -107,7 +107,7 @@ function Content({ lesson, close }: ContentProps) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <DeleteButton id={lesson.id} />
+        <DeleteButton uuid={lesson.uuid} close={close} />
         <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>
           닫기
@@ -126,10 +126,10 @@ function Content({ lesson, close }: ContentProps) {
 }
 
 interface DeleteButtonProps {
-  id: number;
+  uuid: string;
   close: ContentProps['close'];
 }
-function DeleteButton({ id, close }: DeleteButtonProps) {
+function DeleteButton({ uuid, close }: DeleteButtonProps) {
   const formId = React.useId();
   const [state, formAction, isPending] = React.useActionState(removeLesson, {});
 
@@ -165,7 +165,7 @@ function DeleteButton({ id, close }: DeleteButtonProps) {
                 id={formId}
                 action={formAction}
               >
-                <input type="hidden" name="lessonId" value={id} />
+                <input type="hidden" name="lessonUuid" value={uuid} />
                 계획을 삭제합니다.
               </Form>
             </AlertDialog.Body>
