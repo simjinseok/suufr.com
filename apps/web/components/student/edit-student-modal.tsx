@@ -1,13 +1,10 @@
 'use client';
 import type { ModalProps } from '@heroui/react';
-import type { CalendarDate } from '@internationalized/date';
 
 import React from 'react';
 
 import {
   Button,
-  DateField,
-  DateInputGroup,
   FieldError,
   Form,
   Modal,
@@ -17,8 +14,6 @@ import {
   TextField,
   Label,
 } from '@heroui/react';
-import { CalendarIcon } from 'lucide-react';
-import { fromDate, toCalendarDate } from '@internationalized/date';
 
 import { updateStudent } from '@/actions/student';
 import { useForm, Controller } from 'react-hook-form';
@@ -54,7 +49,6 @@ function Content({ student, close }: ContentProps) {
     id: number;
     name: string;
     notes: string;
-    nextPaymentAt: CalendarDate | null;
     phone: string;
     email: string;
   }>({
@@ -62,9 +56,6 @@ function Content({ student, close }: ContentProps) {
       id: student.id,
       name: student.name,
       notes: student.notes,
-      nextPaymentAt: student.nextPaymentAt
-        ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
-        : null,
       phone: student.phone ?? '',
       email: student.email ?? '',
     },
@@ -126,7 +117,7 @@ function Content({ student, close }: ContentProps) {
                   isReadOnly={isPending}
                 >
                   <Label>연락처</Label>
-                  <Input variant="secondary" className="w-full" type="tel" autoComplete="off" />
+                  <Input variant="secondary" className="w-full" type="tel" autoComplete="off" placeholder="010-0000-0000" />
                   <FieldError />
                 </TextField>
               )}
@@ -144,7 +135,7 @@ function Content({ student, close }: ContentProps) {
                 isReadOnly={isPending}
               >
                 <Label>이메일</Label>
-                <Input variant="secondary" type="email" autoComplete="off" />
+                <Input variant="secondary" type="email" autoComplete="off" placeholder="example@example.com" />
                 <FieldError />
               </TextField>
             )}
@@ -157,36 +148,12 @@ function Content({ student, close }: ContentProps) {
                 <Label>참고사항</Label>
                 <TextArea
                   variant="secondary"
+                  placeholder="참고사항"
                   rows={5}
                 />
               </TextField>
             )}
           />
-          <Controller
-            control={control}
-            name="nextPaymentAt"
-            render={({ field: { name, value, onChange } }) => (
-              <DateField
-                className="mt-4"
-                name={name}
-                value={value}
-                onChange={onChange}
-                granularity="day"
-                hideTimeZone
-              >
-                <Label>다음결제예정일</Label>
-                <DateInputGroup variant="secondary">
-                  <DateInputGroup.Input>
-                    {segment => <DateInputGroup.Segment segment={segment} />}
-                  </DateInputGroup.Input>
-                  <DateInputGroup.Suffix>
-                    <CalendarIcon className="size-4" />
-                  </DateInputGroup.Suffix>
-                </DateInputGroup>
-              </DateField>
-            )}
-          />
-
         </Form>
       </Modal.Body>
       <Modal.Footer>

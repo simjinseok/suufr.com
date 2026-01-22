@@ -7,6 +7,7 @@ import { ChevronDownIcon, EditIcon } from 'lucide-react';
 import StatusBadge from '@/components/status-badge';
 import EditStudentModal from '@/components/student/edit-student-modal';
 import EditProfileImageModal from '@/components/student/edit-profile-image-modal';
+import EditNextPaymentAtModal from '@/components/student/edit-next-payment-at-modal';
 import ChangeStatusModal from './_change-status-modal';
 import StatusModal from './_status-modal';
 
@@ -18,6 +19,7 @@ const PAYMENT_METHODS = {
 };
 export default function Student({ student, statuses }) {
   const [isEditingProfileImage, setIsEditingProfileImage] = React.useState(false);
+  const [isEditingNextPaymentAt, setIsEditingNextPaymentAt] = React.useState(false);
   const [isEditingStatus, setIsEditingStatus] = React.useState(false);
   const [isStatusHistoryOpen, setIsStatusHistoryOpen] = React.useState(false);
 
@@ -59,6 +61,9 @@ export default function Student({ student, statuses }) {
                   if (key === 'change-profile-image') {
                     setIsEditingProfileImage(true);
                   }
+                  else if (key === 'change-next-payment-at') {
+                    setIsEditingNextPaymentAt(true);
+                  }
                   else if (key === 'change-status') {
                     setIsEditingStatus(true);
                   }
@@ -70,6 +75,9 @@ export default function Student({ student, statuses }) {
                 <Dropdown.Section>
                   <Dropdown.Item id="change-profile-image">
                     프로필사진 변경
+                  </Dropdown.Item>
+                  <Dropdown.Item id="change-next-payment-at">
+                    다음결제예정일 변경
                   </Dropdown.Item>
                 </Dropdown.Section>
                 <Dropdown.Section>
@@ -89,6 +97,11 @@ export default function Student({ student, statuses }) {
       <EditProfileImageModal
         isOpen={isEditingProfileImage}
         onOpenChange={setIsEditingProfileImage}
+        student={student}
+      />
+      <EditNextPaymentAtModal
+        isOpen={isEditingNextPaymentAt}
+        onOpenChange={setIsEditingNextPaymentAt}
         student={student}
       />
       <ChangeStatusModal

@@ -217,6 +217,57 @@ export async function updateStudentProfileImage(prevState: UpdateStudentProfileI
   );
 }
 
+const updateStudentNextPaymentAtSchema = z.object({
+  nextPaymentAt: z.string().optional(),
+});
+
+type UpdateStudentNextPaymentAtState = ServerActionState<{
+  nextPaymentAt: string | null;
+}>;
+export async function updateStudentNextPaymentAt(prevState: UpdateStudentNextPaymentAtState, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'updateStudentNextPaymentAt',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const session = await getSession();
+      const formEntries = Object.fromEntries(formData.entries());
+      const { studentUuid, nextPaymentAt } = formEntries;
+      const state: UpdateStudentNextPaymentAtState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
+      if (!session?.organization) {
+        return state;
+      }
+
+      const validationResult = updateStudentNextPaymentAtSchema.safeParse({
+        nextPaymentAt: nextPaymentAt === '' ? undefined : nextPaymentAt,
+      });
+      if (!validationResult.success) {
+        state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
+        return state;
+      }
+
+      const { nextPaymentAt: validatedNextPaymentAt } = validationResult.data;
+
+      await studentsApi.update(studentUuid as string, {
+        nextPaymentAt: validatedNextPaymentAt ? parseDate(validatedNextPaymentAt).toDate('UTC').toISOString() : null,
+      });
+
+      revalidatePath('/students', 'page');
+      revalidatePath('/students/[studentUuid]', 'page');
+      state.success = true;
+      state.message = '다음 결제 예정일을 변경하였습니다.';
+      return state;
+    },
+  );
+}
+
 export default async function removeStudent(formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeStudent',
