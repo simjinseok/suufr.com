@@ -19,10 +19,14 @@ model Organization {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
 
-  members  OrganizationMember[]
+  // 소유자 (개인용)
+  userId String? @map("user_id") @db.Uuid
+
+  members  OrganizationMember[] // TODO: 추후 제거 예정
   students Student[]
   meetings Meeting[]
 
+  @@index([userId, deletedAt])
   @@map("organizations")
 }
 
