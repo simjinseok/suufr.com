@@ -317,24 +317,19 @@ export class CognitoService {
   }
 
   private async ensureUserWithOrganization(userId: string, email: string, name?: string) {
-    const existingMember = await this.prisma.organizationMember.findUnique({
+    const existingOrganization = await this.prisma.organization.findFirst({
       where: { userId },
     });
 
-    if (existingMember) return;
+    if (existingOrganization) return;
 
     await this.prisma.$transaction(async (tx) => {
       const orgName = name || email.split('@')[0];
       const org = await tx.organization.create({
-        data: { name: orgName },
-      });
-
-      await tx.organizationMember.create({
         data: {
           name: orgName,
-          role: 'owner',
-          organizationId: org.id,
           userId,
+          profileName: orgName,
         },
       });
 
