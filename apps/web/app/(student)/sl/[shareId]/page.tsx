@@ -4,7 +4,7 @@ import LessonView from './_lesson-view';
 
 export const dynamic = 'force-dynamic';
 
-function buildAssetUrl(key: string | null | undefined, folder: 'organization' | 'member'): string | null {
+function buildAssetUrl(key: string | null | undefined, folder: 'organization'): string | null {
   if (!key) return null;
   return `/assets/${folder}/${key}.webp`;
 }
@@ -28,16 +28,16 @@ export default async function SharedLessonPage({
   }
 
   const { lesson, expiresAt } = share.data;
-  const { member } = lesson;
+  const { organization: org } = lesson.student;
 
-  const teacher = member ? {
-    name: member.name,
-    profileImageUrl: buildAssetUrl(member.profileImageKey, 'member'),
+  const teacher = org.profileName ? {
+    name: org.profileName,
+    profileImageUrl: buildAssetUrl(org.profileImageKey, 'organization'),
   } : null;
-  const organization = member?.organization ? {
-    name: member.organization.name,
-    logoUrl: buildAssetUrl(member.organization.logoImageKey, 'organization'),
-  } : null;
+  const organization = {
+    name: org.name,
+    logoUrl: buildAssetUrl(org.logoImageKey, 'organization'),
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">

@@ -94,13 +94,11 @@ type ShareResponse = {
   };
 };
 
-type SharedLessonMember = {
+type SharedLessonOrganization = {
   name: string;
+  logoImageKey: string | null;
+  profileName: string | null;
   profileImageKey: string | null;
-  organization: {
-    name: string;
-    logoImageKey: string | null;
-  };
 };
 
 type SharedLessonSession = {
@@ -124,8 +122,8 @@ type SharedLesson = {
   student: {
     name: string;
     nextPaymentAt: string | null;
+    organization: SharedLessonOrganization;
   };
-  member: SharedLessonMember | null;
   payment: { id: number }[] | null;
   sessions: SharedLessonSession[];
 };
