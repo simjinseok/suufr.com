@@ -128,6 +128,27 @@ export class PaymentsService {
       throw new ConflictException('Payment already exists for this lesson');
     }
 
+    // soft delete된 payment가 있으면 복구 및 업데이트
+    if (lesson.payment && lesson.payment.deletedAt) {
+      const payment = await this.prisma.payment.update({
+        where: { id: lesson.payment.id },
+        data: {
+          amount: dto.amount,
+          paymentMethod: dto.paymentMethod,
+          notes: dto.notes,
+          paidAt: new Date(dto.paidAt),
+          deletedAt: null,
+        },
+        include: {
+          lesson: {
+            include: { student: true },
+          },
+        },
+      });
+
+      return { success: true, data: payment };
+    }
+
     const payment = await this.prisma.payment.create({
       data: {
         amount: dto.amount,
