@@ -20,6 +20,7 @@ async function bootstrap() {
   // @see RFC 4918 (WebDAV), RFC 4791 (CalDAV)
   const fastifyInstance = fastifyAdapter.getInstance();
   fastifyInstance.addHttpMethod('PROPFIND', { hasBody: true });
+  fastifyInstance.addHttpMethod('PROPPATCH', { hasBody: true });
   fastifyInstance.addHttpMethod('REPORT', { hasBody: true });
   fastifyInstance.addHttpMethod('MKCALENDAR', { hasBody: true });
 
