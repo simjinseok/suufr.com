@@ -6,10 +6,15 @@ export interface SessionEvent {
   duration: number; // minutes
   lessonTitle: string;
   studentName: string;
+  studentUuid: string;
+  studentEmail?: string;
+  userId: string;
   notes: string;
   isDone: boolean;
   updatedAt: Date;
   createdAt: Date;
+  lessonUpdatedAt: Date;
+  studentUpdatedAt: Date;
 }
 
 export interface ParsedICalendarEvent {
@@ -42,11 +47,17 @@ export class ICalendarService {
   sessionToVevent(session: SessionEvent): string {
     const dtstart = this.formatLocalDateTime(session.sessionAt);
     const dtend = this.formatLocalDateTime(new Date(session.sessionAt.getTime() + session.duration * 60 * 1000));
-    const dtstamp = this.formatUtcDateTime(session.updatedAt);
-    const lastModified = this.formatUtcDateTime(session.updatedAt);
-    const summary = `${session.lessonTitle} - ${session.studentName}`;
+    // Use effective updatedAt (max of session, lesson, student) for DTSTAMP/LAST-MODIFIED/SEQUENCE
+    const effectiveUpdatedAt = new Date(Math.max(
+      session.updatedAt.getTime(),
+      session.lessonUpdatedAt.getTime(),
+      session.studentUpdatedAt.getTime(),
+    ));
+    const dtstamp = this.formatUtcDateTime(effectiveUpdatedAt);
+    const lastModified = this.formatUtcDateTime(effectiveUpdatedAt);
+    const summary = `[${session.studentName}] ${session.lessonTitle}`;
     const status = session.isDone ? 'COMPLETED' : 'CONFIRMED';
-    const sequence = Math.floor(session.updatedAt.getTime() / 1000) % 1000000;
+    const sequence = Math.floor(effectiveUpdatedAt.getTime() / 1000) % 1000000;
 
     const lines: string[] = [
       'BEGIN:VEVENT',
@@ -78,7 +89,7 @@ export class ICalendarService {
       'VERSION:2.0',
       `PRODID:${this.PRODID}`,
       'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
+      // METHOD 제거 - CalDAV 객체 저장 시에는 METHOD를 포함하지 않는 것이 표준
       this.buildTimezoneComponent(),
       ...vevents,
       'END:VCALENDAR',

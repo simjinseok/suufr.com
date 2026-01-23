@@ -197,6 +197,7 @@ ${responseElements}
         name: 'current-user-privilege-set',
         children: [
           { name: 'privilege', children: [{ name: 'read' }] },
+          { name: 'privilege', children: [{ name: 'write' }] },
           { name: 'privilege', children: [{ name: 'write-content' }] },
           { name: 'privilege', children: [{ name: 'read-current-user-privilege-set' }] },
         ],
@@ -222,6 +223,7 @@ ${responseElements}
       name: 'current-user-privilege-set',
       children: [
         { name: 'privilege', children: [{ name: 'read' }] },
+        { name: 'privilege', children: [{ name: 'write' }] },
         { name: 'privilege', children: [{ name: 'write-content' }] },
         { name: 'privilege', children: [{ name: 'read-current-user-privilege-set' }] },
       ],

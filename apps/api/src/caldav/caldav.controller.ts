@@ -173,6 +173,7 @@ export class CaldavController {
     return res.status(HttpStatus.NOT_FOUND).send();
   }
 
+  @All('caldav/principals/:userId/calendars/lessons/')
   @All('caldav/principals/:userId/calendars/lessons')
   @UseGuards(CaldavAuthGuard)
   async lessonsCalendar(
@@ -210,6 +211,10 @@ export class CaldavController {
 
     if (req.method === 'REPORT') {
       return this.handleReport(req, res, session);
+    }
+
+    if (req.method === 'PROPPATCH') {
+      return this.sendCalDavError(res, HttpStatus.FORBIDDEN, 'Property modification is not supported.');
     }
 
     return res.status(HttpStatus.METHOD_NOT_ALLOWED).send();
@@ -273,6 +278,7 @@ export class CaldavController {
         <D:getcontenttype>text/calendar; charset=utf-8</D:getcontenttype>
         <D:current-user-privilege-set>
           <D:privilege><D:read/></D:privilege>
+          <D:privilege><D:write/></D:privilege>
           <D:privilege><D:write-content/></D:privilege>
           <D:privilege><D:read-current-user-privilege-set/></D:privilege>
         </D:current-user-privilege-set>
@@ -327,6 +333,10 @@ export class CaldavController {
 
     if (req.method === 'DELETE') {
       return this.sendCalDavError(res, HttpStatus.FORBIDDEN, 'Event deletion is not supported. Events are managed through the web app.');
+    }
+
+    if (req.method === 'PROPPATCH') {
+      return this.sendCalDavError(res, HttpStatus.FORBIDDEN, 'Property modification is not supported.');
     }
 
     return res.status(HttpStatus.METHOD_NOT_ALLOWED).send();

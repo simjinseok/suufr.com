@@ -6,6 +6,17 @@ import { CaldavXmlBuilderService } from './services/caldav-xml-builder.service';
 import { generateEtag, generateCtag } from '../carddav/utils/etag.util';
 
 /**
+ * Get the effective updatedAt by taking the max of session, lesson, and student updatedAt
+ */
+function getEffectiveUpdatedAt(session: SessionEvent): Date {
+  return new Date(Math.max(
+    session.updatedAt.getTime(),
+    session.lessonUpdatedAt.getTime(),
+    session.studentUpdatedAt.getTime(),
+  ));
+}
+
+/**
  * Sync token format: data:,{timestamp}
  * @see RFC 6578 (WebDAV Sync) - sync-token must be a valid URI
  */
@@ -51,10 +62,15 @@ export class CaldavService {
       },
       include: {
         lesson: {
-          include: {
+          select: {
+            title: true,
+            updatedAt: true,
             student: {
               select: {
                 name: true,
+                uuid: true,
+                email: true,
+                updatedAt: true,
               },
             },
           },
@@ -69,10 +85,15 @@ export class CaldavService {
       duration: s.duration,
       lessonTitle: s.lesson.title,
       studentName: s.lesson.student.name,
+      studentUuid: s.lesson.student.uuid,
+      studentEmail: s.lesson.student.email ?? undefined,
+      userId,
       notes: s.notes,
       isDone: s.isDone,
       updatedAt: s.updatedAt,
       createdAt: s.createdAt,
+      lessonUpdatedAt: s.lesson.updatedAt,
+      studentUpdatedAt: s.lesson.student.updatedAt,
     }));
   }
 
@@ -91,10 +112,15 @@ export class CaldavService {
       },
       include: {
         lesson: {
-          include: {
+          select: {
+            title: true,
+            updatedAt: true,
             student: {
               select: {
                 name: true,
+                uuid: true,
+                email: true,
+                updatedAt: true,
               },
             },
           },
@@ -112,30 +138,63 @@ export class CaldavService {
       duration: session.duration,
       lessonTitle: session.lesson.title,
       studentName: session.lesson.student.name,
+      studentUuid: session.lesson.student.uuid,
+      studentEmail: session.lesson.student.email ?? undefined,
+      userId,
       notes: session.notes,
       isDone: session.isDone,
       updatedAt: session.updatedAt,
       createdAt: session.createdAt,
+      lessonUpdatedAt: session.lesson.updatedAt,
+      studentUpdatedAt: session.lesson.student.updatedAt,
     };
   }
 
   async getLatestUpdatedAt(userId: string): Promise<Date | null> {
-    const latest = await this.prisma.session.findFirst({
-      where: {
-        deletedAt: null,
-        lesson: {
+    const [latestSession, latestLesson, latestStudent] = await Promise.all([
+      this.prisma.session.findFirst({
+        where: {
+          deletedAt: null,
+          lesson: {
+            deletedAt: null,
+            student: {
+              userId,
+              deletedAt: null,
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true },
+      }),
+      this.prisma.lesson.findFirst({
+        where: {
           deletedAt: null,
           student: {
             userId,
             deletedAt: null,
           },
         },
-      },
-      orderBy: { updatedAt: 'desc' },
-      select: { updatedAt: true },
-    });
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true },
+      }),
+      this.prisma.student.findFirst({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true },
+      }),
+    ]);
 
-    return latest?.updatedAt ?? null;
+    const dates = [
+      latestSession?.updatedAt,
+      latestLesson?.updatedAt,
+      latestStudent?.updatedAt,
+    ].filter((d): d is Date => d !== null && d !== undefined);
+
+    if (dates.length === 0) return null;
+    return new Date(Math.max(...dates.map(d => d.getTime())));
   }
 
   buildRootPropfindResponse(session: DavSession): string {
@@ -199,7 +258,7 @@ export class CaldavService {
       responses.push({
         href: `/caldav/principals/${userId}/calendars/lessons/`,
         status: 200,
-        properties: this.xmlBuilderService.buildCalendarProps(userId, `${session.organization.name} 수업`, ctag, syncToken),
+        properties: this.xmlBuilderService.buildCalendarProps(userId, '스프 수업', ctag, syncToken),
       });
     }
 
@@ -208,7 +267,7 @@ export class CaldavService {
 
   async buildCalendarPropfindResponse(session: DavSession, depth: string): Promise<string> {
     const userId = session.user.id;
-    const displayName = `${session.organization.name} 수업`;
+    const displayName = '스프 수업';
     const latestUpdatedAt = await this.getLatestUpdatedAt(userId);
     const ctag = generateCtag(latestUpdatedAt);
     const syncToken = generateSyncToken(latestUpdatedAt);
@@ -226,14 +285,15 @@ export class CaldavService {
       const sessions = await this.getSessions(userId);
 
       for (const s of sessions) {
-        const etag = generateEtag(s.uuid, s.updatedAt);
+        const effectiveUpdatedAt = getEffectiveUpdatedAt(s);
+        const etag = generateEtag(s.uuid, effectiveUpdatedAt);
         responses.push({
           href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
           status: 200,
           properties: this.xmlBuilderService.buildEventProps(
             `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
             etag,
-            s.updatedAt,
+            effectiveUpdatedAt,
             s.createdAt,
           ),
         });
@@ -252,7 +312,7 @@ export class CaldavService {
 
     const vevent = this.icalendarService.sessionToVevent(sessionEvent);
     const ical = this.icalendarService.wrapVcalendar([vevent]);
-    const etag = generateEtag(sessionEvent.uuid, sessionEvent.updatedAt);
+    const etag = generateEtag(sessionEvent.uuid, getEffectiveUpdatedAt(sessionEvent));
 
     return { ical, etag };
   }
@@ -274,9 +334,11 @@ export class CaldavService {
       },
       include: {
         lesson: {
-          include: {
+          select: {
+            title: true,
+            updatedAt: true,
             student: {
-              select: { name: true },
+              select: { name: true, uuid: true, email: true, updatedAt: true },
             },
           },
         },
@@ -290,18 +352,24 @@ export class CaldavService {
         duration: s.duration,
         lessonTitle: s.lesson.title,
         studentName: s.lesson.student.name,
+        studentUuid: s.lesson.student.uuid,
+        studentEmail: s.lesson.student.email ?? undefined,
+        userId,
         notes: s.notes,
         isDone: s.isDone,
         updatedAt: s.updatedAt,
         createdAt: s.createdAt,
+        lessonUpdatedAt: s.lesson.updatedAt,
+        studentUpdatedAt: s.lesson.student.updatedAt,
       };
       const vevent = this.icalendarService.sessionToVevent(sessionEvent);
       const ical = this.icalendarService.wrapVcalendar([vevent]);
-      const etag = generateEtag(s.uuid, s.updatedAt);
+      const effectiveUpdatedAt = getEffectiveUpdatedAt(sessionEvent);
+      const etag = generateEtag(s.uuid, effectiveUpdatedAt);
       return {
         href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
         etag,
-        updatedAt: s.updatedAt,
+        updatedAt: effectiveUpdatedAt,
         createdAt: s.createdAt,
         icalData: ical,
       };
@@ -317,11 +385,12 @@ export class CaldavService {
     const events = sessions.map((s) => {
       const vevent = this.icalendarService.sessionToVevent(s);
       const ical = this.icalendarService.wrapVcalendar([vevent]);
-      const etag = generateEtag(s.uuid, s.updatedAt);
+      const effectiveUpdatedAt = getEffectiveUpdatedAt(s);
+      const etag = generateEtag(s.uuid, effectiveUpdatedAt);
       return {
         href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
         etag,
-        updatedAt: s.updatedAt,
+        updatedAt: effectiveUpdatedAt,
         createdAt: s.createdAt,
         icalData: ical,
       };
@@ -334,6 +403,8 @@ export class CaldavService {
     const userId = session.user.id;
     const sinceDate = syncToken ? parseSyncToken(syncToken) : null;
 
+    // For sync-collection, we need to detect changes in session, lesson, or student
+    // So we query sessions with their related lesson/student updatedAt values
     const changedSessions = await this.prisma.session.findMany({
       where: {
         deletedAt: null,
@@ -344,11 +415,28 @@ export class CaldavService {
             deletedAt: null,
           },
         },
-        ...(sinceDate && { updatedAt: { gt: sinceDate } }),
+        // Include sessions where session, lesson, or student was updated
+        ...(sinceDate && {
+          OR: [
+            { updatedAt: { gt: sinceDate } },
+            { lesson: { updatedAt: { gt: sinceDate } } },
+            { lesson: { student: { updatedAt: { gt: sinceDate } } } },
+          ],
+        }),
       },
       select: {
         uuid: true,
         updatedAt: true,
+        lesson: {
+          select: {
+            updatedAt: true,
+            student: {
+              select: {
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -368,10 +456,17 @@ export class CaldavService {
         })
       : [];
 
-    const changed = changedSessions.map(s => ({
-      href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
-      etag: generateEtag(s.uuid, s.updatedAt),
-    }));
+    const changed = changedSessions.map(s => {
+      const effectiveUpdatedAt = new Date(Math.max(
+        s.updatedAt.getTime(),
+        s.lesson.updatedAt.getTime(),
+        s.lesson.student.updatedAt.getTime(),
+      ));
+      return {
+        href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
+        etag: generateEtag(s.uuid, effectiveUpdatedAt),
+      };
+    });
 
     const deleted = deletedSessions.map(s =>
       `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
@@ -409,9 +504,11 @@ export class CaldavService {
       },
       include: {
         lesson: {
-          include: {
+          select: {
+            title: true,
+            updatedAt: true,
             student: {
-              select: { name: true },
+              select: { name: true, uuid: true, email: true, updatedAt: true },
             },
           },
         },
@@ -423,7 +520,12 @@ export class CaldavService {
     }
 
     if (expectedEtag) {
-      const currentEtag = generateEtag(session.uuid, session.updatedAt);
+      const currentEffectiveUpdatedAt = new Date(Math.max(
+        session.updatedAt.getTime(),
+        session.lesson.updatedAt.getTime(),
+        session.lesson.student.updatedAt.getTime(),
+      ));
+      const currentEtag = generateEtag(session.uuid, currentEffectiveUpdatedAt);
       if (currentEtag !== expectedEtag) {
         return { error: 'etag_mismatch' };
       }
@@ -454,9 +556,11 @@ export class CaldavService {
       data: updateData,
       include: {
         lesson: {
-          include: {
+          select: {
+            title: true,
+            updatedAt: true,
             student: {
-              select: { name: true },
+              select: { name: true, uuid: true, email: true, updatedAt: true },
             },
           },
         },
@@ -469,15 +573,20 @@ export class CaldavService {
       duration: updatedSession.duration,
       lessonTitle: updatedSession.lesson.title,
       studentName: updatedSession.lesson.student.name,
+      studentUuid: updatedSession.lesson.student.uuid,
+      studentEmail: updatedSession.lesson.student.email ?? undefined,
+      userId,
       notes: updatedSession.notes,
       isDone: updatedSession.isDone,
       updatedAt: updatedSession.updatedAt,
       createdAt: updatedSession.createdAt,
+      lessonUpdatedAt: updatedSession.lesson.updatedAt,
+      studentUpdatedAt: updatedSession.lesson.student.updatedAt,
     };
 
     return {
       session: result,
-      etag: generateEtag(result.uuid, result.updatedAt),
+      etag: generateEtag(result.uuid, getEffectiveUpdatedAt(result)),
     };
   }
 }
