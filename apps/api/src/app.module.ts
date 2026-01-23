@@ -16,6 +16,7 @@ import { StudentCommentsModule } from './student-comments/student-comments.modul
 import { SettingsModule } from './settings/settings.module';
 import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { CarddavModule } from './carddav/carddav.module';
+import { CaldavModule } from './caldav/caldav.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CarddavModule } from './carddav/carddav.module';
     SettingsModule,
     AppTokensModule,
     CarddavModule,
+    CaldavModule,
   ],
 })
 export class AppModule {}

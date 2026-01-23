@@ -16,21 +16,16 @@ async function bootstrap() {
     ignoreTrailingSlash: true,
   });
 
-  // Register custom HTTP methods for CardDAV/CalDAV (WebDAV)
-  // Fastify 5 doesn't support these by default
+  // Register WebDAV HTTP methods for CardDAV/CalDAV
+  // @see RFC 4918 (WebDAV), RFC 4791 (CalDAV)
   const fastifyInstance = fastifyAdapter.getInstance();
   fastifyInstance.addHttpMethod('PROPFIND', { hasBody: true });
-  fastifyInstance.addHttpMethod('PROPPATCH', { hasBody: true });
   fastifyInstance.addHttpMethod('REPORT', { hasBody: true });
-  fastifyInstance.addHttpMethod('MKCOL');
-  fastifyInstance.addHttpMethod('COPY');
-  fastifyInstance.addHttpMethod('MOVE');
-  fastifyInstance.addHttpMethod('LOCK', { hasBody: true });
-  fastifyInstance.addHttpMethod('UNLOCK');
+  fastifyInstance.addHttpMethod('MKCALENDAR', { hasBody: true });
 
-  // Add content type parser for XML and vCard (CardDAV/CalDAV)
+  // Add content type parser for XML, vCard, and iCalendar (CardDAV/CalDAV)
   fastifyInstance.addContentTypeParser(
-    ['text/xml', 'application/xml', 'text/vcard'],
+    ['text/xml', 'application/xml', 'text/vcard', 'text/calendar'],
     { parseAs: 'buffer' },
     (_req: unknown, body: Buffer, done: (err: null, body: Buffer) => void) => {
       done(null, body);
@@ -68,12 +63,20 @@ async function bootstrap() {
   app.setGlobalPrefix('api', {
     exclude: [
       { path: '', method: RequestMethod.GET },
-      { path: '.well-known/caldav', method: RequestMethod.ALL },
+      // CardDAV routes
       { path: '.well-known/carddav', method: RequestMethod.ALL },
       { path: 'carddav', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId/contacts', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId/contacts/:filename', method: RequestMethod.ALL },
+      // CalDAV routes
+      { path: '.well-known/caldav', method: RequestMethod.ALL },
+      { path: 'caldav', method: RequestMethod.ALL },
+      { path: 'caldav/principals/:userId', method: RequestMethod.ALL },
+      { path: 'caldav/principals/:userId/calendars', method: RequestMethod.ALL },
+      { path: 'caldav/principals/:userId/calendars/:calendarId', method: RequestMethod.ALL },
+      { path: 'caldav/principals/:userId/calendars/lessons', method: RequestMethod.ALL },
+      { path: 'caldav/principals/:userId/calendars/lessons/:filename', method: RequestMethod.ALL },
     ],
   });
 
