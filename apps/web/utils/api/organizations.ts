@@ -9,7 +9,6 @@ type Organization = {
   logoImageKey: string | null;
   logoImageUrl: string | null;
   profileName: string | null;
-  profileImageKey: string | null;
   profileImageUrl: string | null;
 };
 

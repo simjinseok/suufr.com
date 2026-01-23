@@ -31,16 +31,19 @@ export function pLimit(concurrency: number) {
         try {
           const result = await fn();
           resolve(result);
-        } catch (error) {
+        }
+        catch (error) {
           reject(error);
-        } finally {
+        }
+        finally {
           next();
         }
       };
 
       if (activeCount < concurrency) {
         run();
-      } else {
+      }
+      else {
         queue.push(run);
       }
     });
@@ -72,7 +75,8 @@ export async function fetchImageAsBase64(
     if (!parsedUrl.hostname.endsWith('cloudinary.com')) {
       return null;
     }
-  } catch {
+  }
+  catch {
     return null;
   }
 

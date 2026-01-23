@@ -23,7 +23,6 @@ model Organization {
   // 소유자 (개인용)
   userId          String  @map("user_id") @db.Uuid
   profileName     String? @map("profile_name") // 프로필 이름
-  profileImageKey String? @map("profile_image_key") // 프로필 이미지
   profileImageUrl String? @map("profile_image_url")
 
   students Student[]
@@ -39,7 +38,6 @@ model Student {
   name            String
   notes           String
   status          StudentStatusValue @default(pending)
-  profileImageKey String?            @map("profile_image_key")
   profileImageUrl String?            @map("profile_image_url") // CardDAV 사진 동기화용
   nextPaymentAt   DateTime?          @map("next_payment_at") @db.Date
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)

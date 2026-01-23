@@ -309,7 +309,6 @@ export class LessonsService {
                     logoImageKey: true,
                     logoImageUrl: true,
                     profileName: true,
-                    profileImageKey: true,
                     profileImageUrl: true,
                   },
                 },
