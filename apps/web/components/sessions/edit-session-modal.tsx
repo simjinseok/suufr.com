@@ -300,31 +300,19 @@ function RemoveButton({ sessionUuid, onSuccess }: RemoveButtonProps) {
   }, [state.success, state.timestamp, state.message, onSuccess]);
 
   return (
-    <Modal>
+    <Popover>
       <Button variant="danger-soft">삭제</Button>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog>
-            {({ close }) => (
-              <React.Fragment>
-                <Modal.Header>
-                  <Modal.Heading>삭제 확인</Modal.Heading>
-                </Modal.Header>
-                <Modal.Body>
-                  해당 수업을 삭제합니다.
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="ghost" isDisabled={isPending} onClick={close}>취소</Button>
-                  <Form action={formAction}>
-                    <input type="hidden" name="sessionUuid" value={sessionUuid} />
-                    <Button type="submit" variant="danger" isPending={isPending}>삭제</Button>
-                  </Form>
-                </Modal.Footer>
-              </React.Fragment>
-            )}
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      <Popover.Content placement="top left">
+        <Popover.Arrow />
+        <Popover.Dialog>
+          <Popover.Heading>삭제 확인</Popover.Heading>
+          <p className="mt-1 mb-3">해당 수업을 삭제합니다.</p>
+          <Form action={formAction}>
+            <input type="hidden" name="sessionUuid" value={sessionUuid} />
+            <Button type="submit" variant="danger" isPending={isPending}>삭제</Button>
+          </Form>
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
   );
 }
