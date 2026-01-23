@@ -1,9 +1,13 @@
+// Import Sentry instrumentation before anything else
+import './instrument';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from './app.module';
 
@@ -72,6 +76,9 @@ async function bootstrap() {
       { path: 'carddav/principals/:userId/contacts/:filename', method: RequestMethod.ALL },
     ],
   });
+
+  // Sentry error tracking - must be registered before other filters
+  app.useGlobalFilters(new SentryGlobalFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
