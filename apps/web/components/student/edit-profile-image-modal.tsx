@@ -42,10 +42,10 @@ function Content({ student, close }: ContentProps) {
   const formId = React.useId();
 
   const { control, watch } = useForm<{
-    profileImageKey: string | null;
+    profileImageUrl: string | null;
   }>({
     values: {
-      profileImageKey: student.profileImageKey ?? null,
+      profileImageUrl: student.profileImageUrl ?? null,
     },
   });
 
@@ -77,7 +77,7 @@ function Content({ student, close }: ContentProps) {
           <input type="hidden" name="studentUuid" value={student.uuid} />
           <Controller
             control={control}
-            name="profileImageKey"
+            name="profileImageUrl"
             render={({ field: { value, onChange } }) => (
               <ProfileImageUpload
                 name={student.name}

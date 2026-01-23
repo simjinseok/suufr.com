@@ -11,14 +11,14 @@ export type Session = {
     uuid: string;
     name: string;
     profileName: string | null;
-    profileImageKey: string | null;
+    profileImageUrl: string | null;
   } | null;
   organizations: Array<{
     id: number;
     uuid: string;
     name: string;
     profileName: string | null;
-    profileImageKey: string | null;
+    profileImageUrl: string | null;
   }>;
 };
 
@@ -66,7 +66,7 @@ export async function getSession(): Promise<Session | null> {
             uuid: selectedOrg.uuid,
             name: selectedOrg.name,
             profileName: selectedOrg.profileName,
-            profileImageKey: selectedOrg.profileImageKey,
+            profileImageUrl: selectedOrg.profileImageUrl,
           }
         : null,
       organizations,

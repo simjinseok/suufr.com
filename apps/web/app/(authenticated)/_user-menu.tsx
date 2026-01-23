@@ -8,7 +8,7 @@ type OrganizationItem = {
   uuid: string;
   name: string;
   profileName: string | null;
-  profileImageKey: string | null;
+  profileImageUrl: string | null;
 };
 
 type Props = {
@@ -18,9 +18,7 @@ type Props = {
 
 export function UserMenu({ currentOrg, organizations }: Props) {
   const profileName = currentOrg.profileName ?? currentOrg.name;
-  const profileImageUrl = currentOrg.profileImageKey
-    ? `/assets/organization/${currentOrg.profileImageKey}.webp`
-    : null;
+  const profileImageUrl = currentOrg.profileImageUrl;
   const profileInitial = profileName.charAt(profileName.length - 1);
 
   const handleAction = (key: string | number) => {

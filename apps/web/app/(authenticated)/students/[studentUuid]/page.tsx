@@ -5,11 +5,6 @@ import StatsCards from './_stats-cards';
 import { getSession } from '@/utils/auth';
 import { studentsApi, studentStatusesApi } from '@/utils/api';
 
-function buildAssetUrl(key: string | null, folder: 'student'): string | null {
-  if (!key) return null;
-  return `/assets/${folder}/${key}.webp`;
-}
-
 export default async function Page({ params }: { params: Promise<{ studentUuid: string }> }) {
   const { studentUuid } = await params;
   const session = await getSession();
@@ -29,12 +24,6 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
     return notFound();
   }
 
-  const { profileImageKey, ...studentData } = student;
-  const studentWithImageUrl = {
-    ...studentData,
-    profileImageUrl: buildAssetUrl(profileImageKey ?? null, 'student'),
-  };
-
   const stats = {
     ...statsResult.data,
     nextPaymentAt: student.nextPaymentAt,
@@ -42,7 +31,7 @@ export default async function Page({ params }: { params: Promise<{ studentUuid: 
 
   return (
     <>
-      <Student student={studentWithImageUrl} statuses={statusesResult.data} />
+      <Student student={student} statuses={statusesResult.data} />
       <StatsCards stats={stats} />
     </>
   );

@@ -10,12 +10,11 @@ const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 interface Props {
   value: string | null;
   onChange: (url: string | null) => void;
-  onPublicIdChange?: (publicId: string | null) => void;
   disabled?: boolean;
   currentImageUrl?: string | null;
 }
 
-export default function ProfileImageUpload({ value, onChange, onPublicIdChange, disabled, currentImageUrl }: Props) {
+export default function ProfileImageUpload({ value, onChange, disabled, currentImageUrl }: Props) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -54,7 +53,6 @@ export default function ProfileImageUpload({ value, onChange, onPublicIdChange, 
       }
       else {
         onChange(data.url);
-        onPublicIdChange?.(data.publicId);
       }
     }
     catch {
@@ -77,7 +75,6 @@ export default function ProfileImageUpload({ value, onChange, onPublicIdChange, 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(null);
-    onPublicIdChange?.(null);
   };
 
   const displayImageUrl = value || currentImageUrl;

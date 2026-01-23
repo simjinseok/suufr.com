@@ -21,10 +21,8 @@ type Props = {
     name: string;
     phone: string;
     address: string;
-    logoImageKey: string | null;
-    logoUrl: string | null;
+    logoImageUrl: string | null;
     profileName: string | null;
-    profileImageKey: string | null;
     profileImageUrl: string | null;
   };
 };
@@ -39,14 +37,25 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
     },
   );
 
-  const [logoImageKey, setLogoImageKey] = React.useState<string | null>(null);
-  const [logoImagePublicId, setLogoImagePublicId] = React.useState<string | null>(null);
-  const [profileImageKey, setProfileImageKey] = React.useState<string | null>(null);
-  const [profileImagePublicId, setProfileImagePublicId] = React.useState<string | null>(null);
+  // undefined: 변경 안함, null: 삭제, string: 새 이미지
+  const [logoImageUrl, setLogoImageUrl] = React.useState<string | null | undefined>(undefined);
+  const [profileImageUrl, setProfileImageUrl] = React.useState<string | null | undefined>(undefined);
 
-  // state가 업데이트되면 이미지 URL도 업데이트
-  const currentLogoUrl = state.fields?.logoUrl || initialData.logoUrl;
-  const currentProfileImageUrl = state.fields?.profileImageUrl || initialData.profileImageUrl;
+  // 현재 표시할 이미지 URL
+  const currentLogoUrl = logoImageUrl !== undefined
+    ? logoImageUrl
+    : (state.fields?.logoImageUrl ?? initialData.logoImageUrl);
+  const currentProfileImageUrl = profileImageUrl !== undefined
+    ? profileImageUrl
+    : (state.fields?.profileImageUrl ?? initialData.profileImageUrl);
+
+  // hidden input에 전달할 값 (undefined면 기존 값 유지, null이면 삭제)
+  const logoInputValue = logoImageUrl !== undefined
+    ? (logoImageUrl ?? '')
+    : (state.fields?.logoImageUrl ?? initialData.logoImageUrl ?? '');
+  const profileInputValue = profileImageUrl !== undefined
+    ? (profileImageUrl ?? '')
+    : (state.fields?.profileImageUrl ?? initialData.profileImageUrl ?? '');
 
   const { control } = useForm({
     values: {
@@ -76,14 +85,12 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
       )}
 
       <OrganizationLogoUpload
-        value={logoImageKey}
-        onChange={setLogoImageKey}
-        onPublicIdChange={setLogoImagePublicId}
+        value={logoImageUrl}
+        onChange={setLogoImageUrl}
         currentImageUrl={currentLogoUrl}
         disabled={isPending}
       />
-      <input type="hidden" name="logoImageKey" value={logoImageKey || ''} />
-      <input type="hidden" name="logoImagePublicId" value={logoImagePublicId || ''} />
+      <input type="hidden" name="logoImageUrl" value={logoInputValue} />
 
       <Controller
         control={control}
@@ -138,14 +145,12 @@ export function OrganizationForm({ organizationUuid, initialData }: Props) {
         <h3 className="text-lg font-medium text-gray-900 mb-4">선생님 프로필</h3>
         <div className="flex flex-col gap-6">
           <ProfileImageUpload
-            value={profileImageKey}
-            onChange={setProfileImageKey}
-            onPublicIdChange={setProfileImagePublicId}
+            value={profileImageUrl}
+            onChange={setProfileImageUrl}
             currentImageUrl={currentProfileImageUrl}
             disabled={isPending}
           />
-          <input type="hidden" name="profileImageKey" value={profileImageKey || ''} />
-          <input type="hidden" name="profileImagePublicId" value={profileImagePublicId || ''} />
+          <input type="hidden" name="profileImageUrl" value={profileInputValue} />
 
           <Controller
             control={control}

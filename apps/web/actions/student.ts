@@ -7,7 +7,6 @@ import { revalidatePath } from 'next/cache';
 import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
 import { getSession } from '@/utils/auth';
-import { moveImage, deleteImage } from '@/utils/cloudinary';
 import { studentsApi, studentStatusesApi } from '@/utils/api';
 
 const createStudentSchema = z.object({
@@ -68,7 +67,7 @@ const updateStudentSchema = z.object({
   name: z.string().min(1),
   notes: z.string(),
   nextPaymentAt: z.string().optional(),
-  profileImageKey: z.string().nullable().optional(),
+  profileImageUrl: z.string().nullable().optional(),
   phone: z.string().optional().transform(val => val === '' ? null : val),
   email: z.string().optional().transform(val => val === '' ? null : val),
 });
@@ -88,9 +87,8 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
     async () => {
       const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
-      const { studentUuid, profileImageKey: rawProfileImageUrl, profileImagePublicId: rawPublicId, ...data } = formEntries;
-      let profileImageKey = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
-      const publicId = typeof rawPublicId === 'string' && rawPublicId !== '' ? rawPublicId : null;
+      const { studentUuid, profileImageUrl: rawProfileImageUrl, ...data } = formEntries;
+      const profileImageUrl = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
       const state: UpdateStudentState = {
         success: false,
         timestamp: Date.now(),
@@ -100,40 +98,22 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
         return state;
       }
 
-      const { data: student } = await studentsApi.get(studentUuid as string);
-
       const validationResult = updateStudentSchema.safeParse({
         ...data,
-        profileImageKey,
+        profileImageUrl,
       });
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
 
-      const { nextPaymentAt, profileImageKey: validatedProfileImageUrl, ...restData } = validationResult.data;
-
-      // 새 이미지가 임시 폴더에 업로드된 경우 정식 폴더로 이동
-      let finalProfileImageKey = student.profileImageKey; // 기존 값 유지
-      const oldImageKey = student.profileImageKey;
-
-      if (publicId?.startsWith('suufr/temp/')) {
-        const newKey = await moveImage(publicId);
-        if (newKey) {
-          finalProfileImageKey = newKey;
-        }
-      }
+      const { nextPaymentAt, profileImageUrl: validatedProfileImageUrl, ...restData } = validationResult.data;
 
       await studentsApi.update(studentUuid as string, {
         ...restData,
-        profileImageKey: finalProfileImageKey,
+        profileImageUrl: validatedProfileImageUrl,
         nextPaymentAt: nextPaymentAt ? parseDate(nextPaymentAt).toDate('UTC').toISOString() : undefined,
       });
-
-      // 새 이미지가 저장된 경우, 이전 이미지 삭제
-      if (finalProfileImageKey !== oldImageKey && oldImageKey) {
-        await deleteImage(oldImageKey, 'students');
-      }
 
       revalidatePath('/students', 'page');
       revalidatePath('/students/[studentUuid]', 'page');
@@ -145,11 +125,11 @@ export async function updateStudent(prevState: UpdateStudentState, formData: For
 }
 
 const updateStudentProfileImageSchema = z.object({
-  profileImageKey: z.string().nullable().optional(),
+  profileImageUrl: z.string().nullable().optional(),
 });
 
 type UpdateStudentProfileImageState = ServerActionState<{
-  profileImageKey: string | null;
+  profileImageUrl: string | null;
 }>;
 export async function updateStudentProfileImage(prevState: UpdateStudentProfileImageState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
@@ -162,9 +142,8 @@ export async function updateStudentProfileImage(prevState: UpdateStudentProfileI
     async () => {
       const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
-      const { studentUuid, profileImageKey: rawProfileImageUrl, profileImagePublicId: rawPublicId } = formEntries;
-      let profileImageKey = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
-      const publicId = typeof rawPublicId === 'string' && rawPublicId !== '' ? rawPublicId : null;
+      const { studentUuid, profileImageUrl: rawProfileImageUrl } = formEntries;
+      const profileImageUrl = rawProfileImageUrl === '' ? null : rawProfileImageUrl;
       const state: UpdateStudentProfileImageState = {
         success: false,
         timestamp: Date.now(),
@@ -174,39 +153,18 @@ export async function updateStudentProfileImage(prevState: UpdateStudentProfileI
         return state;
       }
 
-      const { data: student } = await studentsApi.get(studentUuid as string);
-
       const validationResult = updateStudentProfileImageSchema.safeParse({
-        profileImageKey,
+        profileImageUrl,
       });
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
       }
 
-      // 새 이미지가 임시 폴더에 업로드된 경우 정식 폴더로 이동
-      let finalProfileImageKey = student.profileImageKey; // 기존 값 유지
-      const oldImageKey = student.profileImageKey;
-
-      if (publicId?.startsWith('suufr/temp/')) {
-        const newKey = await moveImage(publicId);
-        if (newKey) {
-          finalProfileImageKey = newKey;
-        }
-      }
-      else if (profileImageKey === null || profileImageKey === '') {
-        // 이미지 제거
-        finalProfileImageKey = null;
-      }
-
+      // API에서 temp → images 이동 및 기존 이미지 삭제 처리
       await studentsApi.update(studentUuid as string, {
-        profileImageKey: finalProfileImageKey,
+        profileImageUrl: validationResult.data.profileImageUrl,
       });
-
-      // 새 이미지가 저장된 경우 또는 이미지가 제거된 경우, 이전 이미지 삭제
-      if (finalProfileImageKey !== oldImageKey && oldImageKey) {
-        await deleteImage(oldImageKey, 'students');
-      }
 
       revalidatePath('/students', 'page');
       revalidatePath('/students/[studentUuid]', 'page');

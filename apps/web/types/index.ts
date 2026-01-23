@@ -12,6 +12,7 @@ export type Student = {
   notes: string;
   status: string;
   profileImageKey?: string | null;
+  profileImageUrl?: string | null;
   nextPaymentAt?: Date | null;
   phone?: string | null;
   email?: string | null;

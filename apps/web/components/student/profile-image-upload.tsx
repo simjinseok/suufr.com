@@ -6,12 +6,12 @@ import { CameraIcon, XIcon } from 'lucide-react';
 import { optimizeAvatarUrl } from '@/utils/cloudinary-url';
 
 function getProfileImageSrc(value: string, displaySize: number): string {
-  // 임시 URL (업로드 프리뷰) - Cloudinary URL로 시작하는 경우
+  // Cloudinary URL인 경우 최적화
   if (value.includes('res.cloudinary.com')) {
     return optimizeAvatarUrl(value, displaySize) || value;
   }
-  // 저장된 키 - 새로운 asset 경로 사용
-  return `/assets/student/${value}.webp`;
+  // 그 외의 URL은 그대로 반환
+  return value;
 }
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
@@ -80,7 +80,6 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [publicId, setPublicId] = React.useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,7 +119,6 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
       }
       else {
         onChange(data.url);
-        setPublicId(data.publicId);
       }
     }
     catch {
@@ -137,7 +135,6 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(null);
-    setPublicId(null);
     setError(null);
   };
 
@@ -197,8 +194,7 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
         className="hidden"
         disabled={disabled || isUploading}
       />
-      <input type="hidden" name="profileImageKey" value={value || ''} />
-      <input type="hidden" name="profileImagePublicId" value={publicId || ''} />
+      <input type="hidden" name="profileImageUrl" value={value || ''} />
     </div>
   );
 }

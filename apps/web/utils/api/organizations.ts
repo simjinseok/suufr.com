@@ -7,8 +7,10 @@ type Organization = {
   phone: string | null;
   address: string | null;
   logoImageKey: string | null;
+  logoImageUrl: string | null;
   profileName: string | null;
   profileImageKey: string | null;
+  profileImageUrl: string | null;
 };
 
 type ListOrganizationsResponse = {
@@ -27,6 +29,8 @@ type UpdateOrganizationData = {
   address?: string;
   profileName?: string;
   profileImageKey?: string;
+  profileImageUrl?: string | null;
+  logoImageUrl?: string | null;
 };
 
 export const organizationsApi = {

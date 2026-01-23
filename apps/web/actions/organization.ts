@@ -7,19 +7,12 @@ import { updateOrganizationSchema } from '@/schemas/organization';
 import type { ServerActionState } from '@/types/index';
 import { organizationsApi } from '@/utils/api/organizations';
 
-function buildAssetUrl(key: string | null, folder: 'organization'): string | null {
-  if (!key) return null;
-  return `/assets/${folder}/${key}.webp`;
-}
-
 type UpdateOrganizationFields = {
   name: string;
   phone?: string;
   address?: string;
-  logoImageKey?: string | null;
-  logoUrl?: string | null;
+  logoImageUrl?: string | null;
   profileName?: string | null;
-  profileImageKey?: string | null;
   profileImageUrl?: string | null;
 };
 type UpdateOrganizationState = ServerActionState<UpdateOrganizationFields>;
@@ -34,19 +27,17 @@ export async function updateOrganization(
     {},
     async () => {
       const data = Object.fromEntries(formData);
-      const logoImageKey = (data.logoImageKey as string) || null;
-      const profileImageKey = (data.profileImageKey as string) || null;
+      const logoImageUrl = (data.logoImageUrl as string) || null;
+      const profileImageUrl = (data.profileImageUrl as string) || null;
       const state: UpdateOrganizationState = {
         success: false,
         fields: {
           name: (data.name as string) || '',
           phone: (data.phone as string) || undefined,
           address: (data.address as string) || undefined,
-          logoImageKey,
-          logoUrl: null,
+          logoImageUrl,
           profileName: (data.profileName as string) || null,
-          profileImageKey,
-          profileImageUrl: null,
+          profileImageUrl,
         },
         timestamp: Date.now(),
       };
@@ -63,7 +54,8 @@ export async function updateOrganization(
           phone: validation.data.phone || undefined,
           address: validation.data.address || undefined,
           profileName: validation.data.profileName || undefined,
-          profileImageKey: validation.data.profileImageKey || undefined,
+          profileImageUrl: validation.data.profileImageUrl,
+          logoImageUrl: validation.data.logoImageUrl,
         });
 
         revalidatePath(`/organizations/${organizationUuid}/settings`);
@@ -71,11 +63,9 @@ export async function updateOrganization(
         state.message = '조직 정보가 저장되었습니다';
         state.fields = {
           ...state.fields,
-          logoImageKey: response.data.logoImageKey,
-          logoUrl: buildAssetUrl(response.data.logoImageKey, 'organization'),
+          logoImageUrl: response.data.logoImageUrl,
           profileName: response.data.profileName,
-          profileImageKey: response.data.profileImageKey,
-          profileImageUrl: buildAssetUrl(response.data.profileImageKey, 'organization'),
+          profileImageUrl: response.data.profileImageUrl,
         };
       }
       catch (error: any) {
@@ -91,13 +81,7 @@ export async function updateOrganization(
 export async function getOrganization(organizationUuid: string) {
   try {
     const response = await organizationsApi.get(organizationUuid);
-    const organization = response.data;
-
-    return {
-      ...organization,
-      logoUrl: buildAssetUrl(organization.logoImageKey, 'organization'),
-      profileImageUrl: buildAssetUrl(organization.profileImageKey, 'organization'),
-    };
+    return response.data;
   }
   catch {
     return null;

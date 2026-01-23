@@ -10,17 +10,15 @@ const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 interface Props {
   value: string | null;
   onChange: (url: string | null) => void;
-  onPublicIdChange?: (publicId: string | null) => void;
   disabled?: boolean;
   /** 기존에 저장된 이미지 URL (서버에서 생성된 전체 URL) */
   currentImageUrl?: string | null;
 }
 
-export default function OrganizationLogoUpload({ value, onChange, onPublicIdChange, disabled, currentImageUrl }: Props) {
+export default function OrganizationLogoUpload({ value, onChange, disabled, currentImageUrl }: Props) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [publicId, setPublicId] = React.useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,8 +54,6 @@ export default function OrganizationLogoUpload({ value, onChange, onPublicIdChan
       }
       else {
         onChange(data.url);
-        setPublicId(data.publicId);
-        onPublicIdChange?.(data.publicId);
       }
     }
     catch {
@@ -80,8 +76,6 @@ export default function OrganizationLogoUpload({ value, onChange, onPublicIdChan
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(null);
-    setPublicId(null);
-    onPublicIdChange?.(null);
   };
 
   // 새로 업로드된 이미지가 있으면 그것을, 없으면 기존 저장된 이미지 URL 사용
