@@ -129,11 +129,13 @@ export class StudentsService {
         finalProfileImageUrl = await this.cloudinaryService.moveFromTemp(dto.profileImageUrl);
         // 기존 이미지는 response 후에 삭제
         oldImageUrlToDelete = existing.profileImageUrl;
-      } else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
+      }
+      else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
         // 이미지 제거
         finalProfileImageUrl = null;
         oldImageUrlToDelete = existing.profileImageUrl;
-      } else {
+      }
+      else {
         // 이미 정식 URL인 경우 (변경 없음)
         finalProfileImageUrl = dto.profileImageUrl;
       }

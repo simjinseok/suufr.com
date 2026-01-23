@@ -38,7 +38,8 @@ export class CloudinaryService {
       );
 
       return result.secure_url;
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Cloudinary upload error:', error);
       return null;
     }
@@ -64,7 +65,8 @@ export class CloudinaryService {
         invalidate: true,
       });
       return result.secure_url;
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Move image error:', error);
       return null;
     }
@@ -82,7 +84,8 @@ export class CloudinaryService {
       }
       await cloudinary.uploader.destroy(publicId, { invalidate: true });
       return true;
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Cloudinary delete error:', error);
       return false;
     }

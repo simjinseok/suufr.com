@@ -54,7 +54,7 @@ export class AuthService {
       uuid: o.uuid,
       name: o.name,
       profileName: o.profileName,
-      profileImageKey: o.profileImageKey,
+      profileImageUrl: o.profileImageUrl,
     }));
   }
 }
