@@ -9,6 +9,7 @@ export interface SessionEvent {
   notes: string;
   isDone: boolean;
   updatedAt: Date;
+  createdAt: Date;
 }
 
 export interface ParsedICalendarEvent {

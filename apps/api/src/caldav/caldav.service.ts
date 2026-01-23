@@ -72,6 +72,7 @@ export class CaldavService {
       notes: s.notes,
       isDone: s.isDone,
       updatedAt: s.updatedAt,
+      createdAt: s.createdAt,
     }));
   }
 
@@ -114,6 +115,7 @@ export class CaldavService {
       notes: session.notes,
       isDone: session.isDone,
       updatedAt: session.updatedAt,
+      createdAt: session.createdAt,
     };
   }
 
@@ -231,6 +233,8 @@ export class CaldavService {
           properties: this.xmlBuilderService.buildEventProps(
             `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
             etag,
+            s.updatedAt,
+            s.createdAt,
           ),
         });
       }
@@ -289,6 +293,7 @@ export class CaldavService {
         notes: s.notes,
         isDone: s.isDone,
         updatedAt: s.updatedAt,
+        createdAt: s.createdAt,
       };
       const vevent = this.icalendarService.sessionToVevent(sessionEvent);
       const ical = this.icalendarService.wrapVcalendar([vevent]);
@@ -296,6 +301,8 @@ export class CaldavService {
       return {
         href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
         etag,
+        updatedAt: s.updatedAt,
+        createdAt: s.createdAt,
         icalData: ical,
       };
     });
@@ -314,6 +321,8 @@ export class CaldavService {
       return {
         href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
         etag,
+        updatedAt: s.updatedAt,
+        createdAt: s.createdAt,
         icalData: ical,
       };
     });
@@ -463,6 +472,7 @@ export class CaldavService {
       notes: updatedSession.notes,
       isDone: updatedSession.isDone,
       updatedAt: updatedSession.updatedAt,
+      createdAt: updatedSession.createdAt,
     };
 
     return {

@@ -204,20 +204,28 @@ ${responseElements}
     ];
   }
 
-  buildEventProps(href: string, etag: string, icalData?: string): PropfindProperty[] {
+  buildEventProps(href: string, etag: string, updatedAt?: Date, createdAt?: Date, icalData?: string): PropfindProperty[] {
     const props: PropfindProperty[] = [
       { name: 'resourcetype' },
       { name: 'getetag', value: etag },
       { name: 'getcontenttype', value: 'text/calendar; charset=utf-8; component=VEVENT' },
-      {
-        name: 'current-user-privilege-set',
-        children: [
-          { name: 'privilege', children: [{ name: 'read' }] },
-          { name: 'privilege', children: [{ name: 'write-content' }] },
-          { name: 'privilege', children: [{ name: 'read-current-user-privilege-set' }] },
-        ],
-      },
     ];
+
+    if (updatedAt) {
+      props.push({ name: 'getlastmodified', value: updatedAt.toUTCString() });
+    }
+    if (createdAt) {
+      props.push({ name: 'creationdate', value: createdAt.toISOString() });
+    }
+
+    props.push({
+      name: 'current-user-privilege-set',
+      children: [
+        { name: 'privilege', children: [{ name: 'read' }] },
+        { name: 'privilege', children: [{ name: 'write-content' }] },
+        { name: 'privilege', children: [{ name: 'read-current-user-privilege-set' }] },
+      ],
+    });
 
     if (icalData) {
       props.push({
@@ -230,11 +238,11 @@ ${responseElements}
     return props;
   }
 
-  buildMultigetResponse(events: Array<{ href: string; etag: string; icalData: string }>): string {
+  buildMultigetResponse(events: Array<{ href: string; etag: string; updatedAt?: Date; createdAt?: Date; icalData: string }>): string {
     const responses: PropfindResponse[] = events.map(event => ({
       href: event.href,
       status: 200,
-      properties: this.buildEventProps(event.href, event.etag, event.icalData),
+      properties: this.buildEventProps(event.href, event.etag, event.updatedAt, event.createdAt, event.icalData),
     }));
 
     return this.buildMultistatus(responses);
