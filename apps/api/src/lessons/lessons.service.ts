@@ -307,8 +307,10 @@ export class LessonsService {
                   select: {
                     name: true,
                     logoImageKey: true,
+                    logoImageUrl: true,
                     profileName: true,
                     profileImageKey: true,
+                    profileImageUrl: true,
                   },
                 },
               },

@@ -4,11 +4,6 @@ import LessonView from './_lesson-view';
 
 export const dynamic = 'force-dynamic';
 
-function buildAssetUrl(key: string | null | undefined, folder: 'organization'): string | null {
-  if (!key) return null;
-  return `/assets/${folder}/${key}.webp`;
-}
-
 export default async function SharedLessonPage({
   params,
 }: {
@@ -32,11 +27,11 @@ export default async function SharedLessonPage({
 
   const teacher = org.profileName ? {
     name: org.profileName,
-    profileImageUrl: buildAssetUrl(org.profileImageKey, 'organization'),
+    profileImageUrl: org.profileImageUrl,
   } : null;
   const organization = {
     name: org.name,
-    logoUrl: buildAssetUrl(org.logoImageKey, 'organization'),
+    logoUrl: org.logoImageUrl,
   };
 
   return (

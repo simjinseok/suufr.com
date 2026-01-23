@@ -28,7 +28,6 @@ type UpdateOrganizationData = {
   phone?: string;
   address?: string;
   profileName?: string;
-  profileImageKey?: string;
   profileImageUrl?: string | null;
   logoImageUrl?: string | null;
 };

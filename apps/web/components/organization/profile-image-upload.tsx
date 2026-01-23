@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Spinner } from '@heroui/react';
 import { CameraIcon, XIcon, UserIcon } from 'lucide-react';
+import { uploadToCloudinary } from '@/utils/cloudinary-upload';
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
@@ -38,21 +39,14 @@ export default function ProfileImageUpload({ value, onChange, disabled, currentI
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Cloudinary로 직접 업로드
+      const result = await uploadToCloudinary(file);
 
-      const response = await fetch('/api/organizations/profile-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || '업로드에 실패했습니다.');
+      if (!result.success) {
+        setError(result.error);
       }
       else {
-        onChange(data.url);
+        onChange(result.url);
       }
     }
     catch {

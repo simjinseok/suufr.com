@@ -9,11 +9,6 @@ import Students from './_students';
 import { getSession } from '@/utils/auth';
 import { studentsApi } from '@/utils/api';
 
-function buildAssetUrl(key: string | null, folder: 'student'): string | null {
-  if (!key) return null;
-  return `/assets/${folder}/${key}.webp`;
-}
-
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
 const loadSearchParams = createLoader({
@@ -38,10 +33,8 @@ export default async function Page(props: PageProps<'/students'>) {
     q,
   });
 
-  const studentsWithImageUrl = students.map(({ profileImageKey, ...student }) => ({
-    ...student,
-    profileImageUrl: buildAssetUrl(profileImageKey ?? null, 'student'),
-  }));
+  // profileImageUrl은 이미 Cloudinary URL로 저장되어 있음
+  const studentsWithImageUrl = students;
 
   return (
     <div className="mt-3">

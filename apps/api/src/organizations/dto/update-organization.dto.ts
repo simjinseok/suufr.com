@@ -17,10 +17,6 @@ export class UpdateOrganizationDto {
   @IsOptional()
   profileName?: string;
 
-  @IsString()
-  @IsOptional()
-  profileImageKey?: string;
-
   @Allow()
   @IsOptional()
   profileImageUrl?: string | null;

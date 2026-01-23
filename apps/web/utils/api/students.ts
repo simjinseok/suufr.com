@@ -34,7 +34,6 @@ type CreateStudentData = {
 };
 
 type UpdateStudentData = Partial<CreateStudentData> & {
-  profileImageKey?: string | null;
   profileImageUrl?: string | null;
 };
 

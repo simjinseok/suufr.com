@@ -23,9 +23,5 @@ export class UpdateStudentDto {
 
   @Allow()
   @IsOptional()
-  profileImageKey?: string | null;
-
-  @Allow()
-  @IsOptional()
   profileImageUrl?: string | null;
 }

@@ -59,7 +59,8 @@ export class OrganizationsService {
 
     if (dto.profileImageUrl !== undefined) {
       if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        finalProfileImageUrl = await this.cloudinaryService.moveFromTemp(dto.profileImageUrl);
+        // temp에서 images로 이동 (200x200 크롭 적용)
+        finalProfileImageUrl = await this.cloudinaryService.moveProfileImage(dto.profileImageUrl);
         oldProfileImageUrl = organization.profileImageUrl;
       }
       else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
@@ -77,7 +78,8 @@ export class OrganizationsService {
 
     if (dto.logoImageUrl !== undefined) {
       if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
-        finalLogoImageUrl = await this.cloudinaryService.moveFromTemp(dto.logoImageUrl);
+        // temp에서 images로 이동 (원본 유지)
+        finalLogoImageUrl = await this.cloudinaryService.moveLogoImage(dto.logoImageUrl);
         oldLogoImageUrl = organization.logoImageUrl;
       }
       else if (dto.logoImageUrl === null || dto.logoImageUrl === '') {
@@ -96,7 +98,6 @@ export class OrganizationsService {
         ...(dto.phone !== undefined && { phone: dto.phone }),
         ...(dto.address !== undefined && { address: dto.address }),
         ...(dto.profileName !== undefined && { profileName: dto.profileName }),
-        ...(dto.profileImageKey !== undefined && { profileImageKey: dto.profileImageKey }),
         ...(finalProfileImageUrl !== undefined && { profileImageUrl: finalProfileImageUrl }),
         ...(finalLogoImageUrl !== undefined && { logoImageUrl: finalLogoImageUrl }),
       },

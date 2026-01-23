@@ -125,8 +125,8 @@ export class StudentsService {
 
     if (dto.profileImageUrl !== undefined) {
       if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동
-        finalProfileImageUrl = await this.cloudinaryService.moveFromTemp(dto.profileImageUrl);
+        // temp에서 images로 이동 (200x200 크롭 적용)
+        finalProfileImageUrl = await this.cloudinaryService.moveProfileImage(dto.profileImageUrl);
         // 기존 이미지는 response 후에 삭제
         oldImageUrlToDelete = existing.profileImageUrl;
       }
@@ -151,7 +151,6 @@ export class StudentsService {
         ...(dto.nextPaymentAt !== undefined && {
           nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
         }),
-        ...(dto.profileImageKey !== undefined && { profileImageKey: dto.profileImageKey }),
         ...(finalProfileImageUrl !== undefined && { profileImageUrl: finalProfileImageUrl }),
       },
     });
@@ -165,7 +164,7 @@ export class StudentsService {
       });
     }
 
-    return { success: true, data: student, oldProfileImageKey: existing.profileImageKey };
+    return { success: true, data: student };
   }
 
   async remove(uuid: string, userId: string) {

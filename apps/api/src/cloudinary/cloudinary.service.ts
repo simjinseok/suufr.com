@@ -46,11 +46,52 @@ export class CloudinaryService {
   }
 
   /**
-   * temp 폴더의 이미지를 images 폴더로 이동
+   * temp 폴더의 프로필 이미지를 images 폴더로 이동 (200x200 크롭 + 자동 품질)
    * @param tempUrl - temp 폴더에 있는 Cloudinary URL
    * @returns 새로운 Cloudinary URL 또는 null
    */
-  async moveFromTemp(tempUrl: string): Promise<string | null> {
+  async moveProfileImage(tempUrl: string): Promise<string | null> {
+    const publicId = this.extractPublicId(tempUrl);
+    if (!publicId || !publicId.startsWith('suufr/temp/')) {
+      console.error('Invalid temp URL:', tempUrl);
+      return null;
+    }
+
+    const key = randomUUID();
+    const newPublicId = `suufr/images/${key}`;
+
+    try {
+      // temp URL에서 transformation 적용하여 새 이미지로 업로드
+      const result = await cloudinary.uploader.upload(tempUrl, {
+        public_id: newPublicId,
+        transformation: [
+          {
+            crop: 'fill',
+            width: 200,
+            height: 200,
+            quality: 'auto',
+          },
+        ],
+        overwrite: true,
+      });
+
+      // 원본 temp 이미지 삭제
+      await cloudinary.uploader.destroy(publicId, { invalidate: true });
+
+      return result.secure_url;
+    }
+    catch (error) {
+      console.error('Move profile image error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * temp 폴더의 로고 이미지를 images 폴더로 이동 (원본 유지)
+   * @param tempUrl - temp 폴더에 있는 Cloudinary URL
+   * @returns 새로운 Cloudinary URL 또는 null
+   */
+  async moveLogoImage(tempUrl: string): Promise<string | null> {
     const publicId = this.extractPublicId(tempUrl);
     if (!publicId || !publicId.startsWith('suufr/temp/')) {
       console.error('Invalid temp URL:', tempUrl);
@@ -67,7 +108,7 @@ export class CloudinaryService {
       return result.secure_url;
     }
     catch (error) {
-      console.error('Move image error:', error);
+      console.error('Move logo image error:', error);
       return null;
     }
   }
