@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
@@ -14,9 +15,11 @@ import { StudentStatusesModule } from './student-statuses/student-statuses.modul
 import { StudentCommentsModule } from './student-comments/student-comments.module';
 import { SettingsModule } from './settings/settings.module';
 import { AppTokensModule } from './app-tokens/app-tokens.module';
+import { CarddavModule } from './carddav/carddav.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -34,6 +37,7 @@ import { AppTokensModule } from './app-tokens/app-tokens.module';
     StudentCommentsModule,
     SettingsModule,
     AppTokensModule,
+    CarddavModule,
   ],
 })
 export class AppModule {}
