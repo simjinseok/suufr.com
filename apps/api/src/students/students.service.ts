@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { ListStudentsQueryDto } from './dto/list-students-query.dto';
@@ -7,7 +8,10 @@ import { Prisma } from '@prisma/generated/client';
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll(query: ListStudentsQueryDto, userId: string) {
     // 사용자가 소유한 모든 organization 조회
@@ -115,6 +119,26 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
+    // profileImageUrl 처리: temp URL이면 images 폴더로 이동
+    let finalProfileImageUrl: string | null | undefined = undefined;
+    let oldImageUrlToDelete: string | null = null;
+
+    if (dto.profileImageUrl !== undefined) {
+      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
+        // temp에서 images로 이동
+        finalProfileImageUrl = await this.cloudinaryService.moveFromTemp(dto.profileImageUrl);
+        // 기존 이미지는 response 후에 삭제
+        oldImageUrlToDelete = existing.profileImageUrl;
+      } else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
+        // 이미지 제거
+        finalProfileImageUrl = null;
+        oldImageUrlToDelete = existing.profileImageUrl;
+      } else {
+        // 이미 정식 URL인 경우 (변경 없음)
+        finalProfileImageUrl = dto.profileImageUrl;
+      }
+    }
+
     const student = await this.prisma.student.update({
       where: { uuid },
       data: {
@@ -126,8 +150,18 @@ export class StudentsService {
           nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
         }),
         ...(dto.profileImageKey !== undefined && { profileImageKey: dto.profileImageKey }),
+        ...(finalProfileImageUrl !== undefined && { profileImageUrl: finalProfileImageUrl }),
       },
     });
+
+    // 기존 이미지 삭제 (response 후 비동기로 처리)
+    if (oldImageUrlToDelete) {
+      setImmediate(() => {
+        this.cloudinaryService.deleteByUrl(oldImageUrlToDelete).catch((err) => {
+          console.error('Failed to delete old image:', err);
+        });
+      });
+    }
 
     return { success: true, data: student, oldProfileImageKey: existing.profileImageKey };
   }

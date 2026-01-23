@@ -8,9 +8,34 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const fastifyAdapter = new FastifyAdapter({
+    ignoreTrailingSlash: true,
+  });
+
+  // Register custom HTTP methods for CardDAV/CalDAV (WebDAV)
+  // Fastify 5 doesn't support these by default
+  const fastifyInstance = fastifyAdapter.getInstance();
+  fastifyInstance.addHttpMethod('PROPFIND', { hasBody: true });
+  fastifyInstance.addHttpMethod('PROPPATCH', { hasBody: true });
+  fastifyInstance.addHttpMethod('REPORT', { hasBody: true });
+  fastifyInstance.addHttpMethod('MKCOL');
+  fastifyInstance.addHttpMethod('COPY');
+  fastifyInstance.addHttpMethod('MOVE');
+  fastifyInstance.addHttpMethod('LOCK', { hasBody: true });
+  fastifyInstance.addHttpMethod('UNLOCK');
+
+  // Add content type parser for XML and vCard (CardDAV/CalDAV)
+  fastifyInstance.addContentTypeParser(
+    ['text/xml', 'application/xml', 'text/vcard'],
+    { parseAs: 'buffer' },
+    (_req: unknown, body: Buffer, done: (err: null, body: Buffer) => void) => {
+      done(null, body);
+    },
+  );
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    fastifyAdapter,
     {
       rawBody: true,
       logger: ['error', 'warn', 'log'],
@@ -43,9 +68,7 @@ async function bootstrap() {
       { path: '.well-known/carddav', method: RequestMethod.ALL },
       { path: 'carddav', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId', method: RequestMethod.ALL },
-      { path: 'carddav/principals/:userId/', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId/contacts', method: RequestMethod.ALL },
-      { path: 'carddav/principals/:userId/contacts/', method: RequestMethod.ALL },
       { path: 'carddav/principals/:userId/contacts/:filename', method: RequestMethod.ALL },
     ],
   });

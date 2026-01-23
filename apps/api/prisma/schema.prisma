@@ -38,6 +38,7 @@ model Student {
   notes           String
   status          StudentStatusValue @default(pending)
   profileImageKey String?            @map("profile_image_key")
+  profileImageUrl String?            @map("profile_image_url") // CardDAV 사진 동기화용
   nextPaymentAt   DateTime?          @map("next_payment_at") @db.Date
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(0)

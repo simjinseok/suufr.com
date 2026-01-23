@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsDateString, Allow } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsDateString, Allow, IsUrl } from 'class-validator';
 
 export class UpdateStudentDto {
   @IsString()
@@ -24,4 +24,8 @@ export class UpdateStudentDto {
   @Allow()
   @IsOptional()
   profileImageKey?: string | null;
+
+  @Allow()
+  @IsOptional()
+  profileImageUrl?: string | null;
 }
