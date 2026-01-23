@@ -126,8 +126,12 @@ function Content({ session, close }: ContentProps) {
               name="sessionAt"
               render={({ field: { name, value, onChange } }) => (
                 <div className="flex gap-1">
-                  <DateField
+                  <input
+                    type="hidden"
                     name={name}
+                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul')).toString()}
+                  />
+                  <DateField
                     granularity="day"
                     value={toCalendarDate(fromDate(new Date(value), 'Asia/Seoul'))}
                     onChange={(v) => {
