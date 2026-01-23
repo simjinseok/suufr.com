@@ -6,8 +6,6 @@ export interface SessionEvent {
   duration: number; // minutes
   lessonTitle: string;
   studentName: string;
-  studentUuid: string;
-  studentEmail?: string;
   userId: string;
   notes: string;
   isDone: boolean;

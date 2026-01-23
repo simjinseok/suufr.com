@@ -68,8 +68,6 @@ export class CaldavService {
             student: {
               select: {
                 name: true,
-                uuid: true,
-                email: true,
                 updatedAt: true,
               },
             },
@@ -85,8 +83,6 @@ export class CaldavService {
       duration: s.duration,
       lessonTitle: s.lesson.title,
       studentName: s.lesson.student.name,
-      studentUuid: s.lesson.student.uuid,
-      studentEmail: s.lesson.student.email ?? undefined,
       userId,
       notes: s.notes,
       isDone: s.isDone,
@@ -118,8 +114,6 @@ export class CaldavService {
             student: {
               select: {
                 name: true,
-                uuid: true,
-                email: true,
                 updatedAt: true,
               },
             },
@@ -138,8 +132,6 @@ export class CaldavService {
       duration: session.duration,
       lessonTitle: session.lesson.title,
       studentName: session.lesson.student.name,
-      studentUuid: session.lesson.student.uuid,
-      studentEmail: session.lesson.student.email ?? undefined,
       userId,
       notes: session.notes,
       isDone: session.isDone,
@@ -352,8 +344,6 @@ export class CaldavService {
         duration: s.duration,
         lessonTitle: s.lesson.title,
         studentName: s.lesson.student.name,
-        studentUuid: s.lesson.student.uuid,
-        studentEmail: s.lesson.student.email ?? undefined,
         userId,
         notes: s.notes,
         isDone: s.isDone,
@@ -573,8 +563,6 @@ export class CaldavService {
       duration: updatedSession.duration,
       lessonTitle: updatedSession.lesson.title,
       studentName: updatedSession.lesson.student.name,
-      studentUuid: updatedSession.lesson.student.uuid,
-      studentEmail: updatedSession.lesson.student.email ?? undefined,
       userId,
       notes: updatedSession.notes,
       isDone: updatedSession.isDone,
