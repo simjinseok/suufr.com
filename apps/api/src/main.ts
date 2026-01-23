@@ -1,17 +1,39 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, RequestMethod } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    // Enable raw body for DAV requests
-    rawBody: true,
-    logger: ['error', 'warn', 'log'],
-  });
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+    {
+      rawBody: true,
+      logger: ['error', 'warn', 'log'],
+    },
+  );
 
-  app.enableCors({
-    origin: process.env.WEB_URL || 'http://localhost:3000',
-    credentials: true,
+  // Skip CORS for CardDAV/CalDAV routes
+  app.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    const path = req.url || '';
+    if (path.startsWith('/carddav') || path.startsWith('/.well-known/carddav')
+      || path.startsWith('/caldav') || path.startsWith('/.well-known/caldav')) {
+      return next();
+    }
+    const origin = process.env.WEB_URL || 'http://localhost:3000';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+      res.statusCode = 204;
+      return res.end();
+    }
+    next();
   });
 
   app.setGlobalPrefix('api', {
@@ -19,6 +41,12 @@ async function bootstrap() {
       { path: '', method: RequestMethod.GET },
       { path: '.well-known/caldav', method: RequestMethod.ALL },
       { path: '.well-known/carddav', method: RequestMethod.ALL },
+      { path: 'carddav', method: RequestMethod.ALL },
+      { path: 'carddav/principals/:userId', method: RequestMethod.ALL },
+      { path: 'carddav/principals/:userId/', method: RequestMethod.ALL },
+      { path: 'carddav/principals/:userId/contacts', method: RequestMethod.ALL },
+      { path: 'carddav/principals/:userId/contacts/', method: RequestMethod.ALL },
+      { path: 'carddav/principals/:userId/contacts/:filename', method: RequestMethod.ALL },
     ],
   });
 
@@ -34,7 +62,7 @@ async function bootstrap() {
   );
 
   const port = process.env.PORT || 5001;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`NestJS API server running on port ${port}`);
 }
