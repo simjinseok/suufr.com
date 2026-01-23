@@ -66,6 +66,16 @@ export async function fetchImageAsBase64(
   url: string,
   timeoutMs = 5000,
 ): Promise<{ base64: string; mediaType: string } | null> {
+  // Cloudinary URL만 허용 (SSRF 방지)
+  try {
+    const parsedUrl = new URL(url);
+    if (!parsedUrl.hostname.endsWith('cloudinary.com')) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
   // 캐시 확인
   const cached = imageCache.get(url);
   if (cached && cached.expiresAt > Date.now()) {

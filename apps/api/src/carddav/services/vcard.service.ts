@@ -191,6 +191,15 @@ export class VcardService {
             break;
           }
 
+          // Base64 유효성 검증
+          if (value) {
+            try {
+              Buffer.from(value, 'base64');
+            } catch {
+              break; // 유효하지 않은 Base64는 무시
+            }
+          }
+
           // Base64 인코딩된 사진만 처리 (클라이언트에서 보낸 데이터)
           // URL 참조 방식은 무시 (서버에서 보낸 것)
           const upperProperty = property.toUpperCase();

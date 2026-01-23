@@ -105,49 +105,44 @@ export class AppTokensService {
   }
 
   async validateToken(email: string, token: string): Promise<DavSession | null> {
-    // Find all tokens (DAV auth doesn't have a good way to include userId in request)
-    const appTokens = await this.prisma.appToken.findMany({
+    // tokenHash 인덱스를 활용한 O(1) 조회 (스키마에 @@index([tokenHash, deletedAt]) 존재)
+    const tokenHash = hashToken(token);
+    const appToken = await this.prisma.appToken.findFirst({
       where: {
+        tokenHash,
         deletedAt: null,
       },
     });
 
-    // Try to find a matching token
-    for (const appToken of appTokens) {
-      const isValid = verifyToken(token, appToken.tokenHash);
-      if (!isValid) continue;
+    if (!appToken) return null;
 
-      // Token is valid, now verify the user has the expected email
-      // Find the user's organization
-      const organization = await this.prisma.organization.findFirst({
-        where: {
-          userId: appToken.userId,
-          deletedAt: null,
-        },
-      });
+    // Find the user's organization
+    const organization = await this.prisma.organization.findFirst({
+      where: {
+        userId: appToken.userId,
+        deletedAt: null,
+      },
+    });
 
-      if (!organization) continue;
+    if (!organization) return null;
 
-      // Update lastUsedAt
-      await this.prisma.appToken.update({
-        where: { id: appToken.id },
-        data: { lastUsedAt: new Date() },
-      });
+    // Update lastUsedAt
+    await this.prisma.appToken.update({
+      where: { id: appToken.id },
+      data: { lastUsedAt: new Date() },
+    });
 
-      return {
-        user: {
-          id: appToken.userId,
-          email,
-        },
-        organization: {
-          id: organization.id,
-          uuid: organization.uuid,
-          name: organization.name,
-        },
-        tokenId: appToken.id,
-      };
-    }
-
-    return null;
+    return {
+      user: {
+        id: appToken.userId,
+        email,
+      },
+      organization: {
+        id: organization.id,
+        uuid: organization.uuid,
+        name: organization.name,
+      },
+      tokenId: appToken.id,
+    };
   }
 }
