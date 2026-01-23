@@ -13,6 +13,7 @@ model Organization {
   uuid          String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   name          String // 상호명
   logoImageKey  String?   @map("logo_image_key")
+  logoImageUrl  String?   @map("logo_image_url")
   phone         String? // 연락처
   address       String? // 주소 (지도용)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
@@ -23,6 +24,7 @@ model Organization {
   userId          String  @map("user_id") @db.Uuid
   profileName     String? @map("profile_name") // 프로필 이름
   profileImageKey String? @map("profile_image_key") // 프로필 이미지
+  profileImageUrl String? @map("profile_image_url")
 
   students Student[]
   meetings Meeting[]
