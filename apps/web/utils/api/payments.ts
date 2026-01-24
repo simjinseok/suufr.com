@@ -62,6 +62,18 @@ type UpdatePaymentData = {
   notes?: string;
 };
 
+type MonthlyTrendResponse = {
+  success: boolean;
+  data: {
+    months: Array<{
+      year: number;
+      month: number;
+      totalAmount: number;
+      count: number;
+    }>;
+  };
+};
+
 export const paymentsApi = {
   list: (params: ListPaymentsParams) =>
     apiClient<ListPaymentsResponse>('/api/payments', { params }),
@@ -77,4 +89,7 @@ export const paymentsApi = {
 
   remove: (uuid: string) =>
     apiClient<{ success: boolean }>(`/api/payments/${uuid}`, { method: 'DELETE' }),
+
+  getMonthlyTrend: () =>
+    apiClient<MonthlyTrendResponse>('/api/payments/stats/monthly-trend'),
 };

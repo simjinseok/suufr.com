@@ -224,4 +224,69 @@ export class PaymentsService {
 
     return { success: true };
   }
+
+  async getMonthlyTrend(userId: string) {
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true },
+    });
+    const orgIds = organizations.map(o => o.id);
+
+    // 최근 12개월 날짜 범위 계산
+    const now = new Date();
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        deletedAt: null,
+        paidAt: { gte: startDate, lte: endDate },
+        lesson: {
+          deletedAt: null,
+          student: {
+            deletedAt: null,
+            organizationId: { in: orgIds },
+          },
+        },
+      },
+      select: {
+        amount: true,
+        paidAt: true,
+      },
+    });
+
+    // 월별로 그룹핑
+    const monthlyMap = new Map<string, { year: number; month: number; totalAmount: number; count: number }>();
+
+    // 12개월 모든 월에 대해 초기화 (데이터 없어도 0으로 표시)
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const key = `${year}-${month}`;
+      monthlyMap.set(key, { year, month, totalAmount: 0, count: 0 });
+    }
+
+    for (const payment of payments) {
+      const year = payment.paidAt.getFullYear();
+      const month = payment.paidAt.getMonth() + 1;
+      const key = `${year}-${month}`;
+      const entry = monthlyMap.get(key);
+      if (entry) {
+        entry.totalAmount += payment.amount;
+        entry.count += 1;
+      }
+    }
+
+    // 오래된 순으로 정렬
+    const months = Array.from(monthlyMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+
+    return {
+      success: true,
+      data: { months },
+    };
+  }
 }

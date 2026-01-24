@@ -1,23 +1,35 @@
 'use client';
 import React from 'react';
-import { Button, Card } from '@heroui/react';
+import { Card, Chip } from '@heroui/react';
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
 import type { MonthlyPaymentStats } from '@/types/index';
 import { ko } from 'date-fns/locale';
+import PaymentModal from '@/components/lesson/payment-modal';
+import { modal } from '@/contexts/modal-manager';
 
 type Payment = {
   id: number;
+  uuid: string;
   amount: number;
   paymentMethod: string;
   notes: string | null;
   paidAt: Date;
   lesson: {
+    uuid: string;
+    title: string;
     student: {
       id: number;
       name: string;
     };
   };
+};
+
+const PAYMENT_METHODS: Record<string, string> = {
+  card: '카드',
+  transfer: '계좌이체',
+  cash: '현금',
+  none: '미지정',
 };
 
 type Props = {
@@ -63,39 +75,65 @@ export default function MonthlyView({ stats, payments }: Props) {
       </div>
 
       {payments.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {payments.map(payment => (
-            <li key={payment.id}>
-              <Card>
-                <div className="flex justify-between items-end">
-                  <div className="flex flex-col justify-end">
-                    <p className="text-xl font-bold">{payment.lesson.student.name}</p>
-                    {payment.notes && (
-                      <p className="line-clamp-1 text-sm text-gray-600">{payment.notes}</p>
-                    )}
-                    <p className="mt-2 text-sm font-medium text-gray-500">{format(payment.paidAt, 'yyyy-MM-dd', { locale: ko })}</p>
-                  </div>
-                  <div className="flex flex-col items-end justify-between">
-                    <div>
-                      <Button size="sm" variant="ghost">수정</Button>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <p>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {payment.paymentMethod}
-                        </span>
-                      </p>
-                      <p className="text-xl font-bold">
-                        {numberToHangulMixed(payment.amount)}
-                        원
-                      </p>
-                    </div>
+        <div className="bg-white rounded-2xl overflow-hidden">
+          {payments.map((payment, index) => (
+            <div
+              key={payment.id}
+              className={`p-4 ${index !== payments.length - 1 ? 'border-b border-zinc-100' : ''}`}
+            >
+              <div className="flex justify-between items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-zinc-900">
+                    {payment.lesson.student.name}
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    {format(payment.paidAt, 'M월 d일', { locale: ko })}
+                    &nbsp;·&nbsp;
+                    {PAYMENT_METHODS[payment.paymentMethod] || payment.paymentMethod}
+                    &nbsp;·&nbsp;
+                    {payment.lesson.title}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <div className="flex flex-col items-end">
+                    <Chip
+                      size="sm"
+                      variant="tertiary"
+                      color="accent"
+                      onClick={() => {
+                        modal.show(PaymentModal, {
+                          lesson: {
+                            uuid: payment.lesson.uuid,
+                            title: payment.lesson.title,
+                            payment: {
+                              uuid: payment.uuid,
+                              amount: payment.amount,
+                              paymentMethod: payment.paymentMethod,
+                              paidAt: payment.paidAt,
+                              notes: payment.notes,
+                            },
+                          },
+                        });
+                      }}
+                    >
+                      수정
+                    </Chip>
+                    <p className="text-base font-bold text-zinc-900 tabular-nums">
+                      {numberToHangulMixed(payment.amount)}
+                      원
+                    </p>
                   </div>
                 </div>
-              </Card>
-            </li>
+              </div>
+
+              {payment.notes && (
+                <div className="mt-3 p-3 rounded-lg text-sm text-zinc-600 leading-relaxed whitespace-pre-line bg-zinc-50">
+                  {payment.notes}
+                </div>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

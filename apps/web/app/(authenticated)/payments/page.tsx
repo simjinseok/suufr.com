@@ -50,17 +50,25 @@ export default async function Page({ searchParams }: Props) {
   const view: PaymentView = _view === 'yearly' ? 'yearly' : 'monthly';
   const { year, month } = parseDateParam(_date);
 
-  const response = await paymentsApi.list({
-    year,
-    month: view === 'monthly' ? month : undefined,
-    limit: 100,
-  });
+  const [response, trendResponse] = await Promise.all([
+    paymentsApi.list({
+      year,
+      month: view === 'monthly' ? month : undefined,
+      limit: 1000,
+    }),
+    view === 'yearly' ? paymentsApi.getMonthlyTrend() : Promise.resolve(null),
+  ]);
 
   const payments = response.data.map(p => ({
-    ...p,
+    id: p.id,
+    uuid: p.uuid,
+    amount: p.amount,
+    paymentMethod: p.paymentMethod,
+    notes: p.notes,
     paidAt: new Date(p.paidAt),
     lesson: {
-      ...p.lesson,
+      uuid: p.lesson.uuid,
+      title: p.lesson.title,
       student: {
         id: p.lesson.student.id,
         name: p.lesson.student.name,
@@ -122,7 +130,7 @@ export default async function Page({ searchParams }: Props) {
             <MonthlyView stats={currentMonthStats} payments={payments} />
           )
         : (
-            <YearlyView stats={currentYearStats} payments={payments} />
+            <YearlyView stats={currentYearStats} payments={payments} monthlyTrend={trendResponse?.data.months ?? []} />
           )}
     </div>
   );

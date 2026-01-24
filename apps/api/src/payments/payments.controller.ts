@@ -8,6 +8,11 @@ import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  @Get('stats/monthly-trend')
+  getMonthlyTrend(@CurrentUser() user: AuthenticatedUser) {
+    return this.paymentsService.getMonthlyTrend(user.userId);
+  }
+
   @Get()
   findAll(
     @Query() query: ListPaymentsQueryDto,

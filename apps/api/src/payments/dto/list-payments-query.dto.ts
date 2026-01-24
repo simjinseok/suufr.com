@@ -21,7 +21,7 @@ export class ListPaymentsQueryDto {
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(1000)
   limit?: number = 20;
 
   @IsOptional()
