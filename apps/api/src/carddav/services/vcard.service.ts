@@ -13,6 +13,9 @@ export interface StudentContact {
     name: string;
   };
   profileImageUrl?: string | null;
+  birthYear?: number | null;
+  birthMonth?: number | null;
+  birthDay?: number | null;
 }
 
 /**
@@ -28,6 +31,9 @@ export interface ParsedVcardUpdate {
   notes?: string | null;
   photoBase64?: string | null; // Base64 인코딩된 사진 데이터
   photoMediaType?: string; // 사진 MIME type (e.g., image/jpeg)
+  birthYear?: number | null; // 연도 (null = 미상)
+  birthMonth?: number | null; // 월 (1-12)
+  birthDay?: number | null; // 일 (1-31)
 }
 
 // Base64 인코딩 시 ~33% 오버헤드 고려하여 500KB -> 700KB
@@ -65,6 +71,20 @@ export class VcardService {
 
     if (student.notes) {
       lines.push(`NOTE:${this.escapeVcardValue(student.notes)}`);
+    }
+
+    // BDAY (생일)
+    if (student.birthMonth && student.birthDay) {
+      const mm = String(student.birthMonth).padStart(2, '0');
+      const dd = String(student.birthDay).padStart(2, '0');
+      if (student.birthYear) {
+        // 전체 날짜: BDAY:1990-05-15
+        lines.push(`BDAY:${student.birthYear}-${mm}-${dd}`);
+      }
+      else {
+        // 연도 미상: BDAY:--05-15 (vCard 4.0 형식, 대부분 클라이언트 지원)
+        lines.push(`BDAY:--${mm}-${dd}`);
+      }
     }
 
     // PHOTO 속성 (base64 임베딩 - macOS 연락처 앱 호환성)
@@ -223,6 +243,39 @@ export class VcardService {
             hasAnyField = true;
             result.photoBase64 = value || null;
             result.photoMediaType = 'image/jpeg';
+          }
+          break;
+        }
+        case 'BDAY': {
+          // BDAY 형식:
+          // - 전체 날짜: 1990-05-15 또는 19900515
+          // - 연도 미상: --05-15 또는 --0515
+          hasAnyField = true;
+          const trimmed = value.trim();
+
+          if (!trimmed) {
+            // 빈 값 = 생일 삭제
+            result.birthYear = null;
+            result.birthMonth = null;
+            result.birthDay = null;
+            break;
+          }
+
+          // --MM-DD 또는 --MMDD (연도 미상)
+          const noYearMatch = trimmed.match(/^--(\d{2})-?(\d{2})$/);
+          if (noYearMatch) {
+            result.birthYear = null;
+            result.birthMonth = parseInt(noYearMatch[1], 10);
+            result.birthDay = parseInt(noYearMatch[2], 10);
+            break;
+          }
+
+          // YYYY-MM-DD 또는 YYYYMMDD (전체 날짜)
+          const fullMatch = trimmed.match(/^(\d{4})-?(\d{2})-?(\d{2})$/);
+          if (fullMatch) {
+            result.birthYear = parseInt(fullMatch[1], 10);
+            result.birthMonth = parseInt(fullMatch[2], 10);
+            result.birthDay = parseInt(fullMatch[3], 10);
           }
           break;
         }

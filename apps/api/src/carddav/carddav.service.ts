@@ -66,6 +66,9 @@ export class CarddavService {
       updatedAt: s.updatedAt,
       organization: s.organization,
       profileImageUrl: s.profileImageUrl,
+      birthYear: s.birthYear,
+      birthMonth: s.birthMonth,
+      birthDay: s.birthDay,
     }));
   }
 
@@ -102,6 +105,9 @@ export class CarddavService {
       updatedAt: student.updatedAt,
       organization: student.organization,
       profileImageUrl: student.profileImageUrl,
+      birthYear: student.birthYear,
+      birthMonth: student.birthMonth,
+      birthDay: student.birthDay,
     };
   }
 
@@ -263,6 +269,9 @@ export class CarddavService {
             updatedAt: student.updatedAt,
             organization: student.organization,
             profileImageUrl: student.profileImageUrl,
+            birthYear: student.birthYear,
+            birthMonth: student.birthMonth,
+            birthDay: student.birthDay,
           };
           const etag = generateEtag(student.uuid, student.updatedAt);
           const vcardData = await this.vcardService.toVcard(contact);
@@ -387,6 +396,9 @@ export class CarddavService {
       email?: string | null;
       notes?: string;
       profileImageUrl?: string | null;
+      birthYear?: number | null;
+      birthMonth?: number | null;
+      birthDay?: number | null;
     } = {};
 
     if (updates.name !== undefined) {
@@ -401,6 +413,12 @@ export class CarddavService {
     if (updates.notes !== undefined) {
       // notes field in DB is non-nullable, so convert null to empty string
       updateData.notes = updates.notes ?? '';
+    }
+    // 생일 업데이트 (하나라도 설정되어 있으면 전체 업데이트)
+    if (updates.birthYear !== undefined || updates.birthMonth !== undefined || updates.birthDay !== undefined) {
+      updateData.birthYear = updates.birthYear ?? null;
+      updateData.birthMonth = updates.birthMonth ?? null;
+      updateData.birthDay = updates.birthDay ?? null;
     }
 
     // 5. Handle photo update (Cloudinary 실패 시 다른 필드는 계속 업데이트)
@@ -451,6 +469,9 @@ export class CarddavService {
       updatedAt: updatedStudent.updatedAt,
       organization: updatedStudent.organization,
       profileImageUrl: updatedStudent.profileImageUrl,
+      birthYear: updatedStudent.birthYear,
+      birthMonth: updatedStudent.birthMonth,
+      birthDay: updatedStudent.birthDay,
     };
 
     return {

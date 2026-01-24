@@ -6,7 +6,7 @@ import type { GoogleContact, SyncResult } from '../dto';
 const PEOPLE_API_BASE = 'https://people.googleapis.com/v1';
 
 // Fields to request from People API
-const PERSON_FIELDS = 'names,phoneNumbers,emailAddresses,organizations,userDefined';
+const PERSON_FIELDS = 'names,phoneNumbers,emailAddresses,organizations,userDefined,birthdays';
 
 interface ConnectionsResponse {
   connections?: GoogleContact[];
@@ -310,6 +310,9 @@ export class GoogleContactsService {
       name?: string;
       phone?: string | null;
       email?: string | null;
+      birthYear?: number | null;
+      birthMonth?: number | null;
+      birthDay?: number | null;
     } = {};
 
     const displayName = contact.names?.[0]?.displayName;
@@ -322,6 +325,15 @@ export class GoogleContactsService {
 
     const email = contact.emailAddresses?.[0]?.value;
     updateData.email = email;
+
+    // 생일 추출
+    const birthday = contact.birthdays?.[0]?.date;
+    if (birthday) {
+      // year가 0이면 연도 미상
+      updateData.birthYear = birthday.year && birthday.year > 0 ? birthday.year : null;
+      updateData.birthMonth = birthday.month ?? null;
+      updateData.birthDay = birthday.day ?? null;
+    }
 
     if (Object.keys(updateData).length > 0) {
       await this.prisma.student.update({
@@ -361,6 +373,9 @@ export class GoogleContactsService {
     phone: string | null;
     email: string | null;
     status: string;
+    birthYear: number | null;
+    birthMonth: number | null;
+    birthDay: number | null;
     organization: { name: string };
   }): GoogleContact {
     const contact: GoogleContact = {
@@ -381,6 +396,17 @@ export class GoogleContactsService {
 
     if (student.organization.name) {
       contact.organizations = [{ name: student.organization.name }];
+    }
+
+    // 생일 동기화 (월/일이 있어야 유효)
+    if (student.birthMonth && student.birthDay) {
+      contact.birthdays = [{
+        date: {
+          year: student.birthYear ?? 0, // 0 = 연도 미상 (vCard BDAY --MM-DD 형식)
+          month: student.birthMonth,
+          day: student.birthDay,
+        },
+      }];
     }
 
     return contact;

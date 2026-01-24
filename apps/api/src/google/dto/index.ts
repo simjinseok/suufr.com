@@ -64,6 +64,13 @@ export interface GoogleContact {
     key?: string;
     value?: string;
   }>;
+  birthdays?: Array<{
+    date?: {
+      year?: number; // 0 = 연도 미상
+      month?: number; // 1-12
+      day?: number; // 1-31
+    };
+  }>;
 }
 
 export interface SyncResult {

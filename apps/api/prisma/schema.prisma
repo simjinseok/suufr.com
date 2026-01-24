@@ -49,6 +49,11 @@ model Student {
   phone String?
   email String?
 
+  // 생일 (Google Contacts 동기화용)
+  birthYear  Int? @map("birth_year")
+  birthMonth Int? @map("birth_month")
+  birthDay   Int? @map("birth_day")
+
   // 조직
   organizationId Int          @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
