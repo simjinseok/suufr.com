@@ -1,7 +1,7 @@
 // Import Sentry instrumentation before anything else
 import './instrument';
 
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import {
   FastifyAdapter,
@@ -82,7 +82,8 @@ async function bootstrap() {
   });
 
   // Sentry error tracking - must be registered before other filters
-  app.useGlobalFilters(new SentryGlobalFilter());
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryGlobalFilter(httpAdapter));
 
   app.useGlobalPipes(
     new ValidationPipe({

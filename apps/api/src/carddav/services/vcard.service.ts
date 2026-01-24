@@ -195,7 +195,8 @@ export class VcardService {
           if (value) {
             try {
               Buffer.from(value, 'base64');
-            } catch {
+            }
+            catch {
               break; // 유효하지 않은 Base64는 무시
             }
           }

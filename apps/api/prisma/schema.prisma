@@ -53,9 +53,10 @@ model Student {
   organizationId Int          @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id])
 
-  lessons  Lesson[]
-  comments StudentComment[]
-  statuses StudentStatus[]
+  lessons       Lesson[]
+  comments      StudentComment[]
+  statuses      StudentStatus[]
+  googleContact StudentGoogleContact?
 
   @@index([organizationId, name, status, deletedAt])
   @@map("students")
@@ -171,8 +172,9 @@ model Session {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
   lessonId  Int       @map("lesson_id")
 
-  feedback Feedback?
-  lesson   Lesson    @relation(fields: [lessonId], references: [id])
+  feedback    Feedback?
+  lesson      Lesson              @relation(fields: [lessonId], references: [id])
+  googleEvent SessionGoogleEvent?
 
   @@index([lessonId, sessionAt, deletedAt])
   @@map("sessions")
@@ -231,4 +233,81 @@ model AppToken {
   @@index([userId, deletedAt])
   @@index([tokenHash, deletedAt])
   @@map("app_tokens")
+}
+
+// 외부 서비스 OAuth 토큰 (Google 등)
+model ExternalServiceToken {
+  id             Int       @id @default(autoincrement())
+  uuid           String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  provider       String // "google"
+  accessToken    String    @map("access_token") @db.Text // AES-256 암호화
+  refreshToken   String?   @map("refresh_token") @db.Text // AES-256 암호화
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(0)
+  scope          String?
+  providerUserId String?   @map("provider_user_id")
+  providerEmail  String?   @map("provider_email")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(0)
+  userId         String    @map("user_id") @db.Uuid
+
+  @@unique([userId, provider])
+  @@index([provider, deletedAt])
+  @@map("external_service_tokens")
+}
+
+// 사용자별 Google 동기화 토큰 (전체 동기화용)
+model GoogleSyncToken {
+  id                 Int       @id @default(autoincrement())
+  calendarSyncToken  String?   @map("calendar_sync_token") // Calendar API syncToken
+  calendarId         String?   @map("calendar_id") // 동기화할 캘린더 ID
+  contactsSyncToken  String?   @map("contacts_sync_token") // People API syncToken
+  lastCalendarSyncAt DateTime? @map("last_calendar_sync_at") @db.Timestamptz(0)
+  lastContactsSyncAt DateTime? @map("last_contacts_sync_at") @db.Timestamptz(0)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  userId             String    @unique @map("user_id") @db.Uuid
+
+  @@map("google_sync_tokens")
+}
+
+// Session ↔ Google Calendar Event 매핑
+model SessionGoogleEvent {
+  id               Int       @id @default(autoincrement())
+  googleEventId    String    @map("google_event_id") // Google Event ID
+  googleCalendarId String    @map("google_calendar_id") // 어느 캘린더에 저장됐는지
+  etag             String? // 변경 감지용
+  lastSyncedAt     DateTime? @map("last_synced_at") @db.Timestamptz(0)
+  syncStatus       String    @default("synced") @map("sync_status") // synced, pending, error
+  errorMessage     String?   @map("error_message")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  sessionId        Int       @unique @map("session_id")
+  userId           String    @map("user_id") @db.Uuid
+
+  session Session @relation(fields: [sessionId], references: [id])
+
+  @@index([googleEventId])
+  @@index([userId, syncStatus])
+  @@map("session_google_events")
+}
+
+// Student ↔ Google Contact 매핑
+model StudentGoogleContact {
+  id                 Int       @id @default(autoincrement())
+  googleResourceName String    @map("google_resource_name") // "people/c1234567890"
+  etag               String? // 변경 감지용
+  lastSyncedAt       DateTime? @map("last_synced_at") @db.Timestamptz(0)
+  syncStatus         String    @default("synced") @map("sync_status") // synced, pending, error
+  errorMessage       String?   @map("error_message")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  studentId          Int       @unique @map("student_id")
+  userId             String    @map("user_id") @db.Uuid
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([googleResourceName])
+  @@index([userId, syncStatus])
+  @@map("student_google_contacts")
 }

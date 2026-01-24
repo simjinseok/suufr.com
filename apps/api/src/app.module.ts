@@ -17,6 +17,7 @@ import { SettingsModule } from './settings/settings.module';
 import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { CarddavModule } from './carddav/carddav.module';
 import { CaldavModule } from './caldav/caldav.module';
+import { GoogleModule } from './google/google.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CaldavModule } from './caldav/caldav.module';
     AppTokensModule,
     CarddavModule,
     CaldavModule,
+    GoogleModule,
   ],
 })
 export class AppModule {}
