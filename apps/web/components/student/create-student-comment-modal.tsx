@@ -1,21 +1,24 @@
 'use client';
+import { ModalProps, toast } from '@heroui/react';
+
 import * as React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Form, Label, Modal, Spinner, TextArea, TextField } from '@heroui/react';
+
 import { createStudentComment } from '@/actions/student-comment';
 
+interface Props {
+  isOpen?: ModalProps['isOpen'];
+  onOpenChange?: ModalProps['onOpenChange'];
+  studentUuid: string;
+}
 export default function CreateStudentCommentModal({
   isOpen,
-  onClose,
+  onOpenChange,
   studentUuid,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  studentUuid: string;
-}) {
-
+}: Props) {
   return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog className="min-w-[320px]">
           {({ close }) => (
@@ -27,7 +30,11 @@ export default function CreateStudentCommentModal({
   );
 }
 
-function Content({ studentUuid, close }) {
+interface ContentProps {
+  studentUuid: Props['studentUuid'];
+  close: () => void;
+}
+function Content({ studentUuid, close }: ContentProps) {
   const formId = React.useId();
 
   const { control } = useForm({
@@ -43,7 +50,10 @@ function Content({ studentUuid, close }) {
     }
 
     if (state.success) {
-      alert('수정하였습니다');
+      toast.success('추가', {
+        description: '코멘트를 추가하였습니다',
+        timeout: 2000,
+      });
       close();
     }
   }, [state.success, state.timestamp]);

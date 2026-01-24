@@ -1,16 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale/ko';
 import {
   Button,
   Modal,
-  Spinner,
 } from '@heroui/react';
-import { MessageCircle, PlusIcon, Pencil, Trash2 } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 
-import { deleteStudentComment } from '@/actions/student-comment';
+import { modal } from '@/contexts/modal-manager';
 import CreateStudentCommentModal from '@/components/student/create-student-comment-modal';
 import EditStudentCommentModal from '@/components/student/edit-student-comment-modal';
 
@@ -28,12 +27,10 @@ type Props = {
 
 export default function Comments({ comments, studentUuid }: Props) {
   return (
-    <div className="space-y-2">
-      <div className="flex justify-end mb-4">
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Modal>
-          <Button
-            variant="secondary"
-          >
+          <Button variant="secondary">
             <PlusIcon className="w-4 h-4" />
             코멘트 추가
           </Button>
@@ -41,87 +38,43 @@ export default function Comments({ comments, studentUuid }: Props) {
         </Modal>
       </div>
 
-      {comments.length === 0
+      {comments.length > 0
         ? (
-            <div className="py-12 text-center text-zinc-500">
-              코멘트가 없습니다
-            </div>
-          )
-        : (
-            <div className="space-y-2">
-              {comments.map(comment => (
+            <div className="bg-white rounded-2xl overflow-hidden">
+              {comments.map((comment, index) => (
                 <div
                   key={comment.id}
-                  className="flex gap-3 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group"
+                  className={`p-4 group ${index !== comments.length - 1 ? 'border-b border-zinc-100' : ''}`}
                 >
-                  <div className="shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                      <MessageCircle className="w-4 h-4 text-blue-600" />
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-zinc-400">
+                        {format(new Date(comment.createdAt), 'M월 d일', { locale: ko })}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-900 whitespace-pre-wrap leading-relaxed">
+                        {comment.content}
+                      </p>
                     </div>
-                  </div>
-
-                  <div className="grow min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-zinc-400">
-                        {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm')}
-                      </span>
-                    </div>
-
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
-                  </div>
-
-                  <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex gap-1">
-                      <Modal>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          isIconOnly
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </Button>
-
-                        <EditStudentCommentModal
-                          comment={comment}
-                        />
-                      </Modal>
-                      <DeleteCommentButton commentUuid={comment.uuid} />
+                    <div className="shrink-0 flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => modal.show(EditStudentCommentModal, { comment })}
+                      >
+                        수정
+                      </Button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+          )
+        : (
+            <div className="py-12 text-center text-zinc-500">
+              코멘트가 없습니다
+            </div>
           )}
     </div>
-  );
-}
-
-function DeleteCommentButton({ commentUuid }: { commentUuid: string }) {
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
-
-  const handleDelete = () => {
-    if (!confirm('코멘트를 삭제하시겠습니까?')) return;
-
-    startTransition(async () => {
-      await deleteStudentComment(commentUuid);
-      router.refresh();
-    });
-  };
-
-  return (
-    <Button
-      size="sm"
-      variant="ghost"
-      isIconOnly
-      isPending={isPending}
-      onPress={handleDelete}
-    >
-      {({ isPending: pending }) => (
-        pending ? <Spinner size="sm" /> : <Trash2 className="w-3 h-3" />
-      )}
-    </Button>
   );
 }

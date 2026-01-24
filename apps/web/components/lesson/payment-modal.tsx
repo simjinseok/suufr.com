@@ -24,12 +24,12 @@ import { fromDate, getLocalTimeZone, toCalendarDate, today } from '@internationa
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
-  onClose?: ModalProps['onOpenChange'];
+  onOpenChange?: ModalProps['onOpenChange'];
   lesson: any;
 }
-export default function PaymentModal({ isOpen, onClose, lesson }: Props) {
+export default function PaymentModal({ isOpen, onOpenChange, lesson }: Props) {
   return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onClose}>
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (

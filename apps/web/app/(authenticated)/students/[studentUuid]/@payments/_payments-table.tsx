@@ -1,10 +1,11 @@
 'use client';
 
-import {Button, Chip, Modal, Surface} from '@heroui/react';
+import { Button, Chip, Modal, Surface } from '@heroui/react';
 import { format } from 'date-fns';
 import { numberToHangulMixed } from 'es-hangul';
 import { ko } from 'date-fns/locale/ko';
 import PaymentModal from '@/components/lesson/payment-modal';
+import { modal } from '@/contexts/modal-manager';
 
 type Lesson = {
   id: number;
@@ -31,6 +32,7 @@ const PAYMENT_METHODS: Record<string, string> = {
 };
 
 export default function PaymentsTable({ lessons }: Props) {
+
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-500">
@@ -105,10 +107,22 @@ export default function PaymentsTable({ lessons }: Props) {
               <div className="shrink-0">
                 {lesson.payment
                   ? (
-                      <p className="text-base font-bold text-zinc-900 tabular-nums">
-                        {numberToHangulMixed(lesson.payment.amount)}
-                        원
-                      </p>
+                      <div className="flex flex-col items-end">
+                        <Chip
+                          size="sm"
+                          variant="tertiary"
+                          color="accent"
+                          onClick={() => {
+                            modal.show(PaymentModal, { lesson });
+                          }}
+                        >
+                          수정
+                        </Chip>
+                        <p className="text-base font-bold text-zinc-900 tabular-nums">
+                          {numberToHangulMixed(lesson.payment.amount)}
+                          원
+                        </p>
+                      </div>
                     )
                   : (
                       <Modal>

@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { getSession } from '@/utils/auth';
 import { ServerActionState } from '@/types/index';
 import { studentCommentsApi } from '@/utils/api';
+import { formData } from 'zod-form-data';
 
 type CreateStudentCommentState = ServerActionState<{
   content: string;
@@ -37,7 +38,7 @@ export async function createStudentComment(prevState: CreateStudentCommentState,
 
       await studentCommentsApi.create(studentUuid, { content });
 
-      revalidatePath(`/students/[studentUuid]/@comments`)
+      revalidatePath(`/students/[studentUuid]/@comments`);
       state.success = true;
       state.message = '코멘트를 작성하였습니다.';
       return state;
@@ -82,25 +83,34 @@ export async function updateStudentComment(prevState: UpdateStudentCommentState,
   );
 }
 
-export async function deleteStudentComment(commentUuid: string) {
+type RemoveStudentCommentState = ServerActionState<undefined>;
+export async function removeStudentComment(prevState: RemoveStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
-    'deleteStudentComment',
+    'removeStudentComment',
     {
       headers: await headers(),
       recordResponse: true,
     },
     async () => {
+      const state: RemoveStudentCommentState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
       const session = await getSession();
 
       if (!session?.organization) {
-        throw new Error('Unauthorized');
+        return state;
       }
 
+      const commentUuid = formData.get('commentUuid') as string;
       await studentCommentsApi.remove(commentUuid);
 
       revalidatePath(`/students/[studentUuid]/@comments`);
 
-      return { success: true };
+      state.success = true;
+      state.message = '코멘트를 삭제하였습니다';
+      return state;
     },
   );
 }

@@ -1,11 +1,11 @@
 'use client';
-import type { ModalProps } from '@heroui/react';
+import { ModalProps, Popover } from '@heroui/react';
 
 import * as React from 'react';
-import { Button, Form, Label, Modal, Spinner, TextArea, TextField } from '@heroui/react';
+import { Button, Form, Label, Modal, Spinner, TextArea, TextField, toast } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { updateStudentComment } from '@/actions/student-comment';
+import { removeStudentComment, updateStudentComment } from '@/actions/student-comment';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -46,7 +46,10 @@ function Content({ comment, close }: ContentProps) {
     }
 
     if (state.success) {
-      alert('수정하였습니다');
+      toast.success('수정', {
+        description: '코멘트를 수정하였습니다',
+        timeout: 2000,
+      });
       close();
     }
   }, [state.success, state.timestamp]);
@@ -72,6 +75,8 @@ function Content({ comment, close }: ContentProps) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
+        <RemoveButton uuid={comment.uuid} close={close} />
+        <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onPress={close}>
           닫기
         </Button>
@@ -90,5 +95,41 @@ function Content({ comment, close }: ContentProps) {
         </Button>
       </Modal.Footer>
     </React.Fragment>
+  );
+}
+interface RemoveButtonProps {
+  uuid: ContentProps['comment']['uuid'];
+  close: ContentProps['close'];
+}
+function RemoveButton({ uuid, close }: RemoveButtonProps) {
+  const [state, formAction, isPending] = React.useActionState(removeStudentComment, {});
+
+  React.useEffect(() => {
+    if (!state.timestamp) return;
+
+    if (state.success) {
+      toast.danger('삭제', {
+        description: state.message,
+        timeout: 2000,
+      });
+      close();
+    }
+  }, [state.success, state.timestamp, state.message]);
+
+  return (
+    <Popover>
+      <Button variant="danger-soft">삭제</Button>
+      <Popover.Content placement="top left">
+        <Popover.Arrow />
+        <Popover.Dialog>
+          <Popover.Heading>삭제 확인</Popover.Heading>
+          <p className="mt-1 mb-3">이 코멘트를 삭제합니다.</p>
+          <Form action={formAction}>
+            <input type="hidden" name="commentUuid" value={uuid} />
+            <Button type="submit" variant="danger" isPending={isPending}>삭제</Button>
+          </Form>
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
   );
 }
