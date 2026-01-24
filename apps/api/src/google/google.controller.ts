@@ -32,7 +32,7 @@ setInterval(() => {
   }
 }, 60 * 1000); // Every minute
 
-@Controller('api/google')
+@Controller('google')
 export class GoogleController {
   private readonly logger = new Logger(GoogleController.name);
 
