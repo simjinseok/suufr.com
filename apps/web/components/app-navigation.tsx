@@ -8,6 +8,7 @@ import {
   ReceiptIcon,
   UserRoundCheckIcon,
   CalendarIcon,
+  BookOpenIcon,
 } from 'lucide-react';
 
 const menuItems = [
@@ -16,6 +17,7 @@ const menuItems = [
   { href: '/payments', label: '입금내역', icon: ReceiptIcon },
   { href: '/meetings', label: '상담', icon: UserRoundCheckIcon },
   { href: '/calendar', label: '캘린더', icon: CalendarIcon },
+  { href: '/curriculums', label: '커리큘럼', icon: BookOpenIcon },
 ];
 
 interface AppNavigationProps {

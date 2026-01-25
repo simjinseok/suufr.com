@@ -14,6 +14,7 @@ import {
   ChevronsUpDownIcon,
   CheckIcon,
   HardDriveIcon,
+  BookOpenIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -242,6 +243,14 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                   </div>
                   <div>
                     <Label>캘린더</Label>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="curriculums" href="/curriculums" textValue="커리큘럼">
+                  <div>
+                    <BookOpenIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>커리큘럼</Label>
                   </div>
                 </Dropdown.Item>
                 <Separator />

@@ -181,3 +181,26 @@ export type TTempMediaFile = {
   fileName: string;
   fileSize: number;
 };
+
+export type TCurriculumItemMediaFile = {
+  id: number;
+  curriculumItemId: number;
+  mediaFileId: number;
+  mediaFile: TMediaFile;
+};
+
+export type TCurriculumItem = {
+  id: number;
+  uuid: string;
+  title: string;
+  description: string | null;
+  mediaFiles?: TCurriculumItemMediaFile[];
+};
+
+export type TCurriculum = {
+  id: number;
+  uuid: string;
+  title: string;
+  description: string | null;
+  items: TCurriculumItem[];
+};

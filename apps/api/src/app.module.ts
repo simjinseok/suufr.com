@@ -20,6 +20,7 @@ import { CarddavModule } from './carddav/carddav.module';
 import { CaldavModule } from './caldav/caldav.module';
 import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
+import { CurriculumsModule } from './curriculums/curriculums.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { StorageModule } from './storage/storage.module';
     CaldavModule,
     GoogleModule,
     StorageModule,
+    CurriculumsModule,
   ],
 })
 export class AppModule {}

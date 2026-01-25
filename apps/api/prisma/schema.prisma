@@ -25,8 +25,9 @@ model Organization {
   profileName     String? @map("profile_name") // 프로필 이름
   profileImageUrl String? @map("profile_image_url")
 
-  students Student[]
-  meetings Meeting[]
+  students    Student[]
+  meetings    Meeting[]
+  curriculums Curriculum[]
 
   @@index([userId, deletedAt])
   @@map("organizations")
@@ -337,8 +338,9 @@ model MediaFile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
   userId    String   @map("user_id") @db.Uuid // 소유자 (용량 관리용)
 
-  sessionMediaFiles  SessionMediaFile[]
-  feedbackMediaFiles FeedbackMediaFile[]
+  sessionMediaFiles        SessionMediaFile[]
+  feedbackMediaFiles       FeedbackMediaFile[]
+  curriculumItemMediaFiles CurriculumItemMediaFile[]
 
   @@index([userId])
   @@index([userId, fileName])
@@ -383,4 +385,55 @@ model FeedbackMediaFile {
   @@unique([feedbackId, mediaFileId])
   @@index([feedbackId])
   @@map("feedback_media_files")
+}
+
+// 커리큘럼 (수업 계획)
+model Curriculum {
+  id             Int       @id @default(autoincrement())
+  uuid           String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  title          String
+  description    String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(0)
+  organizationId Int       @map("organization_id")
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  items        CurriculumItem[]
+
+  @@index([organizationId, deletedAt])
+  @@map("curriculums")
+}
+
+// 커리큘럼 아이템
+model CurriculumItem {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  title        String
+  description  String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(0)
+  curriculumId Int       @map("curriculum_id")
+
+  curriculum Curriculum                @relation(fields: [curriculumId], references: [id])
+  mediaFiles CurriculumItemMediaFile[]
+
+  @@index([curriculumId, deletedAt])
+  @@map("curriculum_items")
+}
+
+// 커리큘럼 아이템 ↔ 미디어 파일 연결 테이블
+model CurriculumItemMediaFile {
+  id               Int      @id @default(autoincrement())
+  curriculumItemId Int      @map("curriculum_item_id")
+  mediaFileId      Int      @map("media_file_id")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  curriculumItem CurriculumItem @relation(fields: [curriculumItemId], references: [id])
+  mediaFile      MediaFile      @relation(fields: [mediaFileId], references: [id])
+
+  @@unique([curriculumItemId, mediaFileId])
+  @@index([curriculumItemId])
+  @@map("curriculum_item_media_files")
 }
