@@ -9,28 +9,17 @@ import type { TStorageQuota } from '@/types/index';
 import { uploadToCloudinary, validateFile } from '@/utils/cloudinary-upload';
 import { createMediaFile } from '@/actions/storage';
 
-interface FilterBarProps {
-  sortOrder: 'newest' | 'oldest' | 'largest' | 'smallest';
-  searchQuery: string;
+interface UploadButtonProps {
   quota: TStorageQuota | null;
 }
 
-const sortOptions = [
-  { id: 'newest', label: '최신순' },
-  { id: 'oldest', label: '오래된순' },
-  { id: 'largest', label: '크기순 (큰순)' },
-  { id: 'smallest', label: '크기순 (작은순)' },
-];
-
-export default function FilterBar({ sortOrder, searchQuery, quota }: FilterBarProps) {
+export function UploadButton({ quota }: UploadButtonProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [localSearch, setLocalSearch] = React.useState(searchQuery);
   const [isUploading, setIsUploading] = React.useState(false);
-  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const remainingBytes = quota ? quota.quotaBytes - quota.usedBytes : undefined;
+  const isOverQuota = quota ? (quota.usedBytes / quota.quotaBytes) >= 1 : false;
 
   const handleFiles = async (files: FileList) => {
     const fileArray = Array.from(files);
@@ -108,6 +97,53 @@ export default function FilterBar({ sortOrder, searchQuery, quota }: FilterBarPr
     }
   };
 
+  return (
+    <>
+      <Button
+        variant="primary"
+        onPress={() => fileInputRef.current?.click()}
+        isDisabled={isOverQuota || isUploading}
+      >
+        {isUploading
+          ? (
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            )
+          : (
+              <Upload className="w-4 h-4 mr-1" />
+            )}
+        {isUploading ? '업로드 중...' : '업로드'}
+      </Button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+    </>
+  );
+}
+
+interface FilterBarProps {
+  sortOrder: 'newest' | 'oldest' | 'largest' | 'smallest';
+  searchQuery: string;
+}
+
+const sortOptions = [
+  { id: 'newest', label: '최신순' },
+  { id: 'oldest', label: '오래된순' },
+  { id: 'largest', label: '크기순 (큰순)' },
+  { id: 'smallest', label: '크기순 (작은순)' },
+];
+
+export default function FilterBar({ sortOrder, searchQuery }: FilterBarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [localSearch, setLocalSearch] = React.useState(searchQuery);
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value === '' || value === 'newest') {
@@ -136,81 +172,54 @@ export default function FilterBar({ sortOrder, searchQuery, quota }: FilterBarPr
     updateParams('q', '');
   };
 
-  const isOverQuota = quota ? (quota.usedBytes / quota.quotaBytes) >= 1 : false;
-
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <TextField
-          aria-label="파일 검색"
-          value={localSearch}
-          onChange={handleSearchChange}
-          className="flex-1"
-        >
-          <InputGroup>
-            <InputGroup.Prefix>
-              <Search className="w-4 h-4 text-gray-400" />
-            </InputGroup.Prefix>
-            <InputGroup.Input placeholder="파일명으로 검색..." />
-            {localSearch && (
-              <InputGroup.Suffix>
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <X className="w-3.5 h-3.5 text-gray-400" />
-                </button>
-              </InputGroup.Suffix>
-            )}
-          </InputGroup>
-        </TextField>
-
-        <Select
-          variant="secondary"
-          aria-label="정렬 순서"
-          selectedKey={sortOrder}
-          onSelectionChange={(key) => updateParams('sort', key as string)}
-          className="w-28 shrink-0"
-        >
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              {sortOptions.map((option) => (
-                <ListBox.Item key={option.id} id={option.id}>
-                  {option.label}
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
-      </div>
-
-      <Button
-        variant="primary"
-        onPress={() => fileInputRef.current?.click()}
-        isDisabled={isOverQuota || isUploading}
-        className="self-end"
+    <div className="flex items-center gap-2">
+      <TextField
+        aria-label="파일 검색"
+        value={localSearch}
+        onChange={handleSearchChange}
+        className="flex-1"
       >
-        {isUploading ? (
-          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-        ) : (
-          <Upload className="w-4 h-4 mr-1" />
-        )}
-        {isUploading ? '업로드 중...' : '업로드'}
-      </Button>
+        <InputGroup>
+          <InputGroup.Prefix>
+            <Search className="w-4 h-4 text-gray-400" />
+          </InputGroup.Prefix>
+          <InputGroup.Input placeholder="파일명으로 검색..." />
+          {localSearch && (
+            <InputGroup.Suffix>
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            </InputGroup.Suffix>
+          )}
+        </InputGroup>
+      </TextField>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
-        multiple
-        className="hidden"
-        onChange={handleFileSelect}
-      />
+      <Select
+        variant="secondary"
+        aria-label="정렬 순서"
+        selectedKey={sortOrder}
+        onSelectionChange={(key) => updateParams('sort', key as string)}
+        className="w-28 shrink-0"
+      >
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {sortOptions.map((option) => (
+              <ListBox.Item key={option.id} id={option.id}>
+                {option.label}
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
     </div>
   );
 }
