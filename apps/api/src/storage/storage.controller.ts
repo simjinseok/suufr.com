@@ -2,8 +2,10 @@ import { Controller, Get, Post, Delete, Body, Param, NotFoundException, Forbidde
 import { StorageQuotaService } from './storage-quota.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { S3Service } from '../s3/s3.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
+import { randomUUID } from 'crypto';
 
 @Controller('storage')
 export class StorageController {
@@ -11,6 +13,7 @@ export class StorageController {
     private readonly storageQuotaService: StorageQuotaService,
     private readonly prisma: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly s3Service: S3Service,
   ) {}
 
   /**
@@ -20,6 +23,70 @@ export class StorageController {
   async getQuota(@CurrentUser() user: AuthenticatedUser) {
     const quota = await this.storageQuotaService.getQuota(user.userId);
     return { success: true, data: quota };
+  }
+
+  /**
+   * Presigned URL 생성 (클라이언트 직접 업로드용)
+   */
+  @Post('presigned-url')
+  async getPresignedUrl(
+    @Body() body: { fileName: string; contentType: string; fileSize: number },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const { fileName, contentType, fileSize } = body;
+
+    // 1. Validate contentType
+    const SUPPORTED_TYPES = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'video/mp4',
+      'video/quicktime',
+      'video/webm',
+    ];
+
+    if (!SUPPORTED_TYPES.includes(contentType)) {
+      throw new BadRequestException('지원하지 않는 파일 형식입니다.');
+    }
+
+    // 2. Validate file size
+    const isImage = contentType.startsWith('image/');
+    const isVideo = contentType.startsWith('video/');
+    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+    const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
+
+    if (fileSize > maxSize) {
+      const maxSizeMB = isImage ? '10MB' : '100MB';
+      throw new BadRequestException(
+        `파일 크기가 최대 크기(${maxSizeMB})를 초과했습니다.`,
+      );
+    }
+
+    // 3. Generate unique S3 key
+    const ext = fileName.split('.').pop();
+    const uuid = randomUUID();
+    const key = `temp/${uuid}.${ext}`;
+
+    // 4. Generate presigned URL
+    const presignedUrl = await this.s3Service.getPresignedUploadUrl(
+      key,
+      contentType,
+      300, // 5 minutes
+    );
+
+    // 5. Return response
+    const expiresAt = Date.now() + 300 * 1000;
+
+    return {
+      success: true,
+      data: {
+        presignedUrl,
+        key,
+        expiresAt,
+      },
+    };
   }
 
   /**
