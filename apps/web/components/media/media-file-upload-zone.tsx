@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, Loader2Icon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
-import { uploadToCloudinary, validateFile, getResourceType } from '@/utils/cloudinary-upload';
+import { uploadToS3, validateFile, getResourceType } from '@/utils/s3-upload';
 import type { TTempMediaFile } from '@/types/index';
 
 interface UploadingFile {
@@ -51,12 +51,12 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
       setUploadingFiles((prev) => [...prev, { id: uploadId, file, progress: 0 }]);
 
       // 업로드 시작
-      const result = await uploadToCloudinary(file);
+      const result = await uploadToS3(file);
 
       if (result.success) {
         onUploadComplete({
           url: result.url,
-          publicId: result.publicId,
+          publicId: result.key,
           type: result.resourceType,
           fileName: file.name,
           fileSize: result.fileSize,

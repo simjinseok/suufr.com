@@ -6,7 +6,7 @@ import { Button, Select, ListBox, TextField, InputGroup, toast } from '@heroui/r
 import { Upload, Search, X, Loader2 } from 'lucide-react';
 
 import type { TStorageQuota } from '@/types/index';
-import { uploadToCloudinary, validateFile } from '@/utils/cloudinary-upload';
+import { uploadToS3, validateFile } from '@/utils/s3-upload';
 import { createMediaFile } from '@/actions/storage';
 
 interface UploadButtonProps {
@@ -49,8 +49,8 @@ export function UploadButton({ quota }: UploadButtonProps) {
         continue;
       }
 
-      // Cloudinary에 업로드
-      const result = await uploadToCloudinary(file);
+      // S3에 업로드
+      const result = await uploadToS3(file);
 
       if (!result.success) {
         toast.danger('업로드 실패', {
@@ -63,7 +63,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
       // DB에 저장
       const saveResult = await createMediaFile({
         url: result.url,
-        publicId: result.publicId,
+        publicId: result.key,
         type: result.resourceType,
         fileName: file.name,
         fileSize: result.fileSize,

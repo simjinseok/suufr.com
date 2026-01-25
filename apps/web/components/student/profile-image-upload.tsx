@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Avatar, Spinner } from '@heroui/react';
 import { CameraIcon, XIcon } from 'lucide-react';
 import { optimizeAvatarUrl } from '@/utils/cloudinary-url';
-import { uploadToCloudinary } from '@/utils/cloudinary-upload';
+import { uploadToS3 } from '@/utils/s3-upload';
 
 function getProfileImageSrc(value: string, displaySize: number): string {
   // Cloudinary URL인 경우 최적화
@@ -105,8 +105,8 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
       const resizedBlob = await resizeImage(file);
       const resizedFile = new File([resizedBlob], 'profile.jpg', { type: 'image/jpeg' });
 
-      // Cloudinary로 직접 업로드
-      const result = await uploadToCloudinary(resizedFile);
+      // S3로 직접 업로드
+      const result = await uploadToS3(resizedFile);
 
       if (!result.success) {
         setError(result.error);
