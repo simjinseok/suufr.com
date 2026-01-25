@@ -237,6 +237,12 @@ export class StudentsService {
       GROUP BY s.id
     `;
 
-    return { success: true, data: stats ?? { remainingSessionsCount: 0, completedLessonCount: 0, unpaidLessonCount: 0 } };
+    return {
+      success: true,
+      data: {
+        ...(stats ?? { remainingSessionsCount: 0, completedLessonCount: 0, unpaidLessonCount: 0 }),
+        nextPaymentAt: student.nextPaymentAt,
+      },
+    };
   }
 }

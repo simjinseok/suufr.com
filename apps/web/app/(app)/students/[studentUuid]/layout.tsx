@@ -3,6 +3,7 @@ import StudentTabs from './_tabs';
 
 export default function Layout({
   children,
+  stats,
   comments,
   lessons,
   payments,
@@ -10,6 +11,7 @@ export default function Layout({
   return (
     <div>
       {children}
+      {stats}
       <StudentTabs comments={comments} lessons={lessons} payments={payments} />
     </div>
   );

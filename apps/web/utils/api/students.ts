@@ -41,6 +41,7 @@ type StudentStats = {
   remainingSessionsCount: number;
   completedLessonCount: number;
   unpaidLessonCount: number;
+  nextPaymentAt: Date | null;
 };
 
 type StudentStatsResponse = {
