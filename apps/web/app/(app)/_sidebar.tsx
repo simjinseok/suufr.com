@@ -245,6 +245,7 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                     <Label>캘린더</Label>
                   </div>
                 </Dropdown.Item>
+                <Separator />
                 <Dropdown.Item id="curriculums" href="/curriculums" textValue="커리큘럼">
                   <div>
                     <BookOpenIcon strokeWidth={1.5} className="size-5" />
@@ -253,7 +254,6 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                     <Label>커리큘럼</Label>
                   </div>
                 </Dropdown.Item>
-                <Separator />
                 <Dropdown.Item id="files" href="/settings/files" textValue="파일 관리">
                   <div>
                     <HardDriveIcon strokeWidth={1.5} className="size-5" />
