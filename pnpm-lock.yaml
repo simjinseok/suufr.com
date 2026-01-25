@@ -144,9 +144,6 @@ importers:
       '@sentry/nextjs':
         specifier: ^10.36.0
         version: 10.36.0(@opentelemetry/context-async-hooks@2.4.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.4.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.4.0(@opentelemetry/api@1.9.0))(next@16.1.4(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.104.1)
-      cloudinary:
-        specifier: ^2.9.0
-        version: 2.9.0
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

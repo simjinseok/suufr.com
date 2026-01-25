@@ -6,10 +6,9 @@ import { XmlBuilderService } from './services/xml-builder.service';
 import { CarddavAuthGuard } from './guards/carddav-auth.guard';
 import { AppTokensModule } from '../app-tokens/app-tokens.module';
 import { PrismaModule } from '../prisma/prisma.module';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
-  imports: [PrismaModule, AppTokensModule, CloudinaryModule],
+  imports: [PrismaModule, AppTokensModule],
   controllers: [CarddavController],
   providers: [
     CarddavService,

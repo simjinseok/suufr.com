@@ -7,12 +7,8 @@ import { optimizeAvatarUrl } from '@/utils/cloudinary-url';
 import { uploadToS3 } from '@/utils/s3-upload';
 
 function getProfileImageSrc(value: string, displaySize: number): string {
-  // Cloudinary URL인 경우 최적화
-  if (value.includes('res.cloudinary.com')) {
-    return optimizeAvatarUrl(value, displaySize) || value;
-  }
-  // 그 외의 URL은 그대로 반환
-  return value;
+  // Bunny CDN URL 최적화
+  return optimizeAvatarUrl(value, displaySize) || value;
 }
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
