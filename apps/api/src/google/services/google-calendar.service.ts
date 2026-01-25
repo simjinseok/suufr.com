@@ -94,105 +94,238 @@ export class GoogleCalendarService {
   }
 
   /**
-   * Sync all sessions to Google Calendar
+   * Fetch all events from Google Calendar
+   */
+  private async fetchAllGoogleEvents(calendarId: string, accessToken: string): Promise<GoogleCalendarEvent[]> {
+    const events: GoogleCalendarEvent[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const params = new URLSearchParams({
+        maxResults: '250',
+        singleEvents: 'true',
+        showDeleted: 'false',
+      });
+      if (pageToken) {
+        params.set('pageToken', pageToken);
+      }
+
+      const response = await fetch(
+        `${CALENDAR_API_BASE}/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch events: ${response.status}`);
+      }
+
+      const data = await response.json() as EventsListResponse;
+      events.push(...(data.items ?? []));
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    return events;
+  }
+
+  /**
+   * Sync all sessions to Google Calendar with full reconciliation
    */
   async syncAll(userId: string, accessToken: string): Promise<SyncResult> {
     const calendarId = await this.getOrCreateCalendar(userId, accessToken);
     const result: SyncResult = { created: 0, updated: 0, deleted: 0, errors: 0 };
 
-    // Get all sessions for this user
-    const sessions = await this.prisma.session.findMany({
-      where: {
-        deletedAt: null,
-        lesson: {
+    // Fetch data in parallel
+    const [sessions, googleEvents, orphanedEvents] = await Promise.all([
+      // Get all active sessions for this user
+      this.prisma.session.findMany({
+        where: {
           deletedAt: null,
-          student: {
-            userId,
+          lesson: {
             deletedAt: null,
-          },
-        },
-      },
-      include: {
-        lesson: {
-          include: {
-            student: true,
-          },
-        },
-        googleEvent: true,
-      },
-    });
-
-    // Push each session to Google Calendar
-    for (const session of sessions) {
-      try {
-        if (session.googleEvent) {
-          // Update existing event
-          await this.updateEvent(
-            calendarId,
-            session.googleEvent.googleEventId,
-            this.sessionToEvent(session),
-            accessToken,
-          );
-          result.updated++;
-        }
-        else {
-          // Create new event
-          const event = await this.createEvent(calendarId, this.sessionToEvent(session), accessToken);
-          await this.prisma.sessionGoogleEvent.create({
-            data: {
-              sessionId: session.id,
+            student: {
               userId,
-              googleEventId: event.id!,
-              googleCalendarId: calendarId,
-              lastSyncedAt: new Date(),
-              syncStatus: 'synced',
+              deletedAt: null,
             },
-          });
-          result.created++;
-        }
-      }
-      catch (error) {
-        this.logger.error(`Failed to sync session ${session.uuid}:`, error);
-        result.errors++;
-      }
-    }
-
-    // Handle deleted sessions (soft deleted in Suufr but still have Google events)
-    const orphanedEvents = await this.prisma.sessionGoogleEvent.findMany({
-      where: {
-        userId,
-        session: {
-          OR: [
-            { deletedAt: { not: null } },
-            { lesson: { deletedAt: { not: null } } },
-            { lesson: { student: { deletedAt: { not: null } } } },
-          ],
+          },
         },
-      },
-    });
+        include: {
+          lesson: {
+            include: {
+              student: true,
+            },
+          },
+          googleEvent: true,
+        },
+      }),
+      // Get all events from Google Calendar
+      this.fetchAllGoogleEvents(calendarId, accessToken),
+      // Get orphaned events (soft deleted in Suufr)
+      this.prisma.sessionGoogleEvent.findMany({
+        where: {
+          userId,
+          session: {
+            OR: [
+              { deletedAt: { not: null } },
+              { lesson: { deletedAt: { not: null } } },
+              { lesson: { student: { deletedAt: { not: null } } } },
+            ],
+          },
+        },
+      }),
+    ]);
 
-    for (const mapping of orphanedEvents) {
-      try {
-        await this.deleteEvent(mapping.googleCalendarId, mapping.googleEventId, accessToken);
-        await this.prisma.sessionGoogleEvent.delete({ where: { id: mapping.id } });
-        result.deleted++;
+    // Build lookup maps
+    const sessionByUuid = new Map(sessions.map(s => [s.uuid, s]));
+    const googleEventByUuid = new Map<string, GoogleCalendarEvent>();
+    const externalEventIds: string[] = [];
+
+    for (const event of googleEvents) {
+      const suufrUuid = event.extendedProperties?.private?.suufrSessionUuid;
+      if (suufrUuid) {
+        googleEventByUuid.set(suufrUuid, event);
       }
-      catch (error) {
-        this.logger.error(`Failed to delete orphaned event ${mapping.googleEventId}:`, error);
-        result.errors++;
+      else if (event.id) {
+        // Event without suufrSessionUuid = created externally
+        externalEventIds.push(event.id);
       }
     }
+
+    // Prepare operations as factory functions for lazy execution
+    const createOps: (() => Promise<void>)[] = [];
+    const updateOps: (() => Promise<void>)[] = [];
+    const deleteOps: (() => Promise<void>)[] = [];
+
+    // 1. Process sessions: create or update
+    for (const session of sessions) {
+      const existingEvent = googleEventByUuid.get(session.uuid);
+
+      if (existingEvent?.id) {
+        // Update existing event
+        const eventId = existingEvent.id;
+        updateOps.push(() =>
+          this.updateEvent(calendarId, eventId, this.sessionToEvent(session), accessToken)
+            .then(async () => {
+              if (session.googleEvent) {
+                await this.prisma.sessionGoogleEvent.update({
+                  where: { id: session.googleEvent.id },
+                  data: { lastSyncedAt: new Date(), syncStatus: 'synced', errorMessage: null },
+                });
+              }
+              else {
+                await this.prisma.sessionGoogleEvent.create({
+                  data: {
+                    sessionId: session.id,
+                    userId,
+                    googleEventId: eventId,
+                    googleCalendarId: calendarId,
+                    lastSyncedAt: new Date(),
+                    syncStatus: 'synced',
+                  },
+                });
+              }
+              result.updated++;
+            })
+            .catch((error) => {
+              this.logger.error(`Failed to update session ${session.uuid}:`, error);
+              result.errors++;
+            }),
+        );
+      }
+      else {
+        // Create new event
+        createOps.push(() =>
+          this.createEvent(calendarId, this.sessionToEvent(session), accessToken)
+            .then(async (event) => {
+              if (session.googleEvent) {
+                await this.prisma.sessionGoogleEvent.update({
+                  where: { id: session.googleEvent.id },
+                  data: {
+                    googleEventId: event.id!,
+                    googleCalendarId: calendarId,
+                    lastSyncedAt: new Date(),
+                    syncStatus: 'synced',
+                    errorMessage: null,
+                  },
+                });
+              }
+              else {
+                await this.prisma.sessionGoogleEvent.create({
+                  data: {
+                    sessionId: session.id,
+                    userId,
+                    googleEventId: event.id!,
+                    googleCalendarId: calendarId,
+                    lastSyncedAt: new Date(),
+                    syncStatus: 'synced',
+                  },
+                });
+              }
+              result.created++;
+            })
+            .catch((error) => {
+              this.logger.error(`Failed to create session ${session.uuid}:`, error);
+              result.errors++;
+            }),
+        );
+      }
+    }
+
+    // 2. Delete orphaned events (soft deleted in Suufr)
+    for (const mapping of orphanedEvents) {
+      deleteOps.push(() =>
+        this.deleteEvent(mapping.googleCalendarId, mapping.googleEventId, accessToken)
+          .then(() => this.prisma.sessionGoogleEvent.delete({ where: { id: mapping.id } }))
+          .then(() => { result.deleted++; })
+          .catch((error) => {
+            this.logger.error(`Failed to delete orphaned event ${mapping.googleEventId}:`, error);
+            result.errors++;
+          }),
+      );
+    }
+
+    // 3. Delete external events (not linked to any Suufr session)
+    for (const eventId of externalEventIds) {
+      deleteOps.push(() =>
+        this.deleteEvent(calendarId, eventId, accessToken)
+          .then(() => {
+            this.logger.log(`Deleted external event: ${eventId}`);
+            result.deleted++;
+          })
+          .catch((error) => {
+            this.logger.error(`Failed to delete external event ${eventId}:`, error);
+            result.errors++;
+          }),
+      );
+    }
+
+    // 4. Handle Google events linked to non-existent sessions
+    for (const [uuid, event] of googleEventByUuid) {
+      if (!sessionByUuid.has(uuid) && event.id) {
+        const eventId = event.id;
+        deleteOps.push(() =>
+          this.deleteEvent(calendarId, eventId, accessToken)
+            .then(() => {
+              this.logger.log(`Deleted event for non-existent session: ${uuid}`);
+              result.deleted++;
+            })
+            .catch((error) => {
+              this.logger.error(`Failed to delete event ${eventId}:`, error);
+              result.errors++;
+            }),
+        );
+      }
+    }
+
+    // Execute all operations in batches to avoid rate limiting
+    await this.executeBatched([...createOps, ...updateOps, ...deleteOps]);
 
     // Update last sync time
     await this.googleService.updateSyncToken(userId, { lastCalendarSyncAt: new Date() });
 
-    // Register webhook if not already registered or expired
-    const syncToken = await this.googleService.getSyncToken(userId);
-    if (!syncToken?.webhookExpiration || syncToken.webhookExpiration < new Date()) {
-      await this.registerWatch(userId, calendarId, accessToken).catch(err =>
-        this.logger.error(`Failed to register watch for user ${userId}:`, err),
-      );
-    }
+    // Always register webhook on sync
+    await this.registerWatch(userId, calendarId, accessToken).catch(err =>
+      this.logger.error(`Failed to register watch for user ${userId}:`, err),
+    );
 
     return result;
   }
@@ -303,8 +436,18 @@ export class GoogleCalendarService {
     }
 
     const result: SyncResult = { created: 0, updated: 0, deleted: 0, errors: 0 };
-    let pageToken: string | undefined;
     const calendarId = syncTokenRecord.calendarId;
+
+    // Defensive check: verify calendar exists before processing events
+    // This prevents session deletions when calendar was deleted externally
+    const exists = await this.calendarExists(calendarId, accessToken);
+    if (!exists) {
+      this.logger.warn(`Calendar ${calendarId} deleted externally for user ${userId}, clearing sync (sessions preserved)`);
+      await this.googleService.clearCalendarSync(userId);
+      return { created: 0, updated: 0, deleted: 0, errors: 0 };
+    }
+
+    let pageToken: string | undefined;
 
     do {
       const params = new URLSearchParams();
@@ -324,6 +467,13 @@ export class GoogleCalendarService {
         // Sync token expired, need full sync
         await this.googleService.updateSyncToken(userId, { calendarSyncToken: null });
         return this.syncAll(userId, accessToken);
+      }
+
+      if (response.status === 404) {
+        // Calendar not found (deleted externally or disconnected)
+        this.logger.warn(`Calendar not found for user ${userId}, clearing sync data`);
+        await this.googleService.clearCalendarSync(userId);
+        return { created: 0, updated: 0, deleted: 0, errors: 0 };
       }
 
       if (!response.ok) {
@@ -404,11 +554,24 @@ export class GoogleCalendarService {
       return { action: 'skipped' };
     }
 
-    // Event is cancelled = deleted or moved to another calendar
-    // If session still exists, recreate the event in our calendar
+    // Event is cancelled = deleted in Google Calendar
+    // Sync the deletion to Suufr by soft deleting the session
     if (event.status === 'cancelled') {
-      await this.recreateEvent(session, userId, calendarId, accessToken);
-      return { action: 'restored' };
+      // Soft delete the Suufr session
+      await this.prisma.session.update({
+        where: { uuid: session.uuid },
+        data: { deletedAt: new Date() },
+      });
+
+      // Delete the sync mapping
+      if (session.googleEvent) {
+        await this.prisma.sessionGoogleEvent.delete({
+          where: { id: session.googleEvent.id },
+        });
+      }
+
+      this.logger.log(`Deleted session ${session.uuid} (Google Calendar event was cancelled)`);
+      return { action: 'deleted' };
     }
 
     // Update session from Google event (allowed changes: date/time, description)
@@ -614,6 +777,26 @@ export class GoogleCalendarService {
   }
 
   /**
+   * Execute promises in batches with delay between batches to avoid rate limiting
+   */
+  private async executeBatched<T>(
+    tasks: (() => Promise<T>)[],
+    batchSize: number = 3,
+    delayMs: number = 500,
+  ): Promise<T[]> {
+    const results: T[] = [];
+    for (let i = 0; i < tasks.length; i += batchSize) {
+      const batch = tasks.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(task => task()));
+      results.push(...batchResults);
+      if (i + batchSize < tasks.length) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    return results;
+  }
+
+  /**
    * Register a webhook to receive calendar change notifications
    */
   async registerWatch(userId: string, calendarId: string, accessToken: string): Promise<void> {
@@ -719,7 +902,8 @@ export class GoogleCalendarService {
     // Find user by channel ID
     const userId = await this.googleService.findUserByWebhookChannel(channelId);
     if (!userId) {
-      this.logger.warn(`No user found for channel ${channelId}`);
+      // 연동 해제 후 webhook이 도착한 경우 무시
+      this.logger.warn(`No user found for webhook channel ${channelId}, ignoring`);
       return;
     }
 
@@ -728,6 +912,18 @@ export class GoogleCalendarService {
     if (!accessToken) {
       this.logger.warn(`No access token for user ${userId}`);
       return;
+    }
+
+    // Check if calendar still exists before processing changes
+    // This protects sessions when user deletes the entire "스프 수업" calendar
+    const syncToken = await this.googleService.getSyncToken(userId);
+    if (syncToken?.calendarId) {
+      const exists = await this.calendarExists(syncToken.calendarId, accessToken);
+      if (!exists) {
+        this.logger.warn(`Calendar ${syncToken.calendarId} deleted externally for user ${userId}, clearing sync (sessions preserved)`);
+        await this.googleService.clearCalendarSync(userId);
+        return; // Skip pullChanges to prevent session deletions
+      }
     }
 
     try {

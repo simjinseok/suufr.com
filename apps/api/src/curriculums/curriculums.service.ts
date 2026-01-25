@@ -172,8 +172,8 @@ export class CurriculumsService {
     }
 
     // 미디어 파일 개수 제한 체크
-    const totalMediaFiles =
-      (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
+    const totalMediaFiles
+      = (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
     if (totalMediaFiles > MAX_MEDIA_FILES_PER_ITEM) {
       throw new BadRequestException(
         `아이템당 최대 ${MAX_MEDIA_FILES_PER_ITEM}개의 파일만 첨부할 수 있습니다.`,

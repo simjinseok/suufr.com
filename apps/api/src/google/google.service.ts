@@ -269,18 +269,8 @@ export class GoogleService {
     const accessToken = await this.getAccessToken(userId);
     const syncToken = await this.getSyncToken(userId);
 
-    // 1. Webhook 구독 해제
-    if (accessToken && syncToken?.webhookChannelId && syncToken?.webhookResourceId) {
-      await this.stopWatch(syncToken.webhookChannelId, syncToken.webhookResourceId, accessToken)
-        .catch(err => this.logger.error('Failed to stop watch:', err));
-    }
-
-    // 2. Google Calendar 삭제
-    if (accessToken && syncToken?.calendarId) {
-      await this.deleteCalendar(syncToken.calendarId, accessToken);
-    }
-
-    // 3. DB 데이터 삭제
+    // 1. DB 데이터 먼저 삭제 (webhook 처리 방지)
+    // webhook이 오더라도 사용자를 찾지 못해 무시됨
     await this.prisma.$transaction([
       this.prisma.externalServiceToken.updateMany({
         where: { userId, provider: 'google', deletedAt: null },
@@ -290,6 +280,18 @@ export class GoogleService {
       this.prisma.sessionGoogleEvent.deleteMany({ where: { userId } }),
       this.prisma.studentGoogleContact.deleteMany({ where: { userId } }),
     ]);
+
+    // 2. Webhook 구독 해제
+    if (accessToken && syncToken?.webhookChannelId && syncToken?.webhookResourceId) {
+      await this.stopWatch(syncToken.webhookChannelId, syncToken.webhookResourceId, accessToken)
+        .catch(err => this.logger.error('Failed to stop watch:', err));
+    }
+
+    // 3. Google Calendar 삭제
+    if (accessToken && syncToken?.calendarId) {
+      await this.deleteCalendar(syncToken.calendarId, accessToken)
+        .catch(err => this.logger.error('Failed to delete calendar:', err));
+    }
   }
 
   /**
@@ -322,7 +324,7 @@ export class GoogleService {
     const response = await fetch(`${CALENDAR_API_BASE}/channels/stop`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ id: channelId, resourceId }),
@@ -374,6 +376,26 @@ export class GoogleService {
       select: { userId: true },
     });
     return syncToken?.userId ?? null;
+  }
+
+  /**
+   * Clear calendar sync data (called when calendar is not found)
+   */
+  async clearCalendarSync(userId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.googleSyncToken.updateMany({
+        where: { userId },
+        data: {
+          calendarId: null,
+          calendarSyncToken: null,
+          webhookChannelId: null,
+          webhookResourceId: null,
+          webhookExpiration: null,
+        },
+      }),
+      this.prisma.sessionGoogleEvent.deleteMany({ where: { userId } }),
+    ]);
+    this.logger.log(`Cleared calendar sync data for user ${userId}`);
   }
 
   // AES-256-GCM encryption

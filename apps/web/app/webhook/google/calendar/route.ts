@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-
 /**
- * POST /api/google/webhook/calendar
+ * POST /webhook/google/calendar
  * Proxy endpoint for Google Calendar webhook notifications
  * Google calls this URL when calendar events change
  */
@@ -26,7 +24,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Forward to API server
-    const response = await fetch(`${API_URL}/api/google/webhook/calendar`, {
+    const response = await fetch(`${process.env.API_URL}/api/google/webhook/calendar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

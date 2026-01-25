@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto, CreateMediaFileDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -7,16 +7,35 @@ import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
 import { Prisma } from '@prisma/generated/client';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { StorageQuotaService } from '../storage/storage-quota.service';
+import { GoogleCalendarService } from '../google/services/google-calendar.service';
 
 const MAX_MEDIA_FILES_PER_SESSION = 5;
 
 @Injectable()
 export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly storageQuotaService: StorageQuotaService,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) {}
+
+  /**
+   * Sync session to Google Calendar in background (fire-and-forget)
+   */
+  private syncToGoogleCalendar(sessionId: number, userId: string, action: 'push' | 'delete'): void {
+    setImmediate(() => {
+      const promise = action === 'push'
+        ? this.googleCalendarService.pushSession(sessionId, userId)
+        : this.googleCalendarService.deleteSession(sessionId, userId);
+
+      promise.catch((err) => {
+        this.logger.error(`Failed to ${action} session ${sessionId} to Google Calendar:`, err);
+      });
+    });
+  }
 
   async findAll(query: ListSessionsQueryDto, userId: string) {
     // 사용자가 소유한 모든 organization 조회
@@ -147,7 +166,6 @@ export class SessionsService {
       },
     });
 
-
     if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
@@ -170,8 +188,8 @@ export class SessionsService {
     }
 
     // 미디어 파일 개수 제한 체크
-    const totalMediaFiles =
-      (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
+    const totalMediaFiles
+      = (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
     if (totalMediaFiles > MAX_MEDIA_FILES_PER_SESSION) {
       throw new BadRequestException(
         `세션당 최대 ${MAX_MEDIA_FILES_PER_SESSION}개의 파일만 첨부할 수 있습니다.`,
@@ -266,6 +284,9 @@ export class SessionsService {
 
       return newSession;
     });
+
+    // 구글 캘린더에 백그라운드 동기화
+    this.syncToGoogleCalendar(session.id, userId, 'push');
 
     // 생성된 세션 조회하여 반환
     return this.findOne(session.uuid, userId);
@@ -418,6 +439,9 @@ export class SessionsService {
       }
     });
 
+    // 구글 캘린더에 백그라운드 동기화
+    this.syncToGoogleCalendar(session.id, userId, 'push');
+
     // 업데이트된 세션 조회하여 반환
     return this.findOne(uuid, userId);
   }
@@ -442,6 +466,9 @@ export class SessionsService {
       where: { uuid },
       data: { deletedAt: new Date() },
     });
+
+    // 구글 캘린더에서 백그라운드 삭제
+    this.syncToGoogleCalendar(session.id, userId, 'delete');
 
     return { success: true };
   }
@@ -578,7 +605,8 @@ export class SessionsService {
           where: { id: session.feedback.id },
           data: { notes: dto.notes },
         });
-      } else {
+      }
+      else {
         feedbackRecord = await tx.feedback.create({
           data: {
             notes: dto.notes,
