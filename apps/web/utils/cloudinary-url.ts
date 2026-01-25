@@ -1,5 +1,5 @@
 /**
- * Cloudinary URL 유틸리티 (클라이언트에서도 사용 가능)
+ * Bunny CDN URL 유틸리티 (클라이언트에서도 사용 가능)
  *
  * 서버 전용 함수는 cloudinary-url.server.ts 참조
  */
@@ -12,11 +12,11 @@ type ImageOptions = {
 };
 
 /**
- * Cloudinary 이미지 URL을 최적화된 URL로 변환
+ * Bunny CDN 이미지 URL을 최적화된 URL로 변환
  *
  * @example
- * optimizeImageUrl('https://res.cloudinary.com/.../image.jpg', { width: 160 })
- * // => 'https://res.cloudinary.com/.../w_160,h_160,c_fill,f_auto,q_auto/image.jpg'
+ * optimizeImageUrl('https://cdn.example.com/images/abc.jpg', { width: 160 })
+ * // => 'https://cdn.example.com/images/abc.jpg?width=160&height=160&quality=80&format=auto'
  */
 export function optimizeImageUrl(
   url: string | null | undefined,
@@ -24,24 +24,25 @@ export function optimizeImageUrl(
 ): string | null {
   if (!url) return null;
 
-  // Cloudinary URL인지 확인
-  if (!url.includes('res.cloudinary.com')) {
+  // Bunny CDN URL인지 확인 (NEXT_PUBLIC_CDN_URL 기반)
+  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL;
+  if (!cdnUrl || !url.includes(cdnUrl)) {
     return url;
   }
 
   const { width, height = width, quality = 'auto', format = 'auto' } = options;
+  const qualityValue = quality === 'auto' ? 80 : quality;
 
-  // 변환 파라미터 생성
-  const transforms = [
-    `w_${width}`,
-    `h_${height}`,
-    'c_fill', // 크롭 모드: 비율 유지하며 채우기
-    `f_${format}`,
-    `q_${quality}`,
-  ].join(',');
+  // Bunny Optimizer 쿼리 파라미터 생성
+  const params = new URLSearchParams();
+  params.set('width', String(width));
+  params.set('height', String(height));
+  params.set('quality', String(qualityValue));
+  params.set('format', format);
 
-  // /upload/ 뒤에 변환 파라미터 삽입
-  return url.replace('/upload/', `/upload/${transforms}/`);
+  // 기존 쿼리 파라미터 제거 후 새 파라미터 추가
+  const baseUrl = url.split('?')[0];
+  return `${baseUrl}?${params.toString()}`;
 }
 
 /**
