@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { buildCloudinaryUrl } from '@/utils/cloudinary-url.server';
 
 export async function GET(
   _request: Request,
@@ -10,14 +9,13 @@ export async function GET(
   // .webp 확장자 제거
   const imageKey = key.replace(/\.webp$/, '');
 
-  const cloudinaryUrl = buildCloudinaryUrl(imageKey, 'students', {
-    width: 112,
-    format: 'webp',
-  });
-
-  if (!cloudinaryUrl) {
+  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL;
+  if (!cdnUrl) {
     return new Response(null, { status: 404 });
   }
 
-  redirect(cloudinaryUrl);
+  // Bunny CDN URL with optimization parameters
+  const imageUrl = `${cdnUrl}/images/${imageKey}?width=112&quality=80&format=webp`;
+
+  redirect(imageUrl);
 }
