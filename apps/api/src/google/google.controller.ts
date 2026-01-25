@@ -161,6 +161,11 @@ export class GoogleController {
 
       this.logger.log(`Google connected for user ${user.userId} (${userInfo.email})`);
 
+      // 자동 동기화 (백그라운드, 에러 무시)
+      this.calendarService.syncAll(user.userId, tokens.access_token)
+        .then(() => this.logger.log(`Initial sync completed for user ${user.userId}`))
+        .catch(err => this.logger.error('Initial sync failed:', err));
+
       return { success: true };
     }
     catch (err) {
@@ -260,5 +265,32 @@ export class GoogleController {
       this.logger.error(`Full sync failed for user ${user.userId}:`, error);
       throw new InternalServerErrorException('Sync failed');
     }
+  }
+
+  /**
+   * POST /api/google/webhook/calendar
+   * Webhook endpoint for Google Calendar notifications
+   * Called by Web proxy endpoint
+   */
+  @Public()
+  @Post('webhook/calendar')
+  async calendarWebhook(
+    @Body() body: { channelId: string; resourceState: string },
+  ) {
+    const { channelId, resourceState } = body;
+
+    if (!channelId) {
+      this.logger.warn('Webhook received without channelId');
+      return { success: false };
+    }
+
+    this.logger.debug(`Calendar webhook: channel=${channelId}, state=${resourceState}`);
+
+    // Process webhook in background
+    this.calendarService.handleWebhook(channelId, resourceState)
+      .catch(err => this.logger.error('Webhook processing failed:', err));
+
+    // Always return 200 to acknowledge receipt
+    return { success: true };
   }
 }

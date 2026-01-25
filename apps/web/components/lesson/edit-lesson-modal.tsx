@@ -81,6 +81,7 @@ function Content({ lesson, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="lessonUuid" value={lesson.uuid} />
+
           <Controller
             control={control}
             name="title"

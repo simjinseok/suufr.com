@@ -12,13 +12,14 @@ import {
   BanknoteXIcon, BookDashedIcon,
   ChevronDownIcon,
   CircleCheckBigIcon,
-  CircleIcon, CreditCardIcon,
+  CircleIcon, Clock4Icon, CreditCardIcon,
   GlobeIcon, LandmarkIcon,
   LockIcon, PlusIcon,
 } from 'lucide-react';
 import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
 import React from 'react';
+import { modal } from '@/contexts/modal-manager';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
 import EditLessonModal from '@/components/lesson/edit-lesson-modal';
 import CreateSessionModal from '@/components/sessions/create-session-modal';
@@ -26,6 +27,7 @@ import PaymentModal from '@/components/lesson/payment-modal';
 import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
 import { useParams } from 'next/navigation';
+import { ko } from 'date-fns/locale';
 
 export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; use24HourFormat: boolean }) {
   const { studentUuid } = useParams<{ studentUuid: string }>();
@@ -51,45 +53,26 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
         ? (
             <ul className="mt-5 flex flex-col gap-5">
               {lessons.map(lesson => (
-                <li key={lesson.id}>
-                  <Surface className="px-5 py-3 border border-gray-50 rounded-xl shadow-sm">
+                <li key={lesson.id} className="rounded-xl shadow-sm overflow-hidden">
+                  {!lesson.payment && (
+                    <div className="text-center font-medium text-white bg-danger">
+                      결제필요
+                    </div>
+                  )}
+                  <Surface className="px-3 py-3 border-x border-gray-50 rounded-none shadow-none">
                     {/* 모바일: 칩 + 버튼 / 제목 세로 배치 */}
                     <div className="flex flex-col gap-2 sm:hidden">
                       <div className="flex items-center justify-between">
-                        <div className="flex gap-2">
-                          <Modal>
-                            {lesson.payment
-                              ? (
-                                  <Button size="sm" variant="outline">
-                                    {lesson.payment.paymentMethod === 'card' && <CreditCardIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'transfer' && <LandmarkIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'cash' && <BanknoteIcon className="size-3" />}
-                                    {lesson.payment.paymentMethod === 'none' && <BookDashedIcon className="size-3" />}
-                                    {numberToHangulMixed(lesson.payment.amount)}
-                                    원
-                                  </Button>
-                                )
-                              : (
-                                  <Button size="sm" variant="danger-soft">
-                                    <BanknoteXIcon className="size-3" />
-                                    결제필요
-                                  </Button>
-                                )}
-                            <PaymentModal lesson={lesson} />
-                          </Modal>
-                          <Modal>
-                            <Button size="sm" variant="secondary">
-                              {lesson.shares?.length ? <GlobeIcon className="size-3" /> : <LockIcon className="size-3" />}
-                              {lesson.shares?.length ? '공유중' : '공유'}
-                            </Button>
-                            <ShareModal lesson={lesson} />
-                          </Modal>
-                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-xl font-bold">{lesson.title}</p>
                         <ButtonGroup variant="secondary">
-                          <Modal>
-                            <Button variant="secondary">수정</Button>
-                            <EditLessonModal lesson={lesson} />
-                          </Modal>
+                          <Button
+                            variant="secondary"
+                            onPress={() => modal.show(EditLessonModal, { lesson })}
+                          >
+                            수정
+                          </Button>
                           <Dropdown>
                             <Button variant="secondary">
                               <ChevronDownIcon />
@@ -109,8 +92,8 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                             </Dropdown.Popover>
                           </Dropdown>
                         </ButtonGroup>
+
                       </div>
-                      <p className="text-xl font-bold">{lesson.title}</p>
                     </div>
 
                     {/* PC: 기존 가로 배치 */}
@@ -119,58 +102,17 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                         <p className="mt-1 text-xl font-bold">{lesson.title}</p>
                       </div>
                       <div className="flex gap-3">
-                        <Modal>
-                          {lesson.payment
-                            ? (
-                                <Button variant="secondary">
-                                  {lesson.payment.paymentMethod === 'card' && (
-                                    <CreditCardIcon className="size-4" />
-                                  )}
-                                  {lesson.payment.paymentMethod === 'transfer' && (
-                                    <LandmarkIcon className="size-4" />
-                                  )}
-                                  {lesson.payment.paymentMethod === 'cash' && (
-                                    <BanknoteIcon className="size-4" />
-                                  )}
-                                  {lesson.payment.paymentMethod === 'none' && (
-                                    <BookDashedIcon className="size-4" />
-                                  )}
-                                  {numberToHangulMixed(lesson.payment.amount)}
-                                  원
-                                </Button>
-                              )
-                            : (
-                                <Button variant="danger-soft">
-                                  <BanknoteXIcon className="size-4" />
-                                  결제필요
-                                </Button>
-                              )}
-                          <PaymentModal
-                            lesson={lesson}
-                          />
-                        </Modal>
-                        <Modal>
+
+                        <ButtonGroup size="sm" variant="secondary">
                           <Button
-                            variant="primary"
+                            size="sm"
+                            variant="secondary"
+                            onPress={() => modal.show(EditLessonModal, { lesson })}
                           >
-                            {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <LockIcon className="size-4" />}
-                            {lesson.shares?.length ? '공유중' : '공유'}
+                            수정
                           </Button>
-                          <ShareModal
-                            lesson={lesson}
-                          />
-                        </Modal>
-                        <ButtonGroup variant="secondary">
-                          <Modal>
-                            <Button>
-                              수정
-                            </Button>
-                            <EditLessonModal
-                              lesson={lesson}
-                            />
-                          </Modal>
                           <Dropdown>
-                            <Button>
+                            <Button size="sm" variant="secondary">
                               <ChevronDownIcon />
                             </Button>
                             <Dropdown.Popover placement="bottom end" className="min-w-40">
@@ -190,12 +132,13 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                         </ButtonGroup>
                       </div>
                     </div>
-                    <Text className="mt-1 whitespace-pre-wrap">{lesson.notes}</Text>
+                    <Text className="mt-1 text-sm whitespace-pre-wrap">{lesson.notes}</Text>
                     <Divider className="my-3" />
                     <ListBox
                       aria-label={`레슨 ${lesson.id}의 수업 목록`}
                       selectionMode="none"
                       items={lesson.sessions}
+                      className="px-2 gap-2"
                       renderEmptyState={() => (
                         <div className="py-5 flex flex-col gap-3 items-center justify-center">
                           <p>설정된 수업이 없습니다</p>
@@ -206,7 +149,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                         <ListBox.Item
                           id={session.id}
                           textValue={session.id}
-                          className="flex items-start"
+                          className="p-0 flex items-start"
                           onAction={() => {
                             setSelectedSession(session);
                           }}
@@ -228,19 +171,32 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                   />
                                 )}
                           </div>
-                          <div>
-                            <p className="tabular-nums">
-                              {format(new Date(session.sessionAt), 'yyyy-MM-dd', { in: tz('Asia/Seoul') })}
-                              {' '}
-                              {formatTime(session.sessionAt, use24HourFormat)}
-                            </p>
-                            <Text className="whitespace-pre-wrap">
-                              {session.notes}
-                            </Text>
+                          <div className="w-full">
+                            <div className="flex justify-between">
+                              <p className="">
+                                <span className="tabular-nums text-lg font-bold">{format(new Date(session.sessionAt), 'MM.dd', { in: tz('Asia/Seoul') })}</span>
+                                <span className="ml-1 text-sm text-gray-600">{format(new Date(session.sessionAt), 'cccc', { locale: ko, in: tz('Asia/Seoul') })}</span>
+                              </p>
+                              <div className="flex items-center gap-1 text-sm text-gray-600 tabular-nums">
+                                <Clock4Icon className="inline-block size-3.5" />
+                                <p className="">
+                                  {formatTime(session.sessionAt, use24HourFormat)}
+                                </p>
+                                <Chip size="sm">
+                                  {session.duration}
+                                  분
+                                </Chip>
+                              </div>
+                            </div>
+                            {session.notes && (
+                              <Text className="p-2 bg-default/30 rounded whitespace-pre-wrap">
+                                {session.notes}
+                              </Text>
+                            )}
                             {session.feedback && (
-                              <div className="mt-1">
-                                <Text className="font-bold">피드백</Text>
-                                <Text className="whitespace-pre-wrap">
+                              <div className="mt-1 p-2 bg-accent-soft-hover border border-accent/50 rounded-xl">
+                                <p className="text-sm text-accent font-bold">피드백</p>
+                                <Text className="text-sm whitespace-pre-wrap">
                                   {session.feedback.notes}
                                 </Text>
                               </div>
@@ -251,6 +207,49 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
 
                     </ListBox>
                   </Surface>
+                  <div className="px-3 py-2 flex justify-between bg-white">
+                    {lesson.payment
+                      ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onPress={() => modal.show(PaymentModal, { lesson })}
+                          >
+                            {lesson.payment.paymentMethod === 'card' && (
+                              <CreditCardIcon className="size-4" />
+                            )}
+                            {lesson.payment.paymentMethod === 'transfer' && (
+                              <LandmarkIcon className="size-4" />
+                            )}
+                            {lesson.payment.paymentMethod === 'cash' && (
+                              <BanknoteIcon className="size-4" />
+                            )}
+                            {lesson.payment.paymentMethod === 'none' && (
+                              <BookDashedIcon className="size-4" />
+                            )}
+                            {numberToHangulMixed(lesson.payment.amount)}
+                            원
+                          </Button>
+                        )
+                      : (
+                          <Button
+                            variant="danger-soft"
+                            size="sm"
+                            onPress={() => modal.show(PaymentModal, { lesson })}
+                          >
+                            <BanknoteXIcon className="size-4" />
+                            결제필요
+                          </Button>
+                        )}
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onPress={() => modal.show(ShareModal, { lesson })}
+                    >
+                      {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <LockIcon className="size-4" />}
+                      {lesson.shares?.length ? '공유중' : '공유'}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>

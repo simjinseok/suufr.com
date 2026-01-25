@@ -81,7 +81,20 @@ export class LessonsService {
           sessions: {
             where: { deletedAt: null },
             orderBy: { sessionAt: 'asc' },
-            include: { feedback: true },
+            include: {
+              feedback: {
+                include: {
+                  feedbackMediaFiles: {
+                    orderBy: { createdAt: 'asc' },
+                    include: { mediaFile: true },
+                  },
+                },
+              },
+              sessionMediaFiles: {
+                orderBy: { createdAt: 'asc' },
+                include: { mediaFile: true },
+              },
+            },
           },
           payment: {
             where: {
@@ -124,7 +137,20 @@ export class LessonsService {
         sessions: {
           where: { deletedAt: null },
           orderBy: { sessionAt: 'asc' },
-          include: { feedback: true },
+          include: {
+            feedback: {
+              include: {
+                feedbackMediaFiles: {
+                  orderBy: { createdAt: 'asc' },
+                  include: { mediaFile: true },
+                },
+              },
+            },
+            sessionMediaFiles: {
+              orderBy: { createdAt: 'asc' },
+              include: { mediaFile: true },
+            },
+          },
         },
         payment: {
           where: { deletedAt: null },
@@ -171,16 +197,10 @@ export class LessonsService {
             }
           : undefined,
       },
-      include: {
-        student: true,
-        sessions: {
-          where: { deletedAt: null },
-          orderBy: { sessionAt: 'asc' },
-        },
-      },
     });
 
-    return { success: true, data: lesson };
+    // 생성된 레슨 조회하여 반환
+    return this.findOne(lesson.uuid, userId);
   }
 
   async update(uuid: string, dto: UpdateLessonDto, userId: string) {
@@ -196,23 +216,16 @@ export class LessonsService {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
     }
 
-    const updatedLesson = await this.prisma.lesson.update({
+    await this.prisma.lesson.update({
       where: { uuid },
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.notes !== undefined && { notes: dto.notes }),
       },
-      include: {
-        student: true,
-        sessions: {
-          where: { deletedAt: null },
-          orderBy: { sessionAt: 'asc' },
-        },
-        payment: true,
-      },
     });
 
-    return { success: true, data: updatedLesson };
+    // 업데이트된 레슨 조회하여 반환
+    return this.findOne(uuid, userId);
   }
 
   async remove(uuid: string, userId: string) {
@@ -324,6 +337,16 @@ export class LessonsService {
               include: {
                 feedback: {
                   where: { deletedAt: null },
+                  include: {
+                    feedbackMediaFiles: {
+                      orderBy: { createdAt: 'asc' },
+                      include: { mediaFile: true },
+                    },
+                  },
+                },
+                sessionMediaFiles: {
+                  orderBy: { createdAt: 'asc' },
+                  include: { mediaFile: true },
                 },
               },
             },

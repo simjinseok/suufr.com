@@ -77,6 +77,8 @@ model Feedback {
   sessionId Int       @unique @map("session_id")
   session   Session   @relation(fields: [sessionId], references: [id])
 
+  feedbackMediaFiles FeedbackMediaFile[]
+
   @@index([sessionId, deletedAt])
   @@map("feedback")
 }
@@ -177,9 +179,10 @@ model Session {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
   lessonId  Int       @map("lesson_id")
 
-  feedback    Feedback?
-  lesson      Lesson              @relation(fields: [lessonId], references: [id])
-  googleEvent SessionGoogleEvent?
+  feedback          Feedback?
+  lesson            Lesson              @relation(fields: [lessonId], references: [id])
+  googleEvent       SessionGoogleEvent?
+  sessionMediaFiles SessionMediaFile[]
 
   @@index([lessonId, sessionAt, deletedAt])
   @@map("sessions")
@@ -273,6 +276,11 @@ model GoogleSyncToken {
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
   userId             String    @unique @map("user_id") @db.Uuid
 
+  // Google Calendar Webhook
+  webhookChannelId  String?   @map("webhook_channel_id")
+  webhookResourceId String?   @map("webhook_resource_id")
+  webhookExpiration DateTime? @map("webhook_expiration") @db.Timestamptz(0)
+
   @@map("google_sync_tokens")
 }
 
@@ -315,4 +323,64 @@ model StudentGoogleContact {
   @@index([googleResourceName])
   @@index([userId, syncStatus])
   @@map("student_google_contacts")
+}
+
+// 미디어 파일 (이미지/동영상)
+model MediaFile {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  url       String
+  publicId  String   @map("public_id")
+  type      String // "image" | "video"
+  fileName  String?  @map("file_name")
+  fileSize  Int      @map("file_size") // 바이트 단위 (용량 계산용)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  userId    String   @map("user_id") @db.Uuid // 소유자 (용량 관리용)
+
+  sessionMediaFiles  SessionMediaFile[]
+  feedbackMediaFiles FeedbackMediaFile[]
+
+  @@index([userId])
+  @@index([userId, fileName])
+  @@map("media_files")
+}
+
+// 세션 ↔ 미디어 파일 연결 테이블
+model SessionMediaFile {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int      @map("session_id")
+  mediaFileId Int      @map("media_file_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  session   Session   @relation(fields: [sessionId], references: [id])
+  mediaFile MediaFile @relation(fields: [mediaFileId], references: [id])
+
+  @@unique([sessionId, mediaFileId])
+  @@index([sessionId])
+  @@map("session_media_files")
+}
+
+// 사용자 스토리지 용량 관리
+model UserStorageQuota {
+  userId    String   @id @map("user_id") @db.Uuid
+  usedBytes BigInt   @default(0) @map("used_bytes") // 현재 사용량
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  @@map("user_storage_quotas")
+}
+
+// 피드백 ↔ 미디어 파일 연결 테이블
+model FeedbackMediaFile {
+  id          Int      @id @default(autoincrement())
+  feedbackId  Int      @map("feedback_id")
+  mediaFileId Int      @map("media_file_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  feedback  Feedback  @relation(fields: [feedbackId], references: [id])
+  mediaFile MediaFile @relation(fields: [mediaFileId], references: [id])
+
+  @@unique([feedbackId, mediaFileId])
+  @@index([feedbackId])
+  @@map("feedback_media_files")
 }

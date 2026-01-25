@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
         response.cookies.set('access_token', result.accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax',
           maxAge: result.expiresIn - 60,
         });
         return response;
@@ -51,6 +51,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!api|.well-known|health|login|signup|verify-email|forgot-password|reset-password|auth/logout|sl/*|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).+)',
+    '/((?!api|.well-known|auth|health|login|signup|verify-email|forgot-password|reset-password|auth/logout|sl/*|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).+)',
   ],
 };

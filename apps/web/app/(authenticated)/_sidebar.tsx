@@ -13,7 +13,10 @@ import {
   BuildingIcon,
   ChevronsUpDownIcon,
   CheckIcon,
+  HardDriveIcon,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
 import { UserMenu } from './_user-menu';
@@ -32,9 +35,11 @@ type Props = {
 };
 
 export function Sidebar({ currentOrg, organizations }: Props) {
+  const pathname = usePathname();
   const profileName = currentOrg.profileName ?? currentOrg.name;
   const profileImageUrl = currentOrg.profileImageUrl;
   const profileInitial = profileName.charAt(profileName.length - 1);
+  const isFilesActive = pathname.startsWith('/settings/files');
 
   const handleMobileAction = (key: string | number) => {
     const keyStr = String(key);
@@ -73,6 +78,26 @@ export function Sidebar({ currentOrg, organizations }: Props) {
         </div>
       </div>
       <AppNavigation />
+      <div className="px-3 py-2">
+        <Link
+          href="/settings/files"
+          className={`
+            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            transition-all duration-200
+            ${
+              isFilesActive
+                ? 'text-indigo-700 bg-white/80 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            }
+          `}
+        >
+          <HardDriveIcon
+            className={`w-[18px] h-[18px] ${isFilesActive ? 'text-indigo-600' : 'text-gray-400'}`}
+            strokeWidth={isFilesActive ? 2 : 1.5}
+          />
+          <span>파일 관리</span>
+        </Link>
+      </div>
       <UserMenu currentOrg={currentOrg} organizations={organizations} />
     </>
   );
@@ -217,6 +242,15 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                   </div>
                   <div>
                     <Label>캘린더</Label>
+                  </div>
+                </Dropdown.Item>
+                <Separator />
+                <Dropdown.Item id="files" href="/settings/files" textValue="파일 관리">
+                  <div>
+                    <HardDriveIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>파일 관리</Label>
                   </div>
                 </Dropdown.Item>
               </Dropdown.Menu>

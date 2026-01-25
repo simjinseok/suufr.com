@@ -73,20 +73,20 @@ export async function login(
       cookieStore.set('access_token', response.accessToken, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: (response.expiresIn || 3600) - 60,
       });
 
       cookieStore.set('refresh_token', response.refreshToken!, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict',
+        sameSite: 'lax',
       });
 
       cookieStore.set('cognito_username', response.cognitoUsername!, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict',
+        sameSite: 'lax',
       });
 
       state.success = true;
@@ -143,20 +143,20 @@ export async function respondToMfa(
     cookieStore.set('access_token', response.accessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: (response.expiresIn || 3600) - 60,
     });
 
     cookieStore.set('refresh_token', response.refreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
 
     cookieStore.set('cognito_username', response.cognitoUsername, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
 
     cookieStore.delete('mfa_session');

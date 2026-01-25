@@ -7,13 +7,12 @@ import type { GoogleTokenResponse, GoogleUserInfo, GoogleConnectionStatus } from
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
+const CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
 
 // OAuth Scopes
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/contacts',
+  'https://www.googleapis.com/auth/calendar.app.created',
   'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');
 
 @Injectable()
@@ -267,29 +266,71 @@ export class GoogleService {
    * Disconnect Google account
    */
   async disconnect(userId: string): Promise<void> {
+    const accessToken = await this.getAccessToken(userId);
+    const syncToken = await this.getSyncToken(userId);
+
+    // 1. Webhook 구독 해제
+    if (accessToken && syncToken?.webhookChannelId && syncToken?.webhookResourceId) {
+      await this.stopWatch(syncToken.webhookChannelId, syncToken.webhookResourceId, accessToken)
+        .catch(err => this.logger.error('Failed to stop watch:', err));
+    }
+
+    // 2. Google Calendar 삭제
+    if (accessToken && syncToken?.calendarId) {
+      await this.deleteCalendar(syncToken.calendarId, accessToken);
+    }
+
+    // 3. DB 데이터 삭제
     await this.prisma.$transaction([
-      // Soft delete external service token
       this.prisma.externalServiceToken.updateMany({
-        where: {
-          userId,
-          provider: 'google',
-          deletedAt: null,
-        },
+        where: { userId, provider: 'google', deletedAt: null },
         data: { deletedAt: new Date() },
       }),
-      // Delete sync token
-      this.prisma.googleSyncToken.deleteMany({
-        where: { userId },
-      }),
-      // Delete session mappings
-      this.prisma.sessionGoogleEvent.deleteMany({
-        where: { userId },
-      }),
-      // Delete student mappings
-      this.prisma.studentGoogleContact.deleteMany({
-        where: { userId },
-      }),
+      this.prisma.googleSyncToken.deleteMany({ where: { userId } }),
+      this.prisma.sessionGoogleEvent.deleteMany({ where: { userId } }),
+      this.prisma.studentGoogleContact.deleteMany({ where: { userId } }),
     ]);
+  }
+
+  /**
+   * Delete a calendar from Google Calendar
+   */
+  private async deleteCalendar(calendarId: string, accessToken: string): Promise<void> {
+    const response = await fetch(
+      `${CALENDAR_API_BASE}/calendars/${encodeURIComponent(calendarId)}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+
+    // 404 is ok - calendar already deleted
+    if (!response.ok && response.status !== 404) {
+      const error = await response.text();
+      throw new Error(`Failed to delete calendar: ${error}`);
+    }
+  }
+
+  /**
+   * Stop watching a calendar channel
+   */
+  private async stopWatch(
+    channelId: string,
+    resourceId: string,
+    accessToken: string,
+  ): Promise<void> {
+    const response = await fetch(`${CALENDAR_API_BASE}/channels/stop`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: channelId, resourceId }),
+    });
+
+    if (!response.ok && response.status !== 404) {
+      this.logger.error(`Failed to stop watch: ${await response.text()}`);
+    }
   }
 
   /**
@@ -312,6 +353,9 @@ export class GoogleService {
       contactsSyncToken?: string | null;
       lastCalendarSyncAt?: Date;
       lastContactsSyncAt?: Date;
+      webhookChannelId?: string | null;
+      webhookResourceId?: string | null;
+      webhookExpiration?: Date | null;
     },
   ) {
     return this.prisma.googleSyncToken.upsert({
@@ -319,6 +363,17 @@ export class GoogleService {
       create: { userId, ...data },
       update: data,
     });
+  }
+
+  /**
+   * Find user by webhook channel ID
+   */
+  async findUserByWebhookChannel(channelId: string): Promise<string | null> {
+    const syncToken = await this.prisma.googleSyncToken.findFirst({
+      where: { webhookChannelId: channelId },
+      select: { userId: true },
+    });
+    return syncToken?.userId ?? null;
   }
 
   // AES-256-GCM encryption

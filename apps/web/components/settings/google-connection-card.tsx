@@ -40,6 +40,7 @@ export default function GoogleConnectionCard({ status, authUrl, callbackResult }
   }, [callbackResult]);
 
   const handleConnect = () => {
+
     if (authUrl) {
       window.location.href = authUrl;
     }

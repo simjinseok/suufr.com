@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
@@ -18,6 +19,7 @@ import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { CarddavModule } from './carddav/carddav.module';
 import { CaldavModule } from './caldav/caldav.module';
 import { GoogleModule } from './google/google.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { GoogleModule } from './google/google.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     CommonModule,
     HealthModule,
@@ -42,6 +45,7 @@ import { GoogleModule } from './google/google.module';
     CarddavModule,
     CaldavModule,
     GoogleModule,
+    StorageModule,
   ],
 })
 export class AppModule {}

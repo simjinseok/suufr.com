@@ -23,6 +23,7 @@ import { updateSession, removeSession } from '@/actions/session';
 import { TSession } from '@/types/index';
 import { useHourCycle } from '@/contexts/time-format';
 import { Calendar } from '@/components/calendar';
+import MediaFilePicker, { MediaFilePickerState } from '@/components/media/media-file-picker';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -52,6 +53,22 @@ function Content({ session, close }: ContentProps) {
   const hourCycle = useHourCycle();
   const [selectedTab, setSelectedTab] = React.useState<'basic' | 'memo' | 'feedback'>('basic');
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+
+  // 세션 미디어 파일 상태
+  const [mediaFiles, setMediaFiles] = React.useState<MediaFilePickerState>({
+    existingFiles: session.sessionMediaFiles || [],
+    pendingUpload: [],
+    pendingDetach: [],
+    pendingAddExisting: [],
+  });
+
+  // 피드백 미디어 파일 상태
+  const [feedbackMediaFiles, setFeedbackMediaFiles] = React.useState<MediaFilePickerState>({
+    existingFiles: session.feedback?.feedbackMediaFiles || [],
+    pendingUpload: [],
+    pendingDetach: [],
+    pendingAddExisting: [],
+  });
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
@@ -106,6 +123,53 @@ function Content({ session, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="sessionUuid" value={session.uuid} />
+
+          {/* 세션 미디어 파일 변경 데이터 */}
+          {mediaFiles.pendingUpload.length > 0 && (
+            <input
+              type="hidden"
+              name="addNewMediaFiles"
+              value={JSON.stringify(mediaFiles.pendingUpload)}
+            />
+          )}
+          {(mediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
+            <input
+              type="hidden"
+              name="addExistingMediaFileUuids"
+              value={JSON.stringify(mediaFiles.pendingAddExisting!.map((f) => f.uuid))}
+            />
+          )}
+          {mediaFiles.pendingDetach.length > 0 && (
+            <input
+              type="hidden"
+              name="removeMediaFileUuids"
+              value={JSON.stringify(mediaFiles.pendingDetach)}
+            />
+          )}
+
+          {/* 피드백 미디어 파일 변경 데이터 */}
+          {feedbackMediaFiles.pendingUpload.length > 0 && (
+            <input
+              type="hidden"
+              name="feedbackAddNewMediaFiles"
+              value={JSON.stringify(feedbackMediaFiles.pendingUpload)}
+            />
+          )}
+          {(feedbackMediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
+            <input
+              type="hidden"
+              name="feedbackAddExistingMediaFileUuids"
+              value={JSON.stringify(feedbackMediaFiles.pendingAddExisting!.map((f) => f.uuid))}
+            />
+          )}
+          {feedbackMediaFiles.pendingDetach.length > 0 && (
+            <input
+              type="hidden"
+              name="feedbackRemoveMediaFileUuids"
+              value={JSON.stringify(feedbackMediaFiles.pendingDetach)}
+            />
+          )}
+
           <div className="hidden flex-col gap-3 data-[selected=true]:flex" data-selected={selectedTab === 'basic' ? 'true' : undefined}>
             <Controller
               control={control}
@@ -219,7 +283,13 @@ function Content({ session, close }: ContentProps) {
             />
           </div>
 
-          <div className="hidden data-[selected=true]:block" data-selected={selectedTab === 'memo' ? 'true' : undefined}>
+          <div className="hidden data-[selected=true]:flex flex-col gap-4" data-selected={selectedTab === 'memo' ? 'true' : undefined}>
+            <MediaFilePicker
+              variant="simple"
+              value={mediaFiles}
+              onChange={setMediaFiles}
+              maxFiles={5}
+            />
             <Controller
               control={control}
               name="notes"
@@ -238,9 +308,15 @@ function Content({ session, close }: ContentProps) {
           </div>
 
           <div
-            className="hidden data-[selected=true]:block"
+            className="hidden data-[selected=true]:flex flex-col gap-4"
             data-selected={selectedTab === 'feedback' ? 'true' : undefined}
           >
+            <MediaFilePicker
+              variant="simple"
+              value={feedbackMediaFiles}
+              onChange={setFeedbackMediaFiles}
+              maxFiles={5}
+            />
             <Controller
               control={control}
               name="feedback"
@@ -253,6 +329,7 @@ function Content({ session, close }: ContentProps) {
               )}
             />
           </div>
+
         </Form>
         <Tabs
           className="mt-4"

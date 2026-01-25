@@ -19,6 +19,23 @@ type Lesson = {
   student: Student;
 };
 
+type MediaFile = {
+  id: number;
+  uuid: string;
+  url: string;
+  publicId: string;
+  type: 'image' | 'video';
+  fileName: string | null;
+  fileSize: number;
+};
+
+type SessionMediaFile = {
+  id: number;
+  sessionId: number;
+  mediaFileId: number;
+  mediaFile: MediaFile;
+};
+
 type Session = {
   id: number;
   uuid: string;
@@ -28,6 +45,7 @@ type Session = {
   isDone: boolean;
   lesson: Lesson;
   feedback?: Feedback | null;
+  sessionMediaFiles?: SessionMediaFile[];
 };
 
 type ListSessionsParams = {
@@ -55,11 +73,21 @@ type SessionResponse = {
   data: Session;
 };
 
+type CreateMediaFileData = {
+  url: string;
+  publicId: string;
+  type: 'image' | 'video';
+  fileName?: string;
+  fileSize: number;
+};
+
 type CreateSessionData = {
   lessonUuid: string;
   sessionAt: string;
   duration?: number;
   notes?: string;
+  newMediaFiles?: CreateMediaFileData[];
+  existingMediaFileUuids?: string[];
 };
 
 type UpdateSessionData = {
@@ -67,11 +95,32 @@ type UpdateSessionData = {
   duration?: number;
   notes?: string;
   isDone?: boolean;
+  addNewMediaFiles?: CreateMediaFileData[];
+  addExistingMediaFileUuids?: string[];
+  removeMediaFileUuids?: string[];
+};
+
+type FeedbackMediaFile = {
+  id: number;
+  feedbackId: number;
+  mediaFileId: number;
+  mediaFile: MediaFile;
+};
+
+type FeedbackWithMediaFiles = Feedback & {
+  feedbackMediaFiles?: FeedbackMediaFile[];
 };
 
 type FeedbackResponse = {
   success: boolean;
-  data: Feedback;
+  data: FeedbackWithMediaFiles;
+};
+
+type UpsertFeedbackData = {
+  notes: string;
+  addNewMediaFiles?: CreateMediaFileData[];
+  addExistingMediaFileUuids?: string[];
+  removeMediaFileUuids?: string[];
 };
 
 export const sessionsApi = {
@@ -93,8 +142,8 @@ export const sessionsApi = {
   markDone: (uuid: string, isDone: boolean) =>
     apiClient<SessionResponse>(`/api/sessions/${uuid}/done`, { method: 'PATCH', body: { isDone } }),
 
-  upsertFeedback: (uuid: string, notes: string) =>
-    apiClient<FeedbackResponse>(`/api/sessions/${uuid}/feedback`, { method: 'POST', body: { notes } }),
+  upsertFeedback: (uuid: string, data: UpsertFeedbackData) =>
+    apiClient<FeedbackResponse>(`/api/sessions/${uuid}/feedback`, { method: 'POST', body: data }),
 
   deleteFeedback: (uuid: string) =>
     apiClient<{ success: boolean }>(`/api/sessions/${uuid}/feedback`, { method: 'DELETE' }),

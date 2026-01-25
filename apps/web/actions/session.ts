@@ -117,17 +117,44 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
 
       const { isDone, sessionAt, duration, notes, feedback } = validationResult.data;
 
+      // 세션 미디어 파일 데이터 파싱
+      const addNewMediaFilesStr = formData.get('addNewMediaFiles') as string;
+      const addExistingMediaFileUuidsStr = formData.get('addExistingMediaFileUuids') as string;
+      const removeMediaFileUuidsStr = formData.get('removeMediaFileUuids') as string;
+
+      const addNewMediaFiles = addNewMediaFilesStr ? JSON.parse(addNewMediaFilesStr) : undefined;
+      const addExistingMediaFileUuids = addExistingMediaFileUuidsStr ? JSON.parse(addExistingMediaFileUuidsStr) : undefined;
+      const removeMediaFileUuids = removeMediaFileUuidsStr ? JSON.parse(removeMediaFileUuidsStr) : undefined;
+
+      // 피드백 미디어 파일 데이터 파싱
+      const feedbackAddNewMediaFilesStr = formData.get('feedbackAddNewMediaFiles') as string;
+      const feedbackAddExistingMediaFileUuidsStr = formData.get('feedbackAddExistingMediaFileUuids') as string;
+      const feedbackRemoveMediaFileUuidsStr = formData.get('feedbackRemoveMediaFileUuids') as string;
+
+      const feedbackAddNewMediaFiles = feedbackAddNewMediaFilesStr ? JSON.parse(feedbackAddNewMediaFilesStr) : undefined;
+      const feedbackAddExistingMediaFileUuids = feedbackAddExistingMediaFileUuidsStr ? JSON.parse(feedbackAddExistingMediaFileUuidsStr) : undefined;
+      const feedbackRemoveMediaFileUuids = feedbackRemoveMediaFileUuidsStr ? JSON.parse(feedbackRemoveMediaFileUuidsStr) : undefined;
+
       await sessionsApi.update(sessionUuid as string, {
         isDone,
         sessionAt,
         duration,
         notes,
+        addNewMediaFiles,
+        addExistingMediaFileUuids,
+        removeMediaFileUuids,
       });
 
-      // feedback 처리: isDone이고 내용이 있으면 upsert, 아니면 삭제
-      if (isDone && feedback) {
-        await sessionsApi.upsertFeedback(sessionUuid as string, feedback).catch((e) => console.log('fewefw', e));
-      } else {
+      // feedback 처리: isDone이고 (내용이 있거나 파일이 있으면) upsert, 아니면 삭제
+      const hasFeedbackContent = feedback || feedbackAddNewMediaFiles || feedbackAddExistingMediaFileUuids;
+      if (isDone && hasFeedbackContent) {
+        await sessionsApi.upsertFeedback(sessionUuid as string, {
+          notes: feedback,
+          addNewMediaFiles: feedbackAddNewMediaFiles,
+          addExistingMediaFileUuids: feedbackAddExistingMediaFileUuids,
+          removeMediaFileUuids: feedbackRemoveMediaFileUuids,
+        }).catch((e) => console.log('upsertFeedback error:', e));
+      } else if (!isDone || !hasFeedbackContent) {
         await sessionsApi.deleteFeedback(sessionUuid as string).catch(() => {
           // feedback이 없을 수 있으므로 에러 무시
         });
@@ -216,7 +243,7 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
         state.success = true;
         state.message = '피드백을 삭제하였습니다.';
       } else {
-        await sessionsApi.upsertFeedback(sessionUuid, notes);
+        await sessionsApi.upsertFeedback(sessionUuid, { notes });
         state.success = true;
         state.message = '피드백을 저장하였습니다.';
       }

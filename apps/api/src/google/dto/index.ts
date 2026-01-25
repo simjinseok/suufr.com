@@ -23,6 +23,7 @@ export interface GoogleConnectionStatus {
 
 export interface GoogleCalendarEvent {
   id?: string;
+  status?: 'confirmed' | 'tentative' | 'cancelled';
   summary: string;
   description?: string;
   start: {

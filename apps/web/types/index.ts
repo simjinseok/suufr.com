@@ -48,12 +48,21 @@ export type TSession = {
   duration: number;
   lesson?: TLesson;
   feedback?: TFeedback;
+  sessionMediaFiles?: TSessionMediaFile[];
 };
 
 export type TFeedback = {
   id: number;
   notes: string;
   session?: TSession;
+  feedbackMediaFiles?: TFeedbackMediaFile[];
+};
+
+export type TFeedbackMediaFile = {
+  id: number;
+  feedbackId: number;
+  mediaFileId: number;
+  mediaFile: TMediaFile;
 };
 
 export type TPayment = {
@@ -131,4 +140,44 @@ export type TAppToken = {
   name: string;
   lastUsedAt: Date | null;
   createdAt: Date;
+};
+
+export type TMediaFile = {
+  id: number;
+  uuid: string;
+  url: string;
+  publicId: string;
+  type: 'image' | 'video';
+  fileName: string | null;
+  fileSize: number;
+  createdAt: Date;
+  isInUse?: boolean;
+};
+
+export type TSessionMediaFile = {
+  id: number;
+  sessionId: number;
+  mediaFileId: number;
+  mediaFile: TMediaFile;
+};
+
+// MediaFilePicker에서 사용하는 공통 타입
+export type TLessonMediaFile = {
+  id: number;
+  mediaFileId: number;
+  mediaFile: TMediaFile;
+};
+
+export type TStorageQuota = {
+  usedBytes: number;
+  quotaBytes: number;
+  remainingBytes: number;
+};
+
+export type TTempMediaFile = {
+  url: string;
+  publicId: string;
+  type: 'image' | 'video';
+  fileName: string;
+  fileSize: number;
 };

@@ -416,7 +416,7 @@ export class GoogleContactsService {
     const response = await fetch(`${PEOPLE_API_BASE}/people:createContact`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(contact),
@@ -456,7 +456,7 @@ export class GoogleContactsService {
       {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

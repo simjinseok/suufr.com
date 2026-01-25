@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import { randomUUID } from 'crypto';
 
+export type ResourceType = 'image' | 'video';
+
 @Injectable()
 export class CloudinaryService {
   constructor() {
@@ -17,8 +19,19 @@ export class CloudinaryService {
    */
   private extractPublicId(url: string): string | null {
     // https://res.cloudinary.com/{cloud}/image/upload/{version}/{public_id}.{ext}
+    // https://res.cloudinary.com/{cloud}/video/upload/{version}/{public_id}.{ext}
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/);
     return match ? match[1] : null;
+  }
+
+  /**
+   * URL에서 resource type 추출 (image/video)
+   */
+  private extractResourceType(url: string): ResourceType {
+    if (url.includes('/video/upload/')) {
+      return 'video';
+    }
+    return 'image';
   }
 
   /**
@@ -114,16 +127,60 @@ export class CloudinaryService {
   }
 
   /**
-   * URL에서 public_id를 추출하여 이미지 삭제
+   * temp 폴더의 미디어 파일을 media 폴더로 이동 (이미지/동영상 모두 지원)
+   * @param tempUrl - temp 폴더에 있는 Cloudinary URL
+   * @param resourceType - 리소스 타입 ('image' | 'video')
+   * @returns { url, publicId } 또는 null
    */
-  async deleteByUrl(url: string): Promise<boolean> {
+  async moveMediaFile(
+    tempUrl: string,
+    resourceType: ResourceType,
+  ): Promise<{ url: string; publicId: string } | null> {
+    const publicId = this.extractPublicId(tempUrl);
+    if (!publicId || !publicId.startsWith('suufr/temp/')) {
+      console.error('Invalid temp URL:', tempUrl);
+      return null;
+    }
+
+    const key = randomUUID();
+    const newPublicId = `suufr/media/${key}`;
+
+    try {
+      const result = await cloudinary.uploader.rename(publicId, newPublicId, {
+        invalidate: true,
+        resource_type: resourceType,
+      });
+      return {
+        url: result.secure_url,
+        publicId: result.public_id,
+      };
+    }
+    catch (error) {
+      console.error('Move media file error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * URL에서 public_id를 추출하여 파일 삭제
+   * @param url - 삭제할 파일의 Cloudinary URL
+   * @param resourceType - 리소스 타입 (기본값: 'image')
+   */
+  async deleteByUrl(url: string, resourceType?: ResourceType): Promise<boolean> {
     try {
       const publicId = this.extractPublicId(url);
       if (!publicId) {
         console.error('Failed to extract public_id from URL:', url);
         return false;
       }
-      await cloudinary.uploader.destroy(publicId, { invalidate: true });
+
+      // resourceType이 제공되지 않으면 URL에서 추출
+      const type = resourceType ?? this.extractResourceType(url);
+
+      await cloudinary.uploader.destroy(publicId, {
+        invalidate: true,
+        resource_type: type,
+      });
       return true;
     }
     catch (error) {

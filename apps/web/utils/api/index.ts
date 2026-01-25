@@ -8,3 +8,4 @@ export { appTokensApi } from './app-tokens';
 export { paymentsApi } from './payments';
 export { dashboardApi } from './dashboard';
 export { organizationsApi } from './organizations';
+export { storageApi } from './storage';

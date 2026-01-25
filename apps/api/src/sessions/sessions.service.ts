@@ -1,14 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSessionDto } from './dto/create-session.dto';
+import { CreateSessionDto, CreateMediaFileDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { UpsertFeedbackDto } from './dto/feedback.dto';
 import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
 import { Prisma } from '@prisma/generated/client';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { StorageQuotaService } from '../storage/storage-quota.service';
+
+const MAX_MEDIA_FILES_PER_SESSION = 5;
 
 @Injectable()
 export class SessionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly storageQuotaService: StorageQuotaService,
+  ) {}
 
   async findAll(query: ListSessionsQueryDto, userId: string) {
     // 사용자가 소유한 모든 organization 조회
@@ -78,7 +86,18 @@ export class SessionsService {
           lesson: {
             include: { student: true },
           },
-          feedback: true,
+          feedback: {
+            include: {
+              feedbackMediaFiles: {
+                orderBy: { createdAt: 'asc' },
+                include: { mediaFile: true },
+              },
+            },
+          },
+          sessionMediaFiles: {
+            orderBy: { createdAt: 'asc' },
+            include: { mediaFile: true },
+          },
         },
         orderBy: { sessionAt: 'asc' },
         skip,
@@ -113,9 +132,21 @@ export class SessionsService {
         lesson: {
           include: { student: true },
         },
-        feedback: true,
+        feedback: {
+          include: {
+            feedbackMediaFiles: {
+              orderBy: { createdAt: 'asc' },
+              include: { mediaFile: true },
+            },
+          },
+        },
+        sessionMediaFiles: {
+          orderBy: { createdAt: 'asc' },
+          include: { mediaFile: true },
+        },
       },
     });
+
 
     if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
@@ -138,22 +169,106 @@ export class SessionsService {
       throw new NotFoundException(`Lesson with UUID ${dto.lessonUuid} not found`);
     }
 
-    const session = await this.prisma.session.create({
-      data: {
-        sessionAt: new Date(dto.sessionAt),
-        duration: dto.duration ?? 60,
-        notes: dto.notes ?? '',
-        lessonId: lesson.id,
-      },
-      include: {
-        lesson: {
-          include: { student: true },
+    // 미디어 파일 개수 제한 체크
+    const totalMediaFiles =
+      (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
+    if (totalMediaFiles > MAX_MEDIA_FILES_PER_SESSION) {
+      throw new BadRequestException(
+        `세션당 최대 ${MAX_MEDIA_FILES_PER_SESSION}개의 파일만 첨부할 수 있습니다.`,
+      );
+    }
+
+    // 새 파일들의 용량 체크
+    if (dto.newMediaFiles && dto.newMediaFiles.length > 0) {
+      const totalSize = dto.newMediaFiles.reduce((sum, f) => sum + f.fileSize, 0);
+      const canUpload = await this.storageQuotaService.canUpload(userId, totalSize);
+      if (!canUpload) {
+        throw new BadRequestException('스토리지 용량이 부족합니다.');
+      }
+    }
+
+    // 기존 파일 재활용 시 소유권 확인
+    let existingMediaFiles: { id: number }[] = [];
+    if (dto.existingMediaFileUuids && dto.existingMediaFileUuids.length > 0) {
+      existingMediaFiles = await this.prisma.mediaFile.findMany({
+        where: {
+          uuid: { in: dto.existingMediaFileUuids },
+          userId, // 본인 소유만 재활용 가능
         },
-        feedback: true,
-      },
+        select: { id: true },
+      });
+
+      if (existingMediaFiles.length !== dto.existingMediaFileUuids.length) {
+        throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
+      }
+    }
+
+    // 새 파일들 temp → media 폴더로 이동
+    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
+    if (dto.newMediaFiles) {
+      for (const fileDto of dto.newMediaFiles) {
+        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
+        if (!result) {
+          throw new BadRequestException('파일 이동에 실패했습니다.');
+        }
+        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
+      }
+    }
+
+    // 트랜잭션으로 DB 작업 수행
+    const session = await this.prisma.$transaction(async (tx) => {
+      // Session 생성
+      const newSession = await tx.session.create({
+        data: {
+          sessionAt: new Date(dto.sessionAt),
+          duration: dto.duration ?? 60,
+          notes: dto.notes ?? '',
+          lessonId: lesson.id,
+        },
+      });
+
+      // 새 MediaFile 레코드 생성 및 연결
+      for (const moved of movedFiles) {
+        const mediaFile = await tx.mediaFile.create({
+          data: {
+            url: moved.url,
+            publicId: moved.publicId,
+            type: moved.dto.type,
+            fileName: moved.dto.fileName,
+            fileSize: moved.dto.fileSize,
+            userId,
+          },
+        });
+
+        await tx.sessionMediaFile.create({
+          data: {
+            sessionId: newSession.id,
+            mediaFileId: mediaFile.id,
+          },
+        });
+      }
+
+      // 기존 파일 연결
+      for (const existingFile of existingMediaFiles) {
+        await tx.sessionMediaFile.create({
+          data: {
+            sessionId: newSession.id,
+            mediaFileId: existingFile.id,
+          },
+        });
+      }
+
+      // 용량 증가
+      if (movedFiles.length > 0) {
+        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+        await this.storageQuotaService.increaseUsage(userId, totalSize);
+      }
+
+      return newSession;
     });
 
-    return { success: true, data: session };
+    // 생성된 세션 조회하여 반환
+    return this.findOne(session.uuid, userId);
   }
 
   async update(uuid: string, dto: UpdateSessionDto, userId: string) {
@@ -166,29 +281,145 @@ export class SessionsService {
           student: { organization: { userId, deletedAt: null } },
         },
       },
+      include: {
+        sessionMediaFiles: {
+          include: { mediaFile: true },
+        },
+      },
     });
 
     if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    const updatedSession = await this.prisma.session.update({
-      where: { uuid },
-      data: {
-        ...(dto.sessionAt !== undefined && { sessionAt: new Date(dto.sessionAt) }),
-        ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.notes !== undefined && { notes: dto.notes }),
-        ...(dto.isDone !== undefined && { isDone: dto.isDone }),
-      },
-      include: {
-        lesson: {
-          include: { student: true },
+    // 현재 파일 수 계산
+    const currentFileCount = session.sessionMediaFiles.length;
+    const removeCount = dto.removeMediaFileUuids?.length ?? 0;
+    const addNewCount = dto.addNewMediaFiles?.length ?? 0;
+    const addExistingCount = dto.addExistingMediaFileUuids?.length ?? 0;
+    const newTotalCount = currentFileCount - removeCount + addNewCount + addExistingCount;
+
+    if (newTotalCount > MAX_MEDIA_FILES_PER_SESSION) {
+      throw new BadRequestException(
+        `세션당 최대 ${MAX_MEDIA_FILES_PER_SESSION}개의 파일만 첨부할 수 있습니다.`,
+      );
+    }
+
+    // 새 파일들의 용량 체크
+    if (dto.addNewMediaFiles && dto.addNewMediaFiles.length > 0) {
+      const totalSize = dto.addNewMediaFiles.reduce((sum, f) => sum + f.fileSize, 0);
+      const canUpload = await this.storageQuotaService.canUpload(userId, totalSize);
+      if (!canUpload) {
+        throw new BadRequestException('스토리지 용량이 부족합니다.');
+      }
+    }
+
+    // 기존 파일 재활용 시 소유권 확인
+    let existingMediaFiles: { id: number }[] = [];
+    if (dto.addExistingMediaFileUuids && dto.addExistingMediaFileUuids.length > 0) {
+      existingMediaFiles = await this.prisma.mediaFile.findMany({
+        where: {
+          uuid: { in: dto.addExistingMediaFileUuids },
+          userId,
         },
-        feedback: true,
-      },
+        select: { id: true },
+      });
+
+      if (existingMediaFiles.length !== dto.addExistingMediaFileUuids.length) {
+        throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
+      }
+    }
+
+    // 삭제할 파일들 조회
+    let filesToRemove: typeof session.sessionMediaFiles = [];
+    if (dto.removeMediaFileUuids && dto.removeMediaFileUuids.length > 0) {
+      filesToRemove = session.sessionMediaFiles.filter((smf) =>
+        dto.removeMediaFileUuids!.includes(smf.mediaFile.uuid),
+      );
+    }
+
+    // 새 파일들 temp → media 폴더로 이동
+    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
+    if (dto.addNewMediaFiles) {
+      for (const fileDto of dto.addNewMediaFiles) {
+        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
+        if (!result) {
+          throw new BadRequestException('파일 이동에 실패했습니다.');
+        }
+        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
+      }
+    }
+
+    // 트랜잭션으로 DB 작업 수행
+    await this.prisma.$transaction(async (tx) => {
+      // Session 업데이트
+      await tx.session.update({
+        where: { uuid },
+        data: {
+          ...(dto.sessionAt !== undefined && { sessionAt: new Date(dto.sessionAt) }),
+          ...(dto.duration !== undefined && { duration: dto.duration }),
+          ...(dto.notes !== undefined && { notes: dto.notes }),
+          ...(dto.isDone !== undefined && { isDone: dto.isDone }),
+        },
+      });
+
+      // 파일 연결 해제 (hard delete)
+      for (const smf of filesToRemove) {
+        await tx.sessionMediaFile.delete({
+          where: { id: smf.id },
+        });
+      }
+
+      // 새 MediaFile 레코드 생성 및 연결
+      for (const moved of movedFiles) {
+        const mediaFile = await tx.mediaFile.create({
+          data: {
+            url: moved.url,
+            publicId: moved.publicId,
+            type: moved.dto.type,
+            fileName: moved.dto.fileName,
+            fileSize: moved.dto.fileSize,
+            userId,
+          },
+        });
+
+        await tx.sessionMediaFile.create({
+          data: {
+            sessionId: session.id,
+            mediaFileId: mediaFile.id,
+          },
+        });
+      }
+
+      // 기존 파일 연결
+      for (const existingFile of existingMediaFiles) {
+        // 이미 연결되어 있는지 확인 (unique constraint로 인해 중복 방지)
+        const existingLink = await tx.sessionMediaFile.findFirst({
+          where: {
+            sessionId: session.id,
+            mediaFileId: existingFile.id,
+          },
+        });
+
+        if (!existingLink) {
+          await tx.sessionMediaFile.create({
+            data: {
+              sessionId: session.id,
+              mediaFileId: existingFile.id,
+            },
+          });
+        }
+      }
+
+      // 용량 증가
+      if (movedFiles.length > 0) {
+        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+        await this.storageQuotaService.increaseUsage(userId, totalSize);
+      }
     });
 
-    return { success: true, data: updatedSession };
+    // 업데이트된 세션 조회하여 반환
+    return this.findOne(uuid, userId);
   }
 
   async remove(uuid: string, userId: string) {
@@ -238,7 +469,18 @@ export class SessionsService {
         lesson: {
           include: { student: true },
         },
-        feedback: true,
+        feedback: {
+          include: {
+            feedbackMediaFiles: {
+              orderBy: { createdAt: 'asc' },
+              include: { mediaFile: true },
+            },
+          },
+        },
+        sessionMediaFiles: {
+          orderBy: { createdAt: 'asc' },
+          include: { mediaFile: true },
+        },
       },
     });
 
@@ -255,30 +497,164 @@ export class SessionsService {
           student: { organization: { userId, deletedAt: null } },
         },
       },
-      include: { feedback: true },
+      include: {
+        feedback: {
+          include: {
+            feedbackMediaFiles: {
+              include: { mediaFile: true },
+            },
+          },
+        },
+      },
     });
 
     if (!session) {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    let feedback;
-    if (session.feedback) {
-      feedback = await this.prisma.feedback.update({
-        where: { id: session.feedback.id },
-        data: { notes: dto.notes },
-      });
-    }
-    else {
-      feedback = await this.prisma.feedback.create({
-        data: {
-          notes: dto.notes,
-          sessionId: session.id,
-        },
-      });
+    // 현재 파일 수 계산
+    const currentFileCount = session.feedback?.feedbackMediaFiles?.length ?? 0;
+    const removeCount = dto.removeMediaFileUuids?.length ?? 0;
+    const addNewCount = dto.addNewMediaFiles?.length ?? 0;
+    const addExistingCount = dto.addExistingMediaFileUuids?.length ?? 0;
+    const newTotalCount = currentFileCount - removeCount + addNewCount + addExistingCount;
+
+    if (newTotalCount > MAX_MEDIA_FILES_PER_SESSION) {
+      throw new BadRequestException(
+        `피드백당 최대 ${MAX_MEDIA_FILES_PER_SESSION}개의 파일만 첨부할 수 있습니다.`,
+      );
     }
 
-    return { success: true, data: feedback };
+    // 새 파일들의 용량 체크
+    if (dto.addNewMediaFiles && dto.addNewMediaFiles.length > 0) {
+      const totalSize = dto.addNewMediaFiles.reduce((sum, f) => sum + f.fileSize, 0);
+      const canUpload = await this.storageQuotaService.canUpload(userId, totalSize);
+      if (!canUpload) {
+        throw new BadRequestException('스토리지 용량이 부족합니다.');
+      }
+    }
+
+    // 기존 파일 재활용 시 소유권 확인
+    let existingMediaFiles: { id: number }[] = [];
+    if (dto.addExistingMediaFileUuids && dto.addExistingMediaFileUuids.length > 0) {
+      existingMediaFiles = await this.prisma.mediaFile.findMany({
+        where: {
+          uuid: { in: dto.addExistingMediaFileUuids },
+          userId,
+        },
+        select: { id: true },
+      });
+
+      if (existingMediaFiles.length !== dto.addExistingMediaFileUuids.length) {
+        throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
+      }
+    }
+
+    // 삭제할 파일들 조회
+    let filesToRemove: { id: number; mediaFile: { uuid: string } }[] = [];
+    if (dto.removeMediaFileUuids && dto.removeMediaFileUuids.length > 0 && session.feedback) {
+      filesToRemove = session.feedback.feedbackMediaFiles.filter((fmf) =>
+        dto.removeMediaFileUuids!.includes(fmf.mediaFile.uuid),
+      );
+    }
+
+    // 새 파일들 temp → media 폴더로 이동
+    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
+    if (dto.addNewMediaFiles) {
+      for (const fileDto of dto.addNewMediaFiles) {
+        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
+        if (!result) {
+          throw new BadRequestException('파일 이동에 실패했습니다.');
+        }
+        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
+      }
+    }
+
+    // 트랜잭션으로 DB 작업 수행
+    const feedback = await this.prisma.$transaction(async (tx) => {
+      let feedbackRecord;
+      if (session.feedback) {
+        feedbackRecord = await tx.feedback.update({
+          where: { id: session.feedback.id },
+          data: { notes: dto.notes },
+        });
+      } else {
+        feedbackRecord = await tx.feedback.create({
+          data: {
+            notes: dto.notes,
+            sessionId: session.id,
+          },
+        });
+      }
+
+      // 파일 연결 해제 (hard delete)
+      for (const fmf of filesToRemove) {
+        await tx.feedbackMediaFile.delete({
+          where: { id: fmf.id },
+        });
+      }
+
+      // 새 MediaFile 레코드 생성 및 연결
+      for (const moved of movedFiles) {
+        const mediaFile = await tx.mediaFile.create({
+          data: {
+            url: moved.url,
+            publicId: moved.publicId,
+            type: moved.dto.type,
+            fileName: moved.dto.fileName,
+            fileSize: moved.dto.fileSize,
+            userId,
+          },
+        });
+
+        await tx.feedbackMediaFile.create({
+          data: {
+            feedbackId: feedbackRecord.id,
+            mediaFileId: mediaFile.id,
+          },
+        });
+      }
+
+      // 기존 파일 연결
+      for (const existingFile of existingMediaFiles) {
+        const existingLink = await tx.feedbackMediaFile.findFirst({
+          where: {
+            feedbackId: feedbackRecord.id,
+            mediaFileId: existingFile.id,
+          },
+        });
+
+        if (!existingLink) {
+          await tx.feedbackMediaFile.create({
+            data: {
+              feedbackId: feedbackRecord.id,
+              mediaFileId: existingFile.id,
+            },
+          });
+        }
+      }
+
+      // 용량 증가
+      if (movedFiles.length > 0) {
+        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+        await this.storageQuotaService.increaseUsage(userId, totalSize);
+      }
+
+      return feedbackRecord;
+    });
+
+    // 업데이트된 피드백 조회하여 반환
+    const updatedFeedback = await this.prisma.feedback.findUnique({
+      where: { id: feedback.id },
+      include: {
+        feedbackMediaFiles: {
+          orderBy: { createdAt: 'asc' },
+          include: { mediaFile: true },
+        },
+      },
+    });
+
+    return { success: true, data: updatedFeedback };
   }
 
   async deleteFeedback(uuid: string, userId: string) {
@@ -291,7 +667,11 @@ export class SessionsService {
           student: { organization: { userId, deletedAt: null } },
         },
       },
-      include: { feedback: true },
+      include: {
+        feedback: {
+          include: { feedbackMediaFiles: true },
+        },
+      },
     });
 
     if (!session) {
@@ -302,9 +682,20 @@ export class SessionsService {
       throw new NotFoundException('Feedback not found');
     }
 
-    await this.prisma.feedback.update({
-      where: { id: session.feedback.id },
-      data: { deletedAt: new Date() },
+    // 트랜잭션으로 미디어 파일 연결 해제 및 피드백 삭제
+    await this.prisma.$transaction(async (tx) => {
+      // 미디어 파일 연결 해제
+      if (session.feedback!.feedbackMediaFiles.length > 0) {
+        await tx.feedbackMediaFile.deleteMany({
+          where: { feedbackId: session.feedback!.id },
+        });
+      }
+
+      // 피드백 soft delete
+      await tx.feedback.update({
+        where: { id: session.feedback!.id },
+        data: { deletedAt: new Date() },
+      });
     });
 
     return { success: true };
