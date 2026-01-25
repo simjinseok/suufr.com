@@ -112,6 +112,18 @@ type SharedLessonSession = {
   feedback: {
     id: number;
     notes: string;
+    feedbackMediaFiles?: Array<{
+      id: number;
+      mediaFile: {
+        id: number;
+        uuid: string;
+        url: string;
+        type: 'image' | 'video';
+        fileName: string | null;
+        fileSize: number;
+        createdAt: string;
+      };
+    }>;
   } | null;
 };
 

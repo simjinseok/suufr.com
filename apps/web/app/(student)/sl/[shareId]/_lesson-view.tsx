@@ -3,7 +3,14 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 
 import * as React from 'react';
-import { CircleIcon, CircleCheckBigIcon, UserIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video } from 'lucide-react';
+import FilePreviewModal from './_file-preview-modal';
+
+type PreviewFile = {
+  url: string;
+  type: 'image' | 'video';
+  fileName: string | null;
+};
 
 interface Props {
   lesson: {
@@ -24,6 +31,18 @@ interface Props {
       feedback?: {
         id: number;
         notes: string | null;
+        feedbackMediaFiles?: Array<{
+          id: number;
+          mediaFile: {
+            id: number;
+            uuid: string;
+            url: string;
+            type: 'image' | 'video';
+            fileName: string | null;
+            fileSize: number;
+            createdAt: string;
+          };
+        }>;
       } | null;
     }>;
   };
@@ -34,6 +53,7 @@ interface Props {
 }
 
 export default function LessonView({ lesson, teacher }: Props) {
+  const [previewFile, setPreviewFile] = React.useState<PreviewFile | null>(null);
   const completedCount = lesson.sessions.filter(l => l.isDone).length;
   const totalCount = lesson.sessions.length;
 
@@ -88,12 +108,36 @@ export default function LessonView({ lesson, teacher }: Props) {
                       <p className="tabular-nums font-medium">
                         {format(session.sessionAt, 'yyyy-MM-dd HH:mm', { locale: ko })}
                       </p>
-                      {session.feedback?.notes && (
-                        <div className="mt-2 pl-3 border-l-2 border-blue-300">
+                      {(session.feedback?.notes || (session.feedback?.feedbackMediaFiles && session.feedback.feedbackMediaFiles.length > 0)) && (
+                        <div className="mt-2 p-3 bg-blue-50 rounded-lg">
                           <p className="text-xs text-blue-600 font-medium">피드백</p>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                            {session.feedback.notes}
-                          </p>
+                          {session.feedback.notes && (
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                              {session.feedback.notes}
+                            </p>
+                          )}
+                          {session.feedback.feedbackMediaFiles && session.feedback.feedbackMediaFiles.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {session.feedback.feedbackMediaFiles.map(({ id, mediaFile }) => (
+                                <li key={id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewFile({
+                                      url: mediaFile.url,
+                                      type: mediaFile.type,
+                                      fileName: mediaFile.fileName,
+                                    })}
+                                    className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 hover:underline"
+                                  >
+                                    {mediaFile.type === 'image'
+                                      ? <ImageIcon className="size-4 text-gray-400" />
+                                      : <Video className="size-4 text-gray-400" />}
+                                    <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       )}
                     </div>
@@ -149,6 +193,12 @@ export default function LessonView({ lesson, teacher }: Props) {
               설정된 수업이 없습니다
             </div>
           )}
+
+      <FilePreviewModal
+        isOpen={!!previewFile}
+        onOpenChange={(isOpen: boolean) => { if (!isOpen) setPreviewFile(null); }}
+        file={previewFile}
+      />
     </div>
   );
 }

@@ -36,7 +36,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   const response = await fetch(url, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(body && { 'Content-Type': 'application/json' }),
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     },
     ...(body && { body: JSON.stringify(body) }),
@@ -44,6 +44,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    console.log('???', error);
     throw new Error(error.message || `API Error: ${response.status}`);
   }
 
