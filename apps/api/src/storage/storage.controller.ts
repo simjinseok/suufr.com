@@ -51,12 +51,18 @@ export class StorageController {
       throw new ForbiddenException('스토리지 용량이 부족합니다.');
     }
 
+    // temp → media 이동
+    const moved = await this.cloudinaryService.moveMediaFile(url, type);
+    if (!moved) {
+      throw new BadRequestException('파일 이동에 실패했습니다.');
+    }
+
     // DB에 파일 레코드 생성
     const file = await this.prisma.mediaFile.create({
       data: {
         userId: user.userId,
-        url,
-        publicId,
+        url: moved.url,
+        publicId: moved.publicId,
         type,
         fileName,
         fileSize,
