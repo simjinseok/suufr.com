@@ -16,6 +16,7 @@
     "@heroui/react": "^3.0.0-beta.5",
     "@heroui/styles": "^3.0.0-beta.5",
     "@internationalized/date": "^3.10.1",
+    "@next/third-parties": "^16.1.4",
     "@react-stately/data": "^3.15.0",
     "@sentry/nextjs": "^10.36.0",
     "cloudinary": "^2.9.0",
