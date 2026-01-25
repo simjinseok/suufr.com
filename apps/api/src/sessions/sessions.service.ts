@@ -5,7 +5,7 @@ import { UpdateSessionDto } from './dto/update-session.dto';
 import { UpsertFeedbackDto } from './dto/feedback.dto';
 import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
 import { Prisma } from '@prisma/generated/client';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { S3Service } from '../s3/s3.service';
 import { StorageQuotaService } from '../storage/storage-quota.service';
 import { GoogleCalendarService } from '../google/services/google-calendar.service';
 
@@ -17,7 +17,7 @@ export class SessionsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly s3Service: S3Service,
     private readonly storageQuotaService: StorageQuotaService,
     private readonly googleCalendarService: GoogleCalendarService,
   ) {}
@@ -221,17 +221,17 @@ export class SessionsService {
       }
     }
 
-    // 새 파일들 temp → media 폴더로 이동
-    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
-    if (dto.newMediaFiles) {
-      for (const fileDto of dto.newMediaFiles) {
-        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
-        if (!result) {
-          throw new BadRequestException('파일 이동에 실패했습니다.');
-        }
-        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
-      }
-    }
+     // 새 파일들 temp → media 폴더로 이동
+     const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
+     if (dto.newMediaFiles) {
+       for (const fileDto of dto.newMediaFiles) {
+         const result = await this.s3Service.moveMediaFile(fileDto.url);
+         if (!result) {
+           throw new BadRequestException('파일 이동에 실패했습니다.');
+         }
+         movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
+       }
+     }
 
     // 트랜잭션으로 DB 작업 수행
     const session = await this.prisma.$transaction(async (tx) => {
@@ -245,26 +245,26 @@ export class SessionsService {
         },
       });
 
-      // 새 MediaFile 레코드 생성 및 연결
-      for (const moved of movedFiles) {
-        const mediaFile = await tx.mediaFile.create({
-          data: {
-            url: moved.url,
-            publicId: moved.publicId,
-            type: moved.dto.type,
-            fileName: moved.dto.fileName,
-            fileSize: moved.dto.fileSize,
-            userId,
-          },
-        });
+       // 새 MediaFile 레코드 생성 및 연결
+       for (const moved of movedFiles) {
+         const mediaFile = await tx.mediaFile.create({
+           data: {
+             url: moved.url,
+             publicId: moved.key,
+             type: moved.dto.type,
+             fileName: moved.dto.fileName,
+             fileSize: moved.dto.fileSize,
+             userId,
+           },
+         });
 
-        await tx.sessionMediaFile.create({
-          data: {
-            sessionId: newSession.id,
-            mediaFileId: mediaFile.id,
-          },
-        });
-      }
+         await tx.sessionMediaFile.create({
+           data: {
+             sessionId: newSession.id,
+             mediaFileId: mediaFile.id,
+           },
+         });
+       }
 
       // 기존 파일 연결
       for (const existingFile of existingMediaFiles) {
@@ -351,25 +351,25 @@ export class SessionsService {
       }
     }
 
-    // 삭제할 파일들 조회
-    let filesToRemove: typeof session.sessionMediaFiles = [];
-    if (dto.removeMediaFileUuids && dto.removeMediaFileUuids.length > 0) {
-      filesToRemove = session.sessionMediaFiles.filter((smf) =>
-        dto.removeMediaFileUuids!.includes(smf.mediaFile.uuid),
-      );
-    }
+     // 삭제할 파일들 조회
+     let filesToRemove: typeof session.sessionMediaFiles = [];
+     if (dto.removeMediaFileUuids && dto.removeMediaFileUuids.length > 0) {
+       filesToRemove = session.sessionMediaFiles.filter((smf) =>
+         dto.removeMediaFileUuids!.includes(smf.mediaFile.uuid),
+       );
+     }
 
-    // 새 파일들 temp → media 폴더로 이동
-    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
-    if (dto.addNewMediaFiles) {
-      for (const fileDto of dto.addNewMediaFiles) {
-        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
-        if (!result) {
-          throw new BadRequestException('파일 이동에 실패했습니다.');
-        }
-        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
-      }
-    }
+     // 새 파일들 temp → media 폴더로 이동
+     const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
+     if (dto.addNewMediaFiles) {
+       for (const fileDto of dto.addNewMediaFiles) {
+         const result = await this.s3Service.moveMediaFile(fileDto.url);
+         if (!result) {
+           throw new BadRequestException('파일 이동에 실패했습니다.');
+         }
+         movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
+       }
+     }
 
     // 트랜잭션으로 DB 작업 수행
     await this.prisma.$transaction(async (tx) => {
@@ -391,62 +391,62 @@ export class SessionsService {
         });
       }
 
-      // 새 MediaFile 레코드 생성 및 연결
-      for (const moved of movedFiles) {
-        const mediaFile = await tx.mediaFile.create({
-          data: {
-            url: moved.url,
-            publicId: moved.publicId,
-            type: moved.dto.type,
-            fileName: moved.dto.fileName,
-            fileSize: moved.dto.fileSize,
-            userId,
-          },
-        });
+       // 새 MediaFile 레코드 생성 및 연결
+       for (const moved of movedFiles) {
+         const mediaFile = await tx.mediaFile.create({
+           data: {
+             url: moved.url,
+             publicId: moved.key,
+             type: moved.dto.type,
+             fileName: moved.dto.fileName,
+             fileSize: moved.dto.fileSize,
+             userId,
+           },
+         });
 
-        await tx.sessionMediaFile.create({
-          data: {
-            sessionId: session.id,
-            mediaFileId: mediaFile.id,
-          },
-        });
-      }
+         await tx.sessionMediaFile.create({
+           data: {
+             sessionId: session.id,
+             mediaFileId: mediaFile.id,
+           },
+         });
+       }
 
-      // 기존 파일 연결
-      for (const existingFile of existingMediaFiles) {
-        // 이미 연결되어 있는지 확인 (unique constraint로 인해 중복 방지)
-        const existingLink = await tx.sessionMediaFile.findFirst({
-          where: {
-            sessionId: session.id,
-            mediaFileId: existingFile.id,
-          },
-        });
+       // 기존 파일 연결
+       for (const existingFile of existingMediaFiles) {
+         // 이미 연결되어 있는지 확인 (unique constraint로 인해 중복 방지)
+         const existingLink = await tx.sessionMediaFile.findFirst({
+           where: {
+             sessionId: session.id,
+             mediaFileId: existingFile.id,
+           },
+         });
 
-        if (!existingLink) {
-          await tx.sessionMediaFile.create({
-            data: {
-              sessionId: session.id,
-              mediaFileId: existingFile.id,
-            },
-          });
-        }
-      }
+         if (!existingLink) {
+           await tx.sessionMediaFile.create({
+             data: {
+               sessionId: session.id,
+               mediaFileId: existingFile.id,
+             },
+           });
+         }
+       }
 
-      // 용량 증가
-      if (movedFiles.length > 0) {
-        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-        await this.storageQuotaService.increaseUsage(userId, totalSize);
-      }
-    });
+       // 용량 증가
+       if (movedFiles.length > 0) {
+         const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+         await this.storageQuotaService.increaseUsage(userId, totalSize);
+       }
+     });
 
-    // 구글 캘린더에 백그라운드 동기화
-    this.syncToGoogleCalendar(session.id, userId, 'push');
+     // 구글 캘린더에 백그라운드 동기화
+     this.syncToGoogleCalendar(session.id, userId, 'push');
 
-    // 업데이트된 세션 조회하여 반환
-    return this.findOne(uuid, userId);
-  }
+     // 업데이트된 세션 조회하여 반환
+     return this.findOne(uuid, userId);
+   }
 
-  async remove(uuid: string, userId: string) {
+   async remove(uuid: string, userId: string) {
     const session = await this.prisma.session.findFirst({
       where: {
         uuid,
@@ -585,20 +585,20 @@ export class SessionsService {
       );
     }
 
-    // 새 파일들 temp → media 폴더로 이동
-    const movedFiles: { url: string; publicId: string; dto: CreateMediaFileDto }[] = [];
-    if (dto.addNewMediaFiles) {
-      for (const fileDto of dto.addNewMediaFiles) {
-        const result = await this.cloudinaryService.moveMediaFile(fileDto.url, fileDto.type);
-        if (!result) {
-          throw new BadRequestException('파일 이동에 실패했습니다.');
-        }
-        movedFiles.push({ url: result.url, publicId: result.publicId, dto: fileDto });
-      }
-    }
+     // 새 파일들 temp → media 폴더로 이동
+     const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
+     if (dto.addNewMediaFiles) {
+       for (const fileDto of dto.addNewMediaFiles) {
+         const result = await this.s3Service.moveMediaFile(fileDto.url);
+         if (!result) {
+           throw new BadRequestException('파일 이동에 실패했습니다.');
+         }
+         movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
+       }
+     }
 
-    // 트랜잭션으로 DB 작업 수행
-    const feedback = await this.prisma.$transaction(async (tx) => {
+     // 트랜잭션으로 DB 작업 수행
+     const feedback = await this.prisma.$transaction(async (tx) => {
       let feedbackRecord;
       if (session.feedback) {
         feedbackRecord = await tx.feedback.update({
@@ -622,70 +622,70 @@ export class SessionsService {
         });
       }
 
-      // 새 MediaFile 레코드 생성 및 연결
-      for (const moved of movedFiles) {
-        const mediaFile = await tx.mediaFile.create({
-          data: {
-            url: moved.url,
-            publicId: moved.publicId,
-            type: moved.dto.type,
-            fileName: moved.dto.fileName,
-            fileSize: moved.dto.fileSize,
-            userId,
-          },
-        });
+       // 새 MediaFile 레코드 생성 및 연결
+       for (const moved of movedFiles) {
+         const mediaFile = await tx.mediaFile.create({
+           data: {
+             url: moved.url,
+             publicId: moved.key,
+             type: moved.dto.type,
+             fileName: moved.dto.fileName,
+             fileSize: moved.dto.fileSize,
+             userId,
+           },
+         });
 
-        await tx.feedbackMediaFile.create({
-          data: {
-            feedbackId: feedbackRecord.id,
-            mediaFileId: mediaFile.id,
-          },
-        });
-      }
+         await tx.feedbackMediaFile.create({
+           data: {
+             feedbackId: feedbackRecord.id,
+             mediaFileId: mediaFile.id,
+           },
+         });
+       }
 
-      // 기존 파일 연결
-      for (const existingFile of existingMediaFiles) {
-        const existingLink = await tx.feedbackMediaFile.findFirst({
-          where: {
-            feedbackId: feedbackRecord.id,
-            mediaFileId: existingFile.id,
-          },
-        });
+       // 기존 파일 연결
+       for (const existingFile of existingMediaFiles) {
+         const existingLink = await tx.feedbackMediaFile.findFirst({
+           where: {
+             feedbackId: feedbackRecord.id,
+             mediaFileId: existingFile.id,
+           },
+         });
 
-        if (!existingLink) {
-          await tx.feedbackMediaFile.create({
-            data: {
-              feedbackId: feedbackRecord.id,
-              mediaFileId: existingFile.id,
-            },
-          });
-        }
-      }
+         if (!existingLink) {
+           await tx.feedbackMediaFile.create({
+             data: {
+               feedbackId: feedbackRecord.id,
+               mediaFileId: existingFile.id,
+             },
+           });
+         }
+       }
 
-      // 용량 증가
-      if (movedFiles.length > 0) {
-        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-        await this.storageQuotaService.increaseUsage(userId, totalSize);
-      }
+       // 용량 증가
+       if (movedFiles.length > 0) {
+         const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+         await this.storageQuotaService.increaseUsage(userId, totalSize);
+       }
 
-      return feedbackRecord;
-    });
+       return feedbackRecord;
+     });
 
-    // 업데이트된 피드백 조회하여 반환
-    const updatedFeedback = await this.prisma.feedback.findUnique({
-      where: { id: feedback.id },
-      include: {
-        feedbackMediaFiles: {
-          orderBy: { createdAt: 'asc' },
-          include: { mediaFile: true },
-        },
-      },
-    });
+     // 업데이트된 피드백 조회하여 반환
+     const updatedFeedback = await this.prisma.feedback.findUnique({
+       where: { id: feedback.id },
+       include: {
+         feedbackMediaFiles: {
+           orderBy: { createdAt: 'asc' },
+           include: { mediaFile: true },
+         },
+       },
+     });
 
-    return { success: true, data: updatedFeedback };
-  }
+     return { success: true, data: updatedFeedback };
+   }
 
-  async deleteFeedback(uuid: string, userId: string) {
+   async deleteFeedback(uuid: string, userId: string) {
     const session = await this.prisma.session.findFirst({
       where: {
         uuid,

@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { S3Service } from '../s3/s3.service';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Injectable()
 export class OrganizationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async findAll(userId: string) {
@@ -58,9 +58,9 @@ export class OrganizationsService {
     let oldProfileImageUrl: string | null = null;
 
     if (dto.profileImageUrl !== undefined) {
-      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동 (200x200 크롭 적용)
-        finalProfileImageUrl = await this.cloudinaryService.moveProfileImage(dto.profileImageUrl);
+     if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
+         // temp에서 images로 이동 (200x200 크롭 적용)
+         finalProfileImageUrl = await this.s3Service.moveProfileImage(dto.profileImageUrl);
         oldProfileImageUrl = organization.profileImageUrl;
       }
       else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
@@ -77,9 +77,9 @@ export class OrganizationsService {
     let oldLogoImageUrl: string | null = null;
 
     if (dto.logoImageUrl !== undefined) {
-      if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동 (원본 유지)
-        finalLogoImageUrl = await this.cloudinaryService.moveLogoImage(dto.logoImageUrl);
+     if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
+         // temp에서 images로 이동 (원본 유지)
+         finalLogoImageUrl = await this.s3Service.moveLogoImage(dto.logoImageUrl);
         oldLogoImageUrl = organization.logoImageUrl;
       }
       else if (dto.logoImageUrl === null || dto.logoImageUrl === '') {
@@ -103,21 +103,21 @@ export class OrganizationsService {
       },
     });
 
-    // 기존 이미지 삭제 (response 후 비동기로 처리)
-    if (oldProfileImageUrl) {
-      setImmediate(() => {
-        this.cloudinaryService.deleteByUrl(oldProfileImageUrl).catch((err) => {
-          console.error('Failed to delete old profile image:', err);
-        });
-      });
-    }
-    if (oldLogoImageUrl) {
-      setImmediate(() => {
-        this.cloudinaryService.deleteByUrl(oldLogoImageUrl).catch((err) => {
-          console.error('Failed to delete old logo image:', err);
-        });
-      });
-    }
+     // 기존 이미지 삭제 (response 후 비동기로 처리)
+     if (oldProfileImageUrl) {
+       setImmediate(() => {
+         this.s3Service.deleteByUrl(oldProfileImageUrl).catch((err) => {
+           console.error('Failed to delete old profile image:', err);
+         });
+       });
+     }
+     if (oldLogoImageUrl) {
+       setImmediate(() => {
+         this.s3Service.deleteByUrl(oldLogoImageUrl).catch((err) => {
+           console.error('Failed to delete old logo image:', err);
+         });
+       });
+     }
 
     return { success: true, data: updated };
   }

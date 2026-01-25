@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { S3Service } from '../s3/s3.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { ListStudentsQueryDto } from './dto/list-students-query.dto';
@@ -10,7 +10,7 @@ import { Prisma } from '@prisma/generated/client';
 export class StudentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async findAll(query: ListStudentsQueryDto, userId: string) {
@@ -123,10 +123,10 @@ export class StudentsService {
     let finalProfileImageUrl: string | null | undefined = undefined;
     let oldImageUrlToDelete: string | null = null;
 
-    if (dto.profileImageUrl !== undefined) {
-      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동 (200x200 크롭 적용)
-        finalProfileImageUrl = await this.cloudinaryService.moveProfileImage(dto.profileImageUrl);
+     if (dto.profileImageUrl !== undefined) {
+       if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
+         // temp에서 images로 이동 (200x200 크롭 적용)
+         finalProfileImageUrl = await this.s3Service.moveProfileImage(dto.profileImageUrl);
         // 기존 이미지는 response 후에 삭제
         oldImageUrlToDelete = existing.profileImageUrl;
       }
@@ -155,14 +155,14 @@ export class StudentsService {
       },
     });
 
-    // 기존 이미지 삭제 (response 후 비동기로 처리)
-    if (oldImageUrlToDelete) {
-      setImmediate(() => {
-        this.cloudinaryService.deleteByUrl(oldImageUrlToDelete).catch((err) => {
-          console.error('Failed to delete old image:', err);
-        });
-      });
-    }
+     // 기존 이미지 삭제 (response 후 비동기로 처리)
+     if (oldImageUrlToDelete) {
+       setImmediate(() => {
+         this.s3Service.deleteByUrl(oldImageUrlToDelete).catch((err) => {
+           console.error('Failed to delete old image:', err);
+         });
+       });
+     }
 
     return { success: true, data: student };
   }

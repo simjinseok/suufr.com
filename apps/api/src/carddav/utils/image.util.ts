@@ -51,13 +51,11 @@ export function pLimit(concurrency: number) {
 }
 
 /**
- * Optimize Cloudinary URL with transformation for smaller images
- * Converts: https://res.cloudinary.com/.../upload/v123/image.jpg
- * To: https://res.cloudinary.com/.../upload/w_200,h_200,c_fill/v123/image.jpg
+ * Return Bunny CDN URL as-is (no transformations needed)
+ * Bunny CDN serves images directly from S3 without URL-based transformations
  */
 export function optimizeCloudinaryUrl(url: string, size = 200): string {
-  if (!url.includes('cloudinary.com')) return url;
-  return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill/`);
+  return url;
 }
 
 /**
@@ -69,10 +67,12 @@ export async function fetchImageAsBase64(
   url: string,
   timeoutMs = 5000,
 ): Promise<{ base64: string; mediaType: string } | null> {
-  // Cloudinary URL만 허용 (SSRF 방지)
+  // S3/Bunny CDN URL만 허용 (SSRF 방지)
   try {
     const parsedUrl = new URL(url);
-    if (!parsedUrl.hostname.endsWith('cloudinary.com')) {
+    const hostname = parsedUrl.hostname;
+    // Allow S3 URLs and Bunny CDN URLs
+    if (!hostname.includes('s3.') && !hostname.includes('bunny') && !hostname.includes('amazonaws.com')) {
       return null;
     }
   }
