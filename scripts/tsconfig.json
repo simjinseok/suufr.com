@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["../apps/api/node_modules/@types"],
+    "baseUrl": "../apps/api",
+    "paths": {
+      "@prisma/generated/*": ["src/generated/prisma/*"],
+      "@prisma/adapter-pg": ["node_modules/@prisma/adapter-pg"],
+      "pg": ["node_modules/pg"]
+    }
+  },
+  "include": ["./**/*.ts", "../apps/api/src/s3/s3.service.ts"],
+  "exclude": ["node_modules"]
+}
