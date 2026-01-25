@@ -1,15 +1,8 @@
 import * as React from 'react';
-import { redirect } from 'next/navigation';
 
-import { getSession } from '@/utils/auth';
 import ResetPasswordForm from './reset-password-form';
 
-export default async function ResetPasswordPage() {
-  const session = await getSession();
-  if (session) {
-    redirect('/dashboard');
-  }
-
+export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="w-full max-w-sm mx-auto px-6">
