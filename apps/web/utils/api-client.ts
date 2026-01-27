@@ -22,7 +22,8 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
       if (value !== undefined && value !== '') {
         if (Array.isArray(value)) {
           searchParams.set(key, value.join(','));
-        } else {
+        }
+        else {
           searchParams.set(key, String(value));
         }
       }
@@ -43,8 +44,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    console.log('???', error);
+    const error = await response.json().catch((e) => e);
     throw new Error(error.message || `API Error: ${response.status}`);
   }
 
