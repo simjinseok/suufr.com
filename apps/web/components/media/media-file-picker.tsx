@@ -4,7 +4,7 @@ import * as React from 'react';
 import { VideoIcon, XIcon, PlusIcon, FileIcon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
 import type { TMediaFile, TLessonMediaFile } from '@/types/index';
-import MediaFileSelectModal from './media-file-select-modal';
+import MediaFileAttachModal from './media-file-attach-modal';
 
 export interface MediaFilePickerState {
   existingFiles: TLessonMediaFile[];
@@ -273,7 +273,7 @@ export default function MediaFilePicker({
         </Surface>
       )}
 
-      <MediaFileSelectModal
+      <MediaFileAttachModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         selectedUuids={[

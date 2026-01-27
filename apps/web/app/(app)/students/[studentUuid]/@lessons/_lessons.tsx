@@ -3,7 +3,6 @@ import type { TLesson, TSession } from '@/types/index';
 
 import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
-import { tz } from '@date-fns/tz';
 import { ko } from 'date-fns/locale/ko';
 
 import { Button, ButtonGroup, Dropdown, Header, Modal, Surface } from '@heroui/react';
@@ -27,6 +26,7 @@ import { Text } from '@/components/text';
 import { Divider } from '@/components/divider';
 import React from 'react';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
+import EditFeedbackModal from '@/components/sessions/edit-feedback-modal';
 import EditLessonModal from '@/components/lesson/edit-lesson-modal';
 import CreateSessionModal from '@/components/sessions/create-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
@@ -46,12 +46,6 @@ function FileTypeIcon({ type, className }: { type: string; className?: string })
   }
 }
 
-// 날짜를 "3월 5일 (화) 14:00 · 60분" 형식으로 포맷
-function formatSessionDateTime(sessionAt: Date | string, duration: number) {
-  const date = new Date(sessionAt);
-  const formatted = format(date, 'M월 d일 (E) HH:mm', { in: tz('Asia/Seoul'), locale: ko });
-  return `${formatted} · ${duration}분`;
-}
 
 export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; use24HourFormat: boolean }) {
   const { studentUuid } = useParams<{ studentUuid: string }>();
@@ -150,9 +144,18 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                 className="cursor-pointer"
                                 onClick={() => setSelectedSession(session)}
                               >
-                                <p className="font-medium text-sm">
-                                  {formatSessionDateTime(session.sessionAt, session.duration)}
-                                </p>
+                                <div className="flex items-baseline gap-2 flex-wrap">
+                                  <p className="font-semibold text-gray-900">
+                                    {format(new Date(session.sessionAt), 'M월 d일', { locale: ko })}
+                                  </p>
+                                  <span className="text-sm text-gray-500">
+                                    ({format(new Date(session.sessionAt), 'E', { locale: ko })})
+                                  </span>
+                                  <span className="text-sm text-gray-600">
+                                    {format(new Date(session.sessionAt), 'HH:mm', { locale: ko })}
+                                  </span>
+                                  <span className="text-xs text-gray-400">· {session.duration}분</span>
+                                </div>
                                 {session.notes && (
                                   <Text className="mt-1 whitespace-pre-wrap text-sm">
                                     {session.notes}
@@ -188,7 +191,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                   {session.feedback ? (
                                     <div
                                       className="mt-2.5 p-2.5 bg-gray-50 rounded-lg cursor-pointer"
-                                      onClick={() => setSelectedSession(session)}
+                                      onClick={() => setFeedbackSession(session)}
                                     >
                                       <p className="text-xs font-semibold text-indigo-600 mb-1">
                                         피드백
@@ -221,7 +224,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                   ) : (
                                     <div
                                       className="mt-2.5 p-2.5 bg-gray-50 border border-dashed border-gray-200 rounded-lg cursor-pointer flex items-center justify-center gap-1"
-                                      onClick={() => setSelectedSession(session)}
+                                      onClick={() => setFeedbackSession(session)}
                                     >
                                       <PlusIcon className="size-3.5 text-gray-400" />
                                       <span className="text-xs text-gray-400">피드백 추가</span>
@@ -309,6 +312,14 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
           isOpen={isLessonCreating !== null}
           onOpenChange={() => setIsLessonCreating(null)}
           lesson={isLessonCreating}
+        />
+      )}
+
+      {feedbackSession && (
+        <EditFeedbackModal
+          isOpen={!!feedbackSession}
+          onOpenChange={() => setFeedbackSession(null)}
+          session={feedbackSession}
         />
       )}
     </React.Fragment>
