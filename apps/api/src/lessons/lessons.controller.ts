@@ -5,7 +5,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('lessons')
+@Controller('api/lessons')
 export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
 

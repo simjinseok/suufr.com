@@ -4,7 +4,7 @@ import { UpdateOrganizationDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('organizations')
+@Controller('api/organizations')
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 

@@ -4,7 +4,7 @@ import { CreateSessionDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQuer
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('sessions')
+@Controller('api/sessions')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 

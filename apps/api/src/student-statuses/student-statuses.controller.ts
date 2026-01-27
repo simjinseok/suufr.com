@@ -4,7 +4,7 @@ import { CreateStudentStatusDto, UpdateStudentStatusDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller()
+@Controller('api')
 export class StudentStatusesController {
   constructor(private readonly studentStatusesService: StudentStatusesService) {}
 

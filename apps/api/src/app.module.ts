@@ -5,6 +5,8 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
+import { CarddavModule } from './carddav/carddav.module';
+import { CaldavModule } from './caldav/caldav.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { StudentsModule } from './students/students.module';
 import { LessonsModule } from './lessons/lessons.module';
@@ -16,8 +18,6 @@ import { StudentStatusesModule } from './student-statuses/student-statuses.modul
 import { StudentCommentsModule } from './student-comments/student-comments.module';
 import { SettingsModule } from './settings/settings.module';
 import { AppTokensModule } from './app-tokens/app-tokens.module';
-import { CarddavModule } from './carddav/carddav.module';
-import { CaldavModule } from './caldav/caldav.module';
 import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
 import { CurriculumsModule } from './curriculums/curriculums.module';

@@ -2,7 +2,7 @@
 import './instrument';
 
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
-import { ValidationPipe, RequestMethod } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -59,26 +59,6 @@ async function bootstrap() {
       return res.end();
     }
     next();
-  });
-
-  app.setGlobalPrefix('api', {
-    exclude: [
-      { path: '', method: RequestMethod.GET },
-      // CardDAV routes
-      { path: '.well-known/carddav', method: RequestMethod.ALL },
-      { path: 'carddav', method: RequestMethod.ALL },
-      { path: 'carddav/principals/:userId', method: RequestMethod.ALL },
-      { path: 'carddav/principals/:userId/contacts', method: RequestMethod.ALL },
-      { path: 'carddav/principals/:userId/contacts/:filename', method: RequestMethod.ALL },
-      // CalDAV routes
-      { path: '.well-known/caldav', method: RequestMethod.ALL },
-      { path: 'caldav', method: RequestMethod.ALL },
-      { path: 'caldav/principals/:userId', method: RequestMethod.ALL },
-      { path: 'caldav/principals/:userId/calendars', method: RequestMethod.ALL },
-      { path: 'caldav/principals/:userId/calendars/:calendarId', method: RequestMethod.ALL },
-      { path: 'caldav/principals/:userId/calendars/lessons', method: RequestMethod.ALL },
-      { path: 'caldav/principals/:userId/calendars/lessons/:filename', method: RequestMethod.ALL },
-    ],
   });
 
   // Sentry error tracking - must be registered before other filters

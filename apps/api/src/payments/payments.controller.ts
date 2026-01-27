@@ -4,7 +4,7 @@ import { CreatePaymentDto, UpdatePaymentDto, ListPaymentsQueryDto } from './dto'
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('payments')
+@Controller('api/payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 

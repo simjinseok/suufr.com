@@ -6,7 +6,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
 
-@Controller('storage')
+@Controller('api/storage')
 export class StorageController {
   constructor(
     private readonly storageQuotaService: StorageQuotaService,

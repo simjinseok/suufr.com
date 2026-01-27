@@ -10,7 +10,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('curriculums')
+@Controller('api/curriculums')
 export class CurriculumsController {
   constructor(private readonly curriculumsService: CurriculumsService) {}
 

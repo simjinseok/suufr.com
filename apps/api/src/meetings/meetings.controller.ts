@@ -4,7 +4,7 @@ import { CreateMeetingDto, UpdateMeetingDto, ListMeetingsQueryDto } from './dto'
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('meetings')
+@Controller('api/meetings')
 export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 

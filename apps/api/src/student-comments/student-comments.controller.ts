@@ -4,7 +4,7 @@ import { CreateStudentCommentDto, UpdateStudentCommentDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller()
+@Controller('api')
 export class StudentCommentsController {
   constructor(private readonly studentCommentsService: StudentCommentsService) {}
 

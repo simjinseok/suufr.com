@@ -6,7 +6,7 @@ import { ListStudentsQueryDto } from './dto/list-students-query.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('students')
+@Controller('api/students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 

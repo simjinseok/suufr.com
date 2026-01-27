@@ -4,7 +4,7 @@ import { UpdateSettingsDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('settings')
+@Controller('api/settings')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 

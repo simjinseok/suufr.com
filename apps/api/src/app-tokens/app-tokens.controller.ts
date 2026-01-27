@@ -4,7 +4,7 @@ import { CreateAppTokenDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
-@Controller('app-tokens')
+@Controller('api/app-tokens')
 export class AppTokensController {
   constructor(private readonly appTokensService: AppTokensService) {}
 
