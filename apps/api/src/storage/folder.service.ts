@@ -3,8 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StorageQuotaService } from './storage-quota.service';
 import { S3Service } from '../s3/s3.service';
 
-// 폴더명 유효성 검사 정규식: 한글, 영문, 숫자, 공백, -, _
-const FOLDER_NAME_REGEX = /^[가-힣a-zA-Z0-9\s\-_]+$/;
+// 폴더명 유효성 검사 정규식: 한글, 영문, 숫자, 공백, -, _, (), []
+const FOLDER_NAME_REGEX = /^[가-힣a-zA-Z0-9\s\-_\(\)\[\]]+$/;
 const FOLDER_NAME_MAX_LENGTH = 50;
 
 export type FolderWithChildren = {

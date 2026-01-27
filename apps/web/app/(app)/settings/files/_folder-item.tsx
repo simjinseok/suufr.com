@@ -44,7 +44,7 @@ export default function FolderItem({ folder, onEdit, onDelete }: FolderItemProps
               variant="ghost"
               size="sm"
               isIconOnly
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className=""
             >
               <MoreVertical className="w-4 h-4" />
             </Button>

@@ -14,7 +14,7 @@ const folderNameSchema = z.object({
     .trim()
     .min(1, '폴더명을 입력해주세요.')
     .max(50, '폴더명은 50자를 초과할 수 없습니다.')
-    .regex(/^[가-힣a-zA-Z0-9\s\-_]+$/, '폴더명에 특수문자를 사용할 수 없습니다.'),
+    .regex(/^[가-힣a-zA-Z0-9\s\-_\(\)\[\]]+$/, '폴더명에 허용되지 않는 특수문자가 포함되어 있습니다.'),
   parentUuid: z.string().optional(),
   uuid: z.string().optional(),
 });

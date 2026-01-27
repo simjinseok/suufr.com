@@ -97,7 +97,7 @@ function Content({ parentFolderUuid, close }: ContentProps) {
                 <Input variant="secondary" placeholder="폴더 이름을 입력하세요" maxLength={50} />
                 <FieldError />
                 <Description>
-                  한글, 영문, 숫자, 공백, -, _ 만 사용 가능합니다.
+                  한글, 영문, 숫자, 공백, -, _, (), [] 사용 가능
                 </Description>
               </TextField>
             )}
