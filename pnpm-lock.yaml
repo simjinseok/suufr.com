@@ -23,6 +23,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.975.0
         version: 3.975.0
+      '@aws-sdk/cloudfront-signer':
+        specifier: ^3.975.0
+        version: 3.975.0
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.975.0
         version: 3.975.0
@@ -346,6 +349,10 @@ packages:
 
   '@aws-sdk/client-sso@3.974.0':
     resolution: {integrity: sha512-ci+GiM0c4ULo4D79UMcY06LcOLcfvUfiyt8PzNY0vbt5O8BfCPYf4QomwVgkNcLLCYmroO4ge2Yy1EsLUlcD6g==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/cloudfront-signer@3.975.0':
+    resolution: {integrity: sha512-hXZVREp1SmZfsFZectGDFHkz44tcG+LtgErpeBbtVSFLf+hp3D9eD3JnEyTMrR85iIpMX9mF1LeGFnSMenrwqw==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.972.0':
@@ -5952,7 +5959,7 @@ snapshots:
       '@aws-sdk/util-user-agent-browser': 3.972.0
       '@aws-sdk/util-user-agent-node': 3.972.0
       '@smithy/config-resolver': 4.4.6
-      '@smithy/core': 3.20.7
+      '@smithy/core': 3.21.1
       '@smithy/fetch-http-handler': 5.3.9
       '@smithy/hash-node': 4.2.8
       '@smithy/invalid-dependency': 4.2.8
@@ -6022,6 +6029,12 @@ snapshots:
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
+
+  '@aws-sdk/cloudfront-signer@3.975.0':
+    dependencies:
+      '@smithy/core': 3.21.1
+      '@smithy/url-parser': 4.2.8
+      tslib: 2.8.1
 
   '@aws-sdk/core@3.972.0':
     dependencies:
@@ -6425,7 +6438,7 @@ snapshots:
       '@aws-sdk/util-user-agent-browser': 3.972.0
       '@aws-sdk/util-user-agent-node': 3.972.0
       '@smithy/config-resolver': 4.4.6
-      '@smithy/core': 3.20.7
+      '@smithy/core': 3.21.1
       '@smithy/fetch-http-handler': 5.3.9
       '@smithy/hash-node': 4.2.8
       '@smithy/invalid-dependency': 4.2.8

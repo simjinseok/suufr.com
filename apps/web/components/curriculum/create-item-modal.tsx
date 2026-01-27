@@ -43,7 +43,6 @@ function Content({ curriculumUuid, close }: ContentProps) {
 
   const [mediaState, setMediaState] = React.useState<MediaFilePickerState>({
     existingFiles: [],
-    pendingUpload: [],
     pendingDetach: [],
     pendingAddExisting: [],
   });
@@ -73,11 +72,8 @@ function Content({ curriculumUuid, close }: ContentProps) {
 
   const handleSubmit = (formData: FormData) => {
     // Add media file data to form
-    if (mediaState.pendingUpload.length > 0) {
-      formData.set('newMediaFiles', JSON.stringify(mediaState.pendingUpload));
-    }
     if (mediaState.pendingAddExisting.length > 0) {
-      formData.set('existingMediaFileUuids', JSON.stringify(mediaState.pendingAddExisting.map(f => f.uuid)));
+      formData.set('mediaFileUuids', JSON.stringify(mediaState.pendingAddExisting.map(f => f.uuid)));
     }
 
     formAction(formData);

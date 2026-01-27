@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Res } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthenticatedUser } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { CognitoService } from './cognito.service';
+import { S3Service } from '../s3/s3.service';
 import {
   LoginDto,
   MfaDto,
@@ -20,6 +21,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly cognitoService: CognitoService,
+    private readonly s3Service: S3Service,
   ) {}
 
   @Get('me')
@@ -86,5 +88,37 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.cognitoService.refreshToken(dto.refreshToken, dto.username);
+  }
+
+  /**
+   * CloudFront Signed Cookies 발급
+   * 인증된 사용자의 users/{userId}/* 경로에 대한 접근 권한을 쿠키로 발급
+   */
+  @Post('session/cookies')
+  async getSignedCookies(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: { cookie: (name: string, value: string, options: object) => void; json: (body: object) => object },
+  ) {
+    const cookies = this.s3Service.getSignedCookiesForUser(user.userId);
+
+    if (!cookies) {
+      // CloudFront signing이 설정되지 않은 경우
+      return res.json({ success: true, configured: false });
+    }
+
+    const cookieDomain = process.env.CLOUDFRONT_COOKIE_DOMAIN;
+    const cookieOptions = {
+      domain: cookieDomain,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
+      maxAge: 86400 * 1000, // 24시간
+    };
+
+    res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], cookieOptions);
+    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], cookieOptions);
+    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], cookieOptions);
+
+    return res.json({ success: true, configured: true });
   }
 }

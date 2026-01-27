@@ -1,5 +1,5 @@
 import { apiClient } from '../api-client';
-import type { TCurriculum, TCurriculumItem, TTempMediaFile } from '@/types/index';
+import type { TCurriculum, TCurriculumItem } from '@/types/index';
 
 type CurriculumResponse = {
   success: boolean;
@@ -34,15 +34,13 @@ type CreateCurriculumItemData = {
   curriculumUuid: string;
   title: string;
   description?: string;
-  newMediaFiles?: TTempMediaFile[];
-  existingMediaFileUuids?: string[];
+  mediaFileUuids?: string[];
 };
 
 type UpdateCurriculumItemData = {
   title?: string;
   description?: string;
-  addNewMediaFiles?: TTempMediaFile[];
-  addExistingMediaFileUuids?: string[];
+  addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
 };
 

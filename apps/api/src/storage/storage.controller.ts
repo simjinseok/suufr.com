@@ -18,6 +18,16 @@ export class StorageController {
   ) {}
 
   /**
+   * contentType에 따라 폴더 이름 반환
+   */
+  private getFolderByContentType(contentType: string): string {
+    if (contentType.startsWith('image/')) return 'images';
+    if (contentType.startsWith('video/')) return 'videos';
+    if (contentType === 'application/pdf') return 'documents';
+    return 'files';
+  }
+
+  /**
    * 현재 사용자의 스토리지 용량 조회
    */
   @Get('quota')
@@ -67,10 +77,11 @@ export class StorageController {
       );
     }
 
-    // 3. Generate unique S3 key
+    // 3. Generate unique S3 key (바로 영구 경로에 저장)
     const ext = fileName.split('.').pop();
     const uuid = randomUUID();
-    const key = `temp/${uuid}.${ext}`;
+    const folder = this.getFolderByContentType(contentType);
+    const key = `users/${user.userId}/${folder}/${uuid}.${ext}`;
 
     // 4. Generate presigned URL
     const presignedUrl = await this.s3Service.getPresignedUploadUrl(
@@ -81,12 +92,14 @@ export class StorageController {
 
     // 5. Return response
     const expiresAt = Date.now() + 300 * 1000;
+    const cdnUrl = process.env.CDN_URL;
 
     return {
       success: true,
       data: {
         presignedUrl,
         key,
+        cdnUrl: cdnUrl ? `${cdnUrl}/${key}` : null,
         expiresAt,
       },
     };
@@ -94,6 +107,7 @@ export class StorageController {
 
   /**
     * 미디어 파일 생성 (S3 업로드 후 DB 저장)
+    * presigned URL로 이미 영구 경로에 업로드된 파일을 DB에 등록
     */
   @Post('files')
   async createFile(
@@ -101,17 +115,16 @@ export class StorageController {
       url: string;
       publicId: string;
       type: 'image' | 'video' | 'document';
-      contentType: string;
       fileName: string;
       fileSize: number;
       folderUuid?: string;
     },
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const { url, publicId, type, contentType, fileName, fileSize, folderUuid } = body;
+    const { url, publicId, type, fileName, fileSize, folderUuid } = body;
 
     // 유효성 검사
-    if (!url || !publicId || !type || !contentType || !fileSize) {
+    if (!url || !publicId || !type || !fileSize) {
       throw new BadRequestException('필수 필드가 누락되었습니다.');
     }
 
@@ -121,14 +134,6 @@ export class StorageController {
       // S3에서 파일 삭제 (이미 업로드된 경우)
       await this.s3Service.deleteByUrl(url);
       throw new ForbiddenException('스토리지 용량이 부족합니다.');
-    }
-
-    // temp → 적절한 폴더로 이동 (contentType 기반)
-    const moved = await this.s3Service.moveFileByContentType(url, contentType);
-    if (!moved) {
-      // 파일 이동 실패 시 예약한 용량 롤백
-      await this.storageQuotaService.releaseReservedQuota(user.userId, fileSize);
-      throw new BadRequestException('파일 이동에 실패했습니다.');
     }
 
     // folderUuid로 folderId 조회
@@ -145,13 +150,13 @@ export class StorageController {
       }
     }
 
-    // DB에 파일 레코드 생성
+    // DB에 파일 레코드 생성 (이미 영구 경로에 업로드됨)
     try {
       const file = await this.prisma.mediaFile.create({
         data: {
           userId: user.userId,
-          url: moved.url,
-          publicId: moved.key,
+          url,
+          publicId,
           type,
           fileName,
           fileSize,
@@ -163,7 +168,7 @@ export class StorageController {
     } catch (dbError) {
       // DB 생성 실패 시 예약한 용량 롤백 및 S3 파일 삭제
       await this.storageQuotaService.releaseReservedQuota(user.userId, fileSize);
-      await this.s3Service.deleteByUrl(moved.url);
+      await this.s3Service.deleteByUrl(url);
       throw dbError;
     }
   }

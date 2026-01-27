@@ -1,13 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { S3Service } from '../s3/s3.service';
-import { StorageQuotaService } from '../storage/storage-quota.service';
 import {
   CreateCurriculumDto,
   UpdateCurriculumDto,
   CreateCurriculumItemDto,
   UpdateCurriculumItemDto,
-  CreateMediaFileDto,
 } from './dto';
 
 const MAX_MEDIA_FILES_PER_ITEM = 5;
@@ -16,8 +13,6 @@ const MAX_MEDIA_FILES_PER_ITEM = 5;
 export class CurriculumsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly s3Service: S3Service,
-    private readonly storageQuotaService: StorageQuotaService,
   ) {}
 
   async findAll(userId: string, search?: string) {
@@ -172,48 +167,26 @@ export class CurriculumsService {
     }
 
     // 미디어 파일 개수 제한 체크
-    const totalMediaFiles
-      = (dto.newMediaFiles?.length ?? 0) + (dto.existingMediaFileUuids?.length ?? 0);
+    const totalMediaFiles = dto.mediaFileUuids?.length ?? 0;
     if (totalMediaFiles > MAX_MEDIA_FILES_PER_ITEM) {
       throw new BadRequestException(
         `아이템당 최대 ${MAX_MEDIA_FILES_PER_ITEM}개의 파일만 첨부할 수 있습니다.`,
       );
     }
 
-    // 새 파일들의 용량 체크
-    if (dto.newMediaFiles && dto.newMediaFiles.length > 0) {
-      const totalSize = dto.newMediaFiles.reduce((sum, f) => sum + f.fileSize, 0);
-      const canUpload = await this.storageQuotaService.canUpload(userId, totalSize);
-      if (!canUpload) {
-        throw new BadRequestException('스토리지 용량이 부족합니다.');
-      }
-    }
-
-    // 기존 파일 재활용 시 소유권 확인
-    let existingMediaFiles: { id: number }[] = [];
-    if (dto.existingMediaFileUuids && dto.existingMediaFileUuids.length > 0) {
-      existingMediaFiles = await this.prisma.mediaFile.findMany({
+    // 파일 소유권 확인
+    let mediaFiles: { id: number }[] = [];
+    if (dto.mediaFileUuids && dto.mediaFileUuids.length > 0) {
+      mediaFiles = await this.prisma.mediaFile.findMany({
         where: {
-          uuid: { in: dto.existingMediaFileUuids },
+          uuid: { in: dto.mediaFileUuids },
           userId,
         },
         select: { id: true },
       });
 
-      if (existingMediaFiles.length !== dto.existingMediaFileUuids.length) {
+      if (mediaFiles.length !== dto.mediaFileUuids.length) {
         throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
-      }
-    }
-
-    // 새 파일들 temp → 적절한 폴더로 이동 (contentType 기반)
-    const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
-    if (dto.newMediaFiles) {
-      for (const fileDto of dto.newMediaFiles) {
-        const result = await this.s3Service.moveFileByContentType(fileDto.url, fileDto.contentType);
-        if (!result) {
-          throw new BadRequestException('파일 이동에 실패했습니다.');
-        }
-        movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
       }
     }
 
@@ -228,41 +201,14 @@ export class CurriculumsService {
         },
       });
 
-      // 새 MediaFile 레코드 생성 및 연결
-      for (const moved of movedFiles) {
-        const mediaFile = await tx.mediaFile.create({
-          data: {
-            url: moved.url,
-            publicId: moved.key,
-            type: moved.dto.type,
-            fileName: moved.dto.fileName,
-            fileSize: moved.dto.fileSize,
-            userId,
-          },
-        });
-
+      // 파일 연결
+      for (const mediaFile of mediaFiles) {
         await tx.curriculumItemMediaFile.create({
           data: {
             curriculumItemId: newItem.id,
             mediaFileId: mediaFile.id,
           },
         });
-      }
-
-      // 기존 파일 연결
-      for (const existingFile of existingMediaFiles) {
-        await tx.curriculumItemMediaFile.create({
-          data: {
-            curriculumItemId: newItem.id,
-            mediaFileId: existingFile.id,
-          },
-        });
-      }
-
-      // 용량 증가
-      if (movedFiles.length > 0) {
-        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-        await this.storageQuotaService.increaseUsage(userId, totalSize);
       }
 
       return newItem;
@@ -320,9 +266,8 @@ export class CurriculumsService {
     // 현재 파일 수 계산
     const currentFileCount = item.mediaFiles.length;
     const removeCount = dto.removeMediaFileUuids?.length ?? 0;
-    const addNewCount = dto.addNewMediaFiles?.length ?? 0;
-    const addExistingCount = dto.addExistingMediaFileUuids?.length ?? 0;
-    const newTotalCount = currentFileCount - removeCount + addNewCount + addExistingCount;
+    const addCount = dto.addMediaFileUuids?.length ?? 0;
+    const newTotalCount = currentFileCount - removeCount + addCount;
 
     if (newTotalCount > MAX_MEDIA_FILES_PER_ITEM) {
       throw new BadRequestException(
@@ -330,27 +275,18 @@ export class CurriculumsService {
       );
     }
 
-    // 새 파일들의 용량 체크
-    if (dto.addNewMediaFiles && dto.addNewMediaFiles.length > 0) {
-      const totalSize = dto.addNewMediaFiles.reduce((sum, f) => sum + f.fileSize, 0);
-      const canUpload = await this.storageQuotaService.canUpload(userId, totalSize);
-      if (!canUpload) {
-        throw new BadRequestException('스토리지 용량이 부족합니다.');
-      }
-    }
-
-    // 기존 파일 재활용 시 소유권 확인
-    let existingMediaFiles: { id: number }[] = [];
-    if (dto.addExistingMediaFileUuids && dto.addExistingMediaFileUuids.length > 0) {
-      existingMediaFiles = await this.prisma.mediaFile.findMany({
+    // 추가할 파일 소유권 확인
+    let filesToAdd: { id: number }[] = [];
+    if (dto.addMediaFileUuids && dto.addMediaFileUuids.length > 0) {
+      filesToAdd = await this.prisma.mediaFile.findMany({
         where: {
-          uuid: { in: dto.addExistingMediaFileUuids },
+          uuid: { in: dto.addMediaFileUuids },
           userId,
         },
         select: { id: true },
       });
 
-      if (existingMediaFiles.length !== dto.addExistingMediaFileUuids.length) {
+      if (filesToAdd.length !== dto.addMediaFileUuids.length) {
         throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
       }
     }
@@ -361,18 +297,6 @@ export class CurriculumsService {
       filesToRemove = item.mediaFiles.filter((mf) =>
         dto.removeMediaFileUuids!.includes(mf.mediaFile.uuid),
       );
-    }
-
-    // 새 파일들 temp → 적절한 폴더로 이동 (contentType 기반)
-    const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
-    if (dto.addNewMediaFiles) {
-      for (const fileDto of dto.addNewMediaFiles) {
-        const result = await this.s3Service.moveFileByContentType(fileDto.url, fileDto.contentType);
-        if (!result) {
-          throw new BadRequestException('파일 이동에 실패했습니다.');
-        }
-        movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
-      }
     }
 
     // 트랜잭션으로 DB 작업 수행
@@ -393,33 +317,12 @@ export class CurriculumsService {
         });
       }
 
-      // 새 MediaFile 레코드 생성 및 연결
-      for (const moved of movedFiles) {
-        const mediaFile = await tx.mediaFile.create({
-          data: {
-            url: moved.url,
-            publicId: moved.key,
-            type: moved.dto.type,
-            fileName: moved.dto.fileName,
-            fileSize: moved.dto.fileSize,
-            userId,
-          },
-        });
-
-        await tx.curriculumItemMediaFile.create({
-          data: {
-            curriculumItemId: item.id,
-            mediaFileId: mediaFile.id,
-          },
-        });
-      }
-
-      // 기존 파일 연결
-      for (const existingFile of existingMediaFiles) {
+      // 파일 연결
+      for (const fileToAdd of filesToAdd) {
         const existingLink = await tx.curriculumItemMediaFile.findFirst({
           where: {
             curriculumItemId: item.id,
-            mediaFileId: existingFile.id,
+            mediaFileId: fileToAdd.id,
           },
         });
 
@@ -427,16 +330,10 @@ export class CurriculumsService {
           await tx.curriculumItemMediaFile.create({
             data: {
               curriculumItemId: item.id,
-              mediaFileId: existingFile.id,
+              mediaFileId: fileToAdd.id,
             },
           });
         }
-      }
-
-      // 용량 증가
-      if (movedFiles.length > 0) {
-        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-        await this.storageQuotaService.increaseUsage(userId, totalSize);
       }
     });
 

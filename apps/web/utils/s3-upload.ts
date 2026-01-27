@@ -108,17 +108,15 @@ export async function uploadToS3(
     }
 
     const { data } = await presignedResponse.json();
-    const { presignedUrl, key } = data;
+    const { presignedUrl, key, cdnUrl } = data;
 
     // 3. S3로 직접 업로드
     await uploadToS3Direct(presignedUrl, file, file.type, options?.onProgress);
 
-    // 4. Bunny CDN URL 생성 및 반환
-    const cdnUrl = getS3PublicUrl(key);
-
+    // 4. 백엔드에서 받은 CDN URL 반환 (없으면 key만 반환)
     return {
       success: true,
-      url: cdnUrl,
+      url: cdnUrl || key,
       key,
       resourceType,
       fileSize: file.size,
@@ -168,15 +166,4 @@ async function uploadToS3Direct(
     xhr.setRequestHeader('Content-Type', contentType);
     xhr.send(file);
   });
-}
-
-/**
- * S3 key로부터 Bunny CDN URL 생성
- */
-export function getS3PublicUrl(key: string): string {
-  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL;
-  if (!cdnUrl) {
-    throw new Error('NEXT_PUBLIC_CDN_URL environment variable is not set');
-  }
-  return `${cdnUrl}/${key}`;
 }

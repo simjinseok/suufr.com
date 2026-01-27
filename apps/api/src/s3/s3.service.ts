@@ -10,6 +10,10 @@ import {
   CreateInvalidationCommand,
 } from '@aws-sdk/client-cloudfront';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import {
+  getSignedUrl as getCloudFrontSignedUrl,
+  getSignedCookies as getCloudFrontSignedCookies,
+} from '@aws-sdk/cloudfront-signer';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -18,6 +22,9 @@ export class S3Service {
   private readonly cloudFrontClient: CloudFrontClient;
   private readonly bucketName: string;
   private readonly distributionId: string | undefined;
+  private readonly cloudFrontUrl: string | undefined;
+  private readonly cloudFrontKeyPairId: string | undefined;
+  private readonly cloudFrontPrivateKey: string | undefined;
 
   constructor() {
     this.s3Client = new S3Client({
@@ -36,6 +43,10 @@ export class S3Service {
     });
     this.bucketName = process.env.AWS_S3_BUCKET_NAME!;
     this.distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
+    this.cloudFrontUrl = process.env.CLOUDFRONT_URL;
+    this.cloudFrontKeyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
+    // Private key may contain escaped newlines
+    this.cloudFrontPrivateKey = process.env.CLOUDFRONT_PRIVATE_KEY?.replace(/\\n/g, '\n');
   }
 
   /**
@@ -249,11 +260,13 @@ export class S3Service {
    * Move file from temp to appropriate folder based on content type
    * @param tempUrl - Temporary S3 URL
    * @param contentType - MIME type to determine destination folder
+   * @param userId - Optional user ID for protected path (users/{userId}/...)
    * @returns { url, key } or null
    */
   async moveFileByContentType(
     tempUrl: string,
     contentType: string,
+    userId?: string,
   ): Promise<{ url: string; key: string } | null> {
     const sourceKey = this.extractKeyFromUrl(tempUrl);
     if (!sourceKey || !sourceKey.startsWith('temp/')) {
@@ -264,7 +277,10 @@ export class S3Service {
     const folder = this.getFolderByContentType(contentType);
     const ext = this.getExtensionFromContentType(contentType);
     const key = randomUUID();
-    const destKey = `${folder}/${key}${ext}`;
+    // userId가 있으면 보호된 경로, 없으면 공개 경로
+    const destKey = userId
+      ? `users/${userId}/${folder}/${key}${ext}`
+      : `${folder}/${key}${ext}`;
 
     try {
       const success = await this.moveFile(sourceKey, destKey);
@@ -332,5 +348,76 @@ export class S3Service {
       console.error('CloudFront cache invalidation failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Generate CloudFront Signed Cookies for a user
+   * Allows access to users/{userId}/* path
+   * @param userId - User ID
+   * @param expiresInSeconds - Cookie expiration in seconds (default: 24 hours)
+   * @returns Signed cookies object or null if not configured
+   */
+  getSignedCookiesForUser(
+    userId: string,
+    expiresInSeconds = 86400,
+  ): { 'CloudFront-Policy': string; 'CloudFront-Signature': string; 'CloudFront-Key-Pair-Id': string } | null {
+    if (!this.cloudFrontUrl || !this.cloudFrontKeyPairId || !this.cloudFrontPrivateKey) {
+      console.warn('CloudFront signing not configured');
+      return null;
+    }
+
+    const policy = JSON.stringify({
+      Statement: [{
+        Resource: `${this.cloudFrontUrl}/users/${userId}/*`,
+        Condition: {
+          DateLessThan: {
+            'AWS:EpochTime': Math.floor(Date.now() / 1000) + expiresInSeconds,
+          },
+        },
+      }],
+    });
+
+    const cookies = getCloudFrontSignedCookies({
+      keyPairId: this.cloudFrontKeyPairId,
+      privateKey: this.cloudFrontPrivateKey,
+      policy,
+    });
+
+    // CloudFront signed cookies는 항상 이 3개의 쿠키를 반환
+    return {
+      'CloudFront-Policy': cookies['CloudFront-Policy']!,
+      'CloudFront-Signature': cookies['CloudFront-Signature']!,
+      'CloudFront-Key-Pair-Id': cookies['CloudFront-Key-Pair-Id']!,
+    };
+  }
+
+  /**
+   * Generate CloudFront Signed URL for a specific file
+   * Used for shared links where cookies can't be used
+   * @param key - S3 object key
+   * @param expiresInSeconds - URL expiration in seconds (default: 1 hour)
+   * @returns Signed URL or null if not configured
+   */
+  getSignedDownloadUrl(key: string, expiresInSeconds = 3600): string | null {
+    if (!this.cloudFrontUrl || !this.cloudFrontKeyPairId || !this.cloudFrontPrivateKey) {
+      console.warn('CloudFront signing not configured');
+      return null;
+    }
+
+    const url = `${this.cloudFrontUrl}/${key}`;
+
+    return getCloudFrontSignedUrl({
+      url,
+      keyPairId: this.cloudFrontKeyPairId,
+      privateKey: this.cloudFrontPrivateKey,
+      dateLessThan: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
+    });
+  }
+
+  /**
+   * Check if CloudFront signing is configured
+   */
+  isSigningConfigured(): boolean {
+    return !!(this.cloudFrontUrl && this.cloudFrontKeyPairId && this.cloudFrontPrivateKey);
   }
 }

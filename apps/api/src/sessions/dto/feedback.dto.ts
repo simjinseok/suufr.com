@@ -1,6 +1,4 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsNumber, IsUUID } from 'class-validator';
-import { Type } from 'class-transformer';
-import { CreateMediaFileDto } from './create-session.dto';
+import { IsString, IsOptional, IsArray, IsUUID } from 'class-validator';
 
 export class UpsertFeedbackDto {
   @IsString()
@@ -8,18 +6,12 @@ export class UpsertFeedbackDto {
   notes?: string;
 
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateMediaFileDto)
+  @IsUUID('all', { each: true })
   @IsOptional()
-  addNewMediaFiles?: CreateMediaFileDto[];
+  addMediaFileUuids?: string[]; // 추가할 파일 UUID들
 
   @IsArray()
   @IsUUID('all', { each: true })
   @IsOptional()
-  addExistingMediaFileUuids?: string[];
-
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsOptional()
-  removeMediaFileUuids?: string[];
+  removeMediaFileUuids?: string[]; // 연결 해제할 파일 UUID들
 }

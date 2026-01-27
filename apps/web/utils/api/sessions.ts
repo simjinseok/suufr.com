@@ -73,21 +73,12 @@ type SessionResponse = {
   data: Session;
 };
 
-type CreateMediaFileData = {
-  url: string;
-  publicId: string;
-  type: 'image' | 'video';
-  fileName?: string;
-  fileSize: number;
-};
-
 type CreateSessionData = {
   lessonUuid: string;
   sessionAt: string;
   duration?: number;
   notes?: string;
-  newMediaFiles?: CreateMediaFileData[];
-  existingMediaFileUuids?: string[];
+  mediaFileUuids?: string[];
 };
 
 type UpdateSessionData = {
@@ -95,8 +86,7 @@ type UpdateSessionData = {
   duration?: number;
   notes?: string;
   isDone?: boolean;
-  addNewMediaFiles?: CreateMediaFileData[];
-  addExistingMediaFileUuids?: string[];
+  addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
 };
 
@@ -118,8 +108,7 @@ type FeedbackResponse = {
 
 type UpsertFeedbackData = {
   notes: string;
-  addNewMediaFiles?: CreateMediaFileData[];
-  addExistingMediaFileUuids?: string[];
+  addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
 };
 

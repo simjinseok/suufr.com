@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { ListLessonsQueryDto } from './dto/list-lessons-query.dto';
@@ -19,7 +20,10 @@ function generateShareId(): string {
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async findAll(query: ListLessonsQueryDto, userId: string) {
     // 사용자가 소유한 모든 organization 조회
@@ -398,12 +402,88 @@ export class LessonsService {
       throw new NotFoundException('Lesson not found');
     }
 
+    // 공유 링크 만료까지 남은 시간 (초)
+    const expiresInSeconds = Math.max(
+      Math.floor((share.expiresAt.getTime() - Date.now()) / 1000),
+      3600, // 최소 1시간
+    );
+
+    // 미디어 파일 URL을 signed URL로 변환
+    const lessonWithSignedUrls = this.transformMediaUrlsToSigned(
+      share.lesson,
+      expiresInSeconds,
+    );
+
     return {
       success: true,
       data: {
-        lesson: share.lesson,
+        lesson: lessonWithSignedUrls,
         expiresAt: share.expiresAt,
       },
     };
+  }
+
+  /**
+   * 레슨 데이터 내의 모든 미디어 파일 URL을 CloudFront Signed URL로 변환
+   * CloudFront signing이 설정되지 않은 경우 원본 URL 유지
+   */
+  private transformMediaUrlsToSigned<T>(lesson: T, expiresInSeconds: number): T {
+    if (!this.s3Service.isSigningConfigured()) {
+      return lesson;
+    }
+
+    // Deep clone to avoid mutating original
+    const result = JSON.parse(JSON.stringify(lesson));
+
+    // sessions 내의 미디어 파일 변환
+    if (result.sessions) {
+      for (const session of result.sessions) {
+        // sessionMediaFiles
+        if (session.sessionMediaFiles) {
+          for (const smf of session.sessionMediaFiles) {
+            if (smf.mediaFile?.url) {
+              const signedUrl = this.getSignedUrlFromCdnUrl(smf.mediaFile.url, expiresInSeconds);
+              if (signedUrl) {
+                smf.mediaFile.url = signedUrl;
+              }
+            }
+          }
+        }
+
+        // feedback.feedbackMediaFiles
+        if (session.feedback?.feedbackMediaFiles) {
+          for (const fmf of session.feedback.feedbackMediaFiles) {
+            if (fmf.mediaFile?.url) {
+              const signedUrl = this.getSignedUrlFromCdnUrl(fmf.mediaFile.url, expiresInSeconds);
+              if (signedUrl) {
+                fmf.mediaFile.url = signedUrl;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * CDN URL에서 S3 key를 추출하고 signed URL 생성
+   */
+  private getSignedUrlFromCdnUrl(cdnUrl: string, expiresInSeconds: number): string | null {
+    try {
+      const url = new URL(cdnUrl);
+      const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+
+      // users/ 경로의 파일만 signed URL로 변환 (보호된 파일)
+      if (key.startsWith('users/')) {
+        return this.s3Service.getSignedDownloadUrl(key, expiresInSeconds);
+      }
+
+      // 공개 파일은 원본 URL 유지
+      return null;
+    } catch {
+      return null;
+    }
   }
 }

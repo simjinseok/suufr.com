@@ -90,6 +90,7 @@ function Content({ quota, folderUuid, close }: ContentProps) {
     if (uploadedFiles.length > 0) {
       toast.success('파일 업로드 완료', {
         description: `${uploadedFiles.length}개의 파일이 업로드되었습니다.`,
+        timeout: 3000,
       });
       router.refresh();
     }

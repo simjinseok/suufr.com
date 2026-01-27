@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
 import { getSession } from '@/utils/auth';
-import { ServerActionState, TTempMediaFile } from '@/types/index';
+import { ServerActionState } from '@/types/index';
 import { curriculumsApi } from '@/utils/api';
 
 // Create Curriculum
@@ -192,19 +192,15 @@ export async function createCurriculumItem(prevState: CreateCurriculumItemState,
         return state;
       }
 
-      // Parse media files from form data
-      const newMediaFilesJson = data.newMediaFiles as string;
-      const existingMediaFileUuidsJson = data.existingMediaFileUuids as string;
-
-      const newMediaFiles: TTempMediaFile[] = newMediaFilesJson ? JSON.parse(newMediaFilesJson) : [];
-      const existingMediaFileUuids: string[] = existingMediaFileUuidsJson ? JSON.parse(existingMediaFileUuidsJson) : [];
+      // Parse media file UUIDs from form data
+      const mediaFileUuidsJson = data.mediaFileUuids as string;
+      const mediaFileUuids: string[] = mediaFileUuidsJson ? JSON.parse(mediaFileUuidsJson) : [];
 
       await curriculumsApi.createItem({
         curriculumUuid,
         title: validationResult.data.title,
         description: validationResult.data.description,
-        newMediaFiles: newMediaFiles.length > 0 ? newMediaFiles : undefined,
-        existingMediaFileUuids: existingMediaFileUuids.length > 0 ? existingMediaFileUuids : undefined,
+        mediaFileUuids: mediaFileUuids.length > 0 ? mediaFileUuids : undefined,
       });
 
       revalidatePath('/curriculums', 'page');
@@ -259,20 +255,17 @@ export async function updateCurriculumItem(prevState: UpdateCurriculumItemState,
         return state;
       }
 
-      // Parse media files from form data
-      const addNewMediaFilesJson = data.addNewMediaFiles as string;
-      const addExistingMediaFileUuidsJson = data.addExistingMediaFileUuids as string;
+      // Parse media file UUIDs from form data
+      const addMediaFileUuidsJson = data.addMediaFileUuids as string;
       const removeMediaFileUuidsJson = data.removeMediaFileUuids as string;
 
-      const addNewMediaFiles: TTempMediaFile[] = addNewMediaFilesJson ? JSON.parse(addNewMediaFilesJson) : [];
-      const addExistingMediaFileUuids: string[] = addExistingMediaFileUuidsJson ? JSON.parse(addExistingMediaFileUuidsJson) : [];
+      const addMediaFileUuids: string[] = addMediaFileUuidsJson ? JSON.parse(addMediaFileUuidsJson) : [];
       const removeMediaFileUuids: string[] = removeMediaFileUuidsJson ? JSON.parse(removeMediaFileUuidsJson) : [];
 
       await curriculumsApi.updateItem(itemUuid, {
         title: validationResult.data.title,
         description: validationResult.data.description,
-        addNewMediaFiles: addNewMediaFiles.length > 0 ? addNewMediaFiles : undefined,
-        addExistingMediaFileUuids: addExistingMediaFileUuids.length > 0 ? addExistingMediaFileUuids : undefined,
+        addMediaFileUuids: addMediaFileUuids.length > 0 ? addMediaFileUuids : undefined,
         removeMediaFileUuids: removeMediaFileUuids.length > 0 ? removeMediaFileUuids : undefined,
       });
 

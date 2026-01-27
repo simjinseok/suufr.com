@@ -1,15 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { ImageIcon, VideoIcon, XIcon, PlusIcon, FileIcon } from 'lucide-react';
+import { VideoIcon, XIcon, PlusIcon, FileIcon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
-import type { TMediaFile, TTempMediaFile, TLessonMediaFile } from '@/types/index';
+import type { TMediaFile, TLessonMediaFile } from '@/types/index';
 import MediaFileSelectModal from './media-file-select-modal';
 
 export interface MediaFilePickerState {
   existingFiles: TLessonMediaFile[];
-  pendingUpload: TTempMediaFile[];
-  pendingDetach: string[]; // media file UUID들
+  pendingDetach: string[]; // 연결 해제할 media file UUID들
   pendingAddExisting: TMediaFile[]; // 라이브러리에서 새로 선택한 기존 파일들
 }
 
@@ -35,20 +34,13 @@ export default function MediaFilePicker({
     (lmf) => !value.pendingDetach.includes(lmf.mediaFile.uuid),
   );
   const pendingAddExistingFiles = value.pendingAddExisting || [];
-  const totalFilesCount = visibleExistingFiles.length + value.pendingUpload.length + pendingAddExistingFiles.length;
+  const totalFilesCount = visibleExistingFiles.length + pendingAddExistingFiles.length;
   const canAddMore = totalFilesCount < maxFiles;
 
   const handleRemoveExisting = (uuid: string) => {
     onChange({
       ...value,
       pendingDetach: [...value.pendingDetach, uuid],
-    });
-  };
-
-  const handleRemovePending = (index: number) => {
-    onChange({
-      ...value,
-      pendingUpload: value.pendingUpload.filter((_, i) => i !== index),
     });
   };
 
@@ -66,8 +58,8 @@ export default function MediaFilePicker({
     });
   };
 
-  // 선택 완료 시 기존 파일 선택과 새 파일 업로드를 한 번에 처리
-  const handleConfirm = (selectedFiles: TMediaFile[], uploadedFiles: TTempMediaFile[]) => {
+  // 선택 완료 시 기존 파일 선택 처리
+  const handleConfirm = (selectedFiles: TMediaFile[]) => {
     // 이미 첨부된 파일 UUID들
     const alreadyAttachedUuids = value.existingFiles.map((lmf) => lmf.mediaFile.uuid);
     // 이미 추가 대기 중인 파일 UUID들
@@ -86,7 +78,6 @@ export default function MediaFilePicker({
     const newState: MediaFilePickerState = {
       ...value,
       pendingDetach: newPendingDetach,
-      pendingUpload: [...value.pendingUpload, ...uploadedFiles],
       pendingAddExisting: [...(value.pendingAddExisting || []), ...newlySelectedExistingFiles],
     };
 
@@ -94,7 +85,7 @@ export default function MediaFilePicker({
   };
 
   const renderThumbnail = (
-    file: TMediaFile | TTempMediaFile,
+    file: TMediaFile,
     onRemove: () => void,
     isPending = false,
   ) => {
@@ -143,7 +134,7 @@ export default function MediaFilePicker({
   };
 
   const renderSimpleFile = (
-    file: TMediaFile | TTempMediaFile,
+    file: TMediaFile,
     onRemove: () => void,
     isPending = false,
   ) => {
@@ -252,13 +243,6 @@ export default function MediaFilePicker({
               </React.Fragment>
             ))}
 
-            {/* 새로 업로드한 파일들 */}
-            {value.pendingUpload.map((file, index) => (
-              <React.Fragment key={`pending-${index}`}>
-                {renderSimpleFile(file, () => handleRemovePending(index), true)}
-              </React.Fragment>
-            ))}
-
             {/* 삭제 대기 파일들 */}
             {detachedFiles.map((lmf) => renderSimpleDetachedFile(lmf))}
           </div>
@@ -275,13 +259,6 @@ export default function MediaFilePicker({
                 {renderThumbnail(file, () => handleRemovePendingExisting(file.uuid), true)}
               </React.Fragment>
             ))}
-
-            {/* 새로 업로드한 파일들 */}
-            {value.pendingUpload.map((file, index) =>
-              <React.Fragment key={`pending-${index}`}>
-                {renderThumbnail(file, () => handleRemovePending(index), true)}
-              </React.Fragment>,
-            )}
 
             {/* 삭제 대기 파일들 */}
             {detachedFiles.map((lmf) => renderDetachedFile(lmf))}

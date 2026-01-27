@@ -12,7 +12,6 @@ import {
   Label,
   Modal,
   NumberField,
-  Tabs,
   TextArea,
   TextField,
 } from '@heroui/react';
@@ -51,21 +50,11 @@ interface ContentProps {
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
-  const [selectedTab, setSelectedTab] = React.useState<'basic' | 'memo' | 'feedback'>('basic');
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   // 세션 미디어 파일 상태
   const [mediaFiles, setMediaFiles] = React.useState<MediaFilePickerState>({
     existingFiles: session.sessionMediaFiles || [],
-    pendingUpload: [],
-    pendingDetach: [],
-    pendingAddExisting: [],
-  });
-
-  // 피드백 미디어 파일 상태
-  const [feedbackMediaFiles, setFeedbackMediaFiles] = React.useState<MediaFilePickerState>({
-    existingFiles: session.feedback?.feedbackMediaFiles || [],
-    pendingUpload: [],
     pendingDetach: [],
     pendingAddExisting: [],
   });
@@ -76,27 +65,16 @@ function Content({ session, close }: ContentProps) {
       sessionAt: session.sessionAt,
       duration: session?.duration,
       notes: session?.notes,
-      feedback: session?.feedback?.notes ?? '',
     },
   });
-  const { control, watch } = useForm({
+  const { control } = useForm({
     values: {
       isDone: state.fields?.isDone,
       sessionAt: state.fields?.sessionAt,
       duration: state.fields?.duration,
       notes: state.fields?.notes,
-      feedback: state.fields?.feedback ?? '',
     },
   });
-
-  const isDoneValue = watch('isDone');
-
-  // isDone이 false가 되면 memo 탭으로 전환
-  React.useEffect(() => {
-    if (!isDoneValue && selectedTab === 'feedback') {
-      setSelectedTab('memo');
-    }
-  }, [isDoneValue, selectedTab]);
 
   React.useEffect(() => {
     if (!state.timestamp) return;
@@ -125,17 +103,10 @@ function Content({ session, close }: ContentProps) {
           <input type="hidden" name="sessionUuid" value={session.uuid} />
 
           {/* 세션 미디어 파일 변경 데이터 */}
-          {mediaFiles.pendingUpload.length > 0 && (
-            <input
-              type="hidden"
-              name="addNewMediaFiles"
-              value={JSON.stringify(mediaFiles.pendingUpload)}
-            />
-          )}
           {(mediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
             <input
               type="hidden"
-              name="addExistingMediaFileUuids"
+              name="addMediaFileUuids"
               value={JSON.stringify(mediaFiles.pendingAddExisting!.map((f) => f.uuid))}
             />
           )}
@@ -147,30 +118,7 @@ function Content({ session, close }: ContentProps) {
             />
           )}
 
-          {/* 피드백 미디어 파일 변경 데이터 */}
-          {feedbackMediaFiles.pendingUpload.length > 0 && (
-            <input
-              type="hidden"
-              name="feedbackAddNewMediaFiles"
-              value={JSON.stringify(feedbackMediaFiles.pendingUpload)}
-            />
-          )}
-          {(feedbackMediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
-            <input
-              type="hidden"
-              name="feedbackAddExistingMediaFileUuids"
-              value={JSON.stringify(feedbackMediaFiles.pendingAddExisting!.map((f) => f.uuid))}
-            />
-          )}
-          {feedbackMediaFiles.pendingDetach.length > 0 && (
-            <input
-              type="hidden"
-              name="feedbackRemoveMediaFileUuids"
-              value={JSON.stringify(feedbackMediaFiles.pendingDetach)}
-            />
-          )}
-
-          <div className="hidden flex-col gap-3 data-[selected=true]:flex" data-selected={selectedTab === 'basic' ? 'true' : undefined}>
+          <div className="flex flex-col gap-3">
             <Controller
               control={control}
               name="isDone"
@@ -283,13 +231,7 @@ function Content({ session, close }: ContentProps) {
             />
           </div>
 
-          <div className="hidden data-[selected=true]:flex flex-col gap-4" data-selected={selectedTab === 'memo' ? 'true' : undefined}>
-            <MediaFilePicker
-              variant="simple"
-              value={mediaFiles}
-              onChange={setMediaFiles}
-              maxFiles={5}
-            />
+          <div className="flex flex-col gap-4">
             <Controller
               control={control}
               name="notes"
@@ -301,58 +243,18 @@ function Content({ session, close }: ContentProps) {
                 >
                   <Label>수업내용</Label>
                   <TextArea variant="secondary" rows={5} className="resize-none" />
-                  <Description>수강생에게 노출되지 않는 수업 메모입니다</Description>
                 </TextField>
               )}
             />
-          </div>
-
-          <div
-            className="hidden data-[selected=true]:flex flex-col gap-4"
-            data-selected={selectedTab === 'feedback' ? 'true' : undefined}
-          >
             <MediaFilePicker
               variant="simple"
-              value={feedbackMediaFiles}
-              onChange={setFeedbackMediaFiles}
+              value={mediaFiles}
+              onChange={setMediaFiles}
               maxFiles={5}
-            />
-            <Controller
-              control={control}
-              name="feedback"
-              render={({ field: { name, value, onChange } }) => (
-                <TextField name={name} value={value ?? ''} onChange={onChange}>
-                  <Label>피드백</Label>
-                  <TextArea variant="secondary" rows={5} className="resize-none" />
-                  <Description>수강생에게 보여줄 피드백입니다</Description>
-                </TextField>
-              )}
             />
           </div>
 
         </Form>
-        <Tabs
-          className="mt-4"
-          selectedKey={selectedTab}
-          onSelectionChange={(key) => setSelectedTab(key as 'basic' | 'memo' | 'feedback')}
-        >
-          <Tabs.ListContainer>
-            <Tabs.List>
-              <Tabs.Tab id="basic">
-                기본정보
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="memo">
-                수업내용
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="feedback" isDisabled={!isDoneValue}>
-                피드백
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
       </Modal.Body>
       <Modal.Footer>
         <RemoveButton sessionUuid={session.uuid} onSuccess={close} />
