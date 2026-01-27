@@ -11,8 +11,6 @@ import {
   BanknoteIcon,
   BookDashedIcon,
   ChevronDownIcon,
-  CircleCheckBigIcon,
-  CircleIcon,
   CreditCardIcon,
   FileIcon,
   GlobeIcon,
@@ -32,7 +30,51 @@ import CreateSessionModal from '@/components/sessions/create-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
 import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { toggleSessionDone } from '@/actions/session';
+
+function AnimatedCheckIcon({
+  checked,
+  animating,
+}: {
+  checked: boolean;
+  animating: boolean;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`size-5 transition-transform duration-150 active:scale-85 ${
+        animating && checked ? 'animate-bounce-check' : ''
+      }`}
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        className={`transition-all duration-200 ${
+          checked ? 'fill-green-600' : 'fill-transparent'
+        }`}
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        className={`fill-none stroke-2 transition-all duration-200 ${
+          checked ? 'stroke-green-600' : 'stroke-amber-500'
+        }`}
+      />
+      <path
+        d="M7 12.5l3 3 7-7"
+        className="fill-none stroke-white stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]"
+        style={{
+          strokeDasharray: 20,
+          strokeDashoffset: checked ? 0 : 20,
+          transition: 'stroke-dashoffset 0.25s cubic-bezier(0.65, 0, 0.35, 1) 0.1s',
+        }}
+      />
+    </svg>
+  );
+}
 
 // 파일 타입에 따른 아이콘 반환
 function FileTypeIcon({ type, className }: { type: string; className?: string }) {
@@ -46,13 +88,35 @@ function FileTypeIcon({ type, className }: { type: string; className?: string })
   }
 }
 
-
 export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; use24HourFormat: boolean }) {
   const { studentUuid } = useParams<{ studentUuid: string }>();
+  const router = useRouter();
 
   const [selectedSession, setSelectedSession] = React.useState<TSession | null>(null);
   const [isLessonCreating, setIsLessonCreating] = React.useState<TLesson | null>(null);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
+
+  // 체크 토글 애니메이션 상태
+  const [togglingSessionUuid, setTogglingSessionUuid] = React.useState<string | null>(null);
+  const [optimisticDone, setOptimisticDone] = React.useState<Record<string, boolean>>({});
+
+  const handleToggleDone = async (session: TSession, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newIsDone = !(optimisticDone[session.uuid] ?? session.isDone);
+
+    // 낙관적 업데이트 + 애니메이션 트리거
+    setOptimisticDone(prev => ({ ...prev, [session.uuid]: newIsDone }));
+    setTogglingSessionUuid(session.uuid);
+
+    await toggleSessionDone(session.uuid, newIsDone);
+    router.refresh();
+
+    // 애니메이션 완료 후 상태 정리
+    setTimeout(() => setTogglingSessionUuid(null), 400);
+  };
+
+  // 실제 표시할 isDone 값 (낙관적 업데이트 우선)
+  const getIsDone = (session: TSession) => optimisticDone[session.uuid] ?? session.isDone;
 
   return (
     <React.Fragment>
@@ -129,14 +193,17 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                           className={index > 0 ? 'border-t border-gray-50 pt-2 mt-2' : ''}
                         >
                           <div className="flex items-start gap-3">
-                            {/* 완료/미완료 아이콘 */}
-                            <div className="mt-0.5 shrink-0">
-                              {session.isDone ? (
-                                <CircleCheckBigIcon className="size-5 text-green-600" />
-                              ) : (
-                                <CircleIcon className="size-5 text-amber-500" />
-                              )}
-                            </div>
+                            {/* 완료/미완료 아이콘 (클릭으로 토글) */}
+                            <button
+                              type="button"
+                              className="mt-0.5 shrink-0 cursor-pointer"
+                              onClick={(e) => handleToggleDone(session, e)}
+                            >
+                              <AnimatedCheckIcon
+                                checked={getIsDone(session)}
+                                animating={togglingSessionUuid === session.uuid}
+                              />
+                            </button>
 
                             <div className="flex-1 min-w-0">
                               {/* 세션 클릭 영역 */}
@@ -149,12 +216,18 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                     {format(new Date(session.sessionAt), 'M월 d일', { locale: ko })}
                                   </p>
                                   <span className="text-sm text-gray-500">
-                                    ({format(new Date(session.sessionAt), 'E', { locale: ko })})
+                                    (
+                                    {format(new Date(session.sessionAt), 'E', { locale: ko })}
+                                    )
                                   </span>
                                   <span className="text-sm text-gray-600">
-                                    {format(new Date(session.sessionAt), 'HH:mm', { locale: ko })}
+                                    {format(new Date(session.sessionAt), use24HourFormat ? 'HH:mm' : 'a h:mm', { locale: ko })}
                                   </span>
-                                  <span className="text-xs text-gray-400">· {session.duration}분</span>
+                                  <span className="text-xs text-gray-400">
+                                    ·
+                                    {session.duration}
+                                    분
+                                  </span>
                                 </div>
                                 {session.notes && (
                                   <Text className="mt-1 whitespace-pre-wrap text-sm">
@@ -186,7 +259,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                               </div>
 
                               {/* 피드백 영역 */}
-                              {session.isDone && (
+                              {getIsDone(session) && (
                                 <>
                                   {session.feedback ? (
                                     <div
@@ -257,36 +330,41 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                 <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
                   <Modal>
                     <Button variant="secondary" size="sm">
-                      {lesson.shares?.length ? (
-                        <GlobeIcon className="size-3.5" />
-                      ) : (
-                        <LockIcon className="size-3.5" />
-                      )}
+                      {lesson.shares?.length
+                        ? (
+                            <GlobeIcon className="size-3.5" />
+                          )
+                        : (
+                            <LockIcon className="size-3.5" />
+                          )}
                       {lesson.shares?.length ? '공유중' : '공유'}
                     </Button>
                     <ShareModal lesson={lesson} />
                   </Modal>
                   <Modal>
                     <Button variant="secondary" size="sm">
-                      {lesson.payment ? (
-                        <>
-                          {lesson.payment.paymentMethod === 'card' && (
-                            <CreditCardIcon className="size-3.5" />
+                      {lesson.payment
+                        ? (
+                            <>
+                              {lesson.payment.paymentMethod === 'card' && (
+                                <CreditCardIcon className="size-3.5" />
+                              )}
+                              {lesson.payment.paymentMethod === 'transfer' && (
+                                <LandmarkIcon className="size-3.5" />
+                              )}
+                              {lesson.payment.paymentMethod === 'cash' && (
+                                <BanknoteIcon className="size-3.5" />
+                              )}
+                              {lesson.payment.paymentMethod === 'none' && (
+                                <BookDashedIcon className="size-3.5" />
+                              )}
+                              {numberToHangulMixed(lesson.payment.amount)}
+                              원
+                            </>
+                          )
+                        : (
+                            '결제등록'
                           )}
-                          {lesson.payment.paymentMethod === 'transfer' && (
-                            <LandmarkIcon className="size-3.5" />
-                          )}
-                          {lesson.payment.paymentMethod === 'cash' && (
-                            <BanknoteIcon className="size-3.5" />
-                          )}
-                          {lesson.payment.paymentMethod === 'none' && (
-                            <BookDashedIcon className="size-3.5" />
-                          )}
-                          {numberToHangulMixed(lesson.payment.amount)}원
-                        </>
-                      ) : (
-                        '결제등록'
-                      )}
                     </Button>
                     <PaymentModal lesson={lesson} />
                   </Modal>

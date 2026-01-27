@@ -257,6 +257,21 @@ type SessionDetailData = {
   }[];
 };
 
+export async function toggleSessionDone(sessionUuid: string, isDone: boolean): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.organization) {
+    return false;
+  }
+
+  await sessionsApi.markDone(sessionUuid, isDone);
+
+  revalidatePath('/sessions', 'page');
+  revalidatePath('/lessons', 'page');
+  revalidatePath('/students', 'page');
+
+  return true;
+}
+
 export async function getSessionDetail(sessionUuid: string): Promise<SessionDetailData | null> {
   const session = await getSession();
   if (!session?.organization) {
