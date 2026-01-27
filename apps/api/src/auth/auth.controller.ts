@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthenticatedUser } from './guards/jwt-auth.guard';
@@ -92,33 +92,29 @@ export class AuthController {
 
   /**
    * CloudFront Signed Cookies 발급
-   * 인증된 사용자의 users/{userId}/* 경로에 대한 접근 권한을 쿠키로 발급
+   * 인증된 사용자의 users/{userId}/* 경로에 대한 접근 권한을 쿠키 값으로 반환
    */
-  @Post('session/cookies')
-  async getSignedCookies(
-    @CurrentUser() user: AuthenticatedUser,
-    @Res() res: { cookie: (name: string, value: string, options: object) => void; json: (body: object) => object },
-  ) {
+  @Post('cloudfront/cookies')
+  async getSignedCookies(@CurrentUser() user: AuthenticatedUser) {
     const cookies = this.s3Service.getSignedCookiesForUser(user.userId);
 
     if (!cookies) {
       // CloudFront signing이 설정되지 않은 경우
-      return res.json({ success: true, configured: false });
+      return { success: true, configured: false };
     }
 
-    const cookieDomain = process.env.CLOUDFRONT_COOKIE_DOMAIN;
-    const cookieOptions = {
-      domain: cookieDomain,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none' as const,
-      maxAge: 86400 * 1000, // 24시간
+    return {
+      success: true,
+      configured: true,
+      cookies: {
+        'CloudFront-Policy': cookies['CloudFront-Policy'],
+        'CloudFront-Signature': cookies['CloudFront-Signature'],
+        'CloudFront-Key-Pair-Id': cookies['CloudFront-Key-Pair-Id'],
+      },
+      cookieOptions: {
+        domain: process.env.CLOUDFRONT_COOKIE_DOMAIN,
+        maxAge: 86400, // 초 단위 (24시간)
+      },
     };
-
-    res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], cookieOptions);
-    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], cookieOptions);
-    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], cookieOptions);
-
-    return res.json({ success: true, configured: true });
   }
 }

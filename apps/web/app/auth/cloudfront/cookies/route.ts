@@ -4,8 +4,8 @@ import { cookies } from 'next/headers';
 const API_URL = process.env.API_URL!;
 
 /**
- * CloudFront Signed Cookies 발급 API 프록시
- * 백엔드에서 발급한 쿠키를 클라이언트에 전달
+ * CloudFront Signed Cookies 발급
+ * 백엔드에서 쿠키 값을 받아 클라이언트에 Set-Cookie 헤더로 전달
  */
 export async function POST() {
   const cookieStore = await cookies();
@@ -16,7 +16,7 @@ export async function POST() {
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/auth/session/cookies`, {
+    const response = await fetch(`${API_URL}/api/auth/cloudfront/cookies`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -33,14 +33,25 @@ export async function POST() {
 
     const data = await response.json();
 
-    // CloudFront 쿠키를 응답 헤더로 전달
-    const nextResponse = NextResponse.json(data);
-
-    // 백엔드 응답에서 Set-Cookie 헤더를 가져와서 전달
-    const setCookieHeaders = response.headers.getSetCookie();
-    for (const setCookie of setCookieHeaders) {
-      nextResponse.headers.append('Set-Cookie', setCookie);
+    if (!data.configured) {
+      return NextResponse.json({ success: true, configured: false });
     }
+
+    // 쿠키 값을 받아서 직접 Set-Cookie 헤더 설정
+    const { cookies: cfCookies, cookieOptions } = data;
+    const nextResponse = NextResponse.json({ success: true, configured: true });
+
+    const cookieConfig = {
+      domain: cookieOptions.domain,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
+      maxAge: cookieOptions.maxAge,
+    };
+
+    nextResponse.cookies.set('CloudFront-Policy', cfCookies['CloudFront-Policy'], cookieConfig);
+    nextResponse.cookies.set('CloudFront-Signature', cfCookies['CloudFront-Signature'], cookieConfig);
+    nextResponse.cookies.set('CloudFront-Key-Pair-Id', cfCookies['CloudFront-Key-Pair-Id'], cookieConfig);
 
     return nextResponse;
   } catch (error) {

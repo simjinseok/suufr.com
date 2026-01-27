@@ -16,7 +16,7 @@ export function CloudFrontCookiesInitializer() {
 
     // CloudFront 쿠키 설정 API 호출
     // credentials: 'include'로 크로스 도메인 쿠키 설정 가능
-    fetch('/api/auth/session/cookies', {
+    fetch('/auth/cloudfront/cookies', {
       method: 'POST',
       credentials: 'include',
     }).catch((error) => {
