@@ -6,7 +6,7 @@ import { S3Service } from '../s3/s3.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
-import { CreateFolderDto, UpdateFolderDto, MoveFileDto } from './dto';
+import { CreateFolderDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
 
 @Controller('api/storage')
 export class StorageController {
@@ -293,6 +293,38 @@ export class StorageController {
   ) {
     const result = await this.folderService.moveFile(user.userId, uuid, body.folderUuid ?? null);
     return { success: true, data: result };
+  }
+
+  /**
+   * 파일 이름 변경
+   */
+  @Patch('files/:uuid')
+  async updateFile(
+    @Param('uuid') uuid: string,
+    @Body() body: UpdateFileDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // 파일 조회
+    const file = await this.prisma.mediaFile.findUnique({
+      where: { uuid },
+    });
+
+    if (!file) {
+      throw new NotFoundException('파일을 찾을 수 없습니다.');
+    }
+
+    // 소유권 확인
+    if (file.userId !== user.userId) {
+      throw new ForbiddenException('파일을 수정할 권한이 없습니다.');
+    }
+
+    // 파일명 업데이트
+    const updatedFile = await this.prisma.mediaFile.update({
+      where: { id: file.id },
+      data: { fileName: body.fileName },
+    });
+
+    return { success: true, data: updatedFile };
   }
 
   // ==================== 폴더 API ====================

@@ -19,6 +19,17 @@ const folderNameSchema = z.object({
   uuid: z.string().optional(),
 });
 
+// 파일명 유효성 검사 스키마
+const fileNameSchema = z.object({
+  fileName: z
+    .string()
+    .trim()
+    .min(1, '파일명을 입력해주세요.')
+    .max(100, '파일명은 100자를 초과할 수 없습니다.')
+    .regex(/^[^/\\:*?"<>|]+$/, '파일명에 사용할 수 없는 문자가 포함되어 있습니다.'),
+  uuid: z.string(),
+});
+
 export async function getStorageQuota(): Promise<TStorageQuota | null> {
   return await Sentry.withServerActionInstrumentation(
     'getStorageQuota',
@@ -134,6 +145,52 @@ export async function deleteMediaFile(uuid: string): Promise<DeleteMediaFileResu
           return { success: false, message: '다른 곳에서 사용 중인 파일은 삭제할 수 없습니다.' };
         }
         return { success: false, message: '파일 삭제에 실패했습니다.' };
+      }
+    },
+  );
+}
+
+export type RenameFileState = {
+  success?: boolean;
+  fields: { uuid: string; fileName: string };
+  errors?: Record<string, string[]>;
+};
+
+export async function renameFileAction(prevState: RenameFileState, formData: FormData): Promise<RenameFileState> {
+  return await Sentry.withServerActionInstrumentation(
+    'renameFile',
+    { formData, headers: await headers(), recordResponse: true },
+    async () => {
+      const data = Object.fromEntries(formData);
+      const state: RenameFileState = {
+        success: false,
+        fields: { uuid: data.uuid as string, fileName: data.fileName as string },
+        errors: {},
+      };
+
+      const session = await getSession();
+      if (!session?.organization) {
+        state.errors = { fileName: ['인증이 필요합니다.'] };
+        return state;
+      }
+
+      const validationResult = fileNameSchema.safeParse(data);
+      if (!validationResult.success) {
+        state.errors = validationResult.error.flatten().fieldErrors as Record<string, string[]>;
+        return state;
+      }
+
+      try {
+        await storageApi.renameFile(data.uuid as string, validationResult.data.fileName);
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/settings/files');
+        state.success = true;
+        return state;
+      }
+      catch (error) {
+        console.error('Failed to rename file:', error);
+        state.errors = { fileName: [error instanceof Error ? error.message : '파일 이름 변경에 실패했습니다.'] };
+        return state;
       }
     },
   );

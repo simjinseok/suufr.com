@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button, Surface, Tooltip, Menu, Popover } from '@heroui/react';
-import { Trash2, ImageIcon, Video, FileX, FileTextIcon, MoreVertical, FolderInput } from 'lucide-react';
+import { Trash2, ImageIcon, Video, FileX, FileTextIcon, MoreVertical, FolderInput, Pencil } from 'lucide-react';
 
 import type { TMediaFile, TFolder } from '@/types/index';
 import FilePreviewModal from './_file-preview-modal';
@@ -11,6 +11,7 @@ import FolderItem from './_folder-item';
 import EditFolderModal from './_edit-folder-modal';
 import DeleteFolderModal from './_delete-folder-modal';
 import MoveFileModal from './_move-file-modal';
+import RenameFileModal from './_rename-file-modal';
 
 interface FilesListProps {
   files: TMediaFile[];
@@ -44,6 +45,7 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
   const [previewFile, setPreviewFile] = React.useState<TMediaFile | null>(null);
   const [deleteFile, setDeleteFile] = React.useState<TMediaFile | null>(null);
   const [moveFile, setMoveFile] = React.useState<TMediaFile | null>(null);
+  const [renameFile, setRenameFile] = React.useState<TMediaFile | null>(null);
   const [editFolder, setEditFolder] = React.useState<TFolder | null>(null);
   const [deleteFolder, setDeleteFolder] = React.useState<TFolder | null>(null);
 
@@ -137,6 +139,7 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
             onPreview={() => setPreviewFile(file)}
             onDelete={() => setDeleteFile(file)}
             onMove={() => setMoveFile(file)}
+            onRename={() => setRenameFile(file)}
           />
         ))}
       </Surface>
@@ -159,6 +162,12 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
         file={moveFile}
       />
 
+      <RenameFileModal
+        isOpen={!!renameFile}
+        onOpenChange={(open) => !open && setRenameFile(null)}
+        file={renameFile}
+      />
+
       <EditFolderModal
         isOpen={!!editFolder}
         onOpenChange={(open) => !open && setEditFolder(null)}
@@ -179,9 +188,10 @@ interface FileRowProps {
   onPreview: () => void;
   onDelete: () => void;
   onMove: () => void;
+  onRename: () => void;
 }
 
-function FileRow({ file, onPreview, onDelete, onMove }: FileRowProps) {
+function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) {
   const thumbnailUrl = getCloudinaryThumbnail(file.url, file.type);
   const fileName = file.fileName || 'Untitled';
 
@@ -267,6 +277,10 @@ function FileRow({ file, onPreview, onDelete, onMove }: FileRowProps) {
           </Popover.Trigger>
           <Popover.Content placement="bottom end">
             <Menu>
+              <Menu.Item onAction={onRename}>
+                <Pencil className="w-4 h-4" />
+                이름 변경
+              </Menu.Item>
               <Menu.Item onAction={onMove}>
                 <FolderInput className="w-4 h-4" />
                 이동

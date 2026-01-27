@@ -82,6 +82,13 @@ export const storageApi = {
       body: { folderUuid },
     }),
 
+  // 파일 이름 변경
+  renameFile: (uuid: string, fileName: string) =>
+    apiClient<MediaFileResponse>(`/api/storage/files/${uuid}`, {
+      method: 'PATCH',
+      body: { fileName },
+    }),
+
   // 폴더 목록 조회 (트리 구조)
   listFolders: () =>
     apiClient<FoldersResponse>('/api/storage/folders'),
