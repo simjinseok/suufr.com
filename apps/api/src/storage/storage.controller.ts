@@ -1,15 +1,18 @@
-import { Controller, Get, Post, Delete, Body, Param, NotFoundException, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, Query, NotFoundException, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { StorageQuotaService } from './storage-quota.service';
+import { FolderService } from './folder.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
+import { CreateFolderDto, UpdateFolderDto, MoveFileDto } from './dto';
 
 @Controller('api/storage')
 export class StorageController {
   constructor(
     private readonly storageQuotaService: StorageQuotaService,
+    private readonly folderService: FolderService,
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
   ) {}
@@ -101,10 +104,11 @@ export class StorageController {
       contentType: string;
       fileName: string;
       fileSize: number;
+      folderUuid?: string;
     },
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const { url, publicId, type, contentType, fileName, fileSize } = body;
+    const { url, publicId, type, contentType, fileName, fileSize, folderUuid } = body;
 
     // 유효성 검사
     if (!url || !publicId || !type || !contentType || !fileSize) {
@@ -127,6 +131,20 @@ export class StorageController {
       throw new BadRequestException('파일 이동에 실패했습니다.');
     }
 
+    // folderUuid로 folderId 조회
+    let folderId: number | null = null;
+    if (folderUuid) {
+      const folder = await this.prisma.folder.findFirst({
+        where: {
+          uuid: folderUuid,
+          userId: user.userId,
+        },
+      });
+      if (folder) {
+        folderId = folder.id;
+      }
+    }
+
     // DB에 파일 레코드 생성
     try {
       const file = await this.prisma.mediaFile.create({
@@ -137,6 +155,7 @@ export class StorageController {
           type,
           fileName,
           fileSize,
+          folderId,
         },
       });
 
@@ -150,15 +169,51 @@ export class StorageController {
   }
 
   /**
-   * 현재 사용자의 모든 미디어 파일 목록 조회
+   * 현재 사용자의 미디어 파일 목록 조회
+   * @param folderId - 'root' (루트만), uuid (특정 폴더), 없으면 전체
+   * @param search - 파일명 검색 (전체 검색, folderId 무시)
    */
   @Get('files')
-  async listFiles(@CurrentUser() user: AuthenticatedUser) {
+  async listFiles(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('folderId') folderId?: string,
+    @Query('search') search?: string,
+  ) {
+    // 검색이 있으면 전체에서 검색 (폴더 무시)
+    const where: {
+      userId: string;
+      folderId?: number | null;
+      fileName?: { contains: string; mode: 'insensitive' };
+    } = { userId: user.userId };
+
+    if (search && search.trim()) {
+      // 전체 검색
+      where.fileName = { contains: search.trim(), mode: 'insensitive' };
+    } else if (folderId === 'root') {
+      // 루트 레벨만
+      where.folderId = null;
+    } else if (folderId) {
+      // 특정 폴더
+      const folder = await this.prisma.folder.findFirst({
+        where: { uuid: folderId, userId: user.userId },
+      });
+      if (folder) {
+        where.folderId = folder.id;
+      } else {
+        // 폴더를 찾을 수 없으면 빈 결과
+        return { success: true, data: [] };
+      }
+    }
+    // folderId가 없고 search도 없으면 전체 조회
+
     const files = await this.prisma.mediaFile.findMany({
-      where: { userId: user.userId },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: { select: { sessionMediaFiles: true } },
+        folder: {
+          select: { id: true, uuid: true, name: true },
+        },
       },
     });
 
@@ -220,5 +275,90 @@ export class StorageController {
     await this.storageQuotaService.decreaseUsage(user.userId, file.fileSize);
 
     return { success: true };
+  }
+
+  /**
+   * 파일을 다른 폴더로 이동
+   */
+  @Patch('files/:uuid/move')
+  async moveFile(
+    @Param('uuid') uuid: string,
+    @Body() body: MoveFileDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const result = await this.folderService.moveFile(user.userId, uuid, body.folderUuid ?? null);
+    return { success: true, data: result };
+  }
+
+  // ==================== 폴더 API ====================
+
+  /**
+   * 폴더 생성
+   */
+  @Post('folders')
+  async createFolder(
+    @Body() body: CreateFolderDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const folder = await this.folderService.create(user.userId, body);
+    return { success: true, data: folder };
+  }
+
+  /**
+   * 폴더 목록 조회 (트리 구조)
+   */
+  @Get('folders')
+  async listFolders(@CurrentUser() user: AuthenticatedUser) {
+    const folders = await this.folderService.findAll(user.userId);
+    return { success: true, data: folders };
+  }
+
+  /**
+   * 단일 폴더 조회
+   */
+  @Get('folders/:uuid')
+  async getFolder(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const folder = await this.folderService.findOne(user.userId, uuid);
+    return { success: true, data: folder };
+  }
+
+  /**
+   * 폴더의 breadcrumb 조회
+   */
+  @Get('folders/:uuid/breadcrumb')
+  async getFolderBreadcrumb(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const breadcrumb = await this.folderService.getBreadcrumb(user.userId, uuid);
+    return { success: true, data: breadcrumb };
+  }
+
+  /**
+   * 폴더 수정
+   */
+  @Patch('folders/:uuid')
+  async updateFolder(
+    @Param('uuid') uuid: string,
+    @Body() body: UpdateFolderDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const folder = await this.folderService.update(user.userId, uuid, body);
+    return { success: true, data: folder };
+  }
+
+  /**
+   * 폴더 삭제 (재귀적으로 하위 폴더/파일 삭제)
+   */
+  @Delete('folders/:uuid')
+  async deleteFolder(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const result = await this.folderService.delete(user.userId, uuid);
+    return { success: true, data: result };
   }
 }

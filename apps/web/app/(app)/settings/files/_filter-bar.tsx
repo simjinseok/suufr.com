@@ -3,17 +3,41 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Select, ListBox, TextField, InputGroup, toast } from '@heroui/react';
-import { Upload, Search, X, Loader2 } from 'lucide-react';
+import { Upload, Search, X, Loader2, FolderPlus } from 'lucide-react';
 
 import type { TStorageQuota } from '@/types/index';
 import { uploadToS3, validateFile } from '@/utils/s3-upload';
 import { createMediaFile } from '@/actions/storage';
+import CreateFolderModal from './_create-folder-modal';
+
+interface NewFolderButtonProps {
+  parentFolderUuid?: string;
+}
+
+export function NewFolderButton({ parentFolderUuid }: NewFolderButtonProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  return (
+    <>
+      <Button variant="secondary" onPress={() => setIsOpen(true)}>
+        <FolderPlus className="w-4 h-4 mr-1" />
+        새 폴더
+      </Button>
+      <CreateFolderModal
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        parentFolderUuid={parentFolderUuid}
+      />
+    </>
+  );
+}
 
 interface UploadButtonProps {
   quota: TStorageQuota | null;
+  currentFolderUuid?: string;
 }
 
-export function UploadButton({ quota }: UploadButtonProps) {
+export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
   const router = useRouter();
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -60,7 +84,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
         continue;
       }
 
-      // DB에 저장
+      // DB에 저장 (현재 폴더에)
       const saveResult = await createMediaFile({
         url: result.url,
         publicId: result.key,
@@ -68,6 +92,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
         contentType: file.type,
         fileName: file.name,
         fileSize: result.fileSize,
+        folderUuid: currentFolderUuid,
       });
 
       if (saveResult.success) {
@@ -130,6 +155,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
 interface FilterBarProps {
   sortOrder: 'newest' | 'oldest' | 'largest' | 'smallest';
   searchQuery: string;
+  currentFolderUuid?: string;
 }
 
 const sortOptions = [
@@ -139,7 +165,7 @@ const sortOptions = [
   { id: 'smallest', label: '크기순 (작은순)' },
 ];
 
-export default function FilterBar({ sortOrder, searchQuery }: FilterBarProps) {
+export default function FilterBar({ sortOrder, searchQuery, currentFolderUuid }: FilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = React.useState(searchQuery);
@@ -147,11 +173,15 @@ export default function FilterBar({ sortOrder, searchQuery }: FilterBarProps) {
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value === '' || value === 'newest') {
+    if (value === '' || (key === 'sort' && value === 'newest')) {
       params.delete(key);
     }
     else {
       params.set(key, value);
+    }
+    // 폴더 유지
+    if (currentFolderUuid && key !== 'folder') {
+      params.set('folder', currentFolderUuid);
     }
     router.push(`/settings/files?${params.toString()}`);
   };

@@ -7,9 +7,25 @@ type Session = {
   duration: number;
   notes: string;
   isDone: boolean;
+  sessionMediaFiles?: Array<{
+    mediaFile: {
+      uuid: string;
+      url: string;
+      type: 'image' | 'video' | 'document';
+      fileName: string | null;
+    };
+  }>;
   feedback?: {
     id: number;
     notes: string;
+    feedbackMediaFiles?: Array<{
+      mediaFile: {
+        uuid: string;
+        url: string;
+        type: 'image' | 'video' | 'document';
+        fileName: string | null;
+      };
+    }>;
   } | null;
 };
 

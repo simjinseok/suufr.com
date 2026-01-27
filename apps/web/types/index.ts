@@ -142,6 +142,23 @@ export type TAppToken = {
   createdAt: Date;
 };
 
+export type TFolder = {
+  id: number;
+  uuid: string;
+  name: string;
+  parentId: number | null;
+  createdAt: Date;
+  children?: TFolder[];
+  _count?: { mediaFiles: number };
+  parent?: { id: number; uuid: string; name: string } | null;
+};
+
+export type TFolderBreadcrumb = {
+  id: number;
+  uuid: string;
+  name: string;
+};
+
 export type TMediaFile = {
   id: number;
   uuid: string;
@@ -152,6 +169,8 @@ export type TMediaFile = {
   fileSize: number;
   createdAt: Date;
   isInUse?: boolean;
+  folderId?: number | null;
+  folder?: { id: number; uuid: string; name: string } | null;
 };
 
 export type TSessionMediaFile = {

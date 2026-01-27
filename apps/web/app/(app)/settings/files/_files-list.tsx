@@ -1,17 +1,23 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Surface, Tooltip } from '@heroui/react';
-import { Trash2, ImageIcon, Video, FileX, FileTextIcon } from 'lucide-react';
+import { Button, Surface, Tooltip, Menu, Popover } from '@heroui/react';
+import { Trash2, ImageIcon, Video, FileX, FileTextIcon, MoreVertical, FolderInput } from 'lucide-react';
 
-import type { TMediaFile } from '@/types/index';
+import type { TMediaFile, TFolder } from '@/types/index';
 import FilePreviewModal from './_file-preview-modal';
 import DeleteFileModal from './_delete-file-modal';
+import FolderItem from './_folder-item';
+import EditFolderModal from './_edit-folder-modal';
+import DeleteFolderModal from './_delete-folder-modal';
+import MoveFileModal from './_move-file-modal';
 
 interface FilesListProps {
   files: TMediaFile[];
+  folders: TFolder[];
   sortOrder: 'newest' | 'oldest' | 'largest' | 'smallest';
   searchQuery: string;
+  currentFolderUuid?: string;
 }
 
 function formatBytes(bytes: number): string {
@@ -34,20 +40,43 @@ function getCloudinaryThumbnail(url: string, type: 'image' | 'video' | 'document
   return url.replace('/upload/', '/upload/c_fill,w_200,h_200/');
 }
 
-export default function FilesList({ files, sortOrder, searchQuery }: FilesListProps) {
+export default function FilesList({ files, folders, sortOrder, searchQuery, currentFolderUuid }: FilesListProps) {
   const [previewFile, setPreviewFile] = React.useState<TMediaFile | null>(null);
   const [deleteFile, setDeleteFile] = React.useState<TMediaFile | null>(null);
+  const [moveFile, setMoveFile] = React.useState<TMediaFile | null>(null);
+  const [editFolder, setEditFolder] = React.useState<TFolder | null>(null);
+  const [deleteFolder, setDeleteFolder] = React.useState<TFolder | null>(null);
+
+  // 현재 폴더에 있는 하위 폴더들 필터링
+  const currentFolders = React.useMemo(() => {
+    if (searchQuery) return []; // 검색 중에는 폴더 표시 안함
+
+    // 플랫 구조에서 현재 폴더의 직접 하위만 필터
+    const flattenAll = (items: TFolder[]): TFolder[] => {
+      const result: TFolder[] = [];
+      for (const folder of items) {
+        result.push(folder);
+        if (folder.children && folder.children.length > 0) {
+          result.push(...flattenAll(folder.children));
+        }
+      }
+      return result;
+    };
+
+    const allFolders = flattenAll(folders);
+
+    if (!currentFolderUuid) {
+      // 루트에서는 parentId가 null인 폴더들
+      return folders;
+    }
+
+    // 현재 폴더의 직접 자식들
+    const currentFolder = allFolders.find(f => f.uuid === currentFolderUuid);
+    return currentFolder?.children || [];
+  }, [folders, currentFolderUuid, searchQuery]);
 
   const filteredAndSortedFiles = React.useMemo(() => {
     let result = [...files];
-
-    // 검색어 필터링
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((file) =>
-        (file.fileName || '').toLowerCase().includes(query),
-      );
-    }
 
     // 정렬
     result.sort((a, b) => {
@@ -66,12 +95,16 @@ export default function FilesList({ files, sortOrder, searchQuery }: FilesListPr
     });
 
     return result;
-  }, [files, sortOrder, searchQuery]);
+  }, [files, sortOrder]);
 
-  if (filteredAndSortedFiles.length === 0) {
+  const isEmpty = currentFolders.length === 0 && filteredAndSortedFiles.length === 0;
+
+  if (isEmpty) {
     const emptyMessage = searchQuery
       ? `"${searchQuery}"에 대한 검색 결과가 없습니다.`
-      : '업로드된 파일이 없습니다.';
+      : currentFolderUuid
+        ? '이 폴더는 비어 있습니다.'
+        : '업로드된 파일이 없습니다.';
 
     return (
       <Surface className="p-10 border border-gray-50 rounded-xl shadow-xs">
@@ -86,12 +119,24 @@ export default function FilesList({ files, sortOrder, searchQuery }: FilesListPr
   return (
     <>
       <Surface className="border border-gray-50 rounded-xl shadow-xs divide-y divide-gray-100">
+        {/* 폴더 목록 */}
+        {currentFolders.map((folder) => (
+          <FolderItem
+            key={folder.uuid}
+            folder={folder}
+            onEdit={setEditFolder}
+            onDelete={setDeleteFolder}
+          />
+        ))}
+
+        {/* 파일 목록 */}
         {filteredAndSortedFiles.map((file) => (
           <FileRow
             key={file.uuid}
             file={file}
             onPreview={() => setPreviewFile(file)}
             onDelete={() => setDeleteFile(file)}
+            onMove={() => setMoveFile(file)}
           />
         ))}
       </Surface>
@@ -107,6 +152,24 @@ export default function FilesList({ files, sortOrder, searchQuery }: FilesListPr
         onOpenChange={(open) => !open && setDeleteFile(null)}
         file={deleteFile}
       />
+
+      <MoveFileModal
+        isOpen={!!moveFile}
+        onOpenChange={(open) => !open && setMoveFile(null)}
+        file={moveFile}
+      />
+
+      <EditFolderModal
+        isOpen={!!editFolder}
+        onOpenChange={(open) => !open && setEditFolder(null)}
+        folder={editFolder}
+      />
+
+      <DeleteFolderModal
+        isOpen={!!deleteFolder}
+        onOpenChange={(open) => !open && setDeleteFolder(null)}
+        folder={deleteFolder}
+      />
     </>
   );
 }
@@ -115,9 +178,10 @@ interface FileRowProps {
   file: TMediaFile;
   onPreview: () => void;
   onDelete: () => void;
+  onMove: () => void;
 }
 
-function FileRow({ file, onPreview, onDelete }: FileRowProps) {
+function FileRow({ file, onPreview, onDelete, onMove }: FileRowProps) {
   const thumbnailUrl = getCloudinaryThumbnail(file.url, file.type);
   const fileName = file.fileName || 'Untitled';
 
@@ -190,37 +254,37 @@ function FileRow({ file, onPreview, onDelete }: FileRowProps) {
       </button>
 
       <div className="shrink-0">
-        {file.isInUse
-          ? (
-              <Tooltip delay={100}>
-                <Tooltip.Trigger>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    isIconOnly
-                    isDisabled
-                    className="opacity-40"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Content placement="top">
-                  <Tooltip.Arrow />
-                  수업 기록에서 사용 중입니다
-                </Tooltip.Content>
-              </Tooltip>
-            )
-          : (
-              <Button
-                variant="ghost"
-                size="sm"
-                isIconOnly
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-danger"
-                onPress={onDelete}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+        <Popover>
+          <Popover.Trigger>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </Popover.Trigger>
+          <Popover.Content placement="bottom end">
+            <Menu>
+              <Menu.Item onAction={onMove}>
+                <FolderInput className="w-4 h-4" />
+                이동
+              </Menu.Item>
+              {file.isInUse ? (
+                <Menu.Item isDisabled>
+                  <Trash2 className="w-4 h-4" />
+                  삭제 (사용 중)
+                </Menu.Item>
+              ) : (
+                <Menu.Item onAction={onDelete} className="text-danger">
+                  <Trash2 className="w-4 h-4" />
+                  삭제
+                </Menu.Item>
+              )}
+            </Menu>
+          </Popover.Content>
+        </Popover>
       </div>
     </div>
   );

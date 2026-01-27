@@ -326,6 +326,27 @@ model StudentGoogleContact {
   @@map("student_google_contacts")
 }
 
+// 폴더 (파일 정리용)
+model Folder {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  name      String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+  userId    String   @map("user_id") @db.Uuid
+
+  // 중첩 폴더
+  parentId Int?     @map("parent_id")
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children Folder[] @relation("FolderHierarchy")
+
+  mediaFiles MediaFile[]
+
+  @@index([userId])
+  @@index([parentId])
+  @@map("folders")
+}
+
 // 미디어 파일 (이미지/동영상)
 model MediaFile {
   id        Int      @id @default(autoincrement())
@@ -338,12 +359,17 @@ model MediaFile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
   userId    String   @map("user_id") @db.Uuid // 소유자 (용량 관리용)
 
+  // 폴더
+  folderId Int?    @map("folder_id")
+  folder   Folder? @relation(fields: [folderId], references: [id])
+
   sessionMediaFiles        SessionMediaFile[]
   feedbackMediaFiles       FeedbackMediaFile[]
   curriculumItemMediaFiles CurriculumItemMediaFile[]
 
   @@index([userId])
   @@index([userId, fileName])
+  @@index([userId, folderId])
   @@map("media_files")
 }
 

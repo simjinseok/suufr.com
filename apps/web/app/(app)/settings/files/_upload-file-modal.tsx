@@ -13,6 +13,7 @@ interface UploadFileModalProps {
   isOpen: ModalProps['isOpen'];
   onOpenChange: ModalProps['onOpenChange'];
   quota: TStorageQuota | null;
+  folderUuid?: string;
 }
 
 function formatBytes(bytes: number): string {
@@ -25,13 +26,13 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
 }
 
-export default function UploadFileModal({ isOpen, onOpenChange, quota }: UploadFileModalProps) {
+export default function UploadFileModal({ isOpen, onOpenChange, quota, folderUuid }: UploadFileModalProps) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container className="max-w-lg">
         <Modal.Dialog>
           {({ close }) => (
-            <Content quota={quota} close={close} />
+            <Content quota={quota} folderUuid={folderUuid} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -41,10 +42,11 @@ export default function UploadFileModal({ isOpen, onOpenChange, quota }: UploadF
 
 interface ContentProps {
   quota: TStorageQuota | null;
+  folderUuid?: string;
   close: () => void;
 }
 
-function Content({ quota, close }: ContentProps) {
+function Content({ quota, folderUuid, close }: ContentProps) {
   const router = useRouter();
   const [localQuota, setLocalQuota] = React.useState<TStorageQuota | null>(quota);
   const [uploadedFiles, setUploadedFiles] = React.useState<TMediaFile[]>([]);
@@ -62,6 +64,7 @@ function Content({ quota, close }: ContentProps) {
       contentType: file.contentType,
       fileName: file.fileName,
       fileSize: file.fileSize,
+      folderUuid,
     });
 
     if (result.success && result.data) {
