@@ -17,6 +17,7 @@ import {
   ImageIcon,
   LandmarkIcon,
   LockIcon,
+  MoreVerticalIcon,
   PlusIcon,
   VideoIcon,
 } from 'lucide-react';
@@ -206,11 +207,8 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                             </button>
 
                             <div className="flex-1 min-w-0">
-                              {/* 세션 클릭 영역 */}
-                              <div
-                                className="cursor-pointer"
-                                onClick={() => setSelectedSession(session)}
-                              >
+                              {/* 세션 내용 영역 */}
+                              <div>
                                 <div className="flex items-baseline gap-2 flex-wrap">
                                   <p className="font-semibold text-gray-900">
                                     {format(new Date(session.sessionAt), 'M월 d일', { locale: ko })}
@@ -245,7 +243,6 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600 hover:bg-gray-200"
-                                        onClick={(e) => e.stopPropagation()}
                                       >
                                         <FileTypeIcon
                                           type={file.mediaFile.type}
@@ -259,53 +256,62 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                               </div>
 
                               {/* 피드백 영역 */}
-                              {getIsDone(session) && (
-                                <>
-                                  {session.feedback ? (
-                                    <div
-                                      className="mt-2.5 p-2.5 bg-gray-50 rounded-lg cursor-pointer"
-                                      onClick={() => setFeedbackSession(session)}
-                                    >
-                                      <p className="text-xs font-semibold text-indigo-600 mb-1">
-                                        피드백
-                                      </p>
-                                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                        {session.feedback.notes}
-                                      </p>
-                                      {/* 피드백 첨부파일 */}
-                                      {session.feedback.feedbackMediaFiles?.length > 0 && (
-                                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                          {session.feedback.feedbackMediaFiles.map((file: any) => (
-                                            <a
-                                              key={file.mediaFile.uuid}
-                                              href={file.mediaFile.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 rounded text-xs text-indigo-700 hover:bg-indigo-100"
-                                              onClick={(e) => e.stopPropagation()}
-                                            >
-                                              <FileTypeIcon
-                                                type={file.mediaFile.type}
-                                                className="size-3"
-                                              />
-                                              {file.mediaFile.fileName || '파일'}
-                                            </a>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className="mt-2.5 p-2.5 bg-gray-50 border border-dashed border-gray-200 rounded-lg cursor-pointer flex items-center justify-center gap-1"
-                                      onClick={() => setFeedbackSession(session)}
-                                    >
-                                      <PlusIcon className="size-3.5 text-gray-400" />
-                                      <span className="text-xs text-gray-400">피드백 추가</span>
+                              {getIsDone(session) && session.feedback && (
+                                <div className="mt-2.5 p-2.5 bg-gray-50 rounded-lg">
+                                  <p className="text-xs font-semibold text-indigo-600 mb-1">
+                                    피드백
+                                  </p>
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {session.feedback.notes}
+                                  </p>
+                                  {/* 피드백 첨부파일 */}
+                                  {session.feedback.feedbackMediaFiles?.length > 0 && (
+                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                      {session.feedback.feedbackMediaFiles.map((file: any) => (
+                                        <a
+                                          key={file.mediaFile.uuid}
+                                          href={file.mediaFile.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 rounded text-xs text-indigo-700 hover:bg-indigo-100"
+                                        >
+                                          <FileTypeIcon
+                                            type={file.mediaFile.type}
+                                            className="size-3"
+                                          />
+                                          {file.mediaFile.fileName || '파일'}
+                                        </a>
+                                      ))}
                                     </div>
                                   )}
-                                </>
+                                </div>
                               )}
                             </div>
+
+                            {/* 세션 메뉴 드롭다운 */}
+                            <Dropdown>
+                              <Button variant="ghost" size="sm" isIconOnly className="shrink-0 -mt-1 -mr-2">
+                                <MoreVerticalIcon className="size-4 text-gray-400" />
+                              </Button>
+                              <Dropdown.Popover placement="bottom end" className="min-w-36">
+                                <Dropdown.Menu>
+                                  <Dropdown.Item
+                                    key="edit-session"
+                                    onClick={() => setSelectedSession(session)}
+                                  >
+                                    수업 수정
+                                  </Dropdown.Item>
+                                  {getIsDone(session) && (
+                                    <Dropdown.Item
+                                      key="edit-feedback"
+                                      onClick={() => setFeedbackSession(session)}
+                                    >
+                                      피드백 수정
+                                    </Dropdown.Item>
+                                  )}
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
                           </div>
                         </li>
                       ))}
@@ -316,14 +322,6 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                     </div>
                   )}
 
-                  {/* 수업 추가 버튼 */}
-                  <button
-                    className="mt-3 w-full py-2.5 border-2 border-dashed border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg text-sm text-gray-500 hover:text-gray-700 font-medium transition flex items-center justify-center gap-1.5"
-                    onClick={() => setIsLessonCreating(lesson)}
-                  >
-                    <PlusIcon className="size-4" />
-                    수업 추가
-                  </button>
                 </div>
 
                 {/* 하단 섹션: 공유/결제 버튼 */}
