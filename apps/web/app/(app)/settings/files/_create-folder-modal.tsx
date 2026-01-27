@@ -58,7 +58,9 @@ function Content({ parentFolderUuid, close }: ContentProps) {
 
   React.useEffect(() => {
     if (state.success) {
-      toast.success('폴더가 생성되었습니다.');
+      toast.success('폴더가 생성되었습니다.', {
+        timeout: 2000,
+      });
       close();
     }
   }, [state.success, close]);

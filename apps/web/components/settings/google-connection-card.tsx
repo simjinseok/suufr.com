@@ -27,11 +27,13 @@ export default function GoogleConnectionCard({ status, authUrl, callbackResult }
     if (callbackResult === 'success') {
       toast.success('연동 완료', {
         description: 'Google 계정이 연결되었습니다.',
+        timeout: 3000,
       });
     }
     else {
       toast.danger('연동 실패', {
         description: callbackResult,
+        timeout: 3000,
       });
     }
 

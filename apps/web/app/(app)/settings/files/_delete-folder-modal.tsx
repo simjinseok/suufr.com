@@ -52,13 +52,16 @@ function Content({ folder, close }: ContentProps) {
         if (deletedFiles > 0) parts.push(`파일 ${deletedFiles}개`);
         message = `${parts.join(', ')}가 삭제되었습니다.`;
       }
-      toast.success(message);
+      toast.success(message, {
+        timeout: 3000,
+      });
       router.push('/settings/files');
       router.refresh();
       close();
     } else {
       toast.danger('삭제 실패', {
         description: result.message || '폴더 삭제에 실패했습니다.',
+        timeout: 3000,
       });
     }
 

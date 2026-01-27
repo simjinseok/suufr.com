@@ -58,6 +58,7 @@ function Content({ file, close }: ContentProps) {
       if (result.success) {
         toast.success('파일 삭제 완료', {
           description: '파일이 성공적으로 삭제되었습니다.',
+          timeout: 3000,
         });
         close();
         router.refresh();
@@ -65,6 +66,7 @@ function Content({ file, close }: ContentProps) {
       else {
         toast.danger('파일 삭제 실패', {
           description: result.message || '파일을 삭제할 수 없습니다.',
+          timeout: 3000,
         });
       }
     }

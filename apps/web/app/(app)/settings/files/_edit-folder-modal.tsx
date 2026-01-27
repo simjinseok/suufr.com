@@ -56,7 +56,9 @@ function Content({ folder, close }: ContentProps) {
 
   React.useEffect(() => {
     if (state.success) {
-      toast.success('폴더 이름이 변경되었습니다.');
+      toast.success('폴더 이름이 변경되었습니다.', {
+        timeout: 3000,
+      });
       close();
     }
   }, [state.success, close]);

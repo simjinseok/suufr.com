@@ -59,6 +59,7 @@ export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
       if (!validation.valid) {
         toast.danger('업로드 실패', {
           description: validation.error || '유효하지 않은 파일입니다.',
+          timeout: 3000,
         });
         errorCount++;
         continue;
