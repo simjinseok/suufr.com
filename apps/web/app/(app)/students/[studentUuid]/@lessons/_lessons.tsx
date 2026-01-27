@@ -103,7 +103,14 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
 
   const handleToggleDone = async (session: TSession, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newIsDone = !(optimisticDone[session.uuid] ?? session.isDone);
+    const currentIsDone = optimisticDone[session.uuid] ?? session.isDone;
+    const newIsDone = !currentIsDone;
+
+    // 완료 해제 시 확인창
+    if (currentIsDone && !newIsDone) {
+      const confirmed = window.confirm('수업 완료를 해제하시겠습니까?');
+      if (!confirmed) return;
+    }
 
     // 낙관적 업데이트 + 애니메이션 트리거
     setOptimisticDone(prev => ({ ...prev, [session.uuid]: newIsDone }));
