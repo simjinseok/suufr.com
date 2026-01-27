@@ -65,6 +65,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
         url: result.url,
         publicId: result.key,
         type: result.resourceType,
+        contentType: file.type,
         fileName: file.name,
         fileSize: result.fileSize,
       });
@@ -117,7 +118,7 @@ export function UploadButton({ quota }: UploadButtonProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,application/pdf"
         multiple
         className="hidden"
         onChange={handleFileSelect}

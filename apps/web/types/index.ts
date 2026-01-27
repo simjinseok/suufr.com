@@ -147,7 +147,7 @@ export type TMediaFile = {
   uuid: string;
   url: string;
   publicId: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'document';
   fileName: string | null;
   fileSize: number;
   createdAt: Date;
@@ -177,7 +177,8 @@ export type TStorageQuota = {
 export type TTempMediaFile = {
   url: string;
   publicId: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'document';
+  contentType: string;
   fileName: string;
   fileSize: number;
 };

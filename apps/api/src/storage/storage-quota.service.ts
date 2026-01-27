@@ -79,6 +79,56 @@ export class StorageQuotaService {
   }
 
   /**
+   * 비관적 락을 사용한 용량 예약 (동시성 제어)
+   * 동시 업로드 시 Race Condition 방지
+   * @param userId - 사용자 ID
+   * @param fileSize - 예약할 파일 크기 (바이트)
+   * @returns 예약 성공 여부
+   */
+  async reserveQuotaWithLock(userId: string, fileSize: number): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE로 행 잠금
+      const result = await tx.$queryRaw<Array<{ used_bytes: bigint }>>`
+        SELECT used_bytes FROM user_storage_quotas
+        WHERE user_id = ${userId}::uuid
+        FOR UPDATE
+      `;
+
+      const usedBytes = result[0]?.used_bytes ?? BigInt(0);
+
+      // 용량 초과 확인
+      if (Number(usedBytes) + fileSize > DEFAULT_QUOTA_BYTES) {
+        return false;
+      }
+
+      // 용량 예약 (증가)
+      await tx.userStorageQuota.upsert({
+        where: { userId },
+        create: {
+          userId,
+          usedBytes: BigInt(fileSize),
+        },
+        update: {
+          usedBytes: {
+            increment: BigInt(fileSize),
+          },
+        },
+      });
+
+      return true;
+    });
+  }
+
+  /**
+   * 예약된 용량 해제 (업로드 실패 시 롤백)
+   * @param userId - 사용자 ID
+   * @param bytes - 해제할 바이트 수
+   */
+  async releaseReservedQuota(userId: string, bytes: number): Promise<void> {
+    await this.decreaseUsage(userId, bytes);
+  }
+
+  /**
    * 사용량 감소 (파일 삭제 시)
    * @param userId - 사용자 ID
    * @param bytes - 감소할 바이트 수

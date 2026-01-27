@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Modal, ModalProps, Surface, toast } from '@heroui/react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, FileTextIcon } from 'lucide-react';
 
 import MediaFileUploadZone from '@/components/media/media-file-upload-zone';
 import { createMediaFile } from '@/actions/storage';
@@ -54,11 +54,12 @@ function Content({ quota, close }: ContentProps) {
   const isNearQuota = usagePercent >= 80;
 
   const handleUploadComplete = async (file: TTempMediaFile) => {
-    // Cloudinary 업로드 완료 후 DB에 저장
+    // S3 업로드 완료 후 DB에 저장
     const result = await createMediaFile({
       url: file.url,
       publicId: file.publicId,
       type: file.type,
+      contentType: file.contentType,
       fileName: file.fileName,
       fileSize: file.fileSize,
     });
@@ -146,21 +147,30 @@ function Content({ quota, close }: ContentProps) {
                     className="relative aspect-square rounded-lg overflow-hidden flex items-center justify-center ring-2 ring-accent"
                     variant="secondary"
                   >
-                    {file.type === 'video'
+                    {file.type === 'image'
                       ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs text-default-400 px-1 truncate max-w-full">
-                              {file.fileName || 'video'}
-                            </span>
-                          </div>
-                        )
-                      : (
                           <img
                             src={file.url}
                             alt={file.fileName || 'image'}
                             className="w-full h-full object-cover"
                           />
-                        )}
+                        )
+                      : file.type === 'video'
+                        ? (
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-xs text-default-400 px-1 truncate max-w-full">
+                                {file.fileName || 'video'}
+                              </span>
+                            </div>
+                          )
+                        : (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <FileTextIcon className="w-6 h-6 text-default-400" />
+                              <span className="text-xs text-default-400 px-1 truncate max-w-full">
+                                {file.fileName || 'PDF'}
+                              </span>
+                            </div>
+                          )}
                     <div className="absolute top-1 right-1 size-5 bg-accent text-white rounded-full flex items-center justify-center">
                       <CheckCircle className="size-3" />
                     </div>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button, Modal, ModalProps } from '@heroui/react';
-import { X, ImageIcon, Video } from 'lucide-react';
+import { X, ImageIcon, Video, FileTextIcon, ExternalLink } from 'lucide-react';
 
 import type { TMediaFile } from '@/types/index';
 
@@ -56,13 +56,22 @@ interface ContentProps {
 function Content({ file, close }: ContentProps) {
   const fileName = file.fileName || 'Untitled';
 
+  const getTypeIcon = () => {
+    switch (file.type) {
+      case 'image':
+        return <ImageIcon className="w-5 h-5 text-gray-500" />;
+      case 'video':
+        return <Video className="w-5 h-5 text-gray-500" />;
+      case 'document':
+        return <FileTextIcon className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
   return (
     <React.Fragment>
       <Modal.Header>
         <div className="flex items-center gap-2">
-          {file.type === 'image'
-            ? <ImageIcon className="w-5 h-5 text-gray-500" />
-            : <Video className="w-5 h-5 text-gray-500" />}
+          {getTypeIcon()}
           <Modal.Heading className="truncate">{fileName}</Modal.Heading>
         </div>
         <Button
@@ -84,15 +93,29 @@ function Content({ file, close }: ContentProps) {
                   className="max-w-full max-h-[70vh] object-contain"
                 />
               )
-            : (
-                <video
-                  src={file.url}
-                  controls
-                  className="max-w-full max-h-[70vh]"
-                >
-                  브라우저가 동영상 재생을 지원하지 않습니다.
-                </video>
-              )}
+            : file.type === 'video'
+              ? (
+                  <video
+                    src={file.url}
+                    controls
+                    className="max-w-full max-h-[70vh]"
+                  >
+                    브라우저가 동영상 재생을 지원하지 않습니다.
+                  </video>
+                )
+              : (
+                  <div className="flex flex-col items-center justify-center gap-4 p-8">
+                    <FileTextIcon className="w-16 h-16 text-gray-400" />
+                    <p className="text-gray-400 text-center">{fileName}</p>
+                    <Button
+                      variant="primary"
+                      onPress={() => window.open(file.url, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      새 탭에서 열기
+                    </Button>
+                  </div>
+                )}
         </div>
         <div className="p-4 border-t border-gray-100">
           <dl className="grid grid-cols-2 gap-2 text-sm">

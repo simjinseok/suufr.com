@@ -8,8 +8,11 @@ export class CreateMediaFileDto {
   @IsString()
   publicId!: string;
 
-  @IsIn(['image', 'video'])
-  type!: 'image' | 'video';
+  @IsIn(['image', 'video', 'document'])
+  type!: 'image' | 'video' | 'document';
+
+  @IsString()
+  contentType!: string; // MIME type (image/jpeg, video/mp4, etc.)
 
   @IsString()
   @IsOptional()

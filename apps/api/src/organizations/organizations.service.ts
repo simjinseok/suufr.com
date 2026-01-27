@@ -58,9 +58,10 @@ export class OrganizationsService {
     let oldProfileImageUrl: string | null = null;
 
     if (dto.profileImageUrl !== undefined) {
-     if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-         // temp에서 images로 이동 (200x200 크롭 적용)
-         finalProfileImageUrl = await this.s3Service.moveProfileImage(dto.profileImageUrl);
+      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
+        // temp에서 images로 이동
+        const moved = await this.s3Service.moveFileByContentType(dto.profileImageUrl, 'image/jpeg');
+        finalProfileImageUrl = moved?.url ?? null;
         oldProfileImageUrl = organization.profileImageUrl;
       }
       else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
@@ -77,9 +78,10 @@ export class OrganizationsService {
     let oldLogoImageUrl: string | null = null;
 
     if (dto.logoImageUrl !== undefined) {
-     if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
-         // temp에서 images로 이동 (원본 유지)
-         finalLogoImageUrl = await this.s3Service.moveLogoImage(dto.logoImageUrl);
+      if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
+        // temp에서 images로 이동
+        const moved = await this.s3Service.moveFileByContentType(dto.logoImageUrl, 'image/png');
+        finalLogoImageUrl = moved?.url ?? null;
         oldLogoImageUrl = organization.logoImageUrl;
       }
       else if (dto.logoImageUrl === null || dto.logoImageUrl === '') {
@@ -103,21 +105,21 @@ export class OrganizationsService {
       },
     });
 
-     // 기존 이미지 삭제 (response 후 비동기로 처리)
-     if (oldProfileImageUrl) {
-       setImmediate(() => {
-         this.s3Service.deleteByUrl(oldProfileImageUrl).catch((err) => {
-           console.error('Failed to delete old profile image:', err);
-         });
-       });
-     }
-     if (oldLogoImageUrl) {
-       setImmediate(() => {
-         this.s3Service.deleteByUrl(oldLogoImageUrl).catch((err) => {
-           console.error('Failed to delete old logo image:', err);
-         });
-       });
-     }
+    // 기존 이미지 삭제 (response 후 비동기로 처리)
+    if (oldProfileImageUrl) {
+      setImmediate(() => {
+        this.s3Service.deleteByUrl(oldProfileImageUrl).catch((err) => {
+          console.error('Failed to delete old profile image:', err);
+        });
+      });
+    }
+    if (oldLogoImageUrl) {
+      setImmediate(() => {
+        this.s3Service.deleteByUrl(oldLogoImageUrl).catch((err) => {
+          console.error('Failed to delete old logo image:', err);
+        });
+      });
+    }
 
     return { success: true, data: updated };
   }

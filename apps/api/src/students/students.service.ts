@@ -123,10 +123,11 @@ export class StudentsService {
     let finalProfileImageUrl: string | null | undefined = undefined;
     let oldImageUrlToDelete: string | null = null;
 
-     if (dto.profileImageUrl !== undefined) {
-       if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-         // temp에서 images로 이동 (200x200 크롭 적용)
-         finalProfileImageUrl = await this.s3Service.moveProfileImage(dto.profileImageUrl);
+    if (dto.profileImageUrl !== undefined) {
+      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
+        // temp에서 images로 이동
+        const moved = await this.s3Service.moveFileByContentType(dto.profileImageUrl, 'image/jpeg');
+        finalProfileImageUrl = moved?.url ?? null;
         // 기존 이미지는 response 후에 삭제
         oldImageUrlToDelete = existing.profileImageUrl;
       }
@@ -155,14 +156,14 @@ export class StudentsService {
       },
     });
 
-     // 기존 이미지 삭제 (response 후 비동기로 처리)
-     if (oldImageUrlToDelete) {
-       setImmediate(() => {
-         this.s3Service.deleteByUrl(oldImageUrlToDelete).catch((err) => {
-           console.error('Failed to delete old image:', err);
-         });
-       });
-     }
+    // 기존 이미지 삭제 (response 후 비동기로 처리)
+    if (oldImageUrlToDelete) {
+      setImmediate(() => {
+        this.s3Service.deleteByUrl(oldImageUrlToDelete).catch((err) => {
+          console.error('Failed to delete old image:', err);
+        });
+      });
+    }
 
     return { success: true, data: student };
   }

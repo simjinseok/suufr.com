@@ -3,7 +3,7 @@
  * presigned URL을 사용하여 서버를 거치지 않고 업로드
  */
 
-export type ResourceType = 'image' | 'video';
+export type ResourceType = 'image' | 'video' | 'document';
 
 export type UploadResult = {
   success: true;
@@ -19,10 +19,12 @@ export type UploadResult = {
 // 지원되는 파일 형식
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+const SUPPORTED_DOCUMENT_TYPES = ['application/pdf'];
 
 // 파일 크기 제한 (바이트)
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB
 
 /**
  * 파일의 리소스 타입 확인
@@ -33,6 +35,9 @@ export function getResourceType(file: File): ResourceType | null {
   }
   if (SUPPORTED_VIDEO_TYPES.includes(file.type)) {
     return 'video';
+  }
+  if (SUPPORTED_DOCUMENT_TYPES.includes(file.type)) {
+    return 'document';
   }
   return null;
 }
@@ -53,6 +58,10 @@ export function validateFile(file: File): { valid: true } | { valid: false; erro
 
   if (resourceType === 'video' && file.size > MAX_VIDEO_SIZE) {
     return { valid: false, error: '동영상은 100MB 이하만 업로드할 수 있습니다.' };
+  }
+
+  if (resourceType === 'document' && file.size > MAX_DOCUMENT_SIZE) {
+    return { valid: false, error: 'PDF는 50MB 이하만 업로드할 수 있습니다.' };
   }
 
   return { valid: true };
@@ -116,6 +125,7 @@ export async function uploadToS3(
     };
   }
   catch (error) {
+    console.log(error);
     console.error('S3 upload error:', error);
     return { success: false, error: '업로드 중 오류가 발생했습니다.' };
   }

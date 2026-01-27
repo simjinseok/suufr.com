@@ -12,6 +12,9 @@ export class CreateMediaFileDto {
   type!: 'image' | 'video';
 
   @IsString()
+  contentType!: string; // MIME type (image/jpeg, video/mp4, etc.)
+
+  @IsString()
   @IsOptional()
   fileName?: string;
 

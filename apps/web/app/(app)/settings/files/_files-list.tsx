@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button, Surface, Tooltip } from '@heroui/react';
-import { Trash2, ImageIcon, Video, FileX } from 'lucide-react';
+import { Trash2, ImageIcon, Video, FileX, FileTextIcon } from 'lucide-react';
 
 import type { TMediaFile } from '@/types/index';
 import FilePreviewModal from './_file-preview-modal';
@@ -24,7 +24,10 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
 }
 
-function getCloudinaryThumbnail(url: string, type: 'image' | 'video'): string {
+function getCloudinaryThumbnail(url: string, type: 'image' | 'video' | 'document'): string | null {
+  if (type === 'document') {
+    return null; // PDFs don't have thumbnails
+  }
   if (type === 'video') {
     return url.replace('/upload/', '/upload/c_fill,w_200,h_200,so_0/').replace(/\.\w+$/, '.jpg');
   }
@@ -118,6 +121,28 @@ function FileRow({ file, onPreview, onDelete }: FileRowProps) {
   const thumbnailUrl = getCloudinaryThumbnail(file.url, file.type);
   const fileName = file.fileName || 'Untitled';
 
+  const getTypeIcon = () => {
+    switch (file.type) {
+      case 'image':
+        return <ImageIcon className="w-3.5 h-3.5" />;
+      case 'video':
+        return <Video className="w-3.5 h-3.5" />;
+      case 'document':
+        return <FileTextIcon className="w-3.5 h-3.5" />;
+    }
+  };
+
+  const getTypeLabel = () => {
+    switch (file.type) {
+      case 'image':
+        return '이미지';
+      case 'video':
+        return '동영상';
+      case 'document':
+        return 'PDF';
+    }
+  };
+
   return (
     <div className="group flex items-center gap-4 p-3 hover:bg-gray-50 transition-colors">
       <button
@@ -125,15 +150,23 @@ function FileRow({ file, onPreview, onDelete }: FileRowProps) {
         className="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-gray-100 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         onClick={onPreview}
       >
-        <img
-          src={thumbnailUrl}
-          alt={fileName}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-        {file.type === 'video' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <Video className="w-5 h-5 text-white" />
+        {thumbnailUrl ? (
+          <>
+            <img
+              src={thumbnailUrl}
+              alt={fileName}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {file.type === 'video' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <Video className="w-5 h-5 text-white" />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <FileTextIcon className="w-6 h-6 text-gray-400" />
           </div>
         )}
       </button>
@@ -148,10 +181,8 @@ function FileRow({ file, onPreview, onDelete }: FileRowProps) {
         </p>
         <div className="flex items-center gap-2 mt-0.5 text-sm text-gray-500">
           <span className="flex items-center gap-1">
-            {file.type === 'image'
-              ? <ImageIcon className="w-3.5 h-3.5" />
-              : <Video className="w-3.5 h-3.5" />}
-            {file.type === 'image' ? '이미지' : '동영상'}
+            {getTypeIcon()}
+            {getTypeLabel()}
           </span>
           <span>·</span>
           <span>{formatBytes(file.fileSize)}</span>

@@ -53,7 +53,8 @@ export async function getMyMediaFiles(): Promise<TMediaFile[]> {
 export type CreateMediaFileData = {
   url: string;
   publicId: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'document';
+  contentType: string;
   fileName: string;
   fileSize: number;
 };
@@ -75,6 +76,7 @@ export async function createMediaFile(data: CreateMediaFileData): Promise<Create
       }
 
       try {
+        console.log('data', JSON.stringify(data))
         const result = await storageApi.createFile(data);
         const { revalidatePath } = await import('next/cache');
         revalidatePath('/settings/files');

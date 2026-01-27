@@ -14,7 +14,8 @@ type MediaFilesResponse = {
 type CreateMediaFileData = {
   url: string;
   publicId: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'document';
+  contentType: string;
   fileName: string;
   fileSize: number;
 };

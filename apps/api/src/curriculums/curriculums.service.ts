@@ -205,20 +205,20 @@ export class CurriculumsService {
       }
     }
 
-     // 새 파일들 temp → media 폴더로 이동
-     const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
-     if (dto.newMediaFiles) {
-       for (const fileDto of dto.newMediaFiles) {
-         const result = await this.s3Service.moveMediaFile(fileDto.url);
-         if (!result) {
-           throw new BadRequestException('파일 이동에 실패했습니다.');
-         }
-         movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
-       }
-     }
+    // 새 파일들 temp → 적절한 폴더로 이동 (contentType 기반)
+    const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
+    if (dto.newMediaFiles) {
+      for (const fileDto of dto.newMediaFiles) {
+        const result = await this.s3Service.moveFileByContentType(fileDto.url, fileDto.contentType);
+        if (!result) {
+          throw new BadRequestException('파일 이동에 실패했습니다.');
+        }
+        movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
+      }
+    }
 
-     // 트랜잭션으로 DB 작업 수행
-     const item = await this.prisma.$transaction(async (tx) => {
+    // 트랜잭션으로 DB 작업 수행
+    const item = await this.prisma.$transaction(async (tx) => {
       // CurriculumItem 생성
       const newItem = await tx.curriculumItem.create({
         data: {
@@ -228,50 +228,50 @@ export class CurriculumsService {
         },
       });
 
-       // 새 MediaFile 레코드 생성 및 연결
-       for (const moved of movedFiles) {
-         const mediaFile = await tx.mediaFile.create({
-           data: {
-             url: moved.url,
-             publicId: moved.key,
-             type: moved.dto.type,
-             fileName: moved.dto.fileName,
-             fileSize: moved.dto.fileSize,
-             userId,
-           },
-         });
+      // 새 MediaFile 레코드 생성 및 연결
+      for (const moved of movedFiles) {
+        const mediaFile = await tx.mediaFile.create({
+          data: {
+            url: moved.url,
+            publicId: moved.key,
+            type: moved.dto.type,
+            fileName: moved.dto.fileName,
+            fileSize: moved.dto.fileSize,
+            userId,
+          },
+        });
 
-         await tx.curriculumItemMediaFile.create({
-           data: {
-             curriculumItemId: newItem.id,
-             mediaFileId: mediaFile.id,
-           },
-         });
-       }
+        await tx.curriculumItemMediaFile.create({
+          data: {
+            curriculumItemId: newItem.id,
+            mediaFileId: mediaFile.id,
+          },
+        });
+      }
 
-       // 기존 파일 연결
-       for (const existingFile of existingMediaFiles) {
-         await tx.curriculumItemMediaFile.create({
-           data: {
-             curriculumItemId: newItem.id,
-             mediaFileId: existingFile.id,
-           },
-         });
-       }
+      // 기존 파일 연결
+      for (const existingFile of existingMediaFiles) {
+        await tx.curriculumItemMediaFile.create({
+          data: {
+            curriculumItemId: newItem.id,
+            mediaFileId: existingFile.id,
+          },
+        });
+      }
 
-       // 용량 증가
-       if (movedFiles.length > 0) {
-         const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-         await this.storageQuotaService.increaseUsage(userId, totalSize);
-       }
+      // 용량 증가
+      if (movedFiles.length > 0) {
+        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+        await this.storageQuotaService.increaseUsage(userId, totalSize);
+      }
 
-       return newItem;
-     });
+      return newItem;
+    });
 
-     return this.findItem(item.uuid, userId);
-   }
+    return this.findItem(item.uuid, userId);
+  }
 
-   async findItem(uuid: string, userId: string) {
+  async findItem(uuid: string, userId: string) {
     const item = await this.prisma.curriculumItem.findFirst({
       where: {
         uuid,
@@ -363,20 +363,20 @@ export class CurriculumsService {
       );
     }
 
-     // 새 파일들 temp → media 폴더로 이동
-     const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
-     if (dto.addNewMediaFiles) {
-       for (const fileDto of dto.addNewMediaFiles) {
-         const result = await this.s3Service.moveMediaFile(fileDto.url);
-         if (!result) {
-           throw new BadRequestException('파일 이동에 실패했습니다.');
-         }
-         movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
-       }
-     }
+    // 새 파일들 temp → 적절한 폴더로 이동 (contentType 기반)
+    const movedFiles: { url: string; key: string; dto: CreateMediaFileDto }[] = [];
+    if (dto.addNewMediaFiles) {
+      for (const fileDto of dto.addNewMediaFiles) {
+        const result = await this.s3Service.moveFileByContentType(fileDto.url, fileDto.contentType);
+        if (!result) {
+          throw new BadRequestException('파일 이동에 실패했습니다.');
+        }
+        movedFiles.push({ url: result.url, key: result.key, dto: fileDto });
+      }
+    }
 
-     // 트랜잭션으로 DB 작업 수행
-     await this.prisma.$transaction(async (tx) => {
+    // 트랜잭션으로 DB 작업 수행
+    await this.prisma.$transaction(async (tx) => {
       // CurriculumItem 업데이트
       await tx.curriculumItem.update({
         where: { uuid },
@@ -393,57 +393,57 @@ export class CurriculumsService {
         });
       }
 
-       // 새 MediaFile 레코드 생성 및 연결
-       for (const moved of movedFiles) {
-         const mediaFile = await tx.mediaFile.create({
-           data: {
-             url: moved.url,
-             publicId: moved.key,
-             type: moved.dto.type,
-             fileName: moved.dto.fileName,
-             fileSize: moved.dto.fileSize,
-             userId,
-           },
-         });
+      // 새 MediaFile 레코드 생성 및 연결
+      for (const moved of movedFiles) {
+        const mediaFile = await tx.mediaFile.create({
+          data: {
+            url: moved.url,
+            publicId: moved.key,
+            type: moved.dto.type,
+            fileName: moved.dto.fileName,
+            fileSize: moved.dto.fileSize,
+            userId,
+          },
+        });
 
-         await tx.curriculumItemMediaFile.create({
-           data: {
-             curriculumItemId: item.id,
-             mediaFileId: mediaFile.id,
-           },
-         });
-       }
+        await tx.curriculumItemMediaFile.create({
+          data: {
+            curriculumItemId: item.id,
+            mediaFileId: mediaFile.id,
+          },
+        });
+      }
 
-       // 기존 파일 연결
-       for (const existingFile of existingMediaFiles) {
-         const existingLink = await tx.curriculumItemMediaFile.findFirst({
-           where: {
-             curriculumItemId: item.id,
-             mediaFileId: existingFile.id,
-           },
-         });
+      // 기존 파일 연결
+      for (const existingFile of existingMediaFiles) {
+        const existingLink = await tx.curriculumItemMediaFile.findFirst({
+          where: {
+            curriculumItemId: item.id,
+            mediaFileId: existingFile.id,
+          },
+        });
 
-         if (!existingLink) {
-           await tx.curriculumItemMediaFile.create({
-             data: {
-               curriculumItemId: item.id,
-               mediaFileId: existingFile.id,
-             },
-           });
-         }
-       }
+        if (!existingLink) {
+          await tx.curriculumItemMediaFile.create({
+            data: {
+              curriculumItemId: item.id,
+              mediaFileId: existingFile.id,
+            },
+          });
+        }
+      }
 
-       // 용량 증가
-       if (movedFiles.length > 0) {
-         const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
-         await this.storageQuotaService.increaseUsage(userId, totalSize);
-       }
-     });
+      // 용량 증가
+      if (movedFiles.length > 0) {
+        const totalSize = movedFiles.reduce((sum, f) => sum + f.dto.fileSize, 0);
+        await this.storageQuotaService.increaseUsage(userId, totalSize);
+      }
+    });
 
-     return this.findItem(uuid, userId);
-   }
+    return this.findItem(uuid, userId);
+  }
 
-   async removeItem(uuid: string, userId: string) {
+  async removeItem(uuid: string, userId: string) {
     const item = await this.prisma.curriculumItem.findFirst({
       where: {
         uuid,

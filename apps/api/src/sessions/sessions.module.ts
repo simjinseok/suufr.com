@@ -3,9 +3,10 @@ import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
 import { StorageModule } from '../storage/storage.module';
 import { GoogleModule } from '../google/google.module';
+import { S3Module } from '../s3/s3.module';
 
 @Module({
-  imports: [StorageModule, GoogleModule],
+  imports: [StorageModule, GoogleModule, S3Module],
   controllers: [SessionsController],
   providers: [SessionsService],
   exports: [SessionsService],

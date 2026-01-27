@@ -421,31 +421,31 @@ export class CarddavService {
       updateData.birthDay = updates.birthDay ?? null;
     }
 
-     // 5. Handle photo update (S3 실패 시 다른 필드는 계속 업데이트)
-     if (updates.photoBase64 !== undefined) {
-       try {
-         // 기존 사진이 있으면 삭제
-         if (student.profileImageUrl) {
-           await this.s3Service.deleteByUrl(student.profileImageUrl);
-         }
+    // 5. Handle photo update (S3 실패 시 다른 필드는 계속 업데이트)
+    if (updates.photoBase64 !== undefined) {
+      try {
+        // 기존 사진이 있으면 삭제
+        if (student.profileImageUrl) {
+          await this.s3Service.deleteByUrl(student.profileImageUrl);
+        }
 
-         if (updates.photoBase64) {
-           // 새 사진 업로드
-           const mediaType = updates.photoMediaType ?? 'image/jpeg';
-           const newPhotoUrl = await this.s3Service.uploadPhoto(updates.photoBase64, mediaType);
-           updateData.profileImageUrl = newPhotoUrl;
-         }
-         else {
-           // 사진 삭제 (null로 설정)
-           updateData.profileImageUrl = null;
-         }
-       }
-       catch (error) {
-         // 사진 업로드 실패 시 로깅하고 다른 필드는 계속 업데이트
-         console.error('Photo upload failed:', error);
-         // profileImageUrl은 업데이트하지 않음 (기존 값 유지)
-       }
-     }
+        if (updates.photoBase64) {
+          // 새 사진 업로드
+          const mediaType = updates.photoMediaType ?? 'image/jpeg';
+          const newPhotoUrl = await this.s3Service.uploadPhoto(updates.photoBase64, mediaType);
+          updateData.profileImageUrl = newPhotoUrl;
+        }
+        else {
+          // 사진 삭제 (null로 설정)
+          updateData.profileImageUrl = null;
+        }
+      }
+      catch (error) {
+        // 사진 업로드 실패 시 로깅하고 다른 필드는 계속 업데이트
+        console.error('Photo upload failed:', error);
+        // profileImageUrl은 업데이트하지 않음 (기존 값 유지)
+      }
+    }
 
     // 6. Update student
     const updatedStudent = await this.prisma.student.update({

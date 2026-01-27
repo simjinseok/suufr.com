@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, Loader2Icon } from 'lucide-react';
+import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, FileTextIcon, Loader2Icon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
 import { uploadToS3, validateFile, getResourceType } from '@/utils/s3-upload';
 import type { TTempMediaFile } from '@/types/index';
@@ -58,6 +58,7 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
           url: result.url,
           publicId: result.key,
           type: result.resourceType,
+          contentType: file.type,
           fileName: file.name,
           fileSize: result.fileSize,
         });
@@ -106,6 +107,7 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
     const type = getResourceType(file);
     if (type === 'image') return <ImageIcon className="size-4" />;
     if (type === 'video') return <VideoIcon className="size-4" />;
+    if (type === 'document') return <FileTextIcon className="size-4" />;
     return <FileIcon className="size-4" />;
   };
 
@@ -128,12 +130,12 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
           파일을 드래그하거나 클릭하여 업로드
         </p>
         <p className="text-xs text-default-400">
-          이미지 (10MB) / 동영상 (100MB)
+          이미지 (10MB) / 동영상 (100MB) / PDF (50MB)
         </p>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,application/pdf"
           multiple
           className="hidden"
           onChange={handleFileSelect}
