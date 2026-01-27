@@ -47,6 +47,12 @@ export class S3Service {
     this.cloudFrontKeyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
     // Private key may contain escaped newlines
     this.cloudFrontPrivateKey = process.env.CLOUDFRONT_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    // Debug: 환경변수 처리 확인 (임시 로그)
+    console.log('[S3Service] CLOUDFRONT_PRIVATE_KEY raw (first 50):',
+      JSON.stringify(process.env.CLOUDFRONT_PRIVATE_KEY?.substring(0, 50)));
+    console.log('[S3Service] After replace (first 50):',
+      JSON.stringify(this.cloudFrontPrivateKey?.substring(0, 50)));
   }
 
   /**
