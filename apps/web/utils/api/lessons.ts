@@ -103,25 +103,27 @@ type SharedLessonOrganization = {
 };
 
 type SharedLessonSession = {
-  id: number;
   uuid: string;
   sessionAt: string;
   duration: number;
   notes: string;
   isDone: boolean;
+  sessionMediaFiles?: Array<{
+    mediaFile: {
+      uuid: string;
+      url: string;
+      type: 'image' | 'video' | 'document';
+      fileName: string | null;
+    };
+  }>;
   feedback: {
-    id: number;
     notes: string;
     feedbackMediaFiles?: Array<{
-      id: number;
       mediaFile: {
-        id: number;
         uuid: string;
         url: string;
-        type: 'image' | 'video';
+        type: 'image' | 'video' | 'document';
         fileName: string | null;
-        fileSize: number;
-        createdAt: string;
       };
     }>;
   } | null;

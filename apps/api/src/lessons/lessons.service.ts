@@ -309,9 +309,16 @@ export class LessonsService {
   async getByShareId(shareId: string) {
     const share = await this.prisma.sessionShare.findUnique({
       where: { shareId },
-      include: {
+      select: {
+        shareId: true,
+        expiresAt: true,
+        deletedAt: true,
         lesson: {
-          include: {
+          select: {
+            uuid: true,
+            title: true,
+            notes: true,
+            deletedAt: true,
             student: {
               select: {
                 name: true,
@@ -334,19 +341,43 @@ export class LessonsService {
             sessions: {
               where: { deletedAt: null },
               orderBy: { sessionAt: 'asc' },
-              include: {
+              select: {
+                uuid: true,
+                sessionAt: true,
+                duration: true,
+                notes: true,
+                isDone: true,
                 feedback: {
                   where: { deletedAt: null },
-                  include: {
+                  select: {
+                    notes: true,
                     feedbackMediaFiles: {
                       orderBy: { createdAt: 'asc' },
-                      include: { mediaFile: true },
+                      select: {
+                        mediaFile: {
+                          select: {
+                            uuid: true,
+                            url: true,
+                            type: true,
+                            fileName: true,
+                          },
+                        },
+                      },
                     },
                   },
                 },
                 sessionMediaFiles: {
                   orderBy: { createdAt: 'asc' },
-                  include: { mediaFile: true },
+                  select: {
+                    mediaFile: {
+                      select: {
+                        uuid: true,
+                        url: true,
+                        type: true,
+                        fileName: true,
+                      },
+                    },
+                  },
                 },
               },
             },
