@@ -2,15 +2,7 @@
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 
-import * as React from 'react';
 import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon, PaperclipIcon } from 'lucide-react';
-import FilePreviewModal from './_file-preview-modal';
-
-type PreviewFile = {
-  url: string;
-  type: 'image' | 'video';
-  fileName: string | null;
-};
 
 type MediaFile = {
   uuid: string;
@@ -62,22 +54,6 @@ function getFileIcon(type: 'image' | 'video' | 'document') {
 }
 
 export default function LessonView({ lesson, teacher }: Props) {
-  const [previewFile, setPreviewFile] = React.useState<PreviewFile | null>(null);
-
-  const handleFileClick = (mediaFile: MediaFile) => {
-    if (mediaFile.type === 'document') {
-      // document 타입은 새 탭에서 열기
-      window.open(mediaFile.url, '_blank');
-    } else {
-      // image, video는 모달로 미리보기
-      setPreviewFile({
-        url: mediaFile.url,
-        type: mediaFile.type,
-        fileName: mediaFile.fileName,
-      });
-    }
-  };
-
   return (
     <div className="bg-white py-4 border border-gray-100 rounded-xl shadow-xs">
       {/* 레슨 타이틀 */}
@@ -141,14 +117,15 @@ export default function LessonView({ lesson, teacher }: Props) {
                           <ul className="space-y-1">
                             {session.sessionMediaFiles.map(({ mediaFile }) => (
                               <li key={mediaFile.uuid}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleFileClick(mediaFile)}
+                                <a
+                                  href={mediaFile.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 hover:underline"
                                 >
                                   {getFileIcon(mediaFile.type)}
                                   <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
-                                </button>
+                                </a>
                               </li>
                             ))}
                           </ul>
@@ -168,14 +145,15 @@ export default function LessonView({ lesson, teacher }: Props) {
                             <ul className="mt-2 space-y-1">
                               {session.feedback.feedbackMediaFiles.map(({ mediaFile }) => (
                                 <li key={mediaFile.uuid}>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleFileClick(mediaFile)}
+                                  <a
+                                    href={mediaFile.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 hover:underline"
                                   >
                                     {getFileIcon(mediaFile.type)}
                                     <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
-                                  </button>
+                                  </a>
                                 </li>
                               ))}
                             </ul>
@@ -224,12 +202,6 @@ export default function LessonView({ lesson, teacher }: Props) {
               설정된 수업이 없습니다
             </div>
           )}
-
-      <FilePreviewModal
-        isOpen={!!previewFile}
-        onOpenChange={(isOpen: boolean) => { if (!isOpen) setPreviewFile(null); }}
-        file={previewFile}
-      />
     </div>
   );
 }
