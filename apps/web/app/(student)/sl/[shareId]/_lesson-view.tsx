@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 
-import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon, PaperclipIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
 
 type MediaFile = {
   uuid: string;
@@ -29,9 +29,6 @@ interface Props {
       }>;
       feedback?: {
         notes: string | null;
-        feedbackMediaFiles?: Array<{
-          mediaFile: MediaFile;
-        }>;
       } | null;
     }>;
   };
@@ -107,57 +104,31 @@ export default function LessonView({ lesson, teacher }: Props) {
                         </p>
                       )}
 
-                      {/* 세션 첨부파일 (수업 자료) */}
-                      {session.sessionMediaFiles && session.sessionMediaFiles.length > 0 && (
-                        <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-xs text-gray-600 font-medium mb-1 flex items-center gap-1">
-                            <PaperclipIcon className="size-3.5" />
-                            수업 자료
+                      {/* 피드백 */}
+                      {session.feedback?.notes && (
+                        <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-blue-600 font-medium">피드백</p>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {session.feedback.notes}
                           </p>
-                          <ul className="space-y-1">
-                            {session.sessionMediaFiles.map(({ mediaFile }) => (
-                              <li key={mediaFile.uuid}>
-                                <a
-                                  href={mediaFile.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 hover:underline"
-                                >
-                                  {getFileIcon(mediaFile.type)}
-                                  <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
                         </div>
                       )}
 
-                      {/* 피드백 */}
-                      {(session.feedback?.notes || (session.feedback?.feedbackMediaFiles && session.feedback.feedbackMediaFiles.length > 0)) && (
-                        <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-xs text-blue-600 font-medium">피드백</p>
-                          {session.feedback.notes && (
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                              {session.feedback.notes}
-                            </p>
-                          )}
-                          {session.feedback.feedbackMediaFiles && session.feedback.feedbackMediaFiles.length > 0 && (
-                            <ul className="mt-2 space-y-1">
-                              {session.feedback.feedbackMediaFiles.map(({ mediaFile }) => (
-                                <li key={mediaFile.uuid}>
-                                  <a
-                                    href={mediaFile.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 hover:underline"
-                                  >
-                                    {getFileIcon(mediaFile.type)}
-                                    <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                      {/* 첨부파일 */}
+                      {session.sessionMediaFiles && session.sessionMediaFiles.length > 0 && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {session.sessionMediaFiles.map(({ mediaFile }) => (
+                            <a
+                              key={mediaFile.uuid}
+                              href={mediaFile.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                            >
+                              {getFileIcon(mediaFile.type)}
+                              <span className="truncate max-w-[200px]">{mediaFile.fileName || '파일'}</span>
+                            </a>
+                          ))}
                         </div>
                       )}
                     </div>

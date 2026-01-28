@@ -13,7 +13,6 @@ import {
 import { Controller, useForm } from 'react-hook-form';
 import { updateFeedback } from '@/actions/session';
 import { TSession } from '@/types/index';
-import MediaFilePicker, { MediaFilePickerState } from '@/components/media/media-file-picker';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -42,13 +41,6 @@ interface ContentProps {
 
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
-
-  // 피드백 미디어 파일 상태
-  const [mediaFiles, setMediaFiles] = React.useState<MediaFilePickerState>({
-    existingFiles: session.feedback?.feedbackMediaFiles || [],
-    pendingDetach: [],
-    pendingAddExisting: [],
-  });
 
   const [state, formAction, isPending] = React.useActionState(updateFeedback, {
     success: false,
@@ -86,29 +78,6 @@ function Content({ session, close }: ContentProps) {
           validationErrors={undefined}
         >
           <input type="hidden" name="sessionUuid" value={session.uuid} />
-
-          {/* 미디어 파일 변경 데이터 */}
-          {(mediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
-            <input
-              type="hidden"
-              name="addMediaFileUuids"
-              value={JSON.stringify(mediaFiles.pendingAddExisting!.map((f) => f.uuid))}
-            />
-          )}
-          {mediaFiles.pendingDetach.length > 0 && (
-            <input
-              type="hidden"
-              name="removeMediaFileUuids"
-              value={JSON.stringify(mediaFiles.pendingDetach)}
-            />
-          )}
-
-          <MediaFilePicker
-            variant="simple"
-            value={mediaFiles}
-            onChange={setMediaFiles}
-            maxFiles={5}
-          />
 
           <Controller
             control={control}

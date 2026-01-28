@@ -18,14 +18,6 @@ type Session = {
   feedback?: {
     id: number;
     notes: string;
-    feedbackMediaFiles?: Array<{
-      mediaFile: {
-        uuid: string;
-        url: string;
-        type: 'image' | 'video' | 'document';
-        fileName: string | null;
-      };
-    }>;
   } | null;
 };
 
@@ -134,14 +126,6 @@ type SharedLessonSession = {
   }>;
   feedback: {
     notes: string;
-    feedbackMediaFiles?: Array<{
-      mediaFile: {
-        uuid: string;
-        url: string;
-        type: 'image' | 'video' | 'document';
-        fileName: string | null;
-      };
-    }>;
   } | null;
 };
 

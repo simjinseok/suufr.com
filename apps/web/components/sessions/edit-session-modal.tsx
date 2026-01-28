@@ -7,7 +7,6 @@ import {
   Checkbox,
   DateField,
   DateInputGroup,
-  Description,
   Form,
   Label,
   Modal,
@@ -22,7 +21,6 @@ import { updateSession, removeSession } from '@/actions/session';
 import { TSession } from '@/types/index';
 import { useHourCycle } from '@/contexts/time-format';
 import { Calendar } from '@/components/calendar';
-import MediaFilePicker, { MediaFilePickerState } from '@/components/media/media-file-picker';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -51,13 +49,6 @@ function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-
-  // 세션 미디어 파일 상태
-  const [mediaFiles, setMediaFiles] = React.useState<MediaFilePickerState>({
-    existingFiles: session.sessionMediaFiles || [],
-    pendingDetach: [],
-    pendingAddExisting: [],
-  });
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
@@ -101,22 +92,6 @@ function Content({ session, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="sessionUuid" value={session.uuid} />
-
-          {/* 세션 미디어 파일 변경 데이터 */}
-          {(mediaFiles.pendingAddExisting?.length ?? 0) > 0 && (
-            <input
-              type="hidden"
-              name="addMediaFileUuids"
-              value={JSON.stringify(mediaFiles.pendingAddExisting!.map((f) => f.uuid))}
-            />
-          )}
-          {mediaFiles.pendingDetach.length > 0 && (
-            <input
-              type="hidden"
-              name="removeMediaFileUuids"
-              value={JSON.stringify(mediaFiles.pendingDetach)}
-            />
-          )}
 
           <div className="flex flex-col gap-3">
             <Controller
@@ -231,28 +206,20 @@ function Content({ session, close }: ContentProps) {
             />
           </div>
 
-          <div className="flex flex-col gap-4">
-            <Controller
-              control={control}
-              name="notes"
-              render={({ field: { name, value, onChange } }) => (
-                <TextField
-                  name={name}
-                  value={value}
-                  onChange={onChange}
-                >
-                  <Label>수업내용</Label>
-                  <TextArea variant="secondary" rows={5} className="resize-none" />
-                </TextField>
-              )}
-            />
-            <MediaFilePicker
-              variant="simple"
-              value={mediaFiles}
-              onChange={setMediaFiles}
-              maxFiles={5}
-            />
-          </div>
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { name, value, onChange } }) => (
+              <TextField
+                name={name}
+                value={value}
+                onChange={onChange}
+              >
+                <Label>수업내용</Label>
+                <TextArea variant="secondary" rows={5} className="resize-none" />
+              </TextField>
+            )}
+          />
 
         </Form>
       </Modal.Body>

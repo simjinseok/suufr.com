@@ -86,14 +86,7 @@ export class LessonsService {
             where: { deletedAt: null },
             orderBy: { sessionAt: 'asc' },
             include: {
-              feedback: {
-                include: {
-                  feedbackMediaFiles: {
-                    orderBy: { createdAt: 'asc' },
-                    include: { mediaFile: true },
-                  },
-                },
-              },
+              feedback: true,
               sessionMediaFiles: {
                 orderBy: { createdAt: 'asc' },
                 include: { mediaFile: true },
@@ -142,14 +135,7 @@ export class LessonsService {
           where: { deletedAt: null },
           orderBy: { sessionAt: 'asc' },
           include: {
-            feedback: {
-              include: {
-                feedbackMediaFiles: {
-                  orderBy: { createdAt: 'asc' },
-                  include: { mediaFile: true },
-                },
-              },
-            },
+            feedback: true,
             sessionMediaFiles: {
               orderBy: { createdAt: 'asc' },
               include: { mediaFile: true },
@@ -355,19 +341,6 @@ export class LessonsService {
                   where: { deletedAt: null },
                   select: {
                     notes: true,
-                    feedbackMediaFiles: {
-                      orderBy: { createdAt: 'asc' },
-                      select: {
-                        mediaFile: {
-                          select: {
-                            uuid: true,
-                            url: true,
-                            type: true,
-                            fileName: true,
-                          },
-                        },
-                      },
-                    },
                   },
                 },
                 sessionMediaFiles: {
@@ -450,17 +423,6 @@ export class LessonsService {
           }
         }
 
-        // feedback.feedbackMediaFiles
-        if (session.feedback?.feedbackMediaFiles) {
-          for (const fmf of session.feedback.feedbackMediaFiles) {
-            if (fmf.mediaFile?.url) {
-              const signedUrl = this.getSignedUrlFromCdnUrl(fmf.mediaFile.url, expiresInSeconds);
-              if (signedUrl) {
-                fmf.mediaFile.url = signedUrl;
-              }
-            }
-          }
-        }
       }
     }
 

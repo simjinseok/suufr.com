@@ -205,23 +205,12 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
       const notes = formData.get('notes') as string;
       const shouldDelete = formData.get('delete') === 'true';
 
-      // 미디어 파일 데이터 파싱
-      const addMediaFileUuidsStr = formData.get('addMediaFileUuids') as string;
-      const removeMediaFileUuidsStr = formData.get('removeMediaFileUuids') as string;
-
-      const addMediaFileUuids = addMediaFileUuidsStr ? JSON.parse(addMediaFileUuidsStr) : undefined;
-      const removeMediaFileUuids = removeMediaFileUuidsStr ? JSON.parse(removeMediaFileUuidsStr) : undefined;
-
       if (shouldDelete) {
         await sessionsApi.deleteFeedback(sessionUuid);
         state.success = true;
         state.message = '피드백을 삭제하였습니다.';
       } else {
-        await sessionsApi.upsertFeedback(sessionUuid, {
-          notes,
-          addMediaFileUuids,
-          removeMediaFileUuids,
-        });
+        await sessionsApi.upsertFeedback(sessionUuid, { notes });
         state.success = true;
         state.message = '피드백을 저장하였습니다.';
       }
@@ -264,6 +253,45 @@ export async function toggleSessionDone(sessionUuid: string, isDone: boolean): P
   }
 
   await sessionsApi.markDone(sessionUuid, isDone);
+
+  revalidatePath('/sessions', 'page');
+  revalidatePath('/lessons', 'page');
+  revalidatePath('/students', 'page');
+
+  return true;
+}
+
+export async function addSessionFiles(sessionUuid: string, mediaFileUuids: string[]): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.organization) {
+    return false;
+  }
+
+  await sessionsApi.update(sessionUuid, {
+    addMediaFileUuids: mediaFileUuids,
+  });
+
+  revalidatePath('/sessions', 'page');
+  revalidatePath('/lessons', 'page');
+  revalidatePath('/students', 'page');
+
+  return true;
+}
+
+export async function updateSessionFiles(
+  sessionUuid: string,
+  addMediaFileUuids: string[],
+  removeMediaFileUuids: string[],
+): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.organization) {
+    return false;
+  }
+
+  await sessionsApi.update(sessionUuid, {
+    addMediaFileUuids: addMediaFileUuids.length > 0 ? addMediaFileUuids : undefined,
+    removeMediaFileUuids: removeMediaFileUuids.length > 0 ? removeMediaFileUuids : undefined,
+  });
 
   revalidatePath('/sessions', 'page');
   revalidatePath('/lessons', 'page');

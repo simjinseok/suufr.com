@@ -55,14 +55,6 @@ export type TFeedback = {
   id: number;
   notes: string;
   session?: TSession;
-  feedbackMediaFiles?: TFeedbackMediaFile[];
-};
-
-export type TFeedbackMediaFile = {
-  id: number;
-  feedbackId: number;
-  mediaFileId: number;
-  mediaFile: TMediaFile;
 };
 
 export type TPayment = {

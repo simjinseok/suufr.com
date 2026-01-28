@@ -26,6 +26,7 @@ import { Divider } from '@/components/divider';
 import React from 'react';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
 import EditFeedbackModal from '@/components/sessions/edit-feedback-modal';
+import EditSessionFilesModal from '@/components/sessions/edit-session-files-modal';
 import EditLessonModal from '@/components/lesson/edit-lesson-modal';
 import CreateSessionModal from '@/components/sessions/create-session-modal';
 import PaymentModal from '@/components/lesson/payment-modal';
@@ -96,6 +97,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
   const [selectedSession, setSelectedSession] = React.useState<TSession | null>(null);
   const [isLessonCreating, setIsLessonCreating] = React.useState<TLesson | null>(null);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
+  const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
 
   // 체크 토글 애니메이션 상태
   const [togglingSessionUuid, setTogglingSessionUuid] = React.useState<string | null>(null);
@@ -271,26 +273,6 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                   <p className="text-sm text-gray-700 whitespace-pre-wrap">
                                     {session.feedback.notes}
                                   </p>
-                                  {/* 피드백 첨부파일 */}
-                                  {session.feedback.feedbackMediaFiles?.length > 0 && (
-                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                      {session.feedback.feedbackMediaFiles.map((file: any) => (
-                                        <a
-                                          key={file.mediaFile.uuid}
-                                          href={file.mediaFile.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 rounded text-xs text-indigo-700 hover:bg-indigo-100"
-                                        >
-                                          <FileTypeIcon
-                                            type={file.mediaFile.type}
-                                            className="size-3"
-                                          />
-                                          {file.mediaFile.fileName || '파일'}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
                                 </div>
                               )}
                             </div>
@@ -316,6 +298,12 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                       피드백 수정
                                     </Dropdown.Item>
                                   )}
+                                  <Dropdown.Item
+                                    key="edit-files"
+                                    onClick={() => setFilesSession(session)}
+                                  >
+                                    파일 첨부
+                                  </Dropdown.Item>
                                 </Dropdown.Menu>
                               </Dropdown.Popover>
                             </Dropdown>
@@ -403,6 +391,14 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
           isOpen={!!feedbackSession}
           onOpenChange={() => setFeedbackSession(null)}
           session={feedbackSession}
+        />
+      )}
+
+      {filesSession && (
+        <EditSessionFilesModal
+          isOpen={!!filesSession}
+          onOpenChange={() => setFilesSession(null)}
+          session={filesSession}
         />
       )}
     </React.Fragment>

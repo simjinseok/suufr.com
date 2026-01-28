@@ -78,8 +78,6 @@ model Feedback {
   sessionId Int       @unique @map("session_id")
   session   Session   @relation(fields: [sessionId], references: [id])
 
-  feedbackMediaFiles FeedbackMediaFile[]
-
   @@index([sessionId, deletedAt])
   @@map("feedback")
 }
@@ -364,7 +362,6 @@ model MediaFile {
   folder   Folder? @relation(fields: [folderId], references: [id])
 
   sessionMediaFiles        SessionMediaFile[]
-  feedbackMediaFiles       FeedbackMediaFile[]
   curriculumItemMediaFiles CurriculumItemMediaFile[]
 
   @@index([userId])
@@ -396,21 +393,6 @@ model UserStorageQuota {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 
   @@map("user_storage_quotas")
-}
-
-// 피드백 ↔ 미디어 파일 연결 테이블
-model FeedbackMediaFile {
-  id          Int      @id @default(autoincrement())
-  feedbackId  Int      @map("feedback_id")
-  mediaFileId Int      @map("media_file_id")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
-
-  feedback  Feedback  @relation(fields: [feedbackId], references: [id])
-  mediaFile MediaFile @relation(fields: [mediaFileId], references: [id])
-
-  @@unique([feedbackId, mediaFileId])
-  @@index([feedbackId])
-  @@map("feedback_media_files")
 }
 
 // 커리큘럼 (수업 계획)

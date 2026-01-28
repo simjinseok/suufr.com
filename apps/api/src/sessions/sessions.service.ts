@@ -101,14 +101,7 @@ export class SessionsService {
           lesson: {
             include: { student: true },
           },
-          feedback: {
-            include: {
-              feedbackMediaFiles: {
-                orderBy: { createdAt: 'asc' },
-                include: { mediaFile: true },
-              },
-            },
-          },
+          feedback: true,
           sessionMediaFiles: {
             orderBy: { createdAt: 'asc' },
             include: { mediaFile: true },
@@ -147,14 +140,7 @@ export class SessionsService {
         lesson: {
           include: { student: true },
         },
-        feedback: {
-          include: {
-            feedbackMediaFiles: {
-              orderBy: { createdAt: 'asc' },
-              include: { mediaFile: true },
-            },
-          },
-        },
+        feedback: true,
         sessionMediaFiles: {
           orderBy: { createdAt: 'asc' },
           include: { mediaFile: true },
@@ -393,14 +379,7 @@ export class SessionsService {
         lesson: {
           include: { student: true },
         },
-        feedback: {
-          include: {
-            feedbackMediaFiles: {
-              orderBy: { createdAt: 'asc' },
-              include: { mediaFile: true },
-            },
-          },
-        },
+        feedback: true,
         sessionMediaFiles: {
           orderBy: { createdAt: 'asc' },
           include: { mediaFile: true },
@@ -422,13 +401,7 @@ export class SessionsService {
         },
       },
       include: {
-        feedback: {
-          include: {
-            feedbackMediaFiles: {
-              include: { mediaFile: true },
-            },
-          },
-        },
+        feedback: true,
       },
     });
 
@@ -436,101 +409,23 @@ export class SessionsService {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
-    // 현재 파일 수 계산
-    const currentFileCount = session.feedback?.feedbackMediaFiles?.length ?? 0;
-    const removeCount = dto.removeMediaFileUuids?.length ?? 0;
-    const addCount = dto.addMediaFileUuids?.length ?? 0;
-    const newTotalCount = currentFileCount - removeCount + addCount;
-
-    if (newTotalCount > MAX_MEDIA_FILES_PER_SESSION) {
-      throw new BadRequestException(
-        `피드백당 최대 ${MAX_MEDIA_FILES_PER_SESSION}개의 파일만 첨부할 수 있습니다.`,
-      );
-    }
-
-    // 추가할 파일 소유권 확인
-    let filesToAdd: { id: number }[] = [];
-    if (dto.addMediaFileUuids && dto.addMediaFileUuids.length > 0) {
-      filesToAdd = await this.prisma.mediaFile.findMany({
-        where: {
-          uuid: { in: dto.addMediaFileUuids },
-          userId,
-        },
-        select: { id: true },
+    let feedback;
+    if (session.feedback) {
+      feedback = await this.prisma.feedback.update({
+        where: { id: session.feedback.id },
+        data: { notes: dto.notes },
       });
-
-      if (filesToAdd.length !== dto.addMediaFileUuids.length) {
-        throw new BadRequestException('일부 파일을 찾을 수 없거나 권한이 없습니다.');
-      }
     }
-
-    // 삭제할 파일들 조회
-    let filesToRemove: { id: number; mediaFile: { uuid: string } }[] = [];
-    if (dto.removeMediaFileUuids && dto.removeMediaFileUuids.length > 0 && session.feedback) {
-      filesToRemove = session.feedback.feedbackMediaFiles.filter((fmf) =>
-        dto.removeMediaFileUuids!.includes(fmf.mediaFile.uuid),
-      );
-    }
-
-    // 트랜잭션으로 DB 작업 수행
-    const feedback = await this.prisma.$transaction(async (tx) => {
-      let feedbackRecord;
-      if (session.feedback) {
-        feedbackRecord = await tx.feedback.update({
-          where: { id: session.feedback.id },
-          data: { notes: dto.notes },
-        });
-      }
-      else {
-        feedbackRecord = await tx.feedback.create({
-          data: {
-            notes: dto.notes,
-            sessionId: session.id,
-          },
-        });
-      }
-
-      // 파일 연결 해제 (hard delete)
-      for (const fmf of filesToRemove) {
-        await tx.feedbackMediaFile.delete({
-          where: { id: fmf.id },
-        });
-      }
-
-      // 파일 연결
-      for (const fileToAdd of filesToAdd) {
-        const existingLink = await tx.feedbackMediaFile.findFirst({
-          where: {
-            feedbackId: feedbackRecord.id,
-            mediaFileId: fileToAdd.id,
-          },
-        });
-
-        if (!existingLink) {
-          await tx.feedbackMediaFile.create({
-            data: {
-              feedbackId: feedbackRecord.id,
-              mediaFileId: fileToAdd.id,
-            },
-          });
-        }
-      }
-
-      return feedbackRecord;
-    });
-
-    // 업데이트된 피드백 조회하여 반환
-    const updatedFeedback = await this.prisma.feedback.findUnique({
-      where: { id: feedback.id },
-      include: {
-        feedbackMediaFiles: {
-          orderBy: { createdAt: 'asc' },
-          include: { mediaFile: true },
+    else {
+      feedback = await this.prisma.feedback.create({
+        data: {
+          notes: dto.notes,
+          sessionId: session.id,
         },
-      },
-    });
+      });
+    }
 
-    return { success: true, data: updatedFeedback };
+    return { success: true, data: feedback };
   }
 
   async deleteFeedback(uuid: string, userId: string) {
@@ -544,9 +439,7 @@ export class SessionsService {
         },
       },
       include: {
-        feedback: {
-          include: { feedbackMediaFiles: true },
-        },
+        feedback: true,
       },
     });
 
@@ -558,20 +451,10 @@ export class SessionsService {
       throw new NotFoundException('Feedback not found');
     }
 
-    // 트랜잭션으로 미디어 파일 연결 해제 및 피드백 삭제
-    await this.prisma.$transaction(async (tx) => {
-      // 미디어 파일 연결 해제
-      if (session.feedback!.feedbackMediaFiles.length > 0) {
-        await tx.feedbackMediaFile.deleteMany({
-          where: { feedbackId: session.feedback!.id },
-        });
-      }
-
-      // 피드백 soft delete
-      await tx.feedback.update({
-        where: { id: session.feedback!.id },
-        data: { deletedAt: new Date() },
-      });
+    // 피드백 soft delete
+    await this.prisma.feedback.update({
+      where: { id: session.feedback.id },
+      data: { deletedAt: new Date() },
     });
 
     return { success: true };

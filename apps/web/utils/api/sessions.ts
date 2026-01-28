@@ -90,26 +90,13 @@ type UpdateSessionData = {
   removeMediaFileUuids?: string[];
 };
 
-type FeedbackMediaFile = {
-  id: number;
-  feedbackId: number;
-  mediaFileId: number;
-  mediaFile: MediaFile;
-};
-
-type FeedbackWithMediaFiles = Feedback & {
-  feedbackMediaFiles?: FeedbackMediaFile[];
-};
-
 type FeedbackResponse = {
   success: boolean;
-  data: FeedbackWithMediaFiles;
+  data: Feedback;
 };
 
 type UpsertFeedbackData = {
   notes: string;
-  addMediaFileUuids?: string[];
-  removeMediaFileUuids?: string[];
 };
 
 export const sessionsApi = {
