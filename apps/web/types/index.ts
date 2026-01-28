@@ -36,7 +36,7 @@ export type TLesson = {
   student?: TStudent;
   payment?: TPayment;
   sessions: TSession[];
-  shares?: TSessionShare[];
+  shares?: TLessonShare[];
 };
 
 export type TSession = {
@@ -84,7 +84,7 @@ export type TMeeting = {
   meetingAt: Date;
 };
 
-export type TSessionShare = {
+export type TLessonShare = {
   id: number;
   shareId: string;
   lessonId: number;

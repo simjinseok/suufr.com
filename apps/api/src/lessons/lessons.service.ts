@@ -270,7 +270,7 @@ export class LessonsService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    const share = await this.prisma.sessionShare.create({
+    const share = await this.prisma.lessonShare.create({
       data: {
         shareId,
         lessonId: lesson.id,
@@ -294,7 +294,7 @@ export class LessonsService {
       throw new NotFoundException(`Lesson with UUID ${uuid} not found`);
     }
 
-    const share = await this.prisma.sessionShare.findFirst({
+    const share = await this.prisma.lessonShare.findFirst({
       where: { shareId, lessonId: lesson.id, deletedAt: null },
     });
 
@@ -302,7 +302,7 @@ export class LessonsService {
       throw new NotFoundException('Share link not found');
     }
 
-    await this.prisma.sessionShare.update({
+    await this.prisma.lessonShare.update({
       where: { id: share.id },
       data: { deletedAt: new Date() },
     });
@@ -311,7 +311,7 @@ export class LessonsService {
   }
 
   async getByShareId(shareId: string) {
-    const share = await this.prisma.sessionShare.findUnique({
+    const share = await this.prisma.lessonShare.findUnique({
       where: { shareId },
       select: {
         shareId: true,

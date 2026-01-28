@@ -152,7 +152,7 @@ model StudentStatus {
   @@map("student_statuses")
 }
 
-model SessionShare {
+model LessonShare {
   id        Int       @id @default(autoincrement())
   uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   shareId   String    @unique @map("share_id") @db.VarChar(10)
@@ -165,7 +165,7 @@ model SessionShare {
 
   @@index([shareId, expiresAt, deletedAt])
   @@index([lessonId, deletedAt])
-  @@map("session_shares")
+  @@map("lesson_shares")
 }
 
 model Session {
@@ -201,7 +201,7 @@ model Lesson {
   student   Student   @relation(fields: [studentId], references: [id], map: "syllabuses_student_id_fkey")
 
   payment  Payment?
-  shares   SessionShare[]
+  shares   LessonShare[]
   sessions Session[]
 
   @@index([studentId, createdAt, deletedAt])
