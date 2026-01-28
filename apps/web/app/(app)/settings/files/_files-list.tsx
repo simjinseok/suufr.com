@@ -1,17 +1,19 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Surface, Menu, Popover } from '@heroui/react';
+import { Button, Surface, Menu, Popover, toast } from '@heroui/react';
 import { Trash2, ImageIcon, Video, FileX, FileTextIcon, MoreVertical, FolderInput, Pencil } from 'lucide-react';
 
 import type { TMediaFile, TFolder } from '@/types/index';
+import { renameFileAction, updateFolderAction, type RenameFileState, type UpdateFolderState } from '@/actions/storage';
 import FilePreviewModal from './_file-preview-modal';
 import DeleteFileModal from './_delete-file-modal';
 import FolderItem from './_folder-item';
-import EditFolderModal from './_edit-folder-modal';
 import DeleteFolderModal from './_delete-folder-modal';
 import MoveFileModal from './_move-file-modal';
-import RenameFileModal from './_rename-file-modal';
+import InlineEditInput from './_inline-edit-input';
+
+type EditingState = { type: 'file' | 'folder'; uuid: string } | null;
 
 interface FilesListProps {
   files: TMediaFile[];
@@ -25,9 +27,8 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
   const [previewFile, setPreviewFile] = React.useState<TMediaFile | null>(null);
   const [deleteFile, setDeleteFile] = React.useState<TMediaFile | null>(null);
   const [moveFile, setMoveFile] = React.useState<TMediaFile | null>(null);
-  const [renameFile, setRenameFile] = React.useState<TMediaFile | null>(null);
-  const [editFolder, setEditFolder] = React.useState<TFolder | null>(null);
   const [deleteFolder, setDeleteFolder] = React.useState<TFolder | null>(null);
+  const [editingItem, setEditingItem] = React.useState<EditingState>(null);
 
   // 현재 폴더에 있는 하위 폴더들 필터링
   const currentFolders = React.useMemo(() => {
@@ -81,6 +82,23 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
 
   const isEmpty = currentFolders.length === 0 && filteredAndSortedFiles.length === 0;
 
+  const handleStartEditFile = (file: TMediaFile) => {
+    setEditingItem({ type: 'file', uuid: file.uuid });
+  };
+
+  const handleStartEditFolder = (folder: TFolder) => {
+    setEditingItem({ type: 'folder', uuid: folder.uuid });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+  };
+
+  const handleEditSuccess = (message: string) => {
+    toast.success(message, { timeout: 3000 });
+    setEditingItem(null);
+  };
+
   if (isEmpty) {
     const emptyMessage = searchQuery
       ? `"${searchQuery}"에 대한 검색 결과가 없습니다.`
@@ -106,7 +124,10 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
           <FolderItem
             key={folder.uuid}
             folder={folder}
-            onEdit={setEditFolder}
+            isEditing={editingItem?.type === 'folder' && editingItem.uuid === folder.uuid}
+            onStartEdit={() => handleStartEditFolder(folder)}
+            onCancelEdit={handleCancelEdit}
+            onEditSuccess={() => handleEditSuccess('폴더 이름이 변경되었습니다.')}
             onDelete={setDeleteFolder}
           />
         ))}
@@ -116,10 +137,13 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
           <FileRow
             key={file.uuid}
             file={file}
+            isEditing={editingItem?.type === 'file' && editingItem.uuid === file.uuid}
+            onStartEdit={() => handleStartEditFile(file)}
+            onCancelEdit={handleCancelEdit}
+            onEditSuccess={() => handleEditSuccess('파일 이름이 변경되었습니다.')}
             onPreview={() => setPreviewFile(file)}
             onDelete={() => setDeleteFile(file)}
             onMove={() => setMoveFile(file)}
-            onRename={() => setRenameFile(file)}
           />
         ))}
       </Surface>
@@ -142,18 +166,6 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
         file={moveFile}
       />
 
-      <RenameFileModal
-        isOpen={!!renameFile}
-        onOpenChange={(open) => !open && setRenameFile(null)}
-        file={renameFile}
-      />
-
-      <EditFolderModal
-        isOpen={!!editFolder}
-        onOpenChange={(open) => !open && setEditFolder(null)}
-        folder={editFolder}
-      />
-
       <DeleteFolderModal
         isOpen={!!deleteFolder}
         onOpenChange={(open) => !open && setDeleteFolder(null)}
@@ -165,14 +177,41 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
 
 interface FileRowProps {
   file: TMediaFile;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onEditSuccess: () => void;
   onPreview: () => void;
   onDelete: () => void;
   onMove: () => void;
-  onRename: () => void;
 }
 
-function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) {
+function FileRow({ file, isEditing, onStartEdit, onCancelEdit, onEditSuccess, onPreview, onDelete, onMove }: FileRowProps) {
   const fileName = file.fileName || 'Untitled';
+
+  // 확장자 분리
+  const lastDotIndex = fileName.lastIndexOf('.');
+  const hasExtension = lastDotIndex > 0;
+  const baseName = hasExtension ? fileName.slice(0, lastDotIndex) : fileName;
+  const extension = hasExtension ? fileName.slice(lastDotIndex) : '';
+
+  const [state, formAction, isPending] = React.useActionState(renameFileAction, {
+    fields: { uuid: file.uuid, fileName: fileName },
+  } as RenameFileState);
+
+  React.useEffect(() => {
+    if (state.success) {
+      onEditSuccess();
+    }
+  }, [state.success, onEditSuccess]);
+
+  // 폼 제출 시 확장자 붙여서 전송
+  const handleFormAction = (formData: FormData) => {
+    const baseNameValue = formData.get('baseName') as string;
+    formData.delete('baseName');
+    formData.set('fileName', baseNameValue + extension);
+    return formAction(formData);
+  };
 
   const getTypeIcon = () => {
     switch (file.type) {
@@ -206,15 +245,30 @@ function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) 
         {getTypeIcon()}
       </button>
 
-      <button
-        type="button"
-        className="flex-1 min-w-0 text-left cursor-pointer focus:outline-none"
-        onClick={onPreview}
-      >
-        <p className="font-medium truncate" title={fileName}>
-          {fileName}
-        </p>
-      </button>
+      {isEditing ? (
+        <InlineEditInput
+          initialValue={baseName}
+          onSave={handleFormAction}
+          onCancel={onCancelEdit}
+          isPending={isPending}
+          errors={state.errors ? { baseName: state.errors.fileName } : undefined}
+          fieldName="baseName"
+          placeholder="파일 이름을 입력하세요"
+          maxLength={100}
+          suffix={extension}
+          hiddenFields={{ uuid: file.uuid }}
+        />
+      ) : (
+        <button
+          type="button"
+          className="flex-1 min-w-0 text-left cursor-pointer focus:outline-none"
+          onClick={onPreview}
+        >
+          <p className="font-medium truncate" title={fileName}>
+            {fileName}
+          </p>
+        </button>
+      )}
 
       <div className="shrink-0">
         <Popover>
@@ -230,7 +284,7 @@ function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) 
           </Popover.Trigger>
           <Popover.Content placement="bottom end">
             <Menu>
-              <Menu.Item onAction={onRename}>
+              <Menu.Item onAction={onStartEdit}>
                 <Pencil className="w-4 h-4" />
                 이름 변경
               </Menu.Item>
