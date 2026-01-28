@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Surface, Tooltip, Menu, Popover } from '@heroui/react';
+import { Button, Surface, Menu, Popover } from '@heroui/react';
 import { Trash2, ImageIcon, Video, FileX, FileTextIcon, MoreVertical, FolderInput, Pencil } from 'lucide-react';
 
 import type { TMediaFile, TFolder } from '@/types/index';
@@ -19,26 +19,6 @@ interface FilesListProps {
   sortOrder: 'newest' | 'oldest' | 'largest' | 'smallest';
   searchQuery: string;
   currentFolderUuid?: string;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
-
-function getCloudinaryThumbnail(url: string, type: 'image' | 'video' | 'document'): string | null {
-  if (type === 'document') {
-    return null; // PDFs don't have thumbnails
-  }
-  if (type === 'video') {
-    return url.replace('/upload/', '/upload/c_fill,w_200,h_200,so_0/').replace(/\.\w+$/, '.jpg');
-  }
-  return url.replace('/upload/', '/upload/c_fill,w_200,h_200/');
 }
 
 export default function FilesList({ files, folders, sortOrder, searchQuery, currentFolderUuid }: FilesListProps) {
@@ -192,57 +172,38 @@ interface FileRowProps {
 }
 
 function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) {
-  const thumbnailUrl = getCloudinaryThumbnail(file.url, file.type);
   const fileName = file.fileName || 'Untitled';
 
   const getTypeIcon = () => {
     switch (file.type) {
       case 'image':
-        return <ImageIcon className="w-3.5 h-3.5" />;
+        return <ImageIcon className="w-5 h-5 text-blue-500" />;
       case 'video':
-        return <Video className="w-3.5 h-3.5" />;
+        return <Video className="w-5 h-5 text-purple-500" />;
       case 'document':
-        return <FileTextIcon className="w-3.5 h-3.5" />;
+        return <FileTextIcon className="w-5 h-5 text-amber-500" />;
     }
   };
 
-  const getTypeLabel = () => {
+  const getIconBgColor = () => {
     switch (file.type) {
       case 'image':
-        return '이미지';
+        return 'bg-blue-50';
       case 'video':
-        return '동영상';
+        return 'bg-purple-50';
       case 'document':
-        return 'PDF';
+        return 'bg-amber-50';
     }
   };
 
   return (
-    <div className="group flex items-center gap-4 p-3 hover:bg-gray-50 transition-colors">
+    <div className="group flex items-center gap-4 p-2 hover:bg-gray-50 transition-colors">
       <button
         type="button"
-        className="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-gray-100 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${getIconBgColor()}`}
         onClick={onPreview}
       >
-        {thumbnailUrl ? (
-          <>
-            <img
-              src={thumbnailUrl}
-              alt={fileName}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            {file.type === 'video' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Video className="w-5 h-5 text-white" />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <FileTextIcon className="w-6 h-6 text-gray-400" />
-          </div>
-        )}
+        {getTypeIcon()}
       </button>
 
       <button
@@ -253,14 +214,6 @@ function FileRow({ file, onPreview, onDelete, onMove, onRename }: FileRowProps) 
         <p className="font-medium truncate" title={fileName}>
           {fileName}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 text-sm text-gray-500">
-          <span className="flex items-center gap-1">
-            {getTypeIcon()}
-            {getTypeLabel()}
-          </span>
-          <span>·</span>
-          <span>{formatBytes(file.fileSize)}</span>
-        </div>
       </button>
 
       <div className="shrink-0">
