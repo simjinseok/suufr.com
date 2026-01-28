@@ -82,6 +82,7 @@ function Content({ quota, folderUuid, close }: ContentProps) {
     else {
       toast.danger('파일 저장 실패', {
         description: result.message || '파일을 저장할 수 없습니다.',
+        timeout: 3000,
       });
     }
   };

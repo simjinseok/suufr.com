@@ -231,10 +231,14 @@ export default function EditSessionFilesModal({ isOpen, onOpenChange, session }:
     try {
       await updateSessionFiles(session.uuid, addUuids, removeUuids);
       router.refresh();
-      toast.success('파일이 업데이트되었습니다.');
+      toast.success('파일이 업데이트되었습니다.', {
+        timeout: 3000,
+      });
       close();
     } catch {
-      toast.danger('파일 업데이트에 실패했습니다.');
+      toast.danger('파일 업데이트에 실패했습니다.', {
+        timeout: 3000,
+      });
     } finally {
       setIsSaving(false);
     }

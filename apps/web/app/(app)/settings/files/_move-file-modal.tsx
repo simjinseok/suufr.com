@@ -65,12 +65,15 @@ function Content({ file, close }: ContentProps) {
       const targetName = selectedFolderUuid
         ? folders.find(f => f.uuid === selectedFolderUuid)?.name || '선택한 폴더'
         : '루트';
-      toast.success(`파일이 ${targetName}(으)로 이동되었습니다.`);
+      toast.success(`파일이 ${targetName}(으)로 이동되었습니다.`, {
+        timeout: 3000,
+      });
       router.refresh();
       close();
     } else {
       toast.danger('이동 실패', {
         description: result.message || '파일 이동에 실패했습니다.',
+        timeout: 3000,
       });
     }
 

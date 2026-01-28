@@ -69,6 +69,7 @@ export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
       if (remainingBytes !== undefined && file.size > remainingBytes) {
         toast.danger('업로드 실패', {
           description: '스토리지 용량이 부족합니다.',
+          timeout: 3000,
         });
         errorCount++;
         continue;
@@ -80,6 +81,7 @@ export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
       if (!result.success) {
         toast.danger('업로드 실패', {
           description: result.error || '업로드에 실패했습니다.',
+          timeout: 3000,
         });
         errorCount++;
         continue;
@@ -102,6 +104,7 @@ export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
       else {
         toast.danger('파일 저장 실패', {
           description: saveResult.message || '파일을 저장할 수 없습니다.',
+          timeout: 3000,
         });
         errorCount++;
       }
