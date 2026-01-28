@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "pnpm",
+      "args": ["dlx", "@upstash/context7-mcp"]
+    },
+    "playwright": {
+      "command": "pnpm",
+      "args": ["dlx", "@playwright/mcp"]
+    },
+    "postgres": {
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://suufr:suufr@localhost:5432/suufr"
+      ]
+    },
+    "Prisma-Local": {
+      "command": "pnpm",
+      "args": ["dlx", "prisma", "mcp"]
+    }
+  }
+}
