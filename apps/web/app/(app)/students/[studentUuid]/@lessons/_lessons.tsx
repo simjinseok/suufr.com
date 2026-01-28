@@ -1,22 +1,15 @@
 'use client';
 import type { TLesson, TSession } from '@/types/index';
 
-import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
 
 import { Button, ButtonGroup, Dropdown, Header, Modal, Surface } from '@heroui/react';
 import {
   AlertTriangleIcon,
-  BanknoteIcon,
-  BookDashedIcon,
   ChevronDownIcon,
-  CreditCardIcon,
   FileIcon,
-  GlobeIcon,
   ImageIcon,
-  LandmarkIcon,
-  LockIcon,
   MoreVerticalIcon,
   PlusIcon,
   VideoIcon,
@@ -45,7 +38,7 @@ function AnimatedCheckIcon({
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`size-5 transition-transform duration-150 active:scale-85 ${
+      className={`size-5 transition-transform duration-150 ${
         animating && checked ? 'animate-bounce-check' : ''
       }`}
     >
@@ -98,6 +91,8 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
   const [isLessonCreating, setIsLessonCreating] = React.useState<TLesson | null>(null);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
   const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
+  const [shareLesson, setShareLesson] = React.useState<TLesson | null>(null);
+  const [paymentLesson, setPaymentLesson] = React.useState<TLesson | null>(null);
 
   // 체크 토글 애니메이션 상태
   const [togglingSessionUuid, setTogglingSessionUuid] = React.useState<string | null>(null);
@@ -182,6 +177,21 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                 수업 추가
                               </Dropdown.Item>
                             </Dropdown.Section>
+                            <Dropdown.Section>
+                              <Header>관리</Header>
+                              <Dropdown.Item
+                                key="share-settings"
+                                onClick={() => setShareLesson(lesson)}
+                              >
+                                공유 설정
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                key="payment-manage"
+                                onClick={() => setPaymentLesson(lesson)}
+                              >
+                                결제 관리
+                              </Dropdown.Item>
+                            </Dropdown.Section>
                           </Dropdown.Menu>
                         </Dropdown.Popover>
                       </Dropdown>
@@ -206,7 +216,8 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                             {/* 완료/미완료 아이콘 (클릭으로 토글) */}
                             <button
                               type="button"
-                              className="mt-0.5 shrink-0 cursor-pointer"
+                              className="mt-0.5 shrink-0 cursor-pointer active:scale-90 transition-transform"
+                              onTouchStart={() => {}}
                               onClick={(e) => handleToggleDone(session, e)}
                             >
                               <AnimatedCheckIcon
@@ -241,27 +252,6 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                     {session.notes}
                                   </Text>
                                 )}
-
-                                {/* 세션 첨부파일 */}
-                                {session.sessionMediaFiles?.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {session.sessionMediaFiles.map((file: any) => (
-                                      <a
-                                        key={file.mediaFile.uuid}
-                                        href={file.mediaFile.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600 hover:bg-gray-200"
-                                      >
-                                        <FileTypeIcon
-                                          type={file.mediaFile.type}
-                                          className="size-3 text-gray-500"
-                                        />
-                                        {file.mediaFile.fileName || '파일'}
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
 
                               {/* 피드백 영역 */}
@@ -273,6 +263,27 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                                   <p className="text-sm text-gray-700 whitespace-pre-wrap">
                                     {session.feedback.notes}
                                   </p>
+                                </div>
+                              )}
+
+                              {/* 세션 첨부파일 */}
+                              {session.sessionMediaFiles?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {session.sessionMediaFiles.map((file: any) => (
+                                    <a
+                                      key={file.mediaFile.uuid}
+                                      href={file.mediaFile.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600 hover:bg-gray-200"
+                                    >
+                                      <FileTypeIcon
+                                        type={file.mediaFile.type}
+                                        className="size-3 text-gray-500"
+                                      />
+                                      {file.mediaFile.fileName || '파일'}
+                                    </a>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -318,50 +329,6 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                   )}
 
                 </div>
-
-                {/* 하단 섹션: 공유/결제 버튼 */}
-                <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-                  <Modal>
-                    <Button variant="secondary" size="sm">
-                      {lesson.shares?.length
-                        ? (
-                            <GlobeIcon className="size-3.5" />
-                          )
-                        : (
-                            <LockIcon className="size-3.5" />
-                          )}
-                      {lesson.shares?.length ? '공유중' : '공유'}
-                    </Button>
-                    <ShareModal lesson={lesson} />
-                  </Modal>
-                  <Modal>
-                    <Button variant="secondary" size="sm">
-                      {lesson.payment
-                        ? (
-                            <>
-                              {lesson.payment.paymentMethod === 'card' && (
-                                <CreditCardIcon className="size-3.5" />
-                              )}
-                              {lesson.payment.paymentMethod === 'transfer' && (
-                                <LandmarkIcon className="size-3.5" />
-                              )}
-                              {lesson.payment.paymentMethod === 'cash' && (
-                                <BanknoteIcon className="size-3.5" />
-                              )}
-                              {lesson.payment.paymentMethod === 'none' && (
-                                <BookDashedIcon className="size-3.5" />
-                              )}
-                              {numberToHangulMixed(lesson.payment.amount)}
-                              원
-                            </>
-                          )
-                        : (
-                            '결제등록'
-                          )}
-                    </Button>
-                    <PaymentModal lesson={lesson} />
-                  </Modal>
-                </div>
               </Surface>
             </li>
           ))}
@@ -399,6 +366,22 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
           isOpen={!!filesSession}
           onOpenChange={() => setFilesSession(null)}
           session={filesSession}
+        />
+      )}
+
+      {shareLesson && (
+        <ShareModal
+          isOpen={!!shareLesson}
+          onOpenChange={() => setShareLesson(null)}
+          lesson={shareLesson}
+        />
+      )}
+
+      {paymentLesson && (
+        <PaymentModal
+          isOpen={!!paymentLesson}
+          onOpenChange={() => setPaymentLesson(null)}
+          lesson={paymentLesson}
         />
       )}
     </React.Fragment>
