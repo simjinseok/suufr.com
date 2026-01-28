@@ -14,6 +14,7 @@ import {
   TextArea,
   Select, ListBox, Label, TextField,
   Popover,
+  toast,
 } from '@heroui/react';
 import { BanknoteIcon, BookDashedIcon, CalendarIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 import { Calendar } from '@/components/calendar';
@@ -65,7 +66,10 @@ function Content({ close, lesson }) {
     if (!state.timestamp) return;
 
     if (state.success) {
-      alert(state.message);
+      toast.success('결제 정보', {
+        description: state.message,
+        timeout: 3000,
+      });
       close();
     }
   }, [state.success, state.timestamp, state.message]);
@@ -247,7 +251,10 @@ function RemoveButton({ paymentUuid }: { paymentUuid: string }) {
     }
 
     if (state.success) {
-      alert('결제 내역을 삭제하였습니다');
+      toast.danger('결제 내역 삭제', {
+        description: state.message,
+        timeout: 3000,
+      });
     }
   }, [state.success, state.timestamp]);
 

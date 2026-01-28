@@ -1,5 +1,5 @@
 'use client';
-import {Description, ModalProps} from '@heroui/react';
+import { Description, ModalProps, toast } from '@heroui/react';
 import { TLesson } from '@/types/index';
 
 import React from 'react';
@@ -63,7 +63,10 @@ function Content({ lesson, close }: ContentProps) {
     if (!state.timestamp) return;
 
     if (state.success) {
-      alert('수업을 수정하였습니다.');
+      toast.success('수업 수정', {
+        description: state.message,
+        timeout: 3000,
+      });
       close();
     }
   }, [state.timestamp, state.success, state.message]);
@@ -138,7 +141,10 @@ function DeleteButton({ uuid, close }: DeleteButtonProps) {
     if (!state.timestamp) return;
 
     if (state.message) {
-      alert(state.message);
+      toast.success('수업 수정', {
+        description: state.message,
+        timeout: 3000,
+      });
     }
 
     if (state.success) {

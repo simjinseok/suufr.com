@@ -1,5 +1,5 @@
 'use client';
-import type { ModalProps } from '@heroui/react';
+import { ModalProps, toast } from '@heroui/react';
 
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -65,7 +65,10 @@ function Content({ close }: ContentProps) {
     }
 
     if (state.success) {
-      alert('수강생을 추가하였습니다');
+      toast.success('수강생 추가', {
+        description: state.message,
+        timeout: 3000,
+      });
       close();
     }
   }, [state]);

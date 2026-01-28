@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Form, Button, Label, NumberField, Surface, Switch } from '@heroui/react';
+import {Form, Button, Label, NumberField, Surface, Switch, toast} from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { updateSettings } from '@/actions/settings';
@@ -29,7 +29,10 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
     if (!state.timestamp) return;
 
     if (state.success) {
-      alert(state.message);
+      toast.success('설정 변경', {
+        description: state.message,
+        timeout: 3000,
+      });
     }
   }, [state.success, state.timestamp, state.message]);
 
