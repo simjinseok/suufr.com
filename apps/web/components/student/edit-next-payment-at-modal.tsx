@@ -7,7 +7,7 @@ import React from 'react';
 import {
   Button,
   DateField,
-  DateInputGroup,
+
   Form,
   Label,
   Modal,
@@ -94,14 +94,14 @@ function Content({ student, close }: ContentProps) {
                 hideTimeZone
               >
                 <Label>다음 결제 예정일</Label>
-                <DateInputGroup variant="secondary">
-                  <DateInputGroup.Input>
-                    {segment => <DateInputGroup.Segment segment={segment} />}
-                  </DateInputGroup.Input>
-                  <DateInputGroup.Suffix>
+                <DateField.Group variant="secondary">
+                  <DateField.Input>
+                    {segment => <DateField.Segment segment={segment} />}
+                  </DateField.Input>
+                  <DateField.Suffix>
                     <CalendarIcon className="size-4" />
-                  </DateInputGroup.Suffix>
-                </DateInputGroup>
+                  </DateField.Suffix>
+                </DateField.Group>
                 <Description>수강생에게 다음 결제 예정일을 보여줍니다</Description>
               </DateField>
             )}

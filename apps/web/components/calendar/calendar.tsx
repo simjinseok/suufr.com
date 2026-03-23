@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { CalendarDate, today } from '@internationalized/date';
-import { CalendarHeader } from './calendar-header';
-import { CalendarGrid } from './calendar-grid';
+import { Calendar as HeroCalendar } from '@heroui/react';
+import type { CalendarDate } from '@internationalized/date';
 
 interface CalendarProps {
   value?: CalendarDate;
@@ -22,38 +20,30 @@ export function Calendar({
   maxValue,
   isDateUnavailable,
 }: CalendarProps) {
-  const [focusedMonth, setFocusedMonth] = useState<CalendarDate>(
-    value ?? today('Asia/Seoul'),
-  );
-
-  const handlePreviousMonth = () => {
-    setFocusedMonth((prev) => prev.subtract({ months: 1 }));
-  };
-
-  const handleNextMonth = () => {
-    setFocusedMonth((prev) => prev.add({ months: 1 }));
-  };
-
-  const handleSelect = (date: CalendarDate) => {
-    onChange?.(date);
-    onClose?.();
-  };
-
   return (
-    <div className="">
-      <CalendarHeader
-        currentMonth={focusedMonth}
-        onPreviousMonth={handlePreviousMonth}
-        onNextMonth={handleNextMonth}
-      />
-      <CalendarGrid
-        month={focusedMonth}
-        value={value}
-        onSelect={handleSelect}
-        minValue={minValue}
-        maxValue={maxValue}
-        isDateUnavailable={isDateUnavailable}
-      />
-    </div>
+    <HeroCalendar
+      value={value}
+      onChange={(date) => {
+        onChange?.(date as CalendarDate);
+        onClose?.();
+      }}
+      minValue={minValue}
+      maxValue={maxValue}
+      isDateUnavailable={isDateUnavailable}
+    >
+      <HeroCalendar.Header>
+        <HeroCalendar.NavButton slot="previous" />
+        <HeroCalendar.Heading />
+        <HeroCalendar.NavButton slot="next" />
+      </HeroCalendar.Header>
+      <HeroCalendar.Grid>
+        <HeroCalendar.GridHeader>
+          {(day) => <HeroCalendar.HeaderCell />}
+        </HeroCalendar.GridHeader>
+        <HeroCalendar.GridBody>
+          {(date) => <HeroCalendar.Cell date={date} />}
+        </HeroCalendar.GridBody>
+      </HeroCalendar.Grid>
+    </HeroCalendar>
   );
 }

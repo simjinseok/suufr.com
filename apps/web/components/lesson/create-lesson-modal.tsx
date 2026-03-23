@@ -1,13 +1,13 @@
 'use client';
 import type { ZonedDateTime } from '@internationalized/date';
-import { Description, ModalProps, Popover, TimeField, Tooltip } from '@heroui/react';
+import { Description, ModalProps, TimeField, Tooltip } from '@heroui/react';
 
 import * as React from 'react';
 import {
   Button,
   Chip,
   DateField,
-  DateInputGroup,
+  DatePicker,
   Form,
   Input,
   Label,
@@ -19,13 +19,13 @@ import {
   TextArea,
   TextField,
 } from '@heroui/react';
-import { CalendarIcon, HelpCircleIcon } from 'lucide-react';
+import { Calendar } from '@/components/calendar';
+import { HelpCircleIcon } from 'lucide-react';
 import { now, toCalendarDate } from '@internationalized/date';
 
 import { createLesson } from '@/actions/lesson';
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 import Stepper from '@/components/stepper';
-import { Calendar } from '@/components/calendar';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -61,7 +61,6 @@ function Content({ close, studentUuid }: ContentProps) {
   const defaultDuration = useDefaultDuration();
 
   const [currentStep, setCurrentStep] = React.useState(0);
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   // Step 2 data
   const [date, setDate] = React.useState<ZonedDateTime | null>(
@@ -153,51 +152,34 @@ function Content({ close, studentUuid }: ContentProps) {
           <div className="flex flex-col gap-4" hidden={currentStep !== 1}>
             <Surface className="p-3 flex flex-col gap-3 rounded-xl">
               <div className="flex gap-3">
-                <DateField
+                <DatePicker
                   value={toCalendarDate(date!)}
                   granularity="day"
                   onChange={(v) => v && setDate(prev => prev?.set({ year: v.year, month: v.month, day: v.day }) ?? null)}
                   hideTimeZone
                 >
                   <Label>기준 날짜</Label>
-                  <div className="flex items-center gap-1">
-                    <Popover isOpen={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                      <Button
-                        className="rounded-field"
-                        size="sm"
-                        isIconOnly
-                        variant="tertiary"
-                      >
-                        <CalendarIcon className="size-4" />
-                      </Button>
-                      <Popover.Content placement="bottom left">
-                        <Popover.Dialog>
-                          <Calendar
-                            value={toCalendarDate(date!)}
-                            onChange={(v) => {
-                              if (v) {
-                                setDate(prev => prev?.set({ year: v.year, month: v.month, day: v.day }) ?? null);
-                                setIsCalendarOpen(false);
-                              }
-                            }}
-                          />
-                        </Popover.Dialog>
-                      </Popover.Content>
-                    </Popover>
-                    <DateInputGroup variant="secondary">
-                      <DateInputGroup.Input>
-                        {segment => <DateInputGroup.Segment segment={segment} />}
-                      </DateInputGroup.Input>
-                    </DateInputGroup>
-                  </div>
-                </DateField>
+                  <DateField.Group variant="secondary">
+                    <DateField.Input>
+                      {segment => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover placement="bottom left" className="min-w-fit">
+                    <Calendar />
+                  </DatePicker.Popover>
+                </DatePicker>
                 <TimeField hourCycle={hourCycle} granularity="minute" value={date} onChange={(v) => v && setDate(v)} hideTimeZone>
                   <Label>시간</Label>
-                  <DateInputGroup variant="secondary">
-                    <DateInputGroup.Input>
-                      {segment => <DateInputGroup.Segment segment={segment} />}
-                    </DateInputGroup.Input>
-                  </DateInputGroup>
+                  <DateField.Group variant="secondary">
+                    <DateField.Input>
+                      {segment => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                  </DateField.Group>
                 </TimeField>
               </div>
 
@@ -259,14 +241,14 @@ function Content({ close, studentUuid }: ContentProps) {
                       isReadOnly
                       hideTimeZone
                     >
-                      <DateInputGroup variant="secondary">
-                        <DateInputGroup.Input>
-                          {segment => <DateInputGroup.Segment segment={segment} />}
-                        </DateInputGroup.Input>
-                        <DateInputGroup.Suffix>
+                      <DateField.Group variant="secondary">
+                        <DateField.Input>
+                          {segment => <DateField.Segment segment={segment} />}
+                        </DateField.Input>
+                        <DateField.Suffix>
                           <Chip color="accent">{lesson.toDate().toLocaleDateString('ko-KR', { weekday: 'long' })}</Chip>
-                        </DateInputGroup.Suffix>
-                      </DateInputGroup>
+                        </DateField.Suffix>
+                      </DateField.Group>
                     </DateField>
                   ))}
                 </Surface>

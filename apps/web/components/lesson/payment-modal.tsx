@@ -9,15 +9,14 @@ import {
   Modal,
   Button,
   DateField,
-  DateInputGroup,
+  DatePicker,
   NumberField,
   TextArea,
   Select, ListBox, Label, TextField,
-  Popover,
   toast,
 } from '@heroui/react';
-import { BanknoteIcon, BookDashedIcon, CalendarIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 import { Calendar } from '@/components/calendar';
+import { BanknoteIcon, BookDashedIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { updatePayment, removePayment } from '@/actions/payment';
@@ -206,38 +205,23 @@ function Content({ close, lesson }) {
 }
 
 function DatePickerField({ name, value, onChange }) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <DateField name={name} value={value} onChange={onChange} granularity="day" hideTimeZone>
+    <DatePicker name={name} value={value} onChange={onChange} granularity="day" hideTimeZone>
       <Label>날짜</Label>
-      <div className="flex items-center gap-1">
-        <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-          <Button
-            className="rounded-field"
-            isIconOnly
-            size="sm"
-            variant="tertiary"
-          >
-            <CalendarIcon className="size-4" />
-          </Button>
-          <Popover.Content placement="bottom left">
-            <Popover.Dialog>
-              <Calendar
-                value={value}
-                onChange={onChange}
-                onClose={() => setIsOpen(false)}
-              />
-            </Popover.Dialog>
-          </Popover.Content>
-        </Popover>
-        <DateInputGroup variant="secondary">
-          <DateInputGroup.Input>
-            {segment => <DateInputGroup.Segment segment={segment} />}
-          </DateInputGroup.Input>
-        </DateInputGroup>
-      </div>
-    </DateField>
+      <DateField.Group variant="secondary">
+        <DateField.Input>
+          {segment => <DateField.Segment segment={segment} />}
+        </DateField.Input>
+        <DateField.Suffix>
+          <DatePicker.Trigger>
+            <DatePicker.TriggerIndicator />
+          </DatePicker.Trigger>
+        </DateField.Suffix>
+      </DateField.Group>
+      <DatePicker.Popover className="min-w-fit">
+        <Calendar />
+      </DatePicker.Popover>
+    </DatePicker>
   );
 }
 

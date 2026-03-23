@@ -12,7 +12,7 @@ import {
   Label,
   FieldError,
   DateField,
-  DateInputGroup,
+
   Checkbox,
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
@@ -110,11 +110,11 @@ function Content({ meeting, close }: ContentProps) {
             defaultValue={fromDate(new Date(meeting.meetingAt), getLocalTimeZone())}
           >
             <Label>날짜</Label>
-            <DateInputGroup variant="secondary">
-              <DateInputGroup.Input>
-                {segment => <DateInputGroup.Segment segment={segment} />}
-              </DateInputGroup.Input>
-            </DateInputGroup>
+            <DateField.Group variant="secondary">
+              <DateField.Input>
+                {segment => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
             <FieldError />
           </DateField>
           <Controller

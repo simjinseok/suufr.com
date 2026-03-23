@@ -12,7 +12,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <ModalManagerProvider>
           {children}
         </ModalManagerProvider>
-        <Toast.Container placement="top end" />
+        <Toast.Provider placement="top end" />
       </RouterProvider>
     </I18nProvider>
   );

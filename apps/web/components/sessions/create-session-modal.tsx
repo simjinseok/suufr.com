@@ -3,20 +3,17 @@ import * as React from 'react';
 import {
   Button,
   DateField,
-  DateInputGroup,
+  DatePicker,
   Form,
   Label,
   Modal,
   NumberField,
-  Popover,
   TextArea,
   TextField,
-  TimeField,
 } from '@heroui/react';
-import { toCalendarDate, toCalendarDateTime, today } from '@internationalized/date';
 import { Calendar } from '@/components/calendar';
+import { toCalendarDateTime, today } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
-import { CalendarIcon } from 'lucide-react';
 import { createSession } from '@/actions/session';
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
 
@@ -24,7 +21,6 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const defaultDuration = useDefaultDuration();
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const { control } = useForm({
     values: {
       sessionAt: toCalendarDateTime(today('Asia/Seoul')),
@@ -63,62 +59,29 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
                     control={control}
                     name="sessionAt"
                     render={({ field: { name, value, onChange } }) => (
-                      <div className="flex gap-1">
-                        <DateField
-                          name={name}
-                          granularity="day"
-                          value={toCalendarDate(value)}
-                          onChange={(v) => v && onChange(value.set({ year: v.year, month: v.month, day: v.day }))}
-                          hourCycle={hourCycle}
-                          hideTimeZone
-                        >
-                          <Label>날짜</Label>
-                          <div className="flex items-center gap-1">
-                            <Popover isOpen={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                              <Button
-                                className="rounded-field"
-                                size="sm"
-                                isIconOnly
-                                variant="tertiary"
-                              >
-                                <CalendarIcon className="size-4" />
-                              </Button>
-                              <Popover.Content placement="bottom left">
-                                <Popover.Dialog>
-                                  <Calendar
-                                    value={toCalendarDate(value)}
-                                    onChange={(newDate) => {
-                                      if (newDate) {
-                                        onChange(value.set({ year: newDate.year, month: newDate.month, day: newDate.day }));
-                                        setIsCalendarOpen(false);
-                                      }
-                                    }}
-                                  />
-                                </Popover.Dialog>
-                              </Popover.Content>
-                            </Popover>
-                            <DateInputGroup variant="secondary">
-                              <DateInputGroup.Input>
-                                {segment => <DateInputGroup.Segment segment={segment} />}
-                              </DateInputGroup.Input>
-                            </DateInputGroup>
-                          </div>
-                        </DateField>
-                        <TimeField
-                          hourCycle={hourCycle}
-                          granularity="minute"
-                          value={value}
-                          onChange={(v) => v && onChange(v)}
-                          hideTimeZone
-                        >
-                          <Label>시간</Label>
-                          <DateInputGroup variant="secondary">
-                            <DateInputGroup.Input>
-                              {segment => <DateInputGroup.Segment segment={segment} />}
-                            </DateInputGroup.Input>
-                          </DateInputGroup>
-                        </TimeField>
-                      </div>
+                      <DatePicker
+                        name={name}
+                        granularity="minute"
+                        hourCycle={hourCycle}
+                        value={value}
+                        onChange={(v) => v && onChange(v)}
+                        hideTimeZone
+                      >
+                        <Label>날짜 및 시간</Label>
+                        <DateField.Group variant="secondary">
+                          <DateField.Input>
+                            {segment => <DateField.Segment segment={segment} />}
+                          </DateField.Input>
+                          <DateField.Suffix>
+                            <DatePicker.Trigger>
+                              <DatePicker.TriggerIndicator />
+                            </DatePicker.Trigger>
+                          </DateField.Suffix>
+                        </DateField.Group>
+                        <DatePicker.Popover className="min-w-fit">
+                          <Calendar />
+                        </DatePicker.Popover>
+                      </DatePicker>
                     )}
                   />
                   <Controller

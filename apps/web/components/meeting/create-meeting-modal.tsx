@@ -9,7 +9,7 @@ import {
   TextField,
   Label,
   FieldError,
-  DateField, DateInputGroup,
+  DateField,
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { now, getLocalTimeZone } from '@internationalized/date';
@@ -96,11 +96,11 @@ function Content({ close }: ContentProps) {
             hourCycle={hourCycle}
           >
             <Label>날짜</Label>
-            <DateInputGroup variant="secondary">
-              <DateInputGroup.Input>
-                {segment => <DateInputGroup.Segment segment={segment} />}
-              </DateInputGroup.Input>
-            </DateInputGroup>
+            <DateField.Group variant="secondary">
+              <DateField.Input>
+                {segment => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
             <FieldError />
           </DateField>
           <Controller

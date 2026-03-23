@@ -1,26 +1,27 @@
 'use client';
-import { ModalProps, Popover, TimeField } from '@heroui/react';
+import type { ModalProps } from '@heroui/react';
+import type { TSession } from '@/types/index';
 
 import * as React from 'react';
 import {
   Button,
   Checkbox,
   DateField,
-  DateInputGroup,
+  DatePicker,
   Form,
   Label,
   Modal,
   NumberField,
+  Popover,
   TextArea,
   TextField,
 } from '@heroui/react';
-import { fromDate, toCalendarDate, toCalendarDateTime } from '@internationalized/date';
-import { Controller, useForm } from 'react-hook-form';
-import { CalendarIcon } from 'lucide-react';
-import { updateSession, removeSession } from '@/actions/session';
-import { TSession } from '@/types/index';
-import { useHourCycle } from '@/contexts/time-format';
 import { Calendar } from '@/components/calendar';
+import { fromDate, toCalendarDateTime } from '@internationalized/date';
+import { Controller, useForm } from 'react-hook-form';
+import { useHourCycle } from '@/contexts/time-format';
+
+import { updateSession, removeSession } from '@/actions/session';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -48,7 +49,6 @@ interface ContentProps {
 function Content({ session, close }: ContentProps) {
   const formId = React.useId();
   const hourCycle = useHourCycle();
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
@@ -112,74 +112,31 @@ function Content({ session, close }: ContentProps) {
               control={control}
               name="sessionAt"
               render={({ field: { name, value, onChange } }) => (
-                <div className="flex gap-1">
-                  <input
-                    type="hidden"
-                    name={name}
-                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul')).toString()}
-                  />
-                  <DateField
-                    granularity="day"
-                    value={toCalendarDate(fromDate(new Date(value), 'Asia/Seoul'))}
-                    onChange={(v) => {
-                      if (!v) return;
-                      const current = fromDate(new Date(value), 'Asia/Seoul');
-                      const updated = current.set({ year: v.year, month: v.month, day: v.day });
-                      onChange(updated.toDate());
-                    }}
-                    hourCycle={hourCycle}
-                    hideTimeZone
-                    isRequired
-                  >
-                    <Label>날짜</Label>
-                    <div className="flex items-center gap-1">
-                      <Popover isOpen={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <Button
-                          className="rounded-field"
-                          size="sm"
-                          isIconOnly
-                          variant="tertiary"
-                        >
-                          <CalendarIcon className="size-4" />
-                        </Button>
-                        <Popover.Content placement="bottom left">
-                          <Popover.Dialog>
-                            <Calendar
-                              value={toCalendarDate(fromDate(new Date(value), 'Asia/Seoul'))}
-                              onChange={(newDate) => {
-                                if (newDate) {
-                                  const current = fromDate(new Date(value), 'Asia/Seoul');
-                                  const updated = current.set({ year: newDate.year, month: newDate.month, day: newDate.day });
-                                  onChange(updated.toDate());
-                                  setIsCalendarOpen(false);
-                                }
-                              }}
-                            />
-                          </Popover.Dialog>
-                        </Popover.Content>
-                      </Popover>
-                      <DateInputGroup variant="secondary">
-                        <DateInputGroup.Input>
-                          {segment => <DateInputGroup.Segment segment={segment} />}
-                        </DateInputGroup.Input>
-                      </DateInputGroup>
-                    </div>
-                  </DateField>
-                  <TimeField
-                    hourCycle={hourCycle}
-                    granularity="minute"
-                    value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
-                    onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
-                    hideTimeZone
-                  >
-                    <Label>시간</Label>
-                    <DateInputGroup variant="secondary">
-                      <DateInputGroup.Input>
-                        {segment => <DateInputGroup.Segment segment={segment} />}
-                      </DateInputGroup.Input>
-                    </DateInputGroup>
-                  </TimeField>
-                </div>
+                <DatePicker
+                  granularity="minute"
+                  hourCycle={hourCycle}
+                  name={name}
+                  value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
+                  onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
+                  hideTimeZone
+                  isRequired
+                >
+                  <Label>날짜 및 시간</Label>
+                  <DateField.Group variant="secondary">
+                    <DateField.Input>
+                      {segment => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover className="min-w-fit">
+                    <Calendar />
+                  </DatePicker.Popover>
+                </DatePicker>
               )}
             />
             <Controller
