@@ -21,7 +21,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
   const TIMEZONE = 'Asia/Seoul';
   const today = new TZDate(new Date(), TIMEZONE);
   const selectedDate = date ? new TZDate(date + 'T00:00:00', TIMEZONE) : today;
-  const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'day' ? 'day' : 'month';
+  const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'month' ? 'month' : 'day';
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
 
   // Calculate date range based on view (TZDate를 사용하면 date-fns가 타임존을 유지)
