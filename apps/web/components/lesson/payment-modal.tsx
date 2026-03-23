@@ -10,9 +10,13 @@ import {
   Button,
   DateField,
   DatePicker,
+  Description,
   NumberField,
   TextArea,
-  Select, ListBox, Label, TextField,
+  Select,
+  ListBox,
+  Label,
+  TextField,
   toast,
 } from '@heroui/react';
 import { Calendar } from '@/components/calendar';
@@ -99,23 +103,26 @@ function Content({ close, lesson }) {
             control={control}
             name="amount"
             render={({ field: { name, value, onChange } }) => (
-              <NumberField
-                variant="secondary"
-                name={name}
-                value={value}
-                onInput={(event) => {
-                  onChange(Number(event.currentTarget.value.replaceAll(',', '')));
-                }}
-              >
-                <Label>금액</Label>
-                <NumberField.Group>
-                  <NumberField.Input className="text-right" />
-                </NumberField.Group>
-                <p className="text-right">
-                  {numberToHangulMixed(value)}
-                  원
-                </p>
-              </NumberField>
+              <React.Fragment>
+                <NumberField
+                  variant="secondary"
+                  name={name}
+                  value={value}
+                  onInput={(event) => {
+                    onChange(Number(event.currentTarget.value.replaceAll(',', '')));
+                  }}
+                >
+                  <Label>금액</Label>
+                  <NumberField.Group>
+                    <NumberField.Input className="col-span-full text-right" />
+                  </NumberField.Group>
+                  <Description className="text-right">
+                    {numberToHangulMixed(value)}
+                    원
+                  </Description>
+                </NumberField>
+              </React.Fragment>
+
             )}
           />
 
