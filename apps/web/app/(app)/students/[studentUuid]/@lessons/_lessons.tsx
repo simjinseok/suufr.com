@@ -4,12 +4,15 @@ import type { TLesson, TSession } from '@/types/index';
 import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
 
-import { Button, ButtonGroup, Dropdown, Header, Modal, Surface } from '@heroui/react';
+import { Button, Dropdown, Modal, Surface } from '@heroui/react';
 import {
   AlertTriangleIcon,
-  ChevronDownIcon,
+  CreditCardIcon,
   FileIcon,
+  GlobeIcon,
+  GlobeOffIcon,
   ImageIcon,
+  EllipsisIcon,
   MoreVerticalIcon,
   PlusIcon,
   VideoIcon,
@@ -27,6 +30,7 @@ import ShareModal from '@/components/lesson/share-modal';
 import CreateLessonModal from '@/components/lesson/create-lesson-modal';
 import { useParams, useRouter } from 'next/navigation';
 import { toggleSessionDone } from '@/actions/session';
+import DeleteLessonModal from '@/components/lesson/delete-lesson-modal';
 
 function AnimatedCheckIcon({
   checked,
@@ -91,6 +95,8 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
   const [isLessonCreating, setIsLessonCreating] = React.useState<TLesson | null>(null);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
   const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
+  const [editLesson, setEditLesson] = React.useState<TLesson | null>(null);
+  const [deleteLesson, setDeleteLesson] = React.useState<TLesson | null>(null);
   const [shareLesson, setShareLesson] = React.useState<TLesson | null>(null);
   const [paymentLesson, setPaymentLesson] = React.useState<TLesson | null>(null);
 
@@ -157,45 +163,60 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                   {/* 헤더: 제목 + 수정 버튼 */}
                   <div className="flex items-center justify-between">
                     <p className="text-xl font-bold">{lesson.title}</p>
-                    <ButtonGroup variant="secondary" size="sm">
-                      <Modal>
-                        <Button>수정</Button>
-                        <EditLessonModal lesson={lesson} />
-                      </Modal>
+                    <div className="flex items-center gap-2">
+                      {/* 결제 - 모바일 */}
+                      <Button variant={lesson.payment ? 'secondary' : 'danger-soft'} size="sm" isIconOnly
+                        className="sm:hidden" onPress={() => setPaymentLesson(lesson)}>
+                        <CreditCardIcon className="size-4" />
+                      </Button>
+                      {/* 결제 - 데스크탑 */}
+                      <Button variant={lesson.payment ? 'secondary' : 'danger-soft'} size="sm"
+                        className="hidden sm:inline-flex" onPress={() => setPaymentLesson(lesson)}>
+                        <CreditCardIcon className="size-4" />
+                        {lesson.payment ? '완료' : '결제필요'}
+                      </Button>
+
+                      {/* 공유 - 모바일 */}
+                      <Button variant={lesson.shares?.length ? 'primary' : 'secondary'} size="sm" isIconOnly className="sm:hidden"
+                        onPress={() => setShareLesson(lesson)}>
+                        {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
+                      </Button>
+                      {/* 공유 - 데스크탑 */}
+                      <Button variant={lesson.shares?.length ? 'primary' : 'secondary'} size="sm" className="hidden sm:inline-flex"
+                        onPress={() => setShareLesson(lesson)}>
+                        {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
+                        {lesson.shares?.length ? '공유중' : '공유'}
+                      </Button>
+
                       <Dropdown>
-                        <Button>
-                          <ChevronDownIcon className="size-4" />
+                        <Button variant="secondary" size="sm" isIconOnly>
+                          <EllipsisIcon className="size-4" />
                         </Button>
                         <Dropdown.Popover placement="bottom end" className="min-w-40">
                           <Dropdown.Menu>
-                            <Dropdown.Section>
-                              <Header>수업</Header>
-                              <Dropdown.Item
-                                key="create-session"
-                                onClick={() => setIsLessonCreating(lesson)}
-                              >
-                                수업 추가
-                              </Dropdown.Item>
-                            </Dropdown.Section>
-                            <Dropdown.Section>
-                              <Header>관리</Header>
-                              <Dropdown.Item
-                                key="share-settings"
-                                onClick={() => setShareLesson(lesson)}
-                              >
-                                공유 설정
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                key="payment-manage"
-                                onClick={() => setPaymentLesson(lesson)}
-                              >
-                                결제 관리
-                              </Dropdown.Item>
-                            </Dropdown.Section>
+                            <Dropdown.Item
+                              key="edit-lesson"
+                              onClick={() => setEditLesson(lesson)}
+                            >
+                              레슨 수정
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              key="create-session"
+                              onClick={() => setIsLessonCreating(lesson)}
+                            >
+                              수업 추가
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              key="delete-lesson"
+                              className="text-red-600"
+                              onClick={() => setDeleteLesson(lesson)}
+                            >
+                              삭제
+                            </Dropdown.Item>
                           </Dropdown.Menu>
                         </Dropdown.Popover>
                       </Dropdown>
-                    </ButtonGroup>
+                    </div>
                   </div>
 
                   {lesson.notes && (
@@ -329,12 +350,21 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                   )}
 
                 </div>
+
               </Surface>
             </li>
           ))}
         </ul>
       ) : (
         <p className="mt-5 text-gray-500">일정이 없습니다.</p>
+      )}
+
+      {editLesson && (
+        <EditLessonModal
+          isOpen={!!editLesson}
+          onOpenChange={() => setEditLesson(null)}
+          lesson={editLesson}
+        />
       )}
 
       {selectedSession && (
@@ -382,6 +412,14 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
           isOpen={!!paymentLesson}
           onOpenChange={() => setPaymentLesson(null)}
           lesson={paymentLesson}
+        />
+      )}
+
+      {deleteLesson && (
+        <DeleteLessonModal
+          isOpen={!!deleteLesson}
+          onOpenChange={() => setDeleteLesson(null)}
+          lesson={deleteLesson}
         />
       )}
     </React.Fragment>

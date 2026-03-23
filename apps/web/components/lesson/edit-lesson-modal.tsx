@@ -11,12 +11,10 @@ import {
   Button,
   TextField,
   Label,
-  AlertDialog,
-  DangerIcon,
   FieldError,
 } from '@heroui/react';
 
-import { updateLesson, removeLesson } from '@/actions/lesson';
+import { updateLesson } from '@/actions/lesson';
 import { Controller, useForm } from 'react-hook-form';
 
 interface Props {
@@ -111,8 +109,6 @@ function Content({ lesson, close }: ContentProps) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <DeleteButton uuid={lesson.uuid} close={close} />
-        <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>
           닫기
         </Button>
@@ -129,68 +125,3 @@ function Content({ lesson, close }: ContentProps) {
   );
 }
 
-interface DeleteButtonProps {
-  uuid: string;
-  close: ContentProps['close'];
-}
-function DeleteButton({ uuid, close }: DeleteButtonProps) {
-  const formId = React.useId();
-  const [state, formAction, isPending] = React.useActionState(removeLesson, {});
-
-  React.useEffect(() => {
-    if (!state.timestamp) return;
-
-    if (state.message) {
-      toast.success('수업 수정', {
-        description: state.message,
-        timeout: 3000,
-      });
-    }
-
-    if (state.success) {
-      close();
-    }
-  }, [state.success, state.timestamp, state.message]);
-
-  return (
-    <AlertDialog>
-      <Button
-        variant="danger-soft"
-      >
-        삭제
-      </Button>
-      <AlertDialog.Backdrop>
-        <AlertDialog.Container>
-          <AlertDialog.Dialog className="w-60">
-            <AlertDialog.Header>
-              <AlertDialog.Icon>
-                <DangerIcon />
-              </AlertDialog.Icon>
-            </AlertDialog.Header>
-            <AlertDialog.Body>
-              <Form
-                id={formId}
-                action={formAction}
-              >
-                <input type="hidden" name="lessonUuid" value={uuid} />
-                계획을 삭제합니다.
-              </Form>
-            </AlertDialog.Body>
-            <AlertDialog.Footer>
-              <Button variant="secondary" slot="close" isDisabled={isPending}>닫기</Button>
-              <Button
-                type="submit"
-                form={formId}
-                variant="danger-soft"
-                isPending={isPending}
-              >
-                삭제
-              </Button>
-            </AlertDialog.Footer>
-          </AlertDialog.Dialog>
-        </AlertDialog.Container>
-
-      </AlertDialog.Backdrop>
-    </AlertDialog>
-  );
-}
