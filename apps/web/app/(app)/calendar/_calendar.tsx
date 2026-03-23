@@ -166,16 +166,16 @@ export default function Calendar({ lessons, selectedDate, view, use24HourFormat 
           <Tabs selectedKey={view}>
             <Tabs.ListContainer>
               <Tabs.List>
-                <Tabs.Tab id="month" onPress={() => handleViewChange('month')}>
-                  월
+                <Tabs.Tab id="day" onPress={() => handleViewChange('day')}>
+                  일
                   <Tabs.Indicator />
                 </Tabs.Tab>
                 <Tabs.Tab id="week" onPress={() => handleViewChange('week')}>
                   주
                   <Tabs.Indicator />
                 </Tabs.Tab>
-                <Tabs.Tab id="day" onPress={() => handleViewChange('day')}>
-                  일
+                <Tabs.Tab id="month" onPress={() => handleViewChange('month')}>
+                  월
                   <Tabs.Indicator />
                 </Tabs.Tab>
               </Tabs.List>
