@@ -173,7 +173,7 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
                       <Button variant={lesson.payment ? 'secondary' : 'danger-soft'} size="sm"
                         className="hidden sm:inline-flex" onPress={() => setPaymentLesson(lesson)}>
                         <CreditCardIcon className="size-4" />
-                        {lesson.payment ? '완료' : '결제필요'}
+                        {lesson.payment ? '결제완료' : '결제필요'}
                       </Button>
 
                       {/* 공유 - 모바일 */}
