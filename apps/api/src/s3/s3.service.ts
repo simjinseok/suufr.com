@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import {
   CloudFrontClient,
@@ -80,6 +81,32 @@ export class S3Service {
     catch (error) {
       console.error('S3 presigned URL generation error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Retrieve object metadata from S3 (existence, real size, content type).
+   * Used to make file registration server-authoritative instead of trusting the client.
+   * @param key - S3 object key
+   * @returns { contentLength, contentType } or null if the object doesn't exist / on error
+   */
+  async headObject(
+    key: string,
+  ): Promise<{ contentLength: number; contentType: string | undefined } | null> {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+      const res = await this.s3Client.send(command);
+      return {
+        contentLength: res.ContentLength ?? 0,
+        contentType: res.ContentType,
+      };
+    }
+    catch (error) {
+      console.error('S3 headObject error:', error);
+      return null;
     }
   }
 
