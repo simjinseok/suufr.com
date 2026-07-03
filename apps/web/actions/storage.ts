@@ -101,7 +101,6 @@ export async function createMediaFile(data: CreateMediaFileData): Promise<Create
       }
 
       try {
-        console.log('data', JSON.stringify(data))
         const result = await storageApi.createFile(data);
         const { revalidatePath } = await import('next/cache');
         revalidatePath('/settings/files');

@@ -123,7 +123,6 @@ export async function uploadToS3(
     };
   }
   catch (error) {
-    console.log(error);
     console.error('S3 upload error:', error);
     return { success: false, error: '업로드 중 오류가 발생했습니다.' };
   }
