@@ -1,7 +1,5 @@
 /**
  * Bunny CDN URL 유틸리티 (클라이언트에서도 사용 가능)
- *
- * 서버 전용 함수는 cloudinary-url.server.ts 참조
  */
 
 type ImageOptions = {

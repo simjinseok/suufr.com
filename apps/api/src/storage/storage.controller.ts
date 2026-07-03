@@ -7,6 +7,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
 import { CreateFolderDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
+import { folderByContentType } from '../common/utils/content-type';
 
 @Controller('api/storage')
 export class StorageController {
@@ -16,16 +17,6 @@ export class StorageController {
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
   ) {}
-
-  /**
-   * contentType에 따라 폴더 이름 반환
-   */
-  private getFolderByContentType(contentType: string): string {
-    if (contentType.startsWith('image/')) return 'images';
-    if (contentType.startsWith('video/')) return 'videos';
-    if (contentType === 'application/pdf') return 'documents';
-    return 'files';
-  }
 
   /**
    * 현재 사용자의 스토리지 용량 조회
@@ -80,7 +71,7 @@ export class StorageController {
     // 3. Generate unique S3 key (바로 영구 경로에 저장)
     const ext = fileName.split('.').pop();
     const uuid = randomUUID();
-    const folder = this.getFolderByContentType(contentType);
+    const folder = folderByContentType(contentType);
     const key = `users/${user.userId}/${folder}/${uuid}.${ext}`;
 
     // 4. Generate presigned URL

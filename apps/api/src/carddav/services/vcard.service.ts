@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { fetchImageAsBase64, optimizeCloudinaryUrl } from '../utils/image.util';
+import { fetchImageAsBase64 } from '../utils/image.util';
 
 export interface StudentContact {
   uuid: string;
@@ -89,9 +89,7 @@ export class VcardService {
 
     // PHOTO 속성 (base64 임베딩 - macOS 연락처 앱 호환성)
     if (student.profileImageUrl) {
-      // Cloudinary URL인 경우 200x200으로 최적화하여 용량 절감
-      const optimizedUrl = optimizeCloudinaryUrl(student.profileImageUrl, 200);
-      const image = await fetchImageAsBase64(optimizedUrl);
+      const image = await fetchImageAsBase64(student.profileImageUrl);
       if (image) {
         // vCard 3.0: ENCODING=b, TYPE=JPEG/PNG
         const type = image.mediaType.split('/')[1]?.toUpperCase() || 'JPEG';

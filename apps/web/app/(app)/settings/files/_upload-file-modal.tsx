@@ -8,6 +8,7 @@ import { CheckCircle, FileTextIcon } from 'lucide-react';
 import MediaFileUploadZone from '@/components/media/media-file-upload-zone';
 import { createMediaFile } from '@/actions/storage';
 import type { TStorageQuota, TTempMediaFile, TMediaFile } from '@/types/index';
+import { formatBytes } from '@/utils/format-bytes';
 
 interface UploadFileModalProps {
   isOpen: ModalProps['isOpen'];
@@ -16,15 +17,6 @@ interface UploadFileModalProps {
   folderUuid?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
 
 export default function UploadFileModal({ isOpen, onOpenChange, quota, folderUuid }: UploadFileModalProps) {
   return (

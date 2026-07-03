@@ -16,6 +16,7 @@ import {
   getSignedCookies as getCloudFrontSignedCookies,
 } from '@aws-sdk/cloudfront-signer';
 import { randomUUID } from 'crypto';
+import { folderByContentType } from '../common/utils/content-type';
 
 @Injectable()
 export class S3Service {
@@ -137,18 +138,6 @@ export class S3Service {
   }
 
   /**
-   * Get folder name based on content type
-   * @param contentType - MIME type
-   * @returns Folder name
-   */
-  private getFolderByContentType(contentType: string): string {
-    if (contentType.startsWith('image/')) return 'images';
-    if (contentType.startsWith('video/')) return 'videos';
-    if (contentType === 'application/pdf') return 'documents';
-    return 'files'; // fallback
-  }
-
-  /**
    * Get file extension from content type
    * @param contentType - MIME type
    * @returns File extension with dot (e.g., '.png')
@@ -179,7 +168,7 @@ export class S3Service {
   ): Promise<string | null> {
     try {
       const key = randomUUID();
-      const folder = this.getFolderByContentType(mediaType);
+      const folder = folderByContentType(mediaType);
       const s3Key = `${folder}/${key}`;
 
       const buffer = Buffer.from(base64Data, 'base64');
@@ -301,7 +290,7 @@ export class S3Service {
       return null;
     }
 
-    const folder = this.getFolderByContentType(contentType);
+    const folder = folderByContentType(contentType);
     const ext = this.getExtensionFromContentType(contentType);
     const key = randomUUID();
     // userId가 있으면 보호된 경로, 없으면 공개 경로

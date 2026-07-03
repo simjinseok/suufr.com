@@ -51,14 +51,6 @@ export function pLimit(concurrency: number) {
 }
 
 /**
- * Return Bunny CDN URL as-is (no transformations needed)
- * Bunny CDN serves images directly from S3 without URL-based transformations
- */
-export function optimizeCloudinaryUrl(url: string, size = 200): string {
-  return url;
-}
-
-/**
  * Fetch an image from URL and convert to base64
  * Used for embedding profile images in vCards
  * Includes in-memory caching with 5 minute TTL
