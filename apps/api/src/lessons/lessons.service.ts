@@ -426,6 +426,19 @@ export class LessonsService {
       }
     }
 
+    // 조직 프로필/로고 이미지도 서명 (비로그인 공유 뷰에서 users/ 보호경로 접근용)
+    const organization = result.student?.organization;
+    if (organization) {
+      if (organization.profileImageUrl) {
+        const signed = this.getSignedUrlFromCdnUrl(organization.profileImageUrl, expiresInSeconds);
+        if (signed) organization.profileImageUrl = signed;
+      }
+      if (organization.logoImageUrl) {
+        const signed = this.getSignedUrlFromCdnUrl(organization.logoImageUrl, expiresInSeconds);
+        if (signed) organization.logoImageUrl = signed;
+      }
+    }
+
     return result;
   }
 
