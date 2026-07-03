@@ -140,15 +140,7 @@ export class StorageController {
     const cdnUrl = process.env.CDN_URL;
     const url = cdnUrl ? `${cdnUrl}/${publicId}` : publicId;
 
-    // 5. 비관적 락으로 용량 예약 (실제 크기 기준)
-    const reserved = await this.storageQuotaService.reserveQuotaWithLock(user.userId, fileSize);
-    if (!reserved) {
-      // 이미 업로드된 객체 정리
-      await this.s3Service.deleteFile(publicId);
-      throw new ForbiddenException('스토리지 용량이 부족합니다.');
-    }
-
-    // folderUuid로 folderId 조회
+    // 5. folderUuid로 folderId 조회
     let folderId: number | null = null;
     if (folderUuid) {
       const folder = await this.prisma.folder.findFirst({
@@ -162,26 +154,31 @@ export class StorageController {
       }
     }
 
-    // DB에 파일 레코드 생성 (이미 영구 경로에 업로드됨)
+    // 6. 용량 예약 + DB 레코드 생성을 한 트랜잭션으로 (원자성 — 실패/크래시 시 쿼터 드리프트 방지)
     try {
-      const file = await this.prisma.mediaFile.create({
-        data: {
-          userId: user.userId,
-          url,
-          publicId,
-          type,
-          fileName,
-          fileSize,
-          folderId,
-        },
+      const file = await this.prisma.$transaction(async (tx) => {
+        const reserved = await this.storageQuotaService.reserveQuotaWithLock(user.userId, fileSize, tx);
+        if (!reserved) {
+          throw new ForbiddenException('스토리지 용량이 부족합니다.');
+        }
+        return tx.mediaFile.create({
+          data: {
+            userId: user.userId,
+            url,
+            publicId,
+            type,
+            fileName,
+            fileSize,
+            folderId,
+          },
+        });
       });
 
       return { success: true, data: file };
-    } catch (dbError) {
-      // DB 생성 실패 시 예약한 용량 롤백 및 S3 파일 삭제
-      await this.storageQuotaService.releaseReservedQuota(user.userId, fileSize);
+    } catch (error) {
+      // 예약/생성 실패 시 업로드된 S3 객체 정리 (쿼터는 트랜잭션 롤백으로 자동 복구)
       await this.s3Service.deleteFile(publicId);
-      throw dbError;
+      throw error;
     }
   }
 

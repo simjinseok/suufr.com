@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 // 기본 용량 100MB (구독 시스템 구현 시 동적 계산으로 변경 예정)
@@ -85,10 +86,14 @@ export class StorageQuotaService {
    * @param fileSize - 예약할 파일 크기 (바이트)
    * @returns 예약 성공 여부
    */
-  async reserveQuotaWithLock(userId: string, fileSize: number): Promise<boolean> {
-    return this.prisma.$transaction(async (tx) => {
+  async reserveQuotaWithLock(
+    userId: string,
+    fileSize: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean> {
+    const run = async (client: Prisma.TransactionClient) => {
       // FOR UPDATE로 행 잠금
-      const result = await tx.$queryRaw<Array<{ used_bytes: bigint }>>`
+      const result = await client.$queryRaw<Array<{ used_bytes: bigint }>>`
         SELECT used_bytes FROM user_storage_quotas
         WHERE user_id = ${userId}::uuid
         FOR UPDATE
@@ -102,7 +107,7 @@ export class StorageQuotaService {
       }
 
       // 용량 예약 (증가)
-      await tx.userStorageQuota.upsert({
+      await client.userStorageQuota.upsert({
         where: { userId },
         create: {
           userId,
@@ -116,16 +121,10 @@ export class StorageQuotaService {
       });
 
       return true;
-    });
-  }
+    };
 
-  /**
-   * 예약된 용량 해제 (업로드 실패 시 롤백)
-   * @param userId - 사용자 ID
-   * @param bytes - 해제할 바이트 수
-   */
-  async releaseReservedQuota(userId: string, bytes: number): Promise<void> {
-    await this.decreaseUsage(userId, bytes);
+    // 외부 트랜잭션이 있으면 그 안에서, 없으면 자체 트랜잭션으로 실행
+    return tx ? run(tx) : this.prisma.$transaction(run);
   }
 
   /**
@@ -133,18 +132,16 @@ export class StorageQuotaService {
    * @param userId - 사용자 ID
    * @param bytes - 감소할 바이트 수
    */
-  async decreaseUsage(userId: string, bytes: number): Promise<void> {
-    // 현재 사용량 조회
-    const quota = await this.getQuota(userId);
-
-    // 0 이하로 내려가지 않도록 보정
-    const newUsedBytes = Math.max(0, quota.usedBytes - bytes);
-
-    await this.prisma.userStorageQuota.update({
-      where: { userId },
-      data: {
-        usedBytes: BigInt(newUsedBytes),
-      },
-    });
+  async decreaseUsage(
+    userId: string,
+    bytes: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    // GREATEST로 0 미만 방지하며 원자적으로 감소 (락 없는 read-modify-write race 제거)
+    await tx.$executeRaw`
+      UPDATE user_storage_quotas
+      SET used_bytes = GREATEST(0, used_bytes - ${BigInt(bytes)})
+      WHERE user_id = ${userId}::uuid
+    `;
   }
 }
