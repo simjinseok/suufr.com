@@ -44,8 +44,11 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   });
 
   if (!response.ok) {
-    const error = await response.json().catch((e) => e);
-    throw new Error(error.message || `API Error: ${response.status}`);
+    // API 에러 규약: { success: false, error: { code, message } }
+    // (Nest 기본 형태 { message } 도 방어적으로 fallback)
+    const payload = await response.json().catch(() => null);
+    const message = payload?.error?.message ?? payload?.message;
+    throw new Error(message || `API Error: ${response.status}`);
   }
 
   return response.json();
