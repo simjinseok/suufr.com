@@ -1,4 +1,5 @@
 import type { MonthlyPaymentStats, YearlyPaymentStats } from '@/types/index';
+import { toKstParts } from '@/utils/kst';
 
 type PaymentWithStudent = {
   amount: number;
@@ -15,9 +16,8 @@ export function groupPaymentsByMonth(payments: PaymentWithStudent[]): MonthlyPay
   const grouped = new Map<string, MonthlyPaymentStats>();
 
   for (const payment of payments) {
-    const date = new Date(payment.paidAt);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
+    // KST 기준으로 월 분류 (UTC 서버 SSR에서도 정확)
+    const { year, month } = toKstParts(new Date(payment.paidAt));
     const key = `${year}-${month}`;
 
     if (!grouped.has(key)) {

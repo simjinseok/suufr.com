@@ -13,6 +13,7 @@ import {
   getPrevMonth,
   getNextMonth, getPrevYear, getNextYear,
 } from '@/utils/payment-stats';
+import { toKstParts } from '@/utils/kst';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
@@ -27,21 +28,19 @@ type Props = {
 };
 
 function parseDateParam(date: string | undefined): { year: number; month: number } {
-  if (!date) {
-    const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  if (date) {
+    const parts = date.split('-');
+    if (parts.length >= 2) {
+      return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10) };
+    }
+    if (parts.length === 1) {
+      return { year: parseInt(parts[0], 10), month: 1 };
+    }
   }
 
-  const parts = date.split('-');
-  if (parts.length >= 2) {
-    return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10) };
-  }
-  if (parts.length === 1) {
-    return { year: parseInt(parts[0], 10), month: 1 };
-  }
-
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  // date 파라미터가 없으면 KST 기준 현재 연/월
+  const { year, month } = toKstParts(new Date());
+  return { year, month };
 }
 
 export default async function Page({ searchParams }: Props) {

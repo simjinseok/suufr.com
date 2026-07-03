@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { kstMonthStart, toKstParts } from '../common/utils/kst';
 
 @Injectable()
 export class DashboardService {
@@ -29,9 +30,10 @@ export class DashboardService {
       };
     }
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    // 이번 달 범위 (KST 기준, 다음 달 시작을 exclusive 상한으로)
+    const { year, month } = toKstParts(new Date());
+    const startOfMonth = kstMonthStart(year, month);
+    const endOfMonth = kstMonthStart(year, month + 1);
 
     const [activeStudentCount, notPaidLessons, leftStudentsCount, uncheckedMeetings] = await Promise.all([
       // 1. Active student count
@@ -76,7 +78,7 @@ export class DashboardService {
           status: 'leave',
           changedAt: {
             gte: startOfMonth,
-            lte: endOfMonth,
+            lt: endOfMonth,
           },
           deletedAt: null,
           student: {
