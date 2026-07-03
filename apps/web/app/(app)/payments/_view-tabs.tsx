@@ -1,24 +1,13 @@
 'use client';
 import { Tabs } from '@heroui/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { PaymentView } from '@/types/index';
-import {
-  getMonthRange,
-  getYearRange,
-  getPrevMonth,
-  getNextMonth,
-  getPrevYear,
-  getNextYear,
-} from '@/utils/payment-stats';
 
 type Props = {
   view: PaymentView;
-  date: string | undefined;
 };
 
-export default function ViewTabs({ view, date }: Props) {
+export default function ViewTabs({ view }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -28,8 +17,6 @@ export default function ViewTabs({ view, date }: Props) {
     params.delete('date');
     router.push(`/payments?${params.toString()}`);
   };
-
-  const { from } = view === 'monthly' ? getMonthRange(date) : getYearRange(date);
 
   return (
     <Tabs selectedKey={view}>
@@ -44,7 +31,6 @@ export default function ViewTabs({ view, date }: Props) {
           </Tabs.Tab>
           <Tabs.Tab
             id="yearly"
-
             onPress={() => handleViewChange('yearly')}
           >
             연도별

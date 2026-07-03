@@ -160,12 +160,3 @@ export function getNextYear(dateStr: string | undefined): string {
   const { from } = getYearRange(dateStr);
   return formatYearDate(from.getFullYear() + 1);
 }
-
-export function getCurrentMonthDate(): string {
-  const now = new Date();
-  return formatMonthDate(now.getFullYear(), now.getMonth() + 1);
-}
-
-export function getCurrentYearDate(): string {
-  return formatYearDate(new Date().getFullYear());
-}

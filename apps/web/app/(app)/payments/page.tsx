@@ -99,7 +99,7 @@ export default async function Page({ searchParams }: Props) {
     <div>
       <div className="flex justify-between">
         <h1 className="text-xl font-bold text-default-900 lg:text-3xl">입금 내역</h1>
-        <ViewTabs view={view} date={_date} />
+        <ViewTabs view={view} />
       </div>
 
       <div className="mt-4 flex items-center justify-between">
