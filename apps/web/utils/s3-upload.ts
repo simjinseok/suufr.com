@@ -3,6 +3,15 @@
  * presigned URL을 사용하여 서버를 거치지 않고 업로드
  */
 
+import {
+  SUPPORTED_IMAGE_TYPES,
+  SUPPORTED_VIDEO_TYPES,
+  SUPPORTED_DOCUMENT_TYPES,
+  MAX_IMAGE_SIZE,
+  MAX_VIDEO_SIZE,
+  MAX_DOCUMENT_SIZE,
+} from '@/utils/file-constraints';
+
 export type ResourceType = 'image' | 'video' | 'document';
 
 export type UploadResult = {
@@ -15,16 +24,6 @@ export type UploadResult = {
   success: false;
   error: string;
 };
-
-// 지원되는 파일 형식
-const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
-const SUPPORTED_DOCUMENT_TYPES = ['application/pdf'];
-
-// 파일 크기 제한 (바이트)
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB
 
 /**
  * 파일의 리소스 타입 확인

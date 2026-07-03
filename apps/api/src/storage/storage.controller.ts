@@ -8,6 +8,13 @@ import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
 import { CreateFolderDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
 import { folderByContentType } from '../common/utils/content-type';
+import {
+  SUPPORTED_UPLOAD_TYPES,
+  MAX_IMAGE_SIZE,
+  MAX_VIDEO_SIZE,
+  MAX_DOCUMENT_SIZE,
+  MAX_SIZE_BY_TYPE,
+} from '../common/constants/file-constraints';
 
 @Controller('api/storage')
 export class StorageController {
@@ -38,27 +45,13 @@ export class StorageController {
     const { fileName, contentType, fileSize } = body;
 
     // 1. Validate contentType
-    const SUPPORTED_TYPES = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'video/mp4',
-      'video/quicktime',
-      'video/webm',
-      'application/pdf',
-    ];
-
-    if (!SUPPORTED_TYPES.includes(contentType)) {
+    if (!SUPPORTED_UPLOAD_TYPES.includes(contentType)) {
       throw new BadRequestException('지원하지 않는 파일 형식입니다.');
     }
 
     // 2. Validate file size
     const isImage = contentType.startsWith('image/');
     const isVideo = contentType.startsWith('video/');
-    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-    const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB (PDF)
     const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_DOCUMENT_SIZE;
 
     if (fileSize > maxSize) {
@@ -138,12 +131,7 @@ export class StorageController {
     }
 
     // 3. 실제 크기로 서버측 사이즈 제한 재검증 (presigned PUT은 실제 크기를 강제하지 않음)
-    const MAX_SIZE: Record<'image' | 'video' | 'document', number> = {
-      image: 10 * 1024 * 1024,
-      video: 100 * 1024 * 1024,
-      document: 50 * 1024 * 1024,
-    };
-    if (fileSize > MAX_SIZE[type]) {
+    if (fileSize > MAX_SIZE_BY_TYPE[type]) {
       await this.s3Service.deleteFile(publicId);
       throw new BadRequestException('파일 크기가 허용 범위를 초과했습니다.');
     }
