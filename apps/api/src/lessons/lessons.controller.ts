@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto, UpdateLessonDto, ListLessonsQueryDto } from './dto';
 import { Public } from '../common/decorators/public.decorator';
@@ -19,6 +20,8 @@ export class LessonsController {
 
   @Get('share/:shareId')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   getByShareId(@Param('shareId') shareId: string) {
     return this.lessonsService.getByShareId(shareId);
   }

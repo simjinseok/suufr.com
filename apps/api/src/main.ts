@@ -13,6 +13,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
     ignoreTrailingSlash: true,
+    // 로드밸런서 뒤에서 실제 클라이언트 IP(X-Forwarded-For)를 사용 — rate limiting 정확도
+    trustProxy: true,
   });
 
   // Register WebDAV HTTP methods for CardDAV/CalDAV
