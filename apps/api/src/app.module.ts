@@ -21,6 +21,7 @@ import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
 import { CurriculumsModule } from './curriculums/curriculums.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CurriculumsModule } from './curriculums/curriculums.module';
     GoogleModule,
     StorageModule,
     CurriculumsModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}
