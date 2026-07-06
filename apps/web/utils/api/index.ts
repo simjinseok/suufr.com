@@ -10,3 +10,4 @@ export { dashboardApi } from './dashboard';
 export { organizationsApi } from './organizations';
 export { storageApi } from './storage';
 export { curriculumsApi } from './curriculums';
+export { subscriptionsApi } from './subscriptions';
