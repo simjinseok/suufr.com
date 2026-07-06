@@ -1,7 +1,8 @@
 'use client';
 
-import { LogOutIcon, SettingsIcon, ShieldIcon, BuildingIcon, CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
+import { LogOutIcon, SettingsIcon, ShieldIcon, BuildingIcon, CheckIcon, ChevronsUpDownIcon, CreditCardIcon } from 'lucide-react';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
+import { PlanBadge } from '@/components/plan-badge';
 
 type OrganizationItem = {
   id: number;
@@ -14,9 +15,10 @@ type OrganizationItem = {
 type Props = {
   currentOrg: OrganizationItem;
   organizations: OrganizationItem[];
+  plan: 'free' | 'pro';
 };
 
-export function UserMenu({ currentOrg, organizations }: Props) {
+export function UserMenu({ currentOrg, organizations, plan }: Props) {
   const profileName = currentOrg.profileName ?? currentOrg.name;
   const profileImageUrl = currentOrg.profileImageUrl;
   const profileInitial = profileName.charAt(profileName.length - 1);
@@ -26,6 +28,9 @@ export function UserMenu({ currentOrg, organizations }: Props) {
 
     if (keyStr === 'settings') {
       window.location.href = '/settings';
+    }
+    else if (keyStr === 'subscription') {
+      window.location.href = '/settings/subscription';
     }
     else if (keyStr === 'security') {
       window.location.href = '/settings/security';
@@ -60,8 +65,9 @@ export function UserMenu({ currentOrg, organizations }: Props) {
               <Avatar.Fallback>{profileInitial}</Avatar.Fallback>
             </Avatar>
             <div className="text-left min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {profileName}
+              <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+                <span className="truncate">{profileName}</span>
+                <PlanBadge plan={plan} />
               </p>
               <p className="text-xs text-gray-500 truncate">
                 {currentOrg.name}
@@ -114,6 +120,14 @@ export function UserMenu({ currentOrg, organizations }: Props) {
               </div>
               <div>
                 <Label>계정 설정</Label>
+              </div>
+            </Dropdown.Item>
+            <Dropdown.Item id="subscription" textValue="요금제">
+              <div>
+                <CreditCardIcon strokeWidth={1.5} className="size-5" />
+              </div>
+              <div>
+                <Label>요금제</Label>
               </div>
             </Dropdown.Item>
             <Dropdown.Item id="security" textValue="보안 설정">

@@ -15,11 +15,13 @@ import {
   CheckIcon,
   HardDriveIcon,
   BookOpenIcon,
+  CreditCardIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { AppNavigation } from '@/components/app-navigation';
+import { PlanBadge } from '@/components/plan-badge';
 import { UserMenu } from './_user-menu';
 
 type OrganizationItem = {
@@ -33,9 +35,10 @@ type OrganizationItem = {
 type Props = {
   currentOrg: OrganizationItem;
   organizations: OrganizationItem[];
+  plan: 'free' | 'pro';
 };
 
-export function Sidebar({ currentOrg, organizations }: Props) {
+export function Sidebar({ currentOrg, organizations, plan }: Props) {
   const pathname = usePathname();
   const profileName = currentOrg.profileName ?? currentOrg.name;
   const profileImageUrl = currentOrg.profileImageUrl;
@@ -47,6 +50,9 @@ export function Sidebar({ currentOrg, organizations }: Props) {
 
     if (keyStr === 'settings') {
       window.location.href = '/settings';
+    }
+    else if (keyStr === 'subscription') {
+      window.location.href = '/settings/subscription';
     }
     else if (keyStr === 'security') {
       window.location.href = '/settings/security';
@@ -99,7 +105,7 @@ export function Sidebar({ currentOrg, organizations }: Props) {
           <span>파일 관리</span>
         </Link>
       </div>
-      <UserMenu currentOrg={currentOrg} organizations={organizations} />
+      <UserMenu currentOrg={currentOrg} organizations={organizations} plan={plan} />
     </>
   );
 
@@ -128,10 +134,11 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                 <Avatar.Fallback className="text-[10px]">{profileInitial}</Avatar.Fallback>
               </Avatar>
               <div className="text-left">
-                <p className="text-xs font-medium text-gray-900 max-w-20 truncate leading-tight">
-                  {profileName}
+                <p className="text-xs font-medium text-gray-900 max-w-24 truncate leading-tight flex items-center gap-1">
+                  <span className="truncate">{profileName}</span>
+                  <PlanBadge plan={plan} />
                 </p>
-                <p className="text-[10px] text-gray-500 max-w-20 truncate leading-tight">
+                <p className="text-[10px] text-gray-500 max-w-24 truncate leading-tight">
                   {currentOrg.name}
                 </p>
               </div>
@@ -175,6 +182,14 @@ export function Sidebar({ currentOrg, organizations }: Props) {
                   </div>
                   <div>
                     <Label>계정 설정</Label>
+                  </div>
+                </Dropdown.Item>
+                <Dropdown.Item id="subscription" textValue="요금제">
+                  <div>
+                    <CreditCardIcon strokeWidth={1.5} className="size-5" />
+                  </div>
+                  <div>
+                    <Label>요금제</Label>
                   </div>
                 </Dropdown.Item>
                 <Dropdown.Item id="security" textValue="보안 설정">
