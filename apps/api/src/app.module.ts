@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
+import { CryptoModule } from './crypto/crypto.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
 import { CarddavModule } from './carddav/carddav.module';
@@ -31,6 +32,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    CryptoModule,
     CommonModule,
     HealthModule,
     DashboardModule,

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import * as crypto from 'crypto';
+import { CryptoService } from '../crypto/crypto.service';
 import type { GoogleTokenResponse, GoogleUserInfo, GoogleConnectionStatus } from './dto';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -21,24 +21,15 @@ export class GoogleService {
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly redirectUri: string;
-  private readonly encryptionKey: Buffer;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly cryptoService: CryptoService,
   ) {
     this.clientId = this.configService.get<string>('GOOGLE_CLIENT_ID') ?? '';
     this.clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET') ?? '';
     this.redirectUri = this.configService.get<string>('GOOGLE_REDIRECT_URI') ?? '';
-
-    const encryptionKeyBase64 = this.configService.get<string>('TOKEN_ENCRYPTION_KEY');
-    if (encryptionKeyBase64) {
-      this.encryptionKey = Buffer.from(encryptionKeyBase64, 'base64');
-    }
-    else {
-      this.logger.warn('TOKEN_ENCRYPTION_KEY not set, using fallback (not secure for production)');
-      this.encryptionKey = crypto.scryptSync('fallback-key', 'salt', 32);
-    }
   }
 
   /**
@@ -398,26 +389,11 @@ export class GoogleService {
     this.logger.log(`Cleared calendar sync data for user ${userId}`);
   }
 
-  // AES-256-GCM encryption
   private encrypt(text: string): string {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey, iv);
-    const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
-    const authTag = cipher.getAuthTag();
-
-    // Format: iv:authTag:encrypted (all base64)
-    return `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted.toString('base64')}`;
+    return this.cryptoService.encrypt(text);
   }
 
   private decrypt(encryptedText: string): string {
-    const [ivBase64, authTagBase64, encryptedBase64] = encryptedText.split(':');
-    const iv = Buffer.from(ivBase64, 'base64');
-    const authTag = Buffer.from(authTagBase64, 'base64');
-    const encrypted = Buffer.from(encryptedBase64, 'base64');
-
-    const decipher = crypto.createDecipheriv('aes-256-gcm', this.encryptionKey, iv);
-    decipher.setAuthTag(authTag);
-
-    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    return this.cryptoService.decrypt(encryptedText);
   }
 }
