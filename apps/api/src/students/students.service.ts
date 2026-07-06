@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { ListStudentsQueryDto } from './dto/list-students-query.dto';
@@ -11,6 +12,7 @@ export class StudentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async findAll(query: ListStudentsQueryDto, userId: string) {
@@ -89,6 +91,18 @@ export class StudentsService {
 
     if (!organization) {
       throw new NotFoundException('Organization not found');
+    }
+
+    // 플랜별 학생 수 한도 (조직 기준, 기존 초과분은 유지하고 신규 등록만 차단)
+    const { limits } = await this.subscriptionsService.getEntitlements(userId);
+    if (limits.maxStudents !== null) {
+      const studentCount = await this.subscriptionsService.countBillableStudents(organization.id);
+      if (studentCount >= limits.maxStudents) {
+        throw new ForbiddenException({
+          message: `무료 플랜에서는 수강생을 최대 ${limits.maxStudents}명까지 등록할 수 있어요. 프로 플랜으로 업그레이드하면 제한 없이 등록할 수 있습니다.`,
+          error: 'STUDENT_LIMIT_EXCEEDED',
+        });
+      }
     }
 
     const student = await this.prisma.student.create({
