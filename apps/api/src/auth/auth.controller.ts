@@ -5,6 +5,7 @@ import { AuthenticatedUser } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { CognitoService } from './cognito.service';
 import { S3Service } from '../s3/s3.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import {
   LoginDto,
   MfaDto,
@@ -22,6 +23,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly cognitoService: CognitoService,
     private readonly s3Service: S3Service,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   @Get('me')
@@ -29,6 +31,7 @@ export class AuthController {
     const orgData = await this.authService.getCurrentOrganization(user);
     const settings = await this.authService.getOrCreateUserSettings(user.userId);
     const organizations = await this.authService.getUserOrganizations(user.userId);
+    const subscription = await this.subscriptionsService.getEntitlements(user.userId);
 
     return {
       user: {
@@ -39,6 +42,7 @@ export class AuthController {
       organization: orgData?.organization ?? null,
       organizations,
       settings,
+      subscription,
     };
   }
 
