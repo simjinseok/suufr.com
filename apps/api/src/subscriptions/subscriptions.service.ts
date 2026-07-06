@@ -83,10 +83,26 @@ export class SubscriptionsService {
       }
     }
 
-    const quota = await this.prisma.userStorageQuota.findUnique({
-      where: { userId },
-      select: { usedBytes: true },
-    });
+    const [quota, orders] = await Promise.all([
+      this.prisma.userStorageQuota.findUnique({
+        where: { userId },
+        select: { usedBytes: true },
+      }),
+      this.prisma.subscriptionOrder.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        select: {
+          orderId: true,
+          amount: true,
+          status: true,
+          failReason: true,
+          approvedAt: true,
+          receiptUrl: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
     return {
       plan,
@@ -95,6 +111,7 @@ export class SubscriptionsService {
       canceledAt: subscription?.canceledAt ?? null,
       cardCompany: subscription?.cardCompany ?? null,
       cardNumberMasked: subscription?.cardNumberMasked ?? null,
+      orders,
       limits: PLAN_LIMITS[plan],
       usage: {
         studentCount,
