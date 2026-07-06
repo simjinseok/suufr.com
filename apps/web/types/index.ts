@@ -224,6 +224,16 @@ export type TPlanLimits = {
   storageQuotaBytes: number;
 };
 
+export type TSubscriptionOrder = {
+  orderId: string;
+  amount: number;
+  status: 'done' | 'failed';
+  failReason: string | null;
+  approvedAt: string | null;
+  receiptUrl: string | null;
+  createdAt: string;
+};
+
 export type TSubscription = {
   plan: TPlan;
   status: 'active' | 'canceled' | 'past_due' | 'expired';
@@ -231,6 +241,7 @@ export type TSubscription = {
   canceledAt: string | null;
   cardCompany: string | null;
   cardNumberMasked: string | null;
+  orders: TSubscriptionOrder[];
   limits: TPlanLimits;
   usage: {
     studentCount: number | null;

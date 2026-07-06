@@ -49,10 +49,10 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   const response = await fetch(url, {
     method,
     headers: {
-      ...(body && { 'Content-Type': 'application/json' }),
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
-    ...(body && { body: JSON.stringify(body) }),
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
   if (!response.ok) {
