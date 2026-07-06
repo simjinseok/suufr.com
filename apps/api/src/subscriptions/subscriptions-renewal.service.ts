@@ -4,12 +4,16 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../crypto/crypto.service';
 import { TossClient, TossApiError } from './toss.client';
-import { PRO_PRICE_KRW } from './plan.constants';
-import { PRO_ORDER_NAME, addOneMonth } from './subscriptions-billing.service';
-import { UserSubscription } from '@prisma/generated/client';
+import { PLAN_PRICING, PaidPlanValue } from './plan.constants';
+import { addOneMonth } from './subscriptions-billing.service';
+import { OrganizationSubscription } from '@prisma/generated/client';
 
 // 결제 실패(past_due) 후 만료 처리까지의 유예 기간
 const GRACE_PERIOD_DAYS = 7;
+
+type RenewableSubscription = OrganizationSubscription & {
+  organization: { uuid: string; userId: string };
+};
 
 @Injectable()
 export class SubscriptionsRenewalService {
@@ -41,9 +45,9 @@ export class SubscriptionsRenewalService {
     const now = new Date();
     const graceCutoff = new Date(now.getTime() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
 
-    const { count } = await this.prisma.userSubscription.updateMany({
+    const { count } = await this.prisma.organizationSubscription.updateMany({
       where: {
-        plan: 'pro',
+        plan: { not: 'free' },
         OR: [
           { status: 'past_due', currentPeriodEnd: { lt: graceCutoff } },
           { status: 'canceled', currentPeriodEnd: { lt: now } },
@@ -64,12 +68,15 @@ export class SubscriptionsRenewalService {
   private async renewDueSubscriptions() {
     const now = new Date();
 
-    const dueSubscriptions = await this.prisma.userSubscription.findMany({
+    const dueSubscriptions = await this.prisma.organizationSubscription.findMany({
       where: {
-        plan: 'pro',
+        plan: { not: 'free' },
         status: { in: ['active', 'past_due'] },
         billingKey: { not: null },
         currentPeriodEnd: { lte: now },
+      },
+      include: {
+        organization: { select: { uuid: true, userId: true } },
       },
     });
 
@@ -80,21 +87,32 @@ export class SubscriptionsRenewalService {
         await this.renewOne(subscription);
       }
       catch (error) {
-        this.logger.error(`Failed to renew subscription for user ${subscription.userId}:`, error);
+        this.logger.error(
+          `Failed to renew subscription for organization ${subscription.organizationId}:`,
+          error,
+        );
       }
     }
   }
 
-  private async renewOne(subscription: UserSubscription) {
+  private async renewOne(subscription: RenewableSubscription) {
+    const pricing = PLAN_PRICING[subscription.plan as PaidPlanValue];
+    if (!pricing) {
+      this.logger.error(
+        `No pricing defined for plan '${subscription.plan}' (organization ${subscription.organizationId})`,
+      );
+      return;
+    }
+
     const billingKey = this.cryptoService.decrypt(subscription.billingKey!);
     const orderId = `sub-${randomUUID()}`;
 
     try {
       const payment = await this.tossClient.chargeBilling(billingKey, {
-        customerKey: subscription.userId,
-        amount: PRO_PRICE_KRW,
+        customerKey: subscription.organization.uuid,
+        amount: pricing.monthlyPriceKrw,
         orderId,
-        orderName: PRO_ORDER_NAME,
+        orderName: pricing.orderName,
       });
 
       // 주기 앵커 유지: 이전 종료일 기준 +1개월 (다운타임 등으로 과거면 현재 이후까지 연장)
@@ -106,8 +124,8 @@ export class SubscriptionsRenewalService {
       }
 
       await this.prisma.$transaction([
-        this.prisma.userSubscription.update({
-          where: { userId: subscription.userId },
+        this.prisma.organizationSubscription.update({
+          where: { organizationId: subscription.organizationId },
           data: {
             status: 'active',
             currentPeriodStart: previousEnd,
@@ -116,7 +134,8 @@ export class SubscriptionsRenewalService {
         }),
         this.prisma.subscriptionOrder.create({
           data: {
-            userId: subscription.userId,
+            organizationId: subscription.organizationId,
+            userId: subscription.organization.userId,
             orderId,
             paymentKey: payment.paymentKey,
             amount: payment.totalAmount,
@@ -127,26 +146,31 @@ export class SubscriptionsRenewalService {
         }),
       ]);
 
-      this.logger.log(`Renewed subscription for user ${subscription.userId} (until ${newEnd.toISOString()})`);
+      this.logger.log(
+        `Renewed subscription for organization ${subscription.organizationId} (until ${newEnd.toISOString()})`,
+      );
     }
     catch (error) {
       if (error instanceof TossApiError) {
         await this.prisma.$transaction([
-          this.prisma.userSubscription.update({
-            where: { userId: subscription.userId },
+          this.prisma.organizationSubscription.update({
+            where: { organizationId: subscription.organizationId },
             data: { status: 'past_due' },
           }),
           this.prisma.subscriptionOrder.create({
             data: {
-              userId: subscription.userId,
+              organizationId: subscription.organizationId,
+              userId: subscription.organization.userId,
               orderId,
-              amount: PRO_PRICE_KRW,
+              amount: pricing.monthlyPriceKrw,
               status: 'failed',
               failReason: `${error.code}: ${error.message}`,
             },
           }),
         ]);
-        this.logger.warn(`Renewal charge failed for user ${subscription.userId}: ${error.code}`);
+        this.logger.warn(
+          `Renewal charge failed for organization ${subscription.organizationId}: ${error.code}`,
+        );
         return;
       }
       throw error;

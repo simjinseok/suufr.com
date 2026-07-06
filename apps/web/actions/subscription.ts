@@ -19,12 +19,12 @@ export async function getSubscription(): Promise<TSubscription | null> {
     { headers: await headers(), recordResponse: true },
     async () => {
       const session = await getSession();
-      if (!session) {
+      if (!session?.organization) {
         return null;
       }
 
       try {
-        const result = await subscriptionsApi.get(session.organization?.uuid);
+        const result = await subscriptionsApi.get(session.organization.uuid);
         return result.data;
       }
       catch (error) {
@@ -41,12 +41,12 @@ export async function activateBilling(authKey: string): Promise<BillingActionRes
     { headers: await headers(), recordResponse: true },
     async () => {
       const session = await getSession();
-      if (!session) {
+      if (!session?.organization) {
         return { success: false, message: '로그인이 필요합니다.' };
       }
 
       try {
-        await subscriptionsApi.activate(authKey);
+        await subscriptionsApi.activate(session.organization.uuid, authKey);
         revalidatePath('/settings/subscription', 'page');
         return { success: true };
       }
@@ -66,12 +66,12 @@ export async function cancelSubscription(): Promise<BillingActionResult> {
     { headers: await headers(), recordResponse: true },
     async () => {
       const session = await getSession();
-      if (!session) {
+      if (!session?.organization) {
         return { success: false, message: '로그인이 필요합니다.' };
       }
 
       try {
-        await subscriptionsApi.cancel();
+        await subscriptionsApi.cancel(session.organization.uuid);
         revalidatePath('/settings/subscription', 'page');
         return { success: true };
       }
@@ -91,12 +91,12 @@ export async function resumeSubscription(): Promise<BillingActionResult> {
     { headers: await headers(), recordResponse: true },
     async () => {
       const session = await getSession();
-      if (!session) {
+      if (!session?.organization) {
         return { success: false, message: '로그인이 필요합니다.' };
       }
 
       try {
-        await subscriptionsApi.resume();
+        await subscriptionsApi.resume(session.organization.uuid);
         revalidatePath('/settings/subscription', 'page');
         return { success: true };
       }

@@ -94,7 +94,7 @@ export class StudentsService {
     }
 
     // 플랜별 학생 수 한도 (조직 기준, 기존 초과분은 유지하고 신규 등록만 차단)
-    const { limits } = await this.subscriptionsService.getEntitlements(userId);
+    const { limits } = await this.subscriptionsService.getEntitlements(organization.id);
     if (limits.maxStudents !== null) {
       const studentCount = await this.subscriptionsService.countBillableStudents(organization.id);
       if (studentCount >= limits.maxStudents) {

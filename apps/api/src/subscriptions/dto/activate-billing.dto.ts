@@ -1,6 +1,11 @@
-import { IsString } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 
-export class ActivateBillingDto {
+export class OrganizationTargetDto {
+  @IsUUID()
+  organizationUuid!: string;
+}
+
+export class ActivateBillingDto extends OrganizationTargetDto {
   @IsString()
   authKey!: string;
 }

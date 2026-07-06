@@ -18,5 +18,19 @@ export const PLAN_LIMITS: Record<PlanValue, PlanLimits> = {
   },
 };
 
-/** PRO 플랜 월 구독료 (원) */
-export const PRO_PRICE_KRW = 6900;
+/** 결제가 필요한 플랜 (free 제외) */
+export type PaidPlanValue = Exclude<PlanValue, 'free'>;
+
+export interface PlanPricing {
+  /** 월 구독료 (원) — 자동결제 청구 금액 */
+  monthlyPriceKrw: number;
+  /** 토스 주문명 */
+  orderName: string;
+}
+
+export const PLAN_PRICING: Record<PaidPlanValue, PlanPricing> = {
+  pro: {
+    monthlyPriceKrw: 6900,
+    orderName: '스프 프로 월 구독',
+  },
+};
