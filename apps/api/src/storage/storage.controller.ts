@@ -133,7 +133,10 @@ export class StorageController {
     if (!reserved) {
       // S3에서 파일 삭제 (이미 업로드된 경우)
       await this.s3Service.deleteByUrl(url);
-      throw new ForbiddenException('스토리지 용량이 부족합니다.');
+      throw new ForbiddenException({
+        message: '스토리지 용량이 부족합니다.',
+        error: 'STORAGE_LIMIT_EXCEEDED',
+      });
     }
 
     // folderUuid로 folderId 조회
