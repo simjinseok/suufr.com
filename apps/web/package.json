@@ -19,6 +19,7 @@
     "@next/third-parties": "^16.2.7",
     "@react-stately/data": "^3.16.1",
     "@sentry/nextjs": "^10.57.0",
+    "@tosspayments/tosspayments-sdk": "^2.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
