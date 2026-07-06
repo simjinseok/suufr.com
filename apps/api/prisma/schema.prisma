@@ -478,3 +478,27 @@ enum SubscriptionStatusValue {
 
   @@map("SubscriptionStatus")
 }
+
+// 구독 결제 시도 기록 (결제 내역/감사용)
+model SubscriptionOrder {
+  id         Int                          @id @default(autoincrement())
+  userId     String                       @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  orderId    String                       @unique @map("order_id") // 토스 orderId (6-64자)
+  paymentKey String?                      @map("payment_key")
+  amount     Int
+  status     SubscriptionOrderStatusValue
+  failReason String?                      @map("fail_reason")
+  approvedAt DateTime?                    @map("approved_at") @db.Timestamptz(0)
+  receiptUrl String?                      @map("receipt_url")
+  createdAt  DateTime                     @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  @@index([userId, createdAt])
+  @@map("subscription_orders")
+}
+
+enum SubscriptionOrderStatusValue {
+  done
+  failed
+
+  @@map("SubscriptionOrderStatus")
+}
