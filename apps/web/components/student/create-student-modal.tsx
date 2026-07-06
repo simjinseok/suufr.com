@@ -2,6 +2,7 @@
 import { ModalProps, toast } from '@heroui/react';
 
 import React from 'react';
+import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Button,
@@ -16,6 +17,7 @@ import {
   TextField,
   Label,
 } from '@heroui/react';
+import { Crown } from 'lucide-react';
 
 import { createStudent } from '@/actions/student';
 
@@ -79,6 +81,21 @@ function Content({ close }: ContentProps) {
         <Modal.Heading>수강생 추가</Modal.Heading>
       </Modal.Header>
       <Modal.Body>
+        {state.errorCode === 'STUDENT_LIMIT_EXCEEDED' && (
+          <div className="mb-3 p-4 rounded-lg bg-indigo-50 text-sm">
+            <p className="font-medium text-indigo-900 flex items-center gap-1.5">
+              <Crown className="w-4 h-4 text-indigo-600" />
+              프로 플랜이 필요해요
+            </p>
+            <p className="mt-1 text-indigo-800">{state.message}</p>
+            <Link
+              href="/settings/subscription"
+              className="mt-2 inline-block font-medium text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+            >
+              요금제 보기
+            </Link>
+          </div>
+        )}
         <Form
           className="p-1"
           id={formId}
