@@ -93,10 +93,10 @@ export class StudentsService {
       throw new NotFoundException('Organization not found');
     }
 
-    // 플랜별 학생 수 한도 (조직 기준, 기존 초과분은 유지하고 신규 등록만 차단)
-    const { limits } = await this.subscriptionsService.getEntitlements(organization.id);
+    // 플랜별 학생 수 한도 (계정 기준 전 조직 합산, 기존 초과분은 유지하고 신규 등록만 차단)
+    const { limits } = await this.subscriptionsService.getEntitlements(userId);
     if (limits.maxStudents !== null) {
-      const studentCount = await this.subscriptionsService.countBillableStudents(organization.id);
+      const studentCount = await this.subscriptionsService.countBillableStudents(userId);
       if (studentCount >= limits.maxStudents) {
         throw new ForbiddenException({
           message: `무료 플랜에서는 수강생을 최대 ${limits.maxStudents}명까지 등록할 수 있어요. 프로 플랜으로 업그레이드하면 제한 없이 등록할 수 있습니다.`,

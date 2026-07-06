@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../crypto/crypto.service';
@@ -32,37 +32,16 @@ export class SubscriptionsBillingService {
     return `sub-${randomUUID()}`;
   }
 
-  private async findOwnedOrganization(userId: string, organizationUuid: string) {
-    const organization = await this.prisma.organization.findFirst({
-      where: { uuid: organizationUuid, userId, deletedAt: null },
-      select: { id: true, uuid: true },
-    });
-
-    if (!organization) {
-      throw new NotFoundException('Organization not found');
-    }
-
-    return organization;
-  }
-
   /**
-   * 카드 등록(authKey) → 빌링키 발급 → 첫 결제 승인 → 조직 유료 플랜 활성화
+   * 카드 등록(authKey) → 빌링키 발급 → 첫 결제 승인 → 유료 플랜 활성화
    * 첫 결제가 실패하면 아무것도 저장하지 않음 (카드 재등록 필요)
-   * customerKey는 구독 주체인 조직의 uuid
    */
-  async activate(
-    userId: string,
-    organizationUuid: string,
-    authKey: string,
-    customerEmail?: string,
-    plan: PaidPlanValue = 'pro',
-  ) {
-    const organization = await this.findOwnedOrganization(userId, organizationUuid);
+  async activate(userId: string, authKey: string, customerEmail?: string, plan: PaidPlanValue = 'pro') {
     const pricing = PLAN_PRICING[plan];
 
     let billing;
     try {
-      billing = await this.tossClient.issueBillingKey(authKey, organization.uuid);
+      billing = await this.tossClient.issueBillingKey(authKey, userId);
     }
     catch (error) {
       if (error instanceof TossApiError) {
@@ -78,7 +57,7 @@ export class SubscriptionsBillingService {
     let payment;
     try {
       payment = await this.tossClient.chargeBilling(billing.billingKey, {
-        customerKey: organization.uuid,
+        customerKey: userId,
         amount: pricing.monthlyPriceKrw,
         orderId,
         orderName: pricing.orderName,
@@ -89,7 +68,6 @@ export class SubscriptionsBillingService {
       if (error instanceof TossApiError) {
         await this.prisma.subscriptionOrder.create({
           data: {
-            organizationId: organization.id,
             userId,
             orderId,
             amount: pricing.monthlyPriceKrw,
@@ -110,10 +88,10 @@ export class SubscriptionsBillingService {
     const encryptedBillingKey = this.cryptoService.encrypt(billing.billingKey);
 
     await this.prisma.$transaction([
-      this.prisma.organizationSubscription.upsert({
-        where: { organizationId: organization.id },
+      this.prisma.userSubscription.upsert({
+        where: { userId },
         create: {
-          organizationId: organization.id,
+          userId,
           plan,
           status: 'active',
           currentPeriodStart: now,
@@ -135,7 +113,6 @@ export class SubscriptionsBillingService {
       }),
       this.prisma.subscriptionOrder.create({
         data: {
-          organizationId: organization.id,
           userId,
           orderId,
           paymentKey: payment.paymentKey,
@@ -147,20 +124,15 @@ export class SubscriptionsBillingService {
       }),
     ]);
 
-    this.logger.log(
-      `Subscription activated for organization ${organization.id} (period end: ${periodEnd.toISOString()})`,
-    );
+    this.logger.log(`Subscription activated for user ${userId} (period end: ${periodEnd.toISOString()})`);
     return { success: true };
   }
 
   /**
    * 해지 예약: 기간 종료까지 유료 플랜 유지, 갱신만 중단
    */
-  async cancel(userId: string, organizationUuid: string) {
-    const organization = await this.findOwnedOrganization(userId, organizationUuid);
-    const subscription = await this.prisma.organizationSubscription.findUnique({
-      where: { organizationId: organization.id },
-    });
+  async cancel(userId: string) {
+    const subscription = await this.prisma.userSubscription.findUnique({ where: { userId } });
 
     if (!subscription || subscription.plan === 'free'
       || (subscription.status !== 'active' && subscription.status !== 'past_due')) {
@@ -170,8 +142,8 @@ export class SubscriptionsBillingService {
       });
     }
 
-    await this.prisma.organizationSubscription.update({
-      where: { organizationId: organization.id },
+    await this.prisma.userSubscription.update({
+      where: { userId },
       data: { status: 'canceled', canceledAt: new Date() },
     });
 
@@ -181,11 +153,8 @@ export class SubscriptionsBillingService {
   /**
    * 해지 취소: 기간이 남아 있으면 갱신을 재개
    */
-  async resume(userId: string, organizationUuid: string) {
-    const organization = await this.findOwnedOrganization(userId, organizationUuid);
-    const subscription = await this.prisma.organizationSubscription.findUnique({
-      where: { organizationId: organization.id },
-    });
+  async resume(userId: string) {
+    const subscription = await this.prisma.userSubscription.findUnique({ where: { userId } });
 
     const now = new Date();
     if (!subscription || subscription.status !== 'canceled'
@@ -196,8 +165,8 @@ export class SubscriptionsBillingService {
       });
     }
 
-    await this.prisma.organizationSubscription.update({
-      where: { organizationId: organization.id },
+    await this.prisma.userSubscription.update({
+      where: { userId },
       data: { status: 'active', canceledAt: null },
     });
 

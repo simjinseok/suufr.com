@@ -25,10 +25,9 @@ model Organization {
   profileName     String? @map("profile_name") // 프로필 이름
   profileImageUrl String? @map("profile_image_url")
 
-  students     Student[]
-  meetings     Meeting[]
-  curriculums  Curriculum[]
-  subscription OrganizationSubscription?
+  students    Student[]
+  meetings    Meeting[]
+  curriculums Curriculum[]
 
   @@index([userId, deletedAt])
   @@map("organizations")
@@ -447,10 +446,9 @@ model CurriculumItemMediaFile {
   @@map("curriculum_item_media_files")
 }
 
-// 조직 구독 (행이 없으면 free 플랜)
-model OrganizationSubscription {
-  organizationId     Int                     @id @map("organization_id")
-  organization       Organization            @relation(fields: [organizationId], references: [id])
+// 사용자 구독 (행이 없으면 free 플랜)
+model UserSubscription {
+  userId             String                  @id @map("user_id") @db.Uuid // Cognito sub 직접 참조
   plan               PlanValue               @default(free)
   status             SubscriptionStatusValue @default(active)
   currentPeriodStart DateTime?               @map("current_period_start") @db.Timestamptz(0)
@@ -462,7 +460,7 @@ model OrganizationSubscription {
   createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(0)
 
-  @@map("organization_subscriptions")
+  @@map("user_subscriptions")
 }
 
 enum PlanValue {
@@ -483,19 +481,17 @@ enum SubscriptionStatusValue {
 
 // 구독 결제 시도 기록 (결제 내역/감사용)
 model SubscriptionOrder {
-  id             Int                          @id @default(autoincrement())
-  organizationId Int                          @map("organization_id") // 구독 주체 조직
-  userId         String                       @map("user_id") @db.Uuid // 결제 당시 조직 소유자 (Cognito sub)
-  orderId        String                       @unique @map("order_id") // 토스 orderId (6-64자)
-  paymentKey     String?                      @map("payment_key")
-  amount         Int
-  status         SubscriptionOrderStatusValue
-  failReason     String?                      @map("fail_reason")
-  approvedAt     DateTime?                    @map("approved_at") @db.Timestamptz(0)
-  receiptUrl     String?                      @map("receipt_url")
-  createdAt      DateTime                     @default(now()) @map("created_at") @db.Timestamptz(0)
+  id         Int                          @id @default(autoincrement())
+  userId     String                       @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  orderId    String                       @unique @map("order_id") // 토스 orderId (6-64자)
+  paymentKey String?                      @map("payment_key")
+  amount     Int
+  status     SubscriptionOrderStatusValue
+  failReason String?                      @map("fail_reason")
+  approvedAt DateTime?                    @map("approved_at") @db.Timestamptz(0)
+  receiptUrl String?                      @map("receipt_url")
+  createdAt  DateTime                     @default(now()) @map("created_at") @db.Timestamptz(0)
 
-  @@index([organizationId, createdAt])
   @@index([userId, createdAt])
   @@map("subscription_orders")
 }

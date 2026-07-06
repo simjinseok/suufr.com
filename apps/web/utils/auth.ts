@@ -20,7 +20,6 @@ export type Session = {
     profileName: string | null;
     profileImageUrl: string | null;
   }>;
-  // 현재 선택된 조직의 구독 (구독 주체 = 조직)
   subscription: {
     plan: 'free' | 'pro';
     limits: {
@@ -30,7 +29,7 @@ export type Session = {
   };
 };
 
-// API가 조직별 subscription을 아직 내려주지 않을 때(배포 시차) 안전 폴백
+// API가 subscription을 아직 내려주지 않을 때(배포 시차) 안전 폴백
 const FREE_SUBSCRIPTION: Session['subscription'] = {
   plan: 'free',
   limits: { maxStudents: 5, storageQuotaBytes: 104857600 },
@@ -84,7 +83,7 @@ export async function getSession(): Promise<Session | null> {
           }
         : null,
       organizations,
-      subscription: selectedOrg?.subscription ?? FREE_SUBSCRIPTION,
+      subscription: data.subscription ?? FREE_SUBSCRIPTION,
     };
   } catch {
     return null;

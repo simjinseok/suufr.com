@@ -7,23 +7,18 @@ type SubscriptionResponse = {
 };
 
 export const subscriptionsApi = {
-  get: (organizationUuid: string) =>
-    apiClient<SubscriptionResponse>('/api/subscription', {
-      params: { organizationUuid },
-    }),
-  activate: (organizationUuid: string, authKey: string) =>
+  get: () => apiClient<SubscriptionResponse>('/api/subscription'),
+  activate: (authKey: string) =>
     apiClient<{ success: boolean }>('/api/subscription/billing/activate', {
       method: 'POST',
-      body: { organizationUuid, authKey },
+      body: { authKey },
     }),
-  cancel: (organizationUuid: string) =>
+  cancel: () =>
     apiClient<{ success: boolean }>('/api/subscription/cancel', {
       method: 'POST',
-      body: { organizationUuid },
     }),
-  resume: (organizationUuid: string) =>
+  resume: () =>
     apiClient<{ success: boolean }>('/api/subscription/resume', {
       method: 'POST',
-      body: { organizationUuid },
     }),
 };

@@ -31,15 +31,7 @@ export class AuthController {
     const orgData = await this.authService.getCurrentOrganization(user);
     const settings = await this.authService.getOrCreateUserSettings(user.userId);
     const organizations = await this.authService.getUserOrganizations(user.userId);
-
-    // 조직별 구독 플랜 (구독 주체가 조직이므로 조직마다 다를 수 있음)
-    const entitlements = await this.subscriptionsService.getEntitlementsForOrganizations(
-      organizations.map((org: { id: number }) => org.id),
-    );
-    const organizationsWithSubscription = organizations.map((org: { id: number }) => ({
-      ...org,
-      subscription: entitlements[org.id],
-    }));
+    const subscription = await this.subscriptionsService.getEntitlements(user.userId);
 
     return {
       user: {
@@ -48,8 +40,9 @@ export class AuthController {
         name: user.username,
       },
       organization: orgData?.organization ?? null,
-      organizations: organizationsWithSubscription,
+      organizations,
       settings,
+      subscription,
     };
   }
 

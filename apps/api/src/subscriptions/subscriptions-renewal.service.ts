@@ -6,14 +6,10 @@ import { CryptoService } from '../crypto/crypto.service';
 import { TossClient, TossApiError } from './toss.client';
 import { PLAN_PRICING, PaidPlanValue } from './plan.constants';
 import { addOneMonth } from './subscriptions-billing.service';
-import { OrganizationSubscription } from '@prisma/generated/client';
+import { UserSubscription } from '@prisma/generated/client';
 
 // 결제 실패(past_due) 후 만료 처리까지의 유예 기간
 const GRACE_PERIOD_DAYS = 7;
-
-type RenewableSubscription = OrganizationSubscription & {
-  organization: { uuid: string; userId: string };
-};
 
 @Injectable()
 export class SubscriptionsRenewalService {
@@ -45,7 +41,7 @@ export class SubscriptionsRenewalService {
     const now = new Date();
     const graceCutoff = new Date(now.getTime() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
 
-    const { count } = await this.prisma.organizationSubscription.updateMany({
+    const { count } = await this.prisma.userSubscription.updateMany({
       where: {
         plan: { not: 'free' },
         OR: [
@@ -68,15 +64,12 @@ export class SubscriptionsRenewalService {
   private async renewDueSubscriptions() {
     const now = new Date();
 
-    const dueSubscriptions = await this.prisma.organizationSubscription.findMany({
+    const dueSubscriptions = await this.prisma.userSubscription.findMany({
       where: {
         plan: { not: 'free' },
         status: { in: ['active', 'past_due'] },
         billingKey: { not: null },
         currentPeriodEnd: { lte: now },
-      },
-      include: {
-        organization: { select: { uuid: true, userId: true } },
       },
     });
 
@@ -87,20 +80,15 @@ export class SubscriptionsRenewalService {
         await this.renewOne(subscription);
       }
       catch (error) {
-        this.logger.error(
-          `Failed to renew subscription for organization ${subscription.organizationId}:`,
-          error,
-        );
+        this.logger.error(`Failed to renew subscription for user ${subscription.userId}:`, error);
       }
     }
   }
 
-  private async renewOne(subscription: RenewableSubscription) {
+  private async renewOne(subscription: UserSubscription) {
     const pricing = PLAN_PRICING[subscription.plan as PaidPlanValue];
     if (!pricing) {
-      this.logger.error(
-        `No pricing defined for plan '${subscription.plan}' (organization ${subscription.organizationId})`,
-      );
+      this.logger.error(`No pricing defined for plan '${subscription.plan}' (user ${subscription.userId})`);
       return;
     }
 
@@ -109,7 +97,7 @@ export class SubscriptionsRenewalService {
 
     try {
       const payment = await this.tossClient.chargeBilling(billingKey, {
-        customerKey: subscription.organization.uuid,
+        customerKey: subscription.userId,
         amount: pricing.monthlyPriceKrw,
         orderId,
         orderName: pricing.orderName,
@@ -124,8 +112,8 @@ export class SubscriptionsRenewalService {
       }
 
       await this.prisma.$transaction([
-        this.prisma.organizationSubscription.update({
-          where: { organizationId: subscription.organizationId },
+        this.prisma.userSubscription.update({
+          where: { userId: subscription.userId },
           data: {
             status: 'active',
             currentPeriodStart: previousEnd,
@@ -134,8 +122,7 @@ export class SubscriptionsRenewalService {
         }),
         this.prisma.subscriptionOrder.create({
           data: {
-            organizationId: subscription.organizationId,
-            userId: subscription.organization.userId,
+            userId: subscription.userId,
             orderId,
             paymentKey: payment.paymentKey,
             amount: payment.totalAmount,
@@ -146,21 +133,18 @@ export class SubscriptionsRenewalService {
         }),
       ]);
 
-      this.logger.log(
-        `Renewed subscription for organization ${subscription.organizationId} (until ${newEnd.toISOString()})`,
-      );
+      this.logger.log(`Renewed subscription for user ${subscription.userId} (until ${newEnd.toISOString()})`);
     }
     catch (error) {
       if (error instanceof TossApiError) {
         await this.prisma.$transaction([
-          this.prisma.organizationSubscription.update({
-            where: { organizationId: subscription.organizationId },
+          this.prisma.userSubscription.update({
+            where: { userId: subscription.userId },
             data: { status: 'past_due' },
           }),
           this.prisma.subscriptionOrder.create({
             data: {
-              organizationId: subscription.organizationId,
-              userId: subscription.organization.userId,
+              userId: subscription.userId,
               orderId,
               amount: pricing.monthlyPriceKrw,
               status: 'failed',
@@ -168,9 +152,7 @@ export class SubscriptionsRenewalService {
             },
           }),
         ]);
-        this.logger.warn(
-          `Renewal charge failed for organization ${subscription.organizationId}: ${error.code}`,
-        );
+        this.logger.warn(`Renewal charge failed for user ${subscription.userId}: ${error.code}`);
         return;
       }
       throw error;

@@ -1,7 +1,7 @@
 import { PlanValue } from '@prisma/generated/client';
 
 export interface PlanLimits {
-  /** 조직당 등록 가능한 학생 수 (null = 무제한) */
+  /** 계정당 등록 가능한 학생 수 — 소유한 전 조직 합산 (null = 무제한) */
   maxStudents: number | null;
   /** 스토리지 용량 (바이트) */
   storageQuotaBytes: number;
