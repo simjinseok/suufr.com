@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
+import { CryptoModule } from './crypto/crypto.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
 import { CarddavModule } from './carddav/carddav.module';
@@ -22,6 +23,7 @@ import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
 import { CurriculumsModule } from './curriculums/curriculums.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { CurriculumsModule } from './curriculums/curriculums.module';
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     ScheduleModule.forRoot(),
     PrismaModule,
+    CryptoModule,
     CommonModule,
     HealthModule,
     DashboardModule,
@@ -51,6 +54,7 @@ import { CurriculumsModule } from './curriculums/curriculums.module';
     GoogleModule,
     StorageModule,
     CurriculumsModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}

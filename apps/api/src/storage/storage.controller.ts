@@ -159,7 +159,10 @@ export class StorageController {
       const file = await this.prisma.$transaction(async (tx) => {
         const reserved = await this.storageQuotaService.reserveQuotaWithLock(user.userId, fileSize, tx);
         if (!reserved) {
-          throw new ForbiddenException('스토리지 용량이 부족합니다.');
+          throw new ForbiddenException({
+            message: '스토리지 용량이 부족합니다.',
+            error: 'STORAGE_LIMIT_EXCEEDED',
+          });
         }
         return tx.mediaFile.create({
           data: {

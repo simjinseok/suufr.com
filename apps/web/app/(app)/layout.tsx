@@ -28,6 +28,7 @@ export default async function AuthenticatedLayout({
         <Sidebar
           currentOrg={session.organization}
           organizations={session.organizations}
+          plan={session.subscription.plan}
         />
 
         <main className="flex-1 overflow-auto pt-14 sm:pt-0">

@@ -3,6 +3,18 @@ import { cookies } from 'next/headers';
 
 const API_URL = process.env.API_URL!;
 
+export class ApiError extends Error {
+  readonly code?: string;
+  readonly status: number;
+
+  constructor(message: string, options: { code?: string; status: number }) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = options.code;
+    this.status = options.status;
+  }
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -37,18 +49,23 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   const response = await fetch(url, {
     method,
     headers: {
-      ...(body && { 'Content-Type': 'application/json' }),
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
-    ...(body && { body: JSON.stringify(body) }),
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
   if (!response.ok) {
-    // API 에러 규약: { success: false, error: { code, message } }
-    // (Nest 기본 형태 { message } 도 방어적으로 fallback)
-    const payload = await response.json().catch(() => null);
-    const message = payload?.error?.message ?? payload?.message;
-    throw new Error(message || `API Error: ${response.status}`);
+    const body = await response.json().catch(() => null);
+    // NestJS 기본 형식({ message, error: 'CODE' })과
+    // 커스텀 필터 형식({ error: { code, message } }) 모두 지원
+    const code = typeof body?.error === 'string' ? body.error : body?.error?.code;
+    const rawMessage = body?.error?.message ?? body?.message;
+    const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage;
+    throw new ApiError(message || `API Error: ${response.status}`, {
+      code,
+      status: response.status,
+    });
   }
 
   return response.json();

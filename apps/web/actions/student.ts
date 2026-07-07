@@ -8,6 +8,7 @@ import { parseDate } from '@internationalized/date';
 import { z } from 'zod';
 import { getSession } from '@/utils/auth';
 import { studentsApi, studentStatusesApi } from '@/utils/api';
+import { ApiError } from '@/utils/api-client';
 
 const createStudentSchema = z.object({
   name: z.string().trim().min(1, { error: '이름을 입력해주세요' }),
@@ -46,10 +47,22 @@ export async function createStudent(prevState: any, formData: FormData) {
         return obj;
       }
 
-      const { data: student } = await studentsApi.create(session.organization.uuid, {
-        name: validationResult.data.name,
-        notes: validationResult.data.notes,
-      });
+      let student;
+      try {
+        ({ data: student } = await studentsApi.create(session.organization.uuid, {
+          name: validationResult.data.name,
+          notes: validationResult.data.notes,
+        }));
+      }
+      catch (error) {
+        // 서버 액션에서 throw하면 프로덕션에서 메시지가 마스킹되므로 state로 반환
+        if (error instanceof ApiError && error.code === 'STUDENT_LIMIT_EXCEEDED') {
+          obj.errorCode = error.code;
+          obj.message = error.message;
+          return obj;
+        }
+        throw error;
+      }
 
       await studentStatusesApi.create(student.uuid, {
         status: validationResult.data.status,

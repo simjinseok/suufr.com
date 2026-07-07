@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
-
-// 기본 용량 100MB (구독 시스템 구현 시 동적 계산으로 변경 예정)
-const DEFAULT_QUOTA_BYTES = 104857600;
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 export interface StorageQuota {
   usedBytes: number;
@@ -13,24 +11,29 @@ export interface StorageQuota {
 
 @Injectable()
 export class StorageQuotaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly subscriptionsService: SubscriptionsService,
+  ) {}
 
   /**
    * 사용자의 스토리지 용량 정보 조회
-   * 레코드가 없으면 기본값으로 생성
+   * 레코드가 없으면 기본값으로 생성. 용량은 플랜에 따라 결정
    */
   async getQuota(userId: string): Promise<StorageQuota> {
-    const quota = await this.prisma.userStorageQuota.upsert({
-      where: { userId },
-      create: {
-        userId,
-        usedBytes: BigInt(0),
-      },
-      update: {},
-    });
+    const [quota, quotaBytes] = await Promise.all([
+      this.prisma.userStorageQuota.upsert({
+        where: { userId },
+        create: {
+          userId,
+          usedBytes: BigInt(0),
+        },
+        update: {},
+      }),
+      this.subscriptionsService.getStorageQuotaBytes(userId),
+    ]);
 
     const usedBytes = Number(quota.usedBytes);
-    const quotaBytes = DEFAULT_QUOTA_BYTES;
 
     return {
       usedBytes,
@@ -91,6 +94,9 @@ export class StorageQuotaService {
     fileSize: number,
     tx?: Prisma.TransactionClient,
   ): Promise<boolean> {
+    // 트랜잭션(행 잠금) 시간을 늘리지 않도록 용량 한도는 트랜잭션 밖에서 조회
+    const quotaBytes = await this.subscriptionsService.getStorageQuotaBytes(userId);
+
     const run = async (client: Prisma.TransactionClient) => {
       // FOR UPDATE로 행 잠금
       const result = await client.$queryRaw<Array<{ used_bytes: bigint }>>`
@@ -102,7 +108,7 @@ export class StorageQuotaService {
       const usedBytes = result[0]?.used_bytes ?? BigInt(0);
 
       // 용량 초과 확인
-      if (Number(usedBytes) + fileSize > DEFAULT_QUOTA_BYTES) {
+      if (Number(usedBytes) + fileSize > quotaBytes) {
         return false;
       }
 

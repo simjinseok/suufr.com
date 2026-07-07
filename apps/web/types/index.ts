@@ -216,3 +216,39 @@ export type TCurriculum = {
   description: string | null;
   items: TCurriculumItem[];
 };
+
+export type TPlan = 'free' | 'pro';
+
+export type TPlanLimits = {
+  maxStudents: number | null;
+  storageQuotaBytes: number;
+};
+
+export type TSubscriptionOrder = {
+  orderId: string;
+  amount: number;
+  status: 'done' | 'failed';
+  failReason: string | null;
+  approvedAt: string | null;
+  receiptUrl: string | null;
+  createdAt: string;
+};
+
+export type TSubscription = {
+  plan: TPlan;
+  status: 'active' | 'canceled' | 'past_due' | 'expired';
+  currentPeriodEnd: string | null;
+  canceledAt: string | null;
+  cardCompany: string | null;
+  cardNumberMasked: string | null;
+  orders: TSubscriptionOrder[];
+  limits: TPlanLimits;
+  usage: {
+    studentCount: number | null;
+    storageUsedBytes: number;
+  };
+  catalog: {
+    free: TPlanLimits;
+    pro: TPlanLimits & { priceKrw: number };
+  };
+};
