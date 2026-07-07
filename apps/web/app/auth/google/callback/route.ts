@@ -7,15 +7,6 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('access_token')?.value;
-
-  console.log('[Google Callback] access_token:', accessToken ? accessToken.slice(0, 20) + '...' : 'NONE');
-  console.log('[Google Callback] code:', code?.slice(0, 20) + '...');
-  console.log('[Google Callback] state:', state);
-  console.log('[Google Callback] error:', error);
-
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
   const redirectUrl = `${baseUrl}/settings/integrations`;
 

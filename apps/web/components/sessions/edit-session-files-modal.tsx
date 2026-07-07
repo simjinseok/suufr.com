@@ -20,6 +20,7 @@ import { Button, Modal, Surface, ModalProps, TextField, InputGroup, Popover, toa
 import type { TSession, TMediaFile, TFolder, TFolderBreadcrumb, TStorageQuota, TTempMediaFile } from '@/types/index';
 import { getMyMediaFiles, getMyFolders, getFolderBreadcrumb, getStorageQuota, createMediaFile } from '@/actions/storage';
 import { updateSessionFiles } from '@/actions/session';
+import { formatBytes } from '@/utils/format-bytes';
 import MediaFileUploadZone from '@/components/media/media-file-upload-zone';
 
 interface Props {
@@ -30,13 +31,6 @@ interface Props {
 
 type TabType = 'browse' | 'upload';
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
 
 export default function EditSessionFilesModal({ isOpen, onOpenChange, session }: Props) {
   const router = useRouter();

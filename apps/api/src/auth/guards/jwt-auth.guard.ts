@@ -55,20 +55,6 @@ export class JwtAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    // 개발 환경 우회: X-Dev-User-Id 헤더 사용
-    if (process.env.NODE_ENV !== 'production') {
-      const devUserId = request.headers['x-dev-user-id'];
-
-      if (devUserId) {
-        request.user = {
-          userId: devUserId,
-          email: 'dev@test.com',
-          username: 'dev-user',
-        };
-        return true;
-      }
-    }
-
     const token = this.extractToken(request);
 
     if (!token) {

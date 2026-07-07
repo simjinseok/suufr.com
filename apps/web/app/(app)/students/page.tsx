@@ -33,7 +33,7 @@ export default async function Page(props: PageProps<'/students'>) {
     q,
   });
 
-  // profileImageUrl은 이미 Cloudinary URL로 저장되어 있음
+  // profileImageUrl은 이미 완전한 CDN URL로 저장되어 있어 별도 변환이 필요 없음
   const studentsWithImageUrl = students;
 
   return (

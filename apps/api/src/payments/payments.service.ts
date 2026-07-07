@@ -4,6 +4,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
 import { Prisma } from '@prisma/generated/client';
+import { kstMonthStart, toKstParts } from '../common/utils/kst';
 
 @Injectable()
 export class PaymentsService {
@@ -44,16 +45,12 @@ export class PaymentsService {
       },
     };
 
-    // 날짜 필터링
+    // 날짜 필터링 (KST 기준 월/연 경계, 다음 구간 시작을 exclusive 상한으로 사용)
     if (year !== undefined && month !== undefined) {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-      where.paidAt = { gte: startDate, lte: endDate };
+      where.paidAt = { gte: kstMonthStart(year, month), lt: kstMonthStart(year, month + 1) };
     }
     else if (year !== undefined) {
-      const startDate = new Date(year, 0, 1);
-      const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
-      where.paidAt = { gte: startDate, lte: endDate };
+      where.paidAt = { gte: kstMonthStart(year, 1), lt: kstMonthStart(year + 1, 1) };
     }
 
     const [payments, totalCount] = await Promise.all([
@@ -232,15 +229,15 @@ export class PaymentsService {
     });
     const orgIds = organizations.map(o => o.id);
 
-    // 최근 12개월 날짜 범위 계산
-    const now = new Date();
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    // 최근 12개월 날짜 범위 계산 (KST 기준)
+    const { year: currentYear, month: currentMonth } = toKstParts(new Date());
+    const startDate = kstMonthStart(currentYear, currentMonth - 11);
+    const endDate = kstMonthStart(currentYear, currentMonth + 1); // 다음 달 시작 (exclusive)
 
     const payments = await this.prisma.payment.findMany({
       where: {
         deletedAt: null,
-        paidAt: { gte: startDate, lte: endDate },
+        paidAt: { gte: startDate, lt: endDate },
         lesson: {
           deletedAt: null,
           student: {
@@ -258,18 +255,18 @@ export class PaymentsService {
     // 월별로 그룹핑
     const monthlyMap = new Map<string, { year: number; month: number; totalAmount: number; count: number }>();
 
-    // 12개월 모든 월에 대해 초기화 (데이터 없어도 0으로 표시)
+    // 12개월 모든 월에 대해 초기화 (데이터 없어도 0으로 표시, KST 기준)
+    const baseIndex = currentYear * 12 + (currentMonth - 1);
     for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
+      const idx = baseIndex - 11 + i;
+      const year = Math.floor(idx / 12);
+      const month = (idx % 12) + 1;
       const key = `${year}-${month}`;
       monthlyMap.set(key, { year, month, totalAmount: 0, count: 0 });
     }
 
     for (const payment of payments) {
-      const year = payment.paidAt.getFullYear();
-      const month = payment.paidAt.getMonth() + 1;
+      const { year, month } = toKstParts(payment.paidAt);
       const key = `${year}-${month}`;
       const entry = monthlyMap.get(key);
       if (entry) {

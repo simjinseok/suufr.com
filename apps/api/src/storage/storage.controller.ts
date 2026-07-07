@@ -7,6 +7,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
 import { CreateFolderDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
+import { folderByContentType } from '../common/utils/content-type';
+import {
+  SUPPORTED_UPLOAD_TYPES,
+  MAX_IMAGE_SIZE,
+  MAX_VIDEO_SIZE,
+  MAX_DOCUMENT_SIZE,
+  MAX_SIZE_BY_TYPE,
+} from '../common/constants/file-constraints';
 
 @Controller('api/storage')
 export class StorageController {
@@ -16,16 +24,6 @@ export class StorageController {
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
   ) {}
-
-  /**
-   * contentType에 따라 폴더 이름 반환
-   */
-  private getFolderByContentType(contentType: string): string {
-    if (contentType.startsWith('image/')) return 'images';
-    if (contentType.startsWith('video/')) return 'videos';
-    if (contentType === 'application/pdf') return 'documents';
-    return 'files';
-  }
 
   /**
    * 현재 사용자의 스토리지 용량 조회
@@ -47,27 +45,13 @@ export class StorageController {
     const { fileName, contentType, fileSize } = body;
 
     // 1. Validate contentType
-    const SUPPORTED_TYPES = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'video/mp4',
-      'video/quicktime',
-      'video/webm',
-      'application/pdf',
-    ];
-
-    if (!SUPPORTED_TYPES.includes(contentType)) {
+    if (!SUPPORTED_UPLOAD_TYPES.includes(contentType)) {
       throw new BadRequestException('지원하지 않는 파일 형식입니다.');
     }
 
     // 2. Validate file size
     const isImage = contentType.startsWith('image/');
     const isVideo = contentType.startsWith('video/');
-    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-    const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB (PDF)
     const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_DOCUMENT_SIZE;
 
     if (fileSize > maxSize) {
@@ -80,7 +64,7 @@ export class StorageController {
     // 3. Generate unique S3 key (바로 영구 경로에 저장)
     const ext = fileName.split('.').pop();
     const uuid = randomUUID();
-    const folder = this.getFolderByContentType(contentType);
+    const folder = folderByContentType(contentType);
     const key = `users/${user.userId}/${folder}/${uuid}.${ext}`;
 
     // 4. Generate presigned URL
@@ -112,34 +96,51 @@ export class StorageController {
   @Post('files')
   async createFile(
     @Body() body: {
-      url: string;
+      // url/type/fileSize는 클라이언트가 보내지만 신뢰하지 않고 서버에서 재도출한다.
       publicId: string;
-      type: 'image' | 'video' | 'document';
       fileName: string;
-      fileSize: number;
       folderUuid?: string;
     },
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const { url, publicId, type, fileName, fileSize, folderUuid } = body;
+    const { publicId, fileName, folderUuid } = body;
 
     // 유효성 검사
-    if (!url || !publicId || !type || !fileSize) {
+    if (!publicId || !fileName) {
       throw new BadRequestException('필수 필드가 누락되었습니다.');
     }
 
-    // 비관적 락으로 용량 예약 (동시성 제어)
-    const reserved = await this.storageQuotaService.reserveQuotaWithLock(user.userId, fileSize);
-    if (!reserved) {
-      // S3에서 파일 삭제 (이미 업로드된 경우)
-      await this.s3Service.deleteByUrl(url);
-      throw new ForbiddenException({
-        message: '스토리지 용량이 부족합니다.',
-        error: 'STORAGE_LIMIT_EXCEEDED',
-      });
+    // 1. 키가 반드시 본인 소유 경로(users/{userId}/)인지 검증 → 크로스테넌트 등록/삭제 차단
+    const ownPrefix = `users/${user.userId}/`;
+    if (!publicId.startsWith(ownPrefix)) {
+      throw new ForbiddenException('잘못된 파일 경로입니다.');
     }
 
-    // folderUuid로 folderId 조회
+    // 2. S3에서 실제 객체를 확인 (존재 여부 + 진짜 크기/타입). 클라이언트 fileSize/type은 신뢰하지 않음
+    const head = await this.s3Service.headObject(publicId);
+    if (!head) {
+      throw new BadRequestException('업로드된 파일을 찾을 수 없습니다.');
+    }
+
+    const fileSize = head.contentLength;
+    const type = this.resourceTypeFromContentType(head.contentType);
+    if (!type || fileSize <= 0) {
+      // 알 수 없는 타입이거나 빈 파일이면 등록 거부 후 정리
+      await this.s3Service.deleteFile(publicId);
+      throw new BadRequestException('지원하지 않는 파일이거나 손상된 파일입니다.');
+    }
+
+    // 3. 실제 크기로 서버측 사이즈 제한 재검증 (presigned PUT은 실제 크기를 강제하지 않음)
+    if (fileSize > MAX_SIZE_BY_TYPE[type]) {
+      await this.s3Service.deleteFile(publicId);
+      throw new BadRequestException('파일 크기가 허용 범위를 초과했습니다.');
+    }
+
+    // 4. URL은 신뢰 가능한 키로부터 서버가 재구성 (클라이언트 url 미신뢰)
+    const cdnUrl = process.env.CDN_URL;
+    const url = cdnUrl ? `${cdnUrl}/${publicId}` : publicId;
+
+    // 5. folderUuid로 folderId 조회
     let folderId: number | null = null;
     if (folderUuid) {
       const folder = await this.prisma.folder.findFirst({
@@ -153,27 +154,48 @@ export class StorageController {
       }
     }
 
-    // DB에 파일 레코드 생성 (이미 영구 경로에 업로드됨)
+    // 6. 용량 예약 + DB 레코드 생성을 한 트랜잭션으로 (원자성 — 실패/크래시 시 쿼터 드리프트 방지)
     try {
-      const file = await this.prisma.mediaFile.create({
-        data: {
-          userId: user.userId,
-          url,
-          publicId,
-          type,
-          fileName,
-          fileSize,
-          folderId,
-        },
+      const file = await this.prisma.$transaction(async (tx) => {
+        const reserved = await this.storageQuotaService.reserveQuotaWithLock(user.userId, fileSize, tx);
+        if (!reserved) {
+          throw new ForbiddenException({
+            message: '스토리지 용량이 부족합니다.',
+            error: 'STORAGE_LIMIT_EXCEEDED',
+          });
+        }
+        return tx.mediaFile.create({
+          data: {
+            userId: user.userId,
+            url,
+            publicId,
+            type,
+            fileName,
+            fileSize,
+            folderId,
+          },
+        });
       });
 
       return { success: true, data: file };
-    } catch (dbError) {
-      // DB 생성 실패 시 예약한 용량 롤백 및 S3 파일 삭제
-      await this.storageQuotaService.releaseReservedQuota(user.userId, fileSize);
-      await this.s3Service.deleteByUrl(url);
-      throw dbError;
+    } catch (error) {
+      // 예약/생성 실패 시 업로드된 S3 객체 정리 (쿼터는 트랜잭션 롤백으로 자동 복구)
+      await this.s3Service.deleteFile(publicId);
+      throw error;
     }
+  }
+
+  /**
+   * S3 객체의 Content-Type을 MediaFile의 type으로 변환
+   */
+  private resourceTypeFromContentType(
+    contentType?: string,
+  ): 'image' | 'video' | 'document' | null {
+    if (!contentType) return null;
+    if (contentType.startsWith('image/')) return 'image';
+    if (contentType.startsWith('video/')) return 'video';
+    if (contentType === 'application/pdf') return 'document';
+    return null;
   }
 
   /**

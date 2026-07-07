@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import type { FastifyReply } from 'fastify';
 
 interface ErrorResponse {
@@ -43,10 +44,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code = (resp.error as string) || this.getCodeFromStatus(status);
         details = resp.details;
       }
+
+      // 5xx는 예상치 못한 서버 오류이므로 Sentry로 리포트 (4xx는 정상적인 클라이언트 오류라 제외)
+      if (status >= 500) {
+        Sentry.captureException(exception);
+      }
     }
     else if (exception instanceof Error) {
-      message = exception.message;
+      // 예상치 못한 내부 오류: 원문은 로그/Sentry에만 남기고 클라이언트엔 일반 메시지만 노출
       this.logger.error(`Unhandled error: ${exception.message}`, exception.stack);
+      Sentry.captureException(exception);
     }
 
     const error: ErrorResponse['error'] = {
@@ -78,6 +85,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return 'NOT_FOUND';
       case HttpStatus.CONFLICT:
         return 'CONFLICT';
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return 'TOO_MANY_REQUESTS';
       case HttpStatus.UNPROCESSABLE_ENTITY:
         return 'VALIDATION_ERROR';
       default:

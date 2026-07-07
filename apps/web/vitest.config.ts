@@ -17,7 +17,6 @@ export default defineConfig({
       '@/actions': path.resolve(__dirname, './actions'),
       '@/components': path.resolve(__dirname, './components'),
       '@/contexts': path.resolve(__dirname, './contexts'),
-      '@/prisma': path.resolve(__dirname, './prisma'),
       '@/schemas': path.resolve(__dirname, './schemas'),
       '@/types': path.resolve(__dirname, './types'),
       '@/utils': path.resolve(__dirname, './utils'),

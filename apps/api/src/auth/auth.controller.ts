@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthenticatedUser } from './guards/jwt-auth.guard';
@@ -17,6 +18,9 @@ import {
   ResetPasswordDto,
 } from './dto';
 
+// 인증 엔드포인트 브루트포스 방어 (기본 10회/분/IP). 자주 호출되는 me/refresh/cookies는 @SkipThrottle.
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('api/auth')
 export class AuthController {
   constructor(
@@ -26,6 +30,7 @@ export class AuthController {
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
+  @SkipThrottle()
   @Get('me')
   async getMe(@CurrentUser() user: AuthenticatedUser) {
     const orgData = await this.authService.getCurrentOrganization(user);
@@ -70,12 +75,14 @@ export class AuthController {
     return this.cognitoService.verifyEmail(dto.email, dto.code);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('resend-verification')
   async resendVerification(@Body() dto: ResendVerificationDto) {
     return this.cognitoService.resendVerification(dto.email);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -88,6 +95,7 @@ export class AuthController {
     return this.cognitoService.resetPassword(dto.email, dto.code, dto.password);
   }
 
+  @SkipThrottle()
   @Public()
   @Post('refresh')
   async refresh(@Body() dto: RefreshTokenDto) {
@@ -98,6 +106,7 @@ export class AuthController {
    * CloudFront Signed Cookies 발급
    * 인증된 사용자의 users/{userId}/* 경로에 대한 접근 권한을 쿠키 값으로 반환
    */
+  @SkipThrottle()
   @Post('cloudfront/cookies')
   async getSignedCookies(@CurrentUser() user: AuthenticatedUser) {
     const cookies = this.s3Service.getSignedCookiesForUser(user.userId);
