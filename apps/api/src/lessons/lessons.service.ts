@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -368,7 +368,8 @@ export class LessonsService {
     }
 
     if (share.expiresAt < new Date()) {
-      throw new ForbiddenException('Share link has expired');
+      // 만료된 링크는 404로 취급 (공유 페이지에서 깔끔한 not-found 처리)
+      throw new NotFoundException('Share link not found');
     }
 
     if (share.lesson.deletedAt) {
@@ -423,6 +424,19 @@ export class LessonsService {
           }
         }
 
+      }
+    }
+
+    // 조직 프로필/로고 이미지도 서명 (비로그인 공유 뷰에서 users/ 보호경로 접근용)
+    const organization = result.student?.organization;
+    if (organization) {
+      if (organization.profileImageUrl) {
+        const signed = this.getSignedUrlFromCdnUrl(organization.profileImageUrl, expiresInSeconds);
+        if (signed) organization.profileImageUrl = signed;
+      }
+      if (organization.logoImageUrl) {
+        const signed = this.getSignedUrlFromCdnUrl(organization.logoImageUrl, expiresInSeconds);
+        if (signed) organization.logoImageUrl = signed;
       }
     }
 

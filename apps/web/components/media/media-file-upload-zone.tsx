@@ -4,6 +4,7 @@ import * as React from 'react';
 import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, FileTextIcon, Loader2Icon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
 import { uploadToS3, validateFile, getResourceType } from '@/utils/s3-upload';
+import { UPLOAD_ACCEPT_ATTR } from '@/utils/file-constraints';
 import type { TTempMediaFile } from '@/types/index';
 
 interface UploadingFile {
@@ -135,7 +136,7 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,application/pdf"
+          accept={UPLOAD_ACCEPT_ATTR}
           multiple
           className="hidden"
           onChange={handleFileSelect}

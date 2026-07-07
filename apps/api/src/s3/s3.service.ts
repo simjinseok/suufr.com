@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import {
   CloudFrontClient,
@@ -15,6 +16,7 @@ import {
   getSignedCookies as getCloudFrontSignedCookies,
 } from '@aws-sdk/cloudfront-signer';
 import { randomUUID } from 'crypto';
+import { folderByContentType } from '../common/utils/content-type';
 
 @Injectable()
 export class S3Service {
@@ -47,12 +49,6 @@ export class S3Service {
     this.cloudFrontKeyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
     // Private key may contain escaped newlines
     this.cloudFrontPrivateKey = process.env.CLOUDFRONT_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-    // Debug: 환경변수 처리 확인 (임시 로그)
-    console.log('[S3Service] CLOUDFRONT_PRIVATE_KEY raw (first 50):',
-      JSON.stringify(process.env.CLOUDFRONT_PRIVATE_KEY?.substring(0, 50)));
-    console.log('[S3Service] After replace (first 50):',
-      JSON.stringify(this.cloudFrontPrivateKey?.substring(0, 50)));
   }
 
   /**
@@ -80,6 +76,32 @@ export class S3Service {
     catch (error) {
       console.error('S3 presigned URL generation error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Retrieve object metadata from S3 (existence, real size, content type).
+   * Used to make file registration server-authoritative instead of trusting the client.
+   * @param key - S3 object key
+   * @returns { contentLength, contentType } or null if the object doesn't exist / on error
+   */
+  async headObject(
+    key: string,
+  ): Promise<{ contentLength: number; contentType: string | undefined } | null> {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+      const res = await this.s3Client.send(command);
+      return {
+        contentLength: res.ContentLength ?? 0,
+        contentType: res.ContentType,
+      };
+    }
+    catch (error) {
+      console.error('S3 headObject error:', error);
+      return null;
     }
   }
 
@@ -116,18 +138,6 @@ export class S3Service {
   }
 
   /**
-   * Get folder name based on content type
-   * @param contentType - MIME type
-   * @returns Folder name
-   */
-  private getFolderByContentType(contentType: string): string {
-    if (contentType.startsWith('image/')) return 'images';
-    if (contentType.startsWith('video/')) return 'videos';
-    if (contentType === 'application/pdf') return 'documents';
-    return 'files'; // fallback
-  }
-
-  /**
    * Get file extension from content type
    * @param contentType - MIME type
    * @returns File extension with dot (e.g., '.png')
@@ -158,7 +168,7 @@ export class S3Service {
   ): Promise<string | null> {
     try {
       const key = randomUUID();
-      const folder = this.getFolderByContentType(mediaType);
+      const folder = folderByContentType(mediaType);
       const s3Key = `${folder}/${key}`;
 
       const buffer = Buffer.from(base64Data, 'base64');
@@ -280,7 +290,7 @@ export class S3Service {
       return null;
     }
 
-    const folder = this.getFolderByContentType(contentType);
+    const folder = folderByContentType(contentType);
     const ext = this.getExtensionFromContentType(contentType);
     const key = randomUUID();
     // userId가 있으면 보호된 경로, 없으면 공개 경로

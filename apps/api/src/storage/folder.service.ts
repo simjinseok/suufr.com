@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageQuotaService } from './storage-quota.service';
 import { S3Service } from '../s3/s3.service';
@@ -19,6 +19,8 @@ export type FolderWithChildren = {
 
 @Injectable()
 export class FolderService {
+  private readonly logger = new Logger(FolderService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageQuotaService: StorageQuotaService,
@@ -271,44 +273,46 @@ export class FolderService {
       },
     });
 
-    // S3에서 파일 삭제
-    let totalDeletedBytes = 0;
+    const totalBytes = files.reduce((sum, f) => sum + f.fileSize, 0);
+
+    // 1. DB를 원자적으로 정리: 파일 레코드 + 폴더 + 쿼터 차감 (부분 실패로 인한 불일치 방지)
+    await this.prisma.$transaction(async (tx) => {
+      if (files.length > 0) {
+        await tx.mediaFile.deleteMany({
+          where: {
+            id: { in: files.map(f => f.id) },
+          },
+        });
+      }
+
+      // 하위부터 삭제해야 FK 제약 조건 위반 방지 (역순, 원본 배열은 보존)
+      for (const folderId of [...allFolderIds].reverse()) {
+        await tx.folder.delete({
+          where: { id: folderId },
+        });
+      }
+
+      // 삭제한 전체 바이트만큼 차감 (S3 성공 여부와 무관하게 DB와 정합)
+      if (totalBytes > 0) {
+        await this.storageQuotaService.decreaseUsage(userId, totalBytes, tx);
+      }
+    });
+
+    // 2. S3 삭제는 트랜잭션 밖에서 best-effort. 실패한 객체는 고아로 남으며 로그로 남긴다.
     for (const file of files) {
       const deleted = await this.s3Service.deleteByUrl(file.url);
       if (deleted) {
-        totalDeletedBytes += file.fileSize;
-        // CloudFront 캐시 무효화
         await this.s3Service.invalidateCloudFrontCache(file.publicId);
       }
-    }
-
-    // DB에서 파일 삭제 (hard delete)
-    if (files.length > 0) {
-      await this.prisma.mediaFile.deleteMany({
-        where: {
-          id: { in: files.map(f => f.id) },
-        },
-      });
-    }
-
-    // 폴더들 hard delete (하위부터 삭제해야 FK 제약 조건 위반 방지)
-    // 역순으로 정렬 (자식 먼저 삭제)
-    const sortedFolderIds = allFolderIds.reverse();
-    for (const folderId of sortedFolderIds) {
-      await this.prisma.folder.delete({
-        where: { id: folderId },
-      });
-    }
-
-    // 용량 차감
-    if (totalDeletedBytes > 0) {
-      await this.storageQuotaService.decreaseUsage(userId, totalDeletedBytes);
+      else {
+        this.logger.error(`S3 삭제 실패로 고아 객체 발생: ${file.publicId}`);
+      }
     }
 
     return {
       deletedFolders: allFolderIds.length,
       deletedFiles: files.length,
-      freedBytes: totalDeletedBytes,
+      freedBytes: totalBytes,
     };
   }
 

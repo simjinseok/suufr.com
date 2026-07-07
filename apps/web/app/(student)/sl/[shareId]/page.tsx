@@ -13,7 +13,8 @@ export default async function SharedLessonPage({
 }) {
   const { shareId } = await params;
 
-  const share = await lessonsApi.getByShareId(shareId);
+  // 만료·삭제·미존재 또는 조회 실패는 모두 404로 (공유 페이지는 공개용이라 에러 대신 not-found)
+  const share = await lessonsApi.getByShareId(shareId).catch(() => null);
   if (!share?.data?.lesson) {
     return notFound();
   }

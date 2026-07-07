@@ -1,19 +1,20 @@
 // Import Sentry instrumentation before anything else
 import './instrument';
 
-import { NestFactory, HttpAdapterHost } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
     ignoreTrailingSlash: true,
+    // 로드밸런서 뒤에서 실제 클라이언트 IP(X-Forwarded-For)를 사용 — rate limiting 정확도
+    trustProxy: true,
   });
 
   // Register WebDAV HTTP methods for CardDAV/CalDAV
@@ -61,9 +62,8 @@ async function bootstrap() {
     next();
   });
 
-  // Sentry error tracking - must be registered before other filters
-  const { httpAdapter } = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new SentryGlobalFilter(httpAdapter));
+  // 전역 예외 필터는 HttpExceptionFilter(APP_FILTER, common.module) 하나로 통일한다.
+  // Sentry 리포팅은 그 필터 내부에서 처리한다.
 
   app.useGlobalPipes(
     new ValidationPipe({

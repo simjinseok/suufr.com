@@ -4,20 +4,12 @@ import { Surface } from '@heroui/react';
 import { HardDrive, AlertTriangle } from 'lucide-react';
 
 import type { TStorageQuota } from '@/types/index';
+import { formatBytes } from '@/utils/format-bytes';
 
 interface StorageQuotaCardProps {
   quota: TStorageQuota | null;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
 
 export default function StorageQuotaCard({ quota }: StorageQuotaCardProps) {
   if (!quota) {

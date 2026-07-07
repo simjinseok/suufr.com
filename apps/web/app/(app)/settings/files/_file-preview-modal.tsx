@@ -5,6 +5,7 @@ import { Button, Modal, ModalProps } from '@heroui/react';
 import { X, ImageIcon, Video, FileTextIcon, ExternalLink } from 'lucide-react';
 
 import type { TMediaFile } from '@/types/index';
+import { formatBytes } from '@/utils/format-bytes';
 
 interface FilePreviewModalProps {
   isOpen: ModalProps['isOpen'];
@@ -12,15 +13,6 @@ interface FilePreviewModalProps {
   file: TMediaFile | null;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
 
 function formatDateTime(date: Date): string {
   return new Intl.DateTimeFormat('ko-KR', {

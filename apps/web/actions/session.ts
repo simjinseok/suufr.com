@@ -209,7 +209,8 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
         await sessionsApi.deleteFeedback(sessionUuid);
         state.success = true;
         state.message = '피드백을 삭제하였습니다.';
-      } else {
+      }
+      else {
         await sessionsApi.upsertFeedback(sessionUuid, { notes });
         state.success = true;
         state.message = '피드백을 저장하였습니다.';
@@ -247,35 +248,47 @@ type SessionDetailData = {
 };
 
 export async function toggleSessionDone(sessionUuid: string, isDone: boolean): Promise<boolean> {
-  const session = await getSession();
-  if (!session?.organization) {
-    return false;
-  }
+  return await Sentry.withServerActionInstrumentation(
+    'toggleSessionDone',
+    { headers: await headers(), recordResponse: true },
+    async () => {
+      const session = await getSession();
+      if (!session?.organization) {
+        return false;
+      }
 
-  await sessionsApi.markDone(sessionUuid, isDone);
+      await sessionsApi.markDone(sessionUuid, isDone);
 
-  revalidatePath('/sessions', 'page');
-  revalidatePath('/lessons', 'page');
-  revalidatePath('/students', 'page');
+      revalidatePath('/sessions', 'page');
+      revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'page');
 
-  return true;
+      return true;
+    },
+  );
 }
 
 export async function addSessionFiles(sessionUuid: string, mediaFileUuids: string[]): Promise<boolean> {
-  const session = await getSession();
-  if (!session?.organization) {
-    return false;
-  }
+  return await Sentry.withServerActionInstrumentation(
+    'addSessionFiles',
+    { headers: await headers(), recordResponse: true },
+    async () => {
+      const session = await getSession();
+      if (!session?.organization) {
+        return false;
+      }
 
-  await sessionsApi.update(sessionUuid, {
-    addMediaFileUuids: mediaFileUuids,
-  });
+      await sessionsApi.update(sessionUuid, {
+        addMediaFileUuids: mediaFileUuids,
+      });
 
-  revalidatePath('/sessions', 'page');
-  revalidatePath('/lessons', 'page');
-  revalidatePath('/students', 'page');
+      revalidatePath('/sessions', 'page');
+      revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'page');
 
-  return true;
+      return true;
+    },
+  );
 }
 
 export async function updateSessionFiles(
@@ -283,21 +296,27 @@ export async function updateSessionFiles(
   addMediaFileUuids: string[],
   removeMediaFileUuids: string[],
 ): Promise<boolean> {
-  const session = await getSession();
-  if (!session?.organization) {
-    return false;
-  }
+  return await Sentry.withServerActionInstrumentation(
+    'updateSessionFiles',
+    { headers: await headers(), recordResponse: true },
+    async () => {
+      const session = await getSession();
+      if (!session?.organization) {
+        return false;
+      }
 
-  await sessionsApi.update(sessionUuid, {
-    addMediaFileUuids: addMediaFileUuids.length > 0 ? addMediaFileUuids : undefined,
-    removeMediaFileUuids: removeMediaFileUuids.length > 0 ? removeMediaFileUuids : undefined,
-  });
+      await sessionsApi.update(sessionUuid, {
+        addMediaFileUuids: addMediaFileUuids.length > 0 ? addMediaFileUuids : undefined,
+        removeMediaFileUuids: removeMediaFileUuids.length > 0 ? removeMediaFileUuids : undefined,
+      });
 
-  revalidatePath('/sessions', 'page');
-  revalidatePath('/lessons', 'page');
-  revalidatePath('/students', 'page');
+      revalidatePath('/sessions', 'page');
+      revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'page');
 
-  return true;
+      return true;
+    },
+  );
 }
 
 export async function getSessionDetail(sessionUuid: string): Promise<SessionDetailData | null> {
