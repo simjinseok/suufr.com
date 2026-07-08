@@ -16,10 +16,11 @@ import { PaddleWebhookService } from './paddle-webhook.service';
 
 /**
  * Paddle webhook 수신 엔드포인트
+ * 외부 콜백이라 REST API용 api/ 접두어 없이 루트에 둔다 (/health, /caldav처럼)
  * 서명 검증(paddle-signature)에 raw body가 필요 — main.ts의 rawBody: true에 의존
  * 처리 실패는 5xx로 전파해 Paddle 재시도(live 기준 3일)에 맡긴다
  */
-@Controller('api/webhooks/paddle')
+@Controller('webhooks/paddle')
 export class PaddleWebhookController {
   private readonly logger = new Logger(PaddleWebhookController.name);
 
