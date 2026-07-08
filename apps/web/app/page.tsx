@@ -73,6 +73,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing Summary */}
+      <section className="py-20 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-gray-900">요금제</h2>
+          <p className="mt-4 text-gray-500">
+            무료 플랜으로 수강생 5명까지 관리하고, 필요할 때 업그레이드하세요
+          </p>
+          <p className="mt-8 text-3xl sm:text-4xl font-bold text-gray-900">
+            프로 월 ₩6,900
+            <span className="ml-2 text-base font-medium text-gray-400">(부가세 포함)</span>
+          </p>
+          <p className="mt-3 text-sm text-gray-500">
+            수강생 무제한 · 저장 공간 5GB · 언제든 해지 가능
+          </p>
+          <Link
+            href="/pricing"
+            className="mt-8 inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+          >
+            요금제 자세히 보기
+          </Link>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-2xl mx-auto text-center">
