@@ -1,26 +1,13 @@
 import Link from 'next/link';
 import { Calendar, Clock, CreditCard, Users } from 'lucide-react';
 
+import SiteHeader from '@/components/site-header';
+import SiteFooter from '@/components/site-footer';
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <span className="text-sm font-bold text-white">스</span>
-            </div>
-            <span className="text-lg font-bold text-gray-900">스프</span>
-          </div>
-          <Link
-            href="/login"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            로그인
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
@@ -87,7 +74,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-900">
             지금 바로 시작하세요
@@ -104,20 +91,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-gray-100">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <span className="text-xs font-bold text-white">스</span>
-            </div>
-            <span className="text-sm font-semibold text-gray-900">스프</span>
-          </div>
-          <p className="text-sm text-gray-400">
-            © 2025 Suufr. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
