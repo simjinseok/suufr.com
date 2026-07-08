@@ -5,13 +5,14 @@ import { AlertTriangle, Crown, Sparkles } from 'lucide-react';
 
 import type { TSubscription } from '@/types/index';
 
-import UpgradeButton from './_upgrade-button';
+import UpgradeButton, { type PaddleCheckoutConfig } from './_upgrade-button';
 import { CancelSubscriptionButton, ResumeSubscriptionButton } from './_manage-subscription';
 
 interface CurrentPlanCardProps {
   subscription: TSubscription | null;
   userId: string;
   customerEmail?: string;
+  paddle: PaddleCheckoutConfig | null;
 }
 
 function formatDate(iso: string): string {
@@ -23,6 +24,7 @@ export default function CurrentPlanCard({
   subscription,
   userId,
   customerEmail,
+  paddle,
 }: CurrentPlanCardProps) {
   if (!subscription) {
     return (
@@ -64,6 +66,7 @@ export default function CurrentPlanCard({
               <UpgradeButton
                 userId={userId}
                 customerEmail={customerEmail}
+                paddle={paddle}
               />
             )}
             {isPro && isCanceled && periodEndText && <ResumeSubscriptionButton />}

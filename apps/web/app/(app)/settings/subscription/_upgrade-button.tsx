@@ -8,16 +8,24 @@ import { initializePaddle, CheckoutEventNames, type Paddle } from '@paddle/paddl
 
 import { getSubscription } from '@/actions/subscription';
 
+/** 서버 컴포넌트가 런타임 env에서 읽어 내려주는 Paddle 체크아웃 설정 */
+export interface PaddleCheckoutConfig {
+  clientToken: string;
+  environment: 'sandbox' | 'production';
+  priceIdPro: string;
+}
+
 interface UpgradeButtonProps {
   userId: string;
   customerEmail?: string;
+  paddle: PaddleCheckoutConfig | null;
 }
 
 // 결제 완료 후 webhook 반영 대기 폴링 간격/횟수 (2초 x 15회 = 최대 30초)
 const CONFIRM_POLL_INTERVAL_MS = 2000;
 const CONFIRM_POLL_MAX_ATTEMPTS = 15;
 
-export default function UpgradeButton({ userId, customerEmail }: UpgradeButtonProps) {
+export default function UpgradeButton({ userId, customerEmail, paddle }: UpgradeButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isConfirming, setIsConfirming] = React.useState(false);
@@ -51,12 +59,20 @@ export default function UpgradeButton({ userId, customerEmail }: UpgradeButtonPr
   }, [router]);
 
   const handleUpgrade = async () => {
+    if (!paddle) {
+      toast.danger('결제 설정 오류', {
+        description: '결제 설정이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.',
+        timeout: 3000,
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (!paddleRef.current) {
         paddleRef.current = await initializePaddle({
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-          environment: process.env.NEXT_PUBLIC_PADDLE_ENV === 'production' ? 'production' : 'sandbox',
+          token: paddle.clientToken,
+          environment: paddle.environment,
           eventCallback: (event) => {
             if (event.name === CheckoutEventNames.CHECKOUT_COMPLETED) {
               void confirmUpgrade();
@@ -70,7 +86,7 @@ export default function UpgradeButton({ userId, customerEmail }: UpgradeButtonPr
       }
 
       paddleRef.current.Checkout.open({
-        items: [{ priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO!, quantity: 1 }],
+        items: [{ priceId: paddle.priceIdPro, quantity: 1 }],
         ...(customerEmail && { customer: { email: customerEmail } }),
         customData: { userId },
         settings: {
