@@ -20,9 +20,8 @@ export default async function Page() {
       <div className="mt-6 flex flex-col gap-6">
         <CurrentPlanCard
           subscription={subscription}
-          customerKey={session?.user.id ?? ''}
+          userId={session?.user.id ?? ''}
           customerEmail={session?.user.email}
-          customerName={session?.user.name}
         />
         <UsageCard subscription={subscription} />
         <PlanComparison subscription={subscription} />

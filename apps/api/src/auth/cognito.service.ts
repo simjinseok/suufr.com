@@ -80,7 +80,7 @@ export class CognitoService {
         const payload = this.decodeJwt(AccessToken!);
         const userId = payload.sub as string;
 
-        await this.ensureUserWithOrganization(userId, payload.email as string, payload.name as string);
+        await this.ensureUserWithOrganization(userId, email, payload.name as string);
 
         return {
           success: true,
@@ -128,7 +128,7 @@ export class CognitoService {
         const payload = this.decodeJwt(AccessToken!);
         const userId = payload.sub as string;
 
-        await this.ensureUserWithOrganization(userId, payload.email as string, payload.name as string);
+        await this.ensureUserWithOrganization(userId, email, payload.name as string);
 
         return {
           success: true,
