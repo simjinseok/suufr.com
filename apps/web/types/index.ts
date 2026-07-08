@@ -225,12 +225,11 @@ export type TPlanLimits = {
 };
 
 export type TSubscriptionOrder = {
-  orderId: string;
+  paddleTransactionId: string;
   amount: number;
   status: 'done' | 'failed';
   failReason: string | null;
   approvedAt: string | null;
-  receiptUrl: string | null;
   createdAt: string;
 };
 
@@ -239,8 +238,6 @@ export type TSubscription = {
   status: 'active' | 'canceled' | 'past_due' | 'expired';
   currentPeriodEnd: string | null;
   canceledAt: string | null;
-  cardCompany: string | null;
-  cardNumberMasked: string | null;
   orders: TSubscriptionOrder[];
   limits: TPlanLimits;
   usage: {

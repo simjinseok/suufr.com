@@ -1,18 +1,18 @@
 'use client';
 
 import { Surface } from '@heroui/react';
-import { AlertTriangle, CreditCard, Crown, Sparkles } from 'lucide-react';
+import { AlertTriangle, Crown, Sparkles } from 'lucide-react';
 
 import type { TSubscription } from '@/types/index';
 
-import UpgradeButton from './_upgrade-button';
+import UpgradeButton, { type PaddleCheckoutConfig } from './_upgrade-button';
 import { CancelSubscriptionButton, ResumeSubscriptionButton } from './_manage-subscription';
 
 interface CurrentPlanCardProps {
   subscription: TSubscription | null;
-  customerKey: string;
+  userId: string;
   customerEmail?: string;
-  customerName?: string;
+  paddle: PaddleCheckoutConfig | null;
 }
 
 function formatDate(iso: string): string {
@@ -22,9 +22,9 @@ function formatDate(iso: string): string {
 
 export default function CurrentPlanCard({
   subscription,
-  customerKey,
+  userId,
   customerEmail,
-  customerName,
+  paddle,
 }: CurrentPlanCardProps) {
   if (!subscription) {
     return (
@@ -64,9 +64,9 @@ export default function CurrentPlanCard({
             </div>
             {!isPro && (
               <UpgradeButton
-                customerKey={customerKey}
+                userId={userId}
                 customerEmail={customerEmail}
-                customerName={customerName}
+                paddle={paddle}
               />
             )}
             {isPro && isCanceled && periodEndText && <ResumeSubscriptionButton />}
@@ -93,13 +93,6 @@ export default function CurrentPlanCard({
                 정기결제에 실패했어요. 등록된 카드를 확인해주세요. 결제가 계속 실패하면 무료 플랜으로 전환됩니다.
               </span>
             </div>
-          )}
-
-          {isPro && subscription.cardCompany && (
-            <p className="mt-2 text-sm text-gray-500 flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4" />
-              {subscription.cardCompany} {subscription.cardNumberMasked}
-            </p>
           )}
 
           {isPro && !isCanceled && subscription.currentPeriodEnd && (

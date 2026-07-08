@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionsBillingService } from './subscriptions-billing.service';
-import { ActivateBillingDto } from './dto/activate-billing.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
@@ -22,14 +21,14 @@ export class SubscriptionsController {
   }
 
   /**
-   * 카드 등록창에서 받은 authKey로 프로 플랜 활성화 (빌링키 발급 + 첫 결제)
+   * 결제 건의 인보이스 PDF URL 발급 (Paddle 인보이스, 1시간 유효)
    */
-  @Post('billing/activate')
-  async activate(
+  @Get('orders/:paddleTransactionId/invoice')
+  async getInvoice(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: ActivateBillingDto,
+    @Param('paddleTransactionId') paddleTransactionId: string,
   ) {
-    const data = await this.billingService.activate(user.userId, dto.authKey, user.email);
+    const data = await this.billingService.getInvoiceUrl(user.userId, paddleTransactionId);
     return { success: true, data };
   }
 

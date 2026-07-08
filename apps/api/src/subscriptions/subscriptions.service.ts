@@ -82,12 +82,11 @@ export class SubscriptionsService {
         orderBy: { createdAt: 'desc' },
         take: 12,
         select: {
-          orderId: true,
+          paddleTransactionId: true,
           amount: true,
           status: true,
           failReason: true,
           approvedAt: true,
-          receiptUrl: true,
           createdAt: true,
         },
       }),
@@ -98,8 +97,6 @@ export class SubscriptionsService {
       status: subscription?.status ?? 'active',
       currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
       canceledAt: subscription?.canceledAt ?? null,
-      cardCompany: subscription?.cardCompany ?? null,
-      cardNumberMasked: subscription?.cardNumberMasked ?? null,
       orders,
       limits: PLAN_LIMITS[plan],
       usage: {

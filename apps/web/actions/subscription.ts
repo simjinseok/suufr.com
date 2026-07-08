@@ -35,9 +35,9 @@ export async function getSubscription(): Promise<TSubscription | null> {
   );
 }
 
-export async function activateBilling(authKey: string): Promise<BillingActionResult> {
+export async function getInvoiceUrl(paddleTransactionId: string): Promise<BillingActionResult & { url?: string }> {
   return await Sentry.withServerActionInstrumentation(
-    'activateBilling',
+    'getInvoiceUrl',
     { headers: await headers(), recordResponse: true },
     async () => {
       const session = await getSession();
@@ -46,9 +46,8 @@ export async function activateBilling(authKey: string): Promise<BillingActionRes
       }
 
       try {
-        await subscriptionsApi.activate(authKey);
-        revalidatePath('/settings/subscription', 'page');
-        return { success: true };
+        const result = await subscriptionsApi.invoice(paddleTransactionId);
+        return { success: true, url: result.data.url };
       }
       catch (error) {
         if (error instanceof ApiError) {

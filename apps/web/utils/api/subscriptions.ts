@@ -6,13 +6,15 @@ type SubscriptionResponse = {
   data: TSubscription;
 };
 
+type InvoiceResponse = {
+  success: boolean;
+  data: { url: string };
+};
+
 export const subscriptionsApi = {
   get: () => apiClient<SubscriptionResponse>('/api/subscription'),
-  activate: (authKey: string) =>
-    apiClient<{ success: boolean }>('/api/subscription/billing/activate', {
-      method: 'POST',
-      body: { authKey },
-    }),
+  invoice: (paddleTransactionId: string) =>
+    apiClient<InvoiceResponse>(`/api/subscription/orders/${encodeURIComponent(paddleTransactionId)}/invoice`),
   cancel: () =>
     apiClient<{ success: boolean }>('/api/subscription/cancel', {
       method: 'POST',
