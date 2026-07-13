@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   CognitoIdentityProviderClient,
@@ -25,6 +25,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class CognitoService {
+  private readonly logger = new Logger(CognitoService.name);
   private client: CognitoIdentityProviderClient;
   private clientId: string;
   private clientSecret: string | undefined;
@@ -51,6 +52,26 @@ export class CognitoService {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
   }
 
+  // AuthenticationResult → 토큰 응답 (login/respondToMfa/respondToNewPassword 공용)
+  private async issueTokens(
+    authResult: { AccessToken?: string; RefreshToken?: string; ExpiresIn?: number },
+    email: string,
+  ) {
+    const { AccessToken, RefreshToken, ExpiresIn } = authResult;
+    const payload = this.decodeJwt(AccessToken!);
+    const userId = payload.sub as string;
+
+    await this.ensureUserWithOrganization(userId, email, payload.name as string);
+
+    return {
+      success: true,
+      accessToken: AccessToken,
+      refreshToken: RefreshToken,
+      expiresIn: ExpiresIn,
+      cognitoUsername: userId,
+    };
+  }
+
   async login(email: string, password: string) {
     try {
       const secretHash = this.computeSecretHash(email);
@@ -66,7 +87,9 @@ export class CognitoService {
 
       const response = await this.client.send(command);
 
-      if (response.ChallengeName) {
+      // 앱이 완료할 수 있는 챌린지만 통과시킨다. 그 외(MFA_SETUP, EMAIL_OTP 등)는
+      // 유저풀 설정 문제이므로 사용자를 막다른 화면으로 보내지 않고 에러로 처리.
+      if (response.ChallengeName === ChallengeNameType.SOFTWARE_TOKEN_MFA) {
         return {
           success: true,
           requiresMfa: true,
@@ -75,20 +98,22 @@ export class CognitoService {
         };
       }
 
-      if (response.AuthenticationResult) {
-        const { AccessToken, RefreshToken, ExpiresIn } = response.AuthenticationResult;
-        const payload = this.decodeJwt(AccessToken!);
-        const userId = payload.sub as string;
-
-        await this.ensureUserWithOrganization(userId, email, payload.name as string);
-
+      if (response.ChallengeName === ChallengeNameType.NEW_PASSWORD_REQUIRED) {
         return {
           success: true,
-          accessToken: AccessToken,
-          refreshToken: RefreshToken,
-          expiresIn: ExpiresIn,
-          cognitoUsername: userId,
+          requiresNewPassword: true,
+          challengeName: response.ChallengeName,
+          session: response.Session,
         };
+      }
+
+      if (response.ChallengeName) {
+        this.logger.error(`지원하지 않는 로그인 챌린지: ${response.ChallengeName} (유저풀 MFA 설정 확인 필요)`);
+        throw new BadRequestException('지원하지 않는 인증 방식입니다. 관리자에게 문의해주세요.');
+      }
+
+      if (response.AuthenticationResult) {
+        return this.issueTokens(response.AuthenticationResult, email);
       }
 
       throw new UnauthorizedException('로그인에 실패했습니다');
@@ -124,19 +149,7 @@ export class CognitoService {
       const response = await this.client.send(command);
 
       if (response.AuthenticationResult) {
-        const { AccessToken, RefreshToken, ExpiresIn } = response.AuthenticationResult;
-        const payload = this.decodeJwt(AccessToken!);
-        const userId = payload.sub as string;
-
-        await this.ensureUserWithOrganization(userId, email, payload.name as string);
-
-        return {
-          success: true,
-          accessToken: AccessToken,
-          refreshToken: RefreshToken,
-          expiresIn: ExpiresIn,
-          cognitoUsername: userId,
-        };
+        return this.issueTokens(response.AuthenticationResult, email);
       }
 
       throw new UnauthorizedException('MFA 인증에 실패했습니다');
@@ -147,6 +160,40 @@ export class CognitoService {
       }
       if (error instanceof ExpiredCodeException) {
         throw new BadRequestException('MFA 코드가 만료되었습니다');
+      }
+      throw error;
+    }
+  }
+
+  // NEW_PASSWORD_REQUIRED 챌린지 완료 (관리자 비밀번호 리셋 등으로 임시 비밀번호를 받은 계정)
+  async respondToNewPassword(email: string, newPassword: string, session: string) {
+    try {
+      const secretHash = this.computeSecretHash(email);
+      const command = new RespondToAuthChallengeCommand({
+        ClientId: this.clientId,
+        ChallengeName: ChallengeNameType.NEW_PASSWORD_REQUIRED,
+        Session: session,
+        ChallengeResponses: {
+          USERNAME: email,
+          NEW_PASSWORD: newPassword,
+          ...(secretHash && { SECRET_HASH: secretHash }),
+        },
+      });
+
+      const response = await this.client.send(command);
+
+      if (response.AuthenticationResult) {
+        return this.issueTokens(response.AuthenticationResult, email);
+      }
+
+      throw new UnauthorizedException('비밀번호 변경에 실패했습니다');
+    }
+    catch (error) {
+      if (error instanceof InvalidPasswordException) {
+        throw new BadRequestException('비밀번호는 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다');
+      }
+      if (error instanceof NotAuthorizedException) {
+        throw new BadRequestException('세션이 만료되었습니다. 다시 로그인해주세요.');
       }
       throw error;
     }
