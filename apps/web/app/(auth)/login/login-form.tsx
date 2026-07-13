@@ -90,9 +90,11 @@ export default function LoginForm() {
     }
   }, [newPasswordState.timestamp, newPasswordState.success, router]);
 
+  // 각 화면 루트의 key는 필수 — 세 화면의 JSX 구조가 같아 key가 없으면 React가 폼을
+  // 리마운트하지 않고 재활용하는데, 그러면 RHF Controller가 다른 폼의 control에 묶여 입력이 안 된다.
   if (showNewPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+      <div key="new-password" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
         <div className="w-full max-w-sm mx-auto px-6">
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -185,7 +187,7 @@ export default function LoginForm() {
 
   if (showMfa) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+      <div key="mfa" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
         <div className="w-full max-w-sm mx-auto px-6">
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -257,7 +259,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+    <div key="login" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
       <div className="w-full max-w-sm mx-auto px-6">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
