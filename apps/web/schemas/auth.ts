@@ -41,3 +41,13 @@ export const resetPasswordSchema = z
 export const mfaSchema = z.object({
   code: z.string().length(6, { error: 'MFA 코드는 6자리입니다' }),
 });
+
+export const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, { error: '비밀번호는 8자 이상이어야 합니다' }),
+    passwordConfirm: z.string(),
+  })
+  .refine(data => data.password === data.passwordConfirm, {
+    error: '비밀번호가 일치하지 않습니다',
+    path: ['passwordConfirm'],
+  });

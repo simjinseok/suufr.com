@@ -10,6 +10,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import {
   LoginDto,
   MfaDto,
+  NewPasswordDto,
   RefreshTokenDto,
   SignupDto,
   VerifyEmailDto,
@@ -61,6 +62,13 @@ export class AuthController {
   @Post('mfa')
   async mfa(@Body() dto: MfaDto) {
     return this.cognitoService.respondToMfa(dto.email, dto.code, dto.session);
+  }
+
+  // NEW_PASSWORD_REQUIRED 챌린지 완료 (임시 비밀번호 계정의 새 비밀번호 설정)
+  @Public()
+  @Post('new-password')
+  async newPassword(@Body() dto: NewPasswordDto) {
+    return this.cognitoService.respondToNewPassword(dto.email, dto.password, dto.session);
   }
 
   @Public()

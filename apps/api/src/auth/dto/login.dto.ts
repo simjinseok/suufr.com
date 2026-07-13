@@ -20,6 +20,18 @@ export class MfaDto {
   email!: string;
 }
 
+export class NewPasswordDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  session!: string;
+
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
+
 export class RefreshTokenDto {
   @IsString()
   refreshToken!: string;

@@ -3,6 +3,7 @@ import { apiClient } from '../api-client';
 type LoginResponse = {
   success: boolean;
   requiresMfa?: boolean;
+  requiresNewPassword?: boolean;
   challengeName?: string;
   session?: string;
   accessToken?: string;
@@ -51,6 +52,9 @@ export const authApi = {
 
   mfa: (data: { email: string; code: string; session: string }) =>
     apiClient<MfaResponse>('/api/auth/mfa', { method: 'POST', body: data }),
+
+  newPassword: (data: { email: string; password: string; session: string }) =>
+    apiClient<MfaResponse>('/api/auth/new-password', { method: 'POST', body: data }),
 
   signup: (data: { name: string; email: string; password: string }) =>
     apiClient<SignupResponse>('/api/auth/signup', { method: 'POST', body: data }),
