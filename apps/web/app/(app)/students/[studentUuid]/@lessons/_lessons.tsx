@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { numberToHangulMixed } from 'es-hangul';
 
-import { Button, Chip, Dropdown, Modal, Surface } from '@heroui/react';
+import { Button, Dropdown, Modal, Surface } from '@heroui/react';
 import {
   AlertTriangleIcon,
   CalendarPlusIcon,
@@ -35,7 +35,6 @@ import CreateInvoiceModal from '@/components/invoice/create-invoice-modal';
 import { useParams, useRouter } from 'next/navigation';
 import { toggleSessionDone } from '@/actions/session';
 import DeleteInvoiceModal from '@/components/invoice/delete-invoice-modal';
-import { getRemainingCount } from '@/utils/invoice-status';
 import { useTimeZone } from '@/contexts/timezone';
 
 function AnimatedCheckIcon({
@@ -219,7 +218,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
       {invoices.length > 0 ? (
         <ul className="mt-5 flex flex-col gap-5">
           {invoices.map((invoice) => {
-            const remainingCount = getRemainingCount(invoice);
             // 납부 상태는 학생 단위 잔액으로 판정하므로 카드에는 표시하지 않는다.
             // 단 "금액 미입력"(price=0)은 잔액에 잡히지 않아 카드에서 수정을 유도한다 (§3)
             const needsPrice = invoice.price === 0;
@@ -245,14 +243,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-2 min-w-0">
                         <p className="text-xl font-bold truncate">{invoice.title || '수강권'}</p>
-                        {remainingCount !== null && (
-                          <Chip size="sm" color="accent" variant="soft" className="shrink-0">
-                            잔여
-                            {' '}
-                            {remainingCount}
-                            회
-                          </Chip>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Dropdown>

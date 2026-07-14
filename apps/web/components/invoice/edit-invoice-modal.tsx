@@ -45,14 +45,10 @@ interface ContentProps {
 function Content({ invoice, close }: ContentProps) {
   const formId = React.useId();
 
-  // 횟수는 회차 수강권에서만 의미 (환불 정산 시 회차 축소용 — docs/schema-redesign.md §3)
-  const hasTotalCount = invoice.totalCount != null;
-
   const [state, formAction, isPending] = React.useActionState(updateInvoice, {
     fields: {
       title: invoice?.title ?? '',
       price: invoice?.price ?? 0,
-      totalCount: invoice?.totalCount ?? 0,
       notes: invoice?.notes ?? '',
     },
   });
@@ -61,7 +57,6 @@ function Content({ invoice, close }: ContentProps) {
     values: {
       title: state.fields?.title || '',
       price: state.fields?.price ?? 0,
-      totalCount: state.fields?.totalCount ?? 0,
       notes: state.fields?.notes || '',
     },
   });
@@ -128,31 +123,6 @@ function Content({ invoice, close }: ContentProps) {
               </NumberField>
             )}
           />
-          {hasTotalCount && (
-            <Controller
-              control={control}
-              name="totalCount"
-              render={({ field: { name, value, onChange } }) => (
-                <NumberField
-                  variant="secondary"
-                  name={name}
-                  value={value}
-                  minValue={0}
-                  onChange={onChange}
-                >
-                  <Label>수업 횟수</Label>
-                  <NumberField.Group>
-                    <NumberField.DecrementButton />
-                    <NumberField.Input className="w-14 text-center" />
-                    <NumberField.IncrementButton />
-                  </NumberField.Group>
-                  <Description>중도 종료·환불 시 실제 진행 회차로 줄이면 잔여 회차가 정리됩니다.</Description>
-                  <FieldError />
-                </NumberField>
-              )}
-            />
-          )}
-
           <Controller
             control={control}
             name="notes"
