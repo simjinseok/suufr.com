@@ -1,13 +1,17 @@
 'use client';
 import { format } from 'date-fns/format';
+import { tz } from '@date-fns/tz';
 
 import React from 'react';
 import { Button, Modal } from '@heroui/react';
 import { CheckCircle2Icon, CircleDashedIcon } from 'lucide-react';
 import EditMeetingModal from '@/components/meeting/edit-meeting-modal';
+import { useTimeZone } from '@/contexts/timezone';
 import type { TMeeting } from '@/types/index';
 
 export default function Meetings({ meetings }: { meetings: TMeeting[] }) {
+  const timeZone = useTimeZone();
+
   if (meetings.length === 0) {
     return (
       <div className="mt-5 py-12 text-center text-zinc-500">
@@ -35,7 +39,7 @@ export default function Meetings({ meetings }: { meetings: TMeeting[] }) {
               )}
             </div>
             <div className="text-sm text-zinc-500">
-              {format(meeting.meetingAt, 'M월 d일')}
+              {format(meeting.meetingAt, 'M월 d일', { in: tz(timeZone) })}
               {meeting.notes && (
                 <span className="ml-2 text-zinc-400">· {meeting.notes}</span>
               )}

@@ -5,13 +5,14 @@ import { Avatar, Spinner } from '@heroui/react';
 import { CameraIcon, XIcon } from 'lucide-react';
 import { optimizeAvatarUrl } from '@/utils/cloudinary-url';
 import { uploadToS3 } from '@/utils/s3-upload';
+import { SUPPORTED_PROFILE_IMAGE_TYPES } from '@/utils/file-constraints';
 
 function getProfileImageSrc(value: string, displaySize: number): string {
   // Bunny CDN URL 최적화
   return optimizeAvatarUrl(value, displaySize) || value;
 }
 
-const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_FORMATS = SUPPORTED_PROFILE_IMAGE_TYPES;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (리사이징 전 원본 허용)
 const OUTPUT_SIZE = 400; // 출력 이미지 크기 (px)
 const OUTPUT_QUALITY = 0.8; // JPEG 퀄리티 (0-1)
@@ -101,8 +102,8 @@ export default function ProfileImageUpload({ name, value, onChange, disabled }: 
       const resizedBlob = await resizeImage(file);
       const resizedFile = new File([resizedBlob], 'profile.jpg', { type: 'image/jpeg' });
 
-      // S3로 직접 업로드
-      const result = await uploadToS3(resizedFile);
+      // S3로 직접 업로드 (profile: 공개 prefix, 저장 시 커밋)
+      const result = await uploadToS3(resizedFile, { purpose: 'profile' });
 
       if (!result.success) {
         setError(result.error);

@@ -1,12 +1,13 @@
-import { IsString, IsOptional, IsUUID, IsDateString, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsDateString, IsInt, NotEquals } from 'class-validator';
 
+// 입금 1건 기록. 음수 = 환불. 학생 직속 (청구와 연결하지 않는다)
 export class CreatePaymentDto {
   @IsInt()
-  @Min(0)
+  @NotEquals(0)
   amount!: number;
 
   @IsString()
-  paymentMethod!: string;
+  method!: string;
 
   @IsString()
   @IsOptional()
@@ -16,5 +17,5 @@ export class CreatePaymentDto {
   paidAt!: string;
 
   @IsUUID()
-  lessonUuid!: string;
+  studentUuid!: string;
 }

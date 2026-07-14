@@ -12,11 +12,11 @@ type Student = {
   name: string;
 };
 
-type Lesson = {
-  id: number;
+type SessionInvoice = {
   uuid: string;
-  title: string;
-  student: Student;
+  title: string | null;
+  price: number;
+  deletedAt: string | null;
 };
 
 type MediaFile = {
@@ -43,7 +43,9 @@ type Session = {
   duration: number;
   notes: string;
   isDone: boolean;
-  lesson: Lesson;
+  type: 'regular' | 'trial' | 'comp';
+  student: Student;
+  invoice: SessionInvoice | null;
   feedback?: Feedback | null;
   sessionMediaFiles?: SessionMediaFile[];
 };
@@ -52,7 +54,8 @@ type ListSessionsParams = {
   organizationUuids?: string[];
   page?: number;
   limit?: number;
-  lessonUuid?: string;
+  studentUuid?: string;
+  invoiceUuid?: string;
   dateFrom?: string;
   dateTo?: string;
 };
@@ -74,11 +77,29 @@ type SessionResponse = {
 };
 
 type CreateSessionData = {
-  lessonUuid: string;
+  studentUuid: string;
+  invoiceUuid?: string;
   sessionAt: string;
   duration?: number;
   notes?: string;
   mediaFileUuids?: string[];
+};
+
+type CreateSessionsBulkData = {
+  studentUuid: string;
+  invoiceUuid?: string;
+  sessions: Array<{
+    sessionAt: string;
+    duration?: number;
+    notes?: string;
+  }>;
+  // 마지막 수업 다음 회차 ("YYYY-MM-DD", KST) — 다음 결제 예정일 자동 갱신용
+  nextPaymentAt?: string;
+};
+
+type SessionsResponse = {
+  success: boolean;
+  data: Session[];
 };
 
 type UpdateSessionData = {
@@ -86,6 +107,7 @@ type UpdateSessionData = {
   duration?: number;
   notes?: string;
   isDone?: boolean;
+  invoiceUuid?: string;
   addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
 };
@@ -108,6 +130,9 @@ export const sessionsApi = {
 
   create: (data: CreateSessionData) =>
     apiClient<SessionResponse>('/api/sessions', { method: 'POST', body: data }),
+
+  createBulk: (data: CreateSessionsBulkData) =>
+    apiClient<SessionsResponse>('/api/sessions/bulk', { method: 'POST', body: data }),
 
   update: (uuid: string, data: UpdateSessionData) =>
     apiClient<SessionResponse>(`/api/sessions/${uuid}`, { method: 'PATCH', body: data }),

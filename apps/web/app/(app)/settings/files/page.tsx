@@ -1,9 +1,10 @@
 import { getStorageQuota, getMyMediaFiles, getMyFolders, getFolderBreadcrumb } from '@/actions/storage';
 
 import StorageQuotaCard from './_storage-quota-card';
-import FilterBar, { UploadButton, NewFolderButton } from './_filter-bar';
+import FilterBar, { NewFolderButton } from './_filter-bar';
 import FilesList from './_files-list';
 import FolderBreadcrumb from './_folder-breadcrumb';
+import UploadManager from './_upload-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ export default async function Page({ searchParams }: PageProps) {
         <h1 className="text-2xl font-bold">파일 관리</h1>
         <div className="flex items-center gap-2">
           <NewFolderButton parentFolderUuid={currentFolderUuid} />
-          <UploadButton quota={quota} currentFolderUuid={currentFolderUuid} />
+          <UploadManager quota={quota} currentFolderUuid={currentFolderUuid} />
         </div>
       </header>
       <div className="mt-6 flex flex-col gap-6">

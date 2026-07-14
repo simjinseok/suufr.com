@@ -12,8 +12,11 @@ import {
   groupPaymentsByYear,
   getPrevMonth,
   getNextMonth, getPrevYear, getNextYear,
+  formatMonthDate, formatYearDate,
 } from '@/utils/payment-stats';
-import { toKstParts } from '@/utils/kst';
+import { getUserSettings } from '@/utils/user-settings';
+import { DEFAULT_TIMEZONE } from '@/utils/timezone';
+import { TZDate } from '@date-fns/tz';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
@@ -27,7 +30,7 @@ type Props = {
   }>;
 };
 
-function parseDateParam(date: string | undefined): { year: number; month: number } {
+function parseDateParam(date: string | undefined, timeZone: string): { year: number; month: number } {
   if (date) {
     const parts = date.split('-');
     if (parts.length >= 2) {
@@ -38,16 +41,19 @@ function parseDateParam(date: string | undefined): { year: number; month: number
     }
   }
 
-  // date 파라미터가 없으면 KST 기준 현재 연/월
-  const { year, month } = toKstParts(new Date());
-  return { year, month };
+  // date 파라미터가 없으면 유저 설정 타임존 기준 현재 연/월
+  const now = new TZDate(new Date(), timeZone);
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
 }
 
 export default async function Page({ searchParams }: Props) {
   const { view: _view, date: _date } = await searchParams;
 
+  const settings = await getUserSettings();
+  const timeZone = settings.timezone ?? DEFAULT_TIMEZONE;
+
   const view: PaymentView = _view === 'yearly' ? 'yearly' : 'monthly';
-  const { year, month } = parseDateParam(_date);
+  const { year, month } = parseDateParam(_date, timeZone);
 
   const [response, trendResponse] = await Promise.all([
     paymentsApi.list({
@@ -62,21 +68,18 @@ export default async function Page({ searchParams }: Props) {
     id: p.id,
     uuid: p.uuid,
     amount: p.amount,
-    paymentMethod: p.paymentMethod,
+    method: p.method,
     notes: p.notes,
     paidAt: new Date(p.paidAt),
-    lesson: {
-      uuid: p.lesson.uuid,
-      title: p.lesson.title,
-      student: {
-        id: p.lesson.student.id,
-        name: p.lesson.student.name,
-      },
+    student: {
+      uuid: p.student.uuid,
+      id: p.student.id,
+      name: p.student.name,
     },
   }));
 
-  const monthlyStats = groupPaymentsByMonth(payments);
-  const yearlyStats = groupPaymentsByYear(payments);
+  const monthlyStats = groupPaymentsByMonth(payments, timeZone);
+  const yearlyStats = groupPaymentsByYear(payments, timeZone);
 
   const currentMonthStats = monthlyStats.length > 0 ? monthlyStats[0] : null;
   const currentYearStats = yearlyStats.length > 0 ? yearlyStats[0] : null;
@@ -88,8 +91,10 @@ export default async function Page({ searchParams }: Props) {
     return `/payments?${params.toString()}`;
   };
 
-  const prevDate = view === 'monthly' ? getPrevMonth(_date) : getPrevYear(_date);
-  const nextDate = view === 'monthly' ? getNextMonth(_date) : getNextYear(_date);
+  // 파라미터가 없어도 위에서 계산한 연/월을 명시해 런타임 로컬 타임존 폴백을 차단
+  const currentDate = _date ?? (view === 'monthly' ? formatMonthDate(year, month) : formatYearDate(year));
+  const prevDate = view === 'monthly' ? getPrevMonth(currentDate) : getPrevYear(currentDate);
+  const nextDate = view === 'monthly' ? getNextMonth(currentDate) : getNextYear(currentDate);
 
   const displayDate = view === 'monthly'
     ? `${year}년 ${month}월`

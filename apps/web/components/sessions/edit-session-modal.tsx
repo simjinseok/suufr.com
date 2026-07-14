@@ -20,6 +20,7 @@ import { Calendar } from '@/components/calendar';
 import { fromDate, toCalendarDateTime } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { useHourCycle } from '@/contexts/time-format';
+import { useTimeZone } from '@/contexts/timezone';
 
 import { updateSession, removeSession } from '@/actions/session';
 
@@ -47,6 +48,7 @@ interface ContentProps {
   close: () => void;
 }
 function Content({ session, close }: ContentProps) {
+  const timeZone = useTimeZone();
   const formId = React.useId();
   const hourCycle = useHourCycle();
 
@@ -98,11 +100,18 @@ function Content({ session, close }: ContentProps) {
               control={control}
               name="isDone"
               render={({ field: { name, value, onChange } }) => (
-                <Checkbox className="inline-flex" name={name} isSelected={value} onChange={onChange} value="on" variant="secondary">
-                  <Checkbox.Control className="size-5">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
+                // Checkbox.Content(클릭 영역)가 Control과 Label을 모두 감싸야 한다 — HeroUI v3 소스 주석 참조
+                <Checkbox
+                  name={name}
+                  isSelected={value}
+                  onChange={onChange}
+                  value="on"
+                  variant="secondary"
+                >
                   <Checkbox.Content>
+                    <Checkbox.Control className="size-5">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <Label>완료여부</Label>
                   </Checkbox.Content>
                 </Checkbox>
@@ -116,8 +125,8 @@ function Content({ session, close }: ContentProps) {
                   granularity="minute"
                   hourCycle={hourCycle}
                   name={name}
-                  value={toCalendarDateTime(fromDate(new Date(value), 'Asia/Seoul'))}
-                  onChange={(v) => v && onChange(v.toDate('Asia/Seoul'))}
+                  value={toCalendarDateTime(fromDate(new Date(value), timeZone))}
+                  onChange={(v) => v && onChange(v.toDate(timeZone))}
                   hideTimeZone
                   isRequired
                 >

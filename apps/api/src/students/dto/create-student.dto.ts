@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsEmail, IsDateString, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsDateString, IsUUID, IsEnum } from 'class-validator';
+import { StudentStatusValue } from '@prisma/generated/client';
 
 export class CreateStudentDto {
   @IsUUID()
@@ -6,6 +7,10 @@ export class CreateStudentDto {
 
   @IsString()
   name!: string;
+
+  @IsEnum(StudentStatusValue)
+  @IsOptional()
+  status?: StudentStatusValue;
 
   @IsString()
   @IsOptional()

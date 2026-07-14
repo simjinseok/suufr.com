@@ -1,15 +1,23 @@
 'use client';
 import * as React from 'react';
-import { Card, Modal, Button } from '@heroui/react';
+import { Card, Chip, Modal, Button } from '@heroui/react';
+import { numberToHangulMixed } from 'es-hangul';
 import { BanknoteXIcon, ChevronRightIcon, UserRoundCheckIcon, UserRoundMinusIcon } from 'lucide-react';
 import Link from 'next/link';
 
-type NotPaidLesson = {
-  id: number;
-  title: string;
-  createdAt: Date;
+// 미수는 학생 단위 잔액으로 판정한다 (docs/schema-redesign.md §3)
+type UnpaidStudent = {
+  uuid: string;
+  name: string;
+  outstandingAmount: number;
+};
+
+type NeedsPriceInvoice = {
+  uuid: string;
+  title: string | null;
+  createdAt: string;
   student: {
-    id: number;
+    uuid: string;
     name: string;
   };
 };
@@ -17,13 +25,15 @@ type NotPaidLesson = {
 interface Props {
   currentActiveStudentCount: number;
   leftStudentsCount: number;
-  notPaidLessons: NotPaidLesson[];
+  unpaidStudents: UnpaidStudent[];
+  needsPriceInvoices: NeedsPriceInvoice[];
 }
 
 export default function DashboardCards({
   currentActiveStudentCount,
   leftStudentsCount,
-  notPaidLessons,
+  unpaidStudents,
+  needsPriceInvoices,
 }: Props) {
   return (
     <div className="mt-3 flex flex-col gap-3 md:grid md:grid-cols-3">
@@ -63,11 +73,19 @@ export default function DashboardCards({
             <BanknoteXIcon className="text-danger size-5" />
           </div>
           <div className="grow flex flex-col gap-y-2">
-            <dt className="text-small font-medium text-default-500">미입금</dt>
+            <dt className="text-small font-medium text-default-500">미납</dt>
             <dd className="text-2xl font-semibold text-default-700">
-              {notPaidLessons.length}
-              건
+              {unpaidStudents.length}
+              명
             </dd>
+            {needsPriceInvoices.length > 0 && (
+              <p className="text-xs text-warning-600">
+                금액 미입력
+                {' '}
+                {needsPriceInvoices.length}
+                건
+              </p>
+            )}
           </div>
           <div className="">
             <Modal>
@@ -81,7 +99,11 @@ export default function DashboardCards({
                 <Modal.Container>
                   <Modal.Dialog className="max-w-md max-h-[80vh] flex flex-col">
                     {({ close }) => (
-                      <ModalContent lessons={notPaidLessons} close={close} />
+                      <ModalContent
+                        students={unpaidStudents}
+                        needsPriceInvoices={needsPriceInvoices}
+                        close={close}
+                      />
                     )}
                   </Modal.Dialog>
                 </Modal.Container>
@@ -96,45 +118,70 @@ export default function DashboardCards({
 }
 
 interface ModalContentProps {
-  lessons: NotPaidLesson[];
+  students: UnpaidStudent[];
+  needsPriceInvoices: NeedsPriceInvoice[];
   close: () => void;
 }
 
-function ModalContent({ lessons, close }: ModalContentProps) {
+function ModalContent({ students, needsPriceInvoices, close }: ModalContentProps) {
+  const isEmpty = students.length === 0 && needsPriceInvoices.length === 0;
+
   return (
     <React.Fragment>
       <Modal.Header>
-        <Modal.Heading>입금 확인이 필요한 레슨</Modal.Heading>
+        <Modal.Heading>입금 확인이 필요한 학생</Modal.Heading>
       </Modal.Header>
       <Modal.Body className="overflow-y-auto flex-1">
-        {lessons.length > 0
+        {isEmpty
           ? (
+              <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+                <BanknoteXIcon className="size-10 mb-2 opacity-50" />
+                <p className="text-sm">미납 내역이 없습니다</p>
+              </div>
+            )
+          : (
               <ul className="space-y-2">
-                {lessons.map(lesson => (
-                  <li key={lesson.uuid}>
+                {students.map(student => (
+                  <li key={student.uuid}>
                     <Link
-                      href={`/students/${lesson.student.uuid}`}
+                      href={`/students/${student.uuid}`}
+                      className="group flex items-center justify-between p-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        {student.name}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+                          {numberToHangulMixed(student.outstandingAmount)}
+                          원
+                        </span>
+                        <ChevronRightIcon className="size-4 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors" />
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+                {needsPriceInvoices.map(invoice => (
+                  <li key={invoice.uuid}>
+                    <Link
+                      href={`/students/${invoice.student.uuid}`}
                       className="group flex items-center justify-between p-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-colors"
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                          {lesson.student.name}
+                          {invoice.student.name}
                         </span>
                         <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {lesson.title}
+                          {invoice.title || '수강권'}
                         </span>
                       </div>
-                      <ChevronRightIcon className="size-4 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors" />
+                      <div className="flex items-center gap-2">
+                        <Chip size="sm" color="warning" variant="soft">금액 미입력</Chip>
+                        <ChevronRightIcon className="size-4 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors" />
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
-            )
-          : (
-              <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
-                <BanknoteXIcon className="size-10 mb-2 opacity-50" />
-                <p className="text-sm">미입금 레슨이 없습니다</p>
-              </div>
             )}
       </Modal.Body>
       <Modal.Footer>

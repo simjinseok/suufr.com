@@ -5,9 +5,18 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { parseDateTime } from '@internationalized/date';
 import { getSession } from '@/utils/auth';
+import { getUserSettings } from '@/utils/user-settings';
+import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 import { ServerActionState } from '@/types/index';
 import { z } from 'zod';
 import { sessionsApi } from '@/utils/api';
+import { ApiError } from '@/utils/api-client';
+
+// 폼의 벽시계 문자열("YYYY-MM-DDTHH:mm")을 instant로 바꿀 기준 = 유저 설정 타임존
+async function getUserTimeZone(): Promise<string> {
+  const settings = await getUserSettings();
+  return settings.timezone ?? DEFAULT_TIMEZONE;
+}
 
 type CreateSessionState = {
   success: boolean;
@@ -29,7 +38,7 @@ export async function createSession(prevState: CreateSessionState, formData: For
       recordResponse: true,
     },
     async () => {
-      const { lessonUuid, ...data } = Object.fromEntries(formData.entries());
+      const { studentUuid, invoiceUuid, ...data } = Object.fromEntries(formData.entries());
       const state: CreateSessionState = {
         success: false,
         fields: {
@@ -46,16 +55,83 @@ export async function createSession(prevState: CreateSessionState, formData: For
         return state;
       }
 
+      const timeZone = await getUserTimeZone();
       await sessionsApi.create({
-        lessonUuid: lessonUuid as string,
-        sessionAt: parseDateTime(data.sessionAt as string).toDate('Asia/Seoul').toISOString(),
+        studentUuid: studentUuid as string,
+        invoiceUuid: (invoiceUuid as string) || undefined,
+        sessionAt: parseDateTime(data.sessionAt as string).toDate(timeZone).toISOString(),
         duration: Number(data.duration) || 60,
         notes: data.notes as string,
       });
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
+
+      state.success = true;
+      return state;
+    },
+  );
+}
+
+// 요일·시간·횟수로 계산한 수업 목록을 한 번에 생성 (수강권 카드의 "수업 만들기")
+type CreateSessionsBulkState = ServerActionState<null>;
+export async function createSessionsBulk(prevState: CreateSessionsBulkState, formData: FormData) {
+  return await Sentry.withServerActionInstrumentation(
+    'createSessionsBulk',
+    {
+      formData,
+      headers: await headers(),
+      recordResponse: true,
+    },
+    async () => {
+      const state: CreateSessionsBulkState = {
+        success: false,
+        timestamp: Date.now(),
+      };
+
+      const session = await getSession();
+      if (!session?.organization) {
+        return state;
+      }
+
+      // 클라이언트 미리보기에 표시된 그대로의 목록 ("YYYY-MM-DDTHH:mm", 유저 설정 타임존 벽시계)
+      let sessionAts: unknown;
+      try {
+        sessionAts = JSON.parse((formData.get('sessions') as string) || '[]');
+      }
+      catch {
+        sessionAts = null;
+      }
+
+      const validationResult = z.array(z.string()).min(1).max(50).safeParse(sessionAts);
+      if (!validationResult.success) {
+        state.message = '생성할 수업이 없습니다';
+        return state;
+      }
+
+      const duration = Number(formData.get('duration')) || 60;
+      const timeZone = await getUserTimeZone();
+
+      try {
+        const { data } = await sessionsApi.createBulk({
+          studentUuid: formData.get('studentUuid') as string,
+          invoiceUuid: (formData.get('invoiceUuid') as string) || undefined,
+          sessions: validationResult.data.map(sessionAt => ({
+            sessionAt: parseDateTime(sessionAt).toDate(timeZone).toISOString(),
+            duration,
+          })),
+          nextPaymentAt: (formData.get('nextPaymentAt') as string) || undefined,
+        });
+        state.message = `수업 ${data.length}개를 만들었습니다`;
+      }
+      catch (error) {
+        state.message = error instanceof ApiError ? error.message : '수업 생성에 실패했습니다';
+        return state;
+      }
+
+      revalidatePath('/students', 'layout');
+      revalidatePath('/sessions', 'page');
+      revalidatePath('/calendar', 'page');
 
       state.success = true;
       return state;
@@ -69,9 +145,9 @@ type UpdateSessionState = ServerActionState<{
   duration: number;
   notes: string;
 }>;
-const updateSessionSchema = z.object({
+const updateSessionSchema = (timeZone: string) => z.object({
   isDone: z.preprocess(val => val === 'on', z.boolean()),
-  sessionAt: z.string().transform(val => parseDateTime(val).toDate('Asia/Seoul').toISOString()),
+  sessionAt: z.string().transform(val => parseDateTime(val).toDate(timeZone).toISOString()),
   duration: z.coerce.number().int().min(1).default(60),
   notes: z.string().trim(),
 });
@@ -103,7 +179,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      const validationResult = updateSessionSchema.safeParse(data);
+      const validationResult = updateSessionSchema(await getUserTimeZone()).safeParse(data);
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
         return state;
@@ -128,7 +204,6 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       });
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
       state.success = true;
       state.message = '세션 정보를 수정하였습니다';
@@ -166,8 +241,7 @@ export async function removeSession(prevState: RemoveSessionState, formData: For
 
       await sessionsApi.remove(sessionUuid);
 
-      revalidatePath('/(authenticated)/students/[studentUuid]/@lessons', 'page');
-      revalidatePath('/lessons', 'page');
+      revalidatePath('/students', 'layout');
 
       state.success = true;
       state.message = '수업을 삭제하였습니다.';
@@ -217,7 +291,6 @@ export async function updateFeedback(prevState: UpdateFeedbackState, formData: F
       }
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
 
       return state;
@@ -233,7 +306,7 @@ type SessionDetailData = {
     isDone: boolean;
     notes: string;
     feedback: string | null;
-    lessonTitle: string;
+    invoiceTitle: string | null;
     studentName: string;
     studentUuid: string;
   };
@@ -260,7 +333,6 @@ export async function toggleSessionDone(sessionUuid: string, isDone: boolean): P
       await sessionsApi.markDone(sessionUuid, isDone);
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
 
       return true;
@@ -283,7 +355,6 @@ export async function addSessionFiles(sessionUuid: string, mediaFileUuids: strin
       });
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
 
       return true;
@@ -311,7 +382,6 @@ export async function updateSessionFiles(
       });
 
       revalidatePath('/sessions', 'page');
-      revalidatePath('/lessons', 'page');
       revalidatePath('/students', 'page');
 
       return true;
@@ -340,7 +410,7 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
 
   // Filter out the current session and sessions from other students, take only 3
   const filteredPrevious = previousSessions
-    .filter(s => s.uuid !== sessionUuid && s.lesson.student.uuid === currentSession.lesson.student.uuid)
+    .filter(s => s.uuid !== sessionUuid && s.student.uuid === currentSession.student.uuid)
     .slice(0, 3);
 
   return {
@@ -351,9 +421,9 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
       isDone: currentSession.isDone,
       notes: currentSession.notes,
       feedback: currentSession.feedback?.notes || null,
-      lessonTitle: currentSession.lesson.title,
-      studentName: currentSession.lesson.student.name,
-      studentUuid: currentSession.lesson.student.uuid,
+      invoiceTitle: currentSession.invoice?.title ?? null,
+      studentName: currentSession.student.name,
+      studentUuid: currentSession.student.uuid,
     },
     previousSessions: filteredPrevious.map(s => ({
       id: s.id,

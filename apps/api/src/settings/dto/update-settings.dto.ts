@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsInt, Min } from 'class-validator';
+import { IsBoolean, IsOptional, IsInt, IsTimeZone, Min } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsBoolean()
@@ -13,4 +13,8 @@ export class UpdateSettingsDto {
   @IsBoolean()
   @IsOptional()
   autoUpdateNextPaymentAt?: boolean;
+
+  @IsTimeZone()
+  @IsOptional()
+  timezone?: string;
 }

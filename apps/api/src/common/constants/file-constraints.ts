@@ -22,3 +22,10 @@ export const MAX_SIZE_BY_TYPE: Record<'image' | 'video' | 'document', number> = 
   video: MAX_VIDEO_SIZE,
   document: MAX_DOCUMENT_SIZE,
 };
+
+/**
+ * 프로필성 이미지(학생 프로필, 조직 프로필/로고) 전용 제약.
+ * MediaFile/쿼터에 등록되지 않는 purpose=profile 업로드에 적용된다.
+ */
+export const SUPPORTED_PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB

@@ -7,6 +7,8 @@ import { Button, Chip, Form, Modal, TextArea, TextField, Label } from '@heroui/r
 import { Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
+import { useTimeZone } from '@/contexts/timezone';
 import { Controller, useForm } from 'react-hook-form';
 
 import StatusBadge from '@/components/status-badge';
@@ -27,6 +29,7 @@ interface Props {
 }
 
 export default function StatusModal({ isOpen, onOpenChange, statuses }: Props) {
+  const timeZone = useTimeZone();
   const [editingStatus, setEditingStatus] = React.useState<StudentStatusType | null>(null);
 
   return (
@@ -56,7 +59,7 @@ export default function StatusModal({ isOpen, onOpenChange, statuses }: Props) {
                               <div className="grow min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <StatusBadge status={status.status} />
-                                  <Chip variant="secondary" color="default">{format(new Date(status.changedAt), 'yyyy-MM-dd', { locale: ko })}</Chip>
+                                  <Chip variant="secondary" color="default">{format(new Date(status.changedAt), 'yyyy-MM-dd', { locale: ko, in: tz(timeZone) })}</Chip>
                                 </div>
                                 {status.notes && (
                                   <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
@@ -108,6 +111,7 @@ function EditStatusModal({
   onClose: () => void;
   studentStatus: StudentStatusType | null;
 }) {
+  const timeZone = useTimeZone();
   const formId = React.useId();
 
   const { control } = useForm({
@@ -148,7 +152,7 @@ function EditStatusModal({
                   <div className="mb-4">
                     <StatusBadge status={studentStatus.status} />
                     <span className="ml-2 text-sm text-zinc-500">
-                      {format(new Date(studentStatus.changedAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                      {format(new Date(studentStatus.changedAt), 'yyyy-MM-dd HH:mm', { locale: ko, in: tz(timeZone) })}
                     </span>
                   </div>
                   <Controller

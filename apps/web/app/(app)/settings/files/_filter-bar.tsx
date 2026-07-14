@@ -2,12 +2,9 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, Select, ListBox, TextField, InputGroup, toast } from '@heroui/react';
-import { Upload, Search, X, Loader2, FolderPlus } from 'lucide-react';
+import { Button, Select, ListBox, TextField, InputGroup } from '@heroui/react';
+import { Search, X, FolderPlus } from 'lucide-react';
 
-import type { TStorageQuota } from '@/types/index';
-import { uploadToS3, validateFile } from '@/utils/s3-upload';
-import { createMediaFile } from '@/actions/storage';
 import CreateFolderModal from './_create-folder-modal';
 
 interface NewFolderButtonProps {
@@ -27,131 +24,6 @@ export function NewFolderButton({ parentFolderUuid }: NewFolderButtonProps) {
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         parentFolderUuid={parentFolderUuid}
-      />
-    </>
-  );
-}
-
-interface UploadButtonProps {
-  quota: TStorageQuota | null;
-  currentFolderUuid?: string;
-}
-
-export function UploadButton({ quota, currentFolderUuid }: UploadButtonProps) {
-  const router = useRouter();
-  const [isUploading, setIsUploading] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const remainingBytes = quota ? quota.quotaBytes - quota.usedBytes : undefined;
-  const isOverQuota = quota ? (quota.usedBytes / quota.quotaBytes) >= 1 : false;
-
-  const handleFiles = async (files: FileList) => {
-    const fileArray = Array.from(files);
-    if (fileArray.length === 0) return;
-
-    setIsUploading(true);
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const file of fileArray) {
-      // 유효성 검사
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        toast.danger('업로드 실패', {
-          description: validation.error || '유효하지 않은 파일입니다.',
-          timeout: 3000,
-        });
-        errorCount++;
-        continue;
-      }
-
-      // 용량 확인
-      if (remainingBytes !== undefined && file.size > remainingBytes) {
-        toast.danger('업로드 실패', {
-          description: '스토리지 용량이 부족합니다.',
-          timeout: 3000,
-        });
-        errorCount++;
-        continue;
-      }
-
-      // S3에 업로드
-      const result = await uploadToS3(file);
-
-      if (!result.success) {
-        toast.danger('업로드 실패', {
-          description: result.error || '업로드에 실패했습니다.',
-          timeout: 3000,
-        });
-        errorCount++;
-        continue;
-      }
-
-      // DB에 저장 (현재 폴더에)
-      const saveResult = await createMediaFile({
-        url: result.url,
-        publicId: result.key,
-        type: result.resourceType,
-        contentType: file.type,
-        fileName: file.name,
-        fileSize: result.fileSize,
-        folderUuid: currentFolderUuid,
-      });
-
-      if (saveResult.success) {
-        successCount++;
-      }
-      else {
-        toast.danger('파일 저장 실패', {
-          description: saveResult.message || '파일을 저장할 수 없습니다.',
-          timeout: 3000,
-        });
-        errorCount++;
-      }
-    }
-
-    setIsUploading(false);
-
-    if (successCount > 0) {
-      toast.success('파일 업로드 완료', {
-        description: `${successCount}개의 파일이 업로드되었습니다.`,
-        timeout: 3000,
-      });
-      router.refresh();
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(e.target.files);
-      e.target.value = '';
-    }
-  };
-
-  return (
-    <>
-      <Button
-        variant="primary"
-        onPress={() => fileInputRef.current?.click()}
-        isDisabled={isOverQuota || isUploading}
-      >
-        {isUploading
-          ? (
-              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-            )
-          : (
-              <Upload className="w-4 h-4 mr-1" />
-            )}
-        {isUploading ? '업로드 중...' : '업로드'}
-      </Button>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm,application/pdf"
-        multiple
-        className="hidden"
-        onChange={handleFileSelect}
       />
     </>
   );

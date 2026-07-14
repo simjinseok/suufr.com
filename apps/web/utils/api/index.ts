@@ -1,7 +1,8 @@
 export { studentsApi } from './students';
 export { studentStatusesApi } from './student-statuses';
 export { studentCommentsApi } from './student-comments';
-export { lessonsApi } from './lessons';
+export { invoicesApi } from './invoices';
+export { studentSharesApi } from './student-shares';
 export { sessionsApi } from './sessions';
 export { settingsApi } from './settings';
 export { appTokensApi } from './app-tokens';

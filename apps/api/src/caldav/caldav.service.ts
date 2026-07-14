@@ -6,12 +6,11 @@ import { CaldavXmlBuilderService } from './services/caldav-xml-builder.service';
 import { generateEtag, generateCtag } from '../carddav/utils/etag.util';
 
 /**
- * Get the effective updatedAt by taking the max of session, lesson, and student updatedAt
+ * Get the effective updatedAt by taking the max of session and student updatedAt
  */
 function getEffectiveUpdatedAt(session: SessionEvent): Date {
   return new Date(Math.max(
     session.updatedAt.getTime(),
-    session.lessonUpdatedAt.getTime(),
     session.studentUpdatedAt.getTime(),
   ));
 }
@@ -50,27 +49,18 @@ export class CaldavService {
     const sessions = await this.prisma.session.findMany({
       where: {
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
         ...(startDate && { sessionAt: { gte: startDate } }),
         ...(endDate && { sessionAt: { lte: endDate } }),
       },
       include: {
-        lesson: {
+        student: {
           select: {
-            title: true,
+            name: true,
             updatedAt: true,
-            student: {
-              select: {
-                name: true,
-                updatedAt: true,
-              },
-            },
           },
         },
       },
@@ -81,15 +71,13 @@ export class CaldavService {
       uuid: s.uuid,
       sessionAt: s.sessionAt,
       duration: s.duration,
-      lessonTitle: s.lesson.title,
-      studentName: s.lesson.student.name,
+      studentName: s.student.name,
       userId,
       notes: s.notes,
       isDone: s.isDone,
       updatedAt: s.updatedAt,
       createdAt: s.createdAt,
-      lessonUpdatedAt: s.lesson.updatedAt,
-      studentUpdatedAt: s.lesson.student.updatedAt,
+      studentUpdatedAt: s.student.updatedAt,
     }));
   }
 
@@ -98,25 +86,16 @@ export class CaldavService {
       where: {
         uuid,
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
       },
       include: {
-        lesson: {
+        student: {
           select: {
-            title: true,
+            name: true,
             updatedAt: true,
-            student: {
-              select: {
-                name: true,
-                updatedAt: true,
-              },
-            },
           },
         },
       },
@@ -130,35 +109,19 @@ export class CaldavService {
       uuid: session.uuid,
       sessionAt: session.sessionAt,
       duration: session.duration,
-      lessonTitle: session.lesson.title,
-      studentName: session.lesson.student.name,
+      studentName: session.student.name,
       userId,
       notes: session.notes,
       isDone: session.isDone,
       updatedAt: session.updatedAt,
       createdAt: session.createdAt,
-      lessonUpdatedAt: session.lesson.updatedAt,
-      studentUpdatedAt: session.lesson.student.updatedAt,
+      studentUpdatedAt: session.student.updatedAt,
     };
   }
 
   async getLatestUpdatedAt(userId: string): Promise<Date | null> {
-    const [latestSession, latestLesson, latestStudent] = await Promise.all([
+    const [latestSession, latestStudent] = await Promise.all([
       this.prisma.session.findFirst({
-        where: {
-          deletedAt: null,
-          lesson: {
-            deletedAt: null,
-            student: {
-              userId,
-              deletedAt: null,
-            },
-          },
-        },
-        orderBy: { updatedAt: 'desc' },
-        select: { updatedAt: true },
-      }),
-      this.prisma.lesson.findFirst({
         where: {
           deletedAt: null,
           student: {
@@ -181,7 +144,6 @@ export class CaldavService {
 
     const dates = [
       latestSession?.updatedAt,
-      latestLesson?.updatedAt,
       latestStudent?.updatedAt,
     ].filter((d): d is Date => d !== null && d !== undefined);
 
@@ -316,23 +278,14 @@ export class CaldavService {
       where: {
         uuid: { in: uuids },
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
       },
       include: {
-        lesson: {
-          select: {
-            title: true,
-            updatedAt: true,
-            student: {
-              select: { name: true, uuid: true, email: true, updatedAt: true },
-            },
-          },
+        student: {
+          select: { name: true, updatedAt: true },
         },
       },
     });
@@ -342,15 +295,13 @@ export class CaldavService {
         uuid: s.uuid,
         sessionAt: s.sessionAt,
         duration: s.duration,
-        lessonTitle: s.lesson.title,
-        studentName: s.lesson.student.name,
+        studentName: s.student.name,
         userId,
         notes: s.notes,
         isDone: s.isDone,
         updatedAt: s.updatedAt,
         createdAt: s.createdAt,
-        lessonUpdatedAt: s.lesson.updatedAt,
-        studentUpdatedAt: s.lesson.student.updatedAt,
+        studentUpdatedAt: s.student.updatedAt,
       };
       const vevent = this.icalendarService.sessionToVevent(sessionEvent);
       const ical = this.icalendarService.wrapVcalendar([vevent]);
@@ -393,38 +344,28 @@ export class CaldavService {
     const userId = session.user.id;
     const sinceDate = syncToken ? parseSyncToken(syncToken) : null;
 
-    // For sync-collection, we need to detect changes in session, lesson, or student
-    // So we query sessions with their related lesson/student updatedAt values
+    // For sync-collection, we need to detect changes in session or student
     const changedSessions = await this.prisma.session.findMany({
       where: {
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
-        // Include sessions where session, lesson, or student was updated
+        // Include sessions where session or student was updated
         ...(sinceDate && {
           OR: [
             { updatedAt: { gt: sinceDate } },
-            { lesson: { updatedAt: { gt: sinceDate } } },
-            { lesson: { student: { updatedAt: { gt: sinceDate } } } },
+            { student: { updatedAt: { gt: sinceDate } } },
           ],
         }),
       },
       select: {
         uuid: true,
         updatedAt: true,
-        lesson: {
+        student: {
           select: {
             updatedAt: true,
-            student: {
-              select: {
-                updatedAt: true,
-              },
-            },
           },
         },
       },
@@ -434,10 +375,8 @@ export class CaldavService {
       ? await this.prisma.session.findMany({
           where: {
             deletedAt: { gt: sinceDate },
-            lesson: {
-              student: {
-                userId,
-              },
+            student: {
+              userId,
             },
           },
           select: {
@@ -449,8 +388,7 @@ export class CaldavService {
     const changed = changedSessions.map(s => {
       const effectiveUpdatedAt = new Date(Math.max(
         s.updatedAt.getTime(),
-        s.lesson.updatedAt.getTime(),
-        s.lesson.student.updatedAt.getTime(),
+        s.student.updatedAt.getTime(),
       ));
       return {
         href: `/caldav/principals/${userId}/calendars/lessons/${s.uuid}.ics`,
@@ -484,23 +422,14 @@ export class CaldavService {
       where: {
         uuid,
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
       },
       include: {
-        lesson: {
-          select: {
-            title: true,
-            updatedAt: true,
-            student: {
-              select: { name: true, uuid: true, email: true, updatedAt: true },
-            },
-          },
+        student: {
+          select: { name: true, updatedAt: true },
         },
       },
     });
@@ -512,8 +441,7 @@ export class CaldavService {
     if (expectedEtag) {
       const currentEffectiveUpdatedAt = new Date(Math.max(
         session.updatedAt.getTime(),
-        session.lesson.updatedAt.getTime(),
-        session.lesson.student.updatedAt.getTime(),
+        session.student.updatedAt.getTime(),
       ));
       const currentEtag = generateEtag(session.uuid, currentEffectiveUpdatedAt);
       if (currentEtag !== expectedEtag) {
@@ -545,14 +473,8 @@ export class CaldavService {
       where: { id: session.id },
       data: updateData,
       include: {
-        lesson: {
-          select: {
-            title: true,
-            updatedAt: true,
-            student: {
-              select: { name: true, uuid: true, email: true, updatedAt: true },
-            },
-          },
+        student: {
+          select: { name: true, updatedAt: true },
         },
       },
     });
@@ -561,15 +483,13 @@ export class CaldavService {
       uuid: updatedSession.uuid,
       sessionAt: updatedSession.sessionAt,
       duration: updatedSession.duration,
-      lessonTitle: updatedSession.lesson.title,
-      studentName: updatedSession.lesson.student.name,
+      studentName: updatedSession.student.name,
       userId,
       notes: updatedSession.notes,
       isDone: updatedSession.isDone,
       updatedAt: updatedSession.updatedAt,
       createdAt: updatedSession.createdAt,
-      lessonUpdatedAt: updatedSession.lesson.updatedAt,
-      studentUpdatedAt: updatedSession.lesson.student.updatedAt,
+      studentUpdatedAt: updatedSession.student.updatedAt,
     };
 
     return {

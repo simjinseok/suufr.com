@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, UpdatePaymentDto, ListPaymentsQueryDto } from './dto';
+import { CreatePaymentDto, UpdatePaymentDto, ListPaymentsQueryDto, MonthlyTrendQueryDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
@@ -9,8 +9,11 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get('stats/monthly-trend')
-  getMonthlyTrend(@CurrentUser() user: AuthenticatedUser) {
-    return this.paymentsService.getMonthlyTrend(user.userId);
+  getMonthlyTrend(
+    @Query() query: MonthlyTrendQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.paymentsService.getMonthlyTrend(user.userId, query.timezone);
   }
 
   @Get()

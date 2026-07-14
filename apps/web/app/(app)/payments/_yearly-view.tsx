@@ -5,8 +5,10 @@ import { numberToHangulMixed } from 'es-hangul';
 import { format } from 'date-fns/format';
 import type { YearlyPaymentStats } from '@/types/index';
 import { ko } from 'date-fns/locale';
-import PaymentModal from '@/components/lesson/payment-modal';
+import { tz } from '@date-fns/tz';
+import PaymentModal from '@/components/invoice/payment-modal';
 import { modal } from '@/contexts/modal-manager';
+import { useTimeZone } from '@/contexts/timezone';
 import {
   AreaChart,
   Area,
@@ -19,16 +21,13 @@ type Payment = {
   id: number;
   uuid: string;
   amount: number;
-  paymentMethod: string;
+  method: string;
   notes: string | null;
   paidAt: Date;
-  lesson: {
+  student: {
     uuid: string;
-    title: string;
-    student: {
-      id: number;
-      name: string;
-    };
+    id: number;
+    name: string;
   };
 };
 
@@ -53,6 +52,8 @@ type Props = {
 };
 
 export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
+  const timeZone = useTimeZone();
+
   if (!stats || stats.count === 0) {
     return (
       <div className="mt-6 space-y-6">
@@ -93,11 +94,21 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
                       const item = payload[0].payload as { year: number; month: number; totalAmount: number; count: number };
                       return (
                         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 px-3 py-2">
-                          <p className="text-xs font-medium text-zinc-500">{item.year}년 {item.month}월</p>
-                          <p className="text-sm font-semibold text-zinc-900 mt-0.5">
-                            {numberToHangulMixed(item.totalAmount)}원
+                          <p className="text-xs font-medium text-zinc-500">
+                            {item.year}
+                            년
+                            {' '}
+                            {item.month}
+                            월
                           </p>
-                          <p className="text-xs text-zinc-400">{item.count}건</p>
+                          <p className="text-sm font-semibold text-zinc-900 mt-0.5">
+                            {numberToHangulMixed(item.totalAmount)}
+                            원
+                          </p>
+                          <p className="text-xs text-zinc-400">
+                            {item.count}
+                            건
+                          </p>
                         </div>
                       );
                     }}
@@ -189,11 +200,21 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
                     const item = payload[0].payload as { year: number; month: number; totalAmount: number; count: number };
                     return (
                       <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 px-3 py-2">
-                        <p className="text-xs font-medium text-zinc-500">{item.year}년 {item.month}월</p>
-                        <p className="text-sm font-semibold text-zinc-900 mt-0.5">
-                          {numberToHangulMixed(item.totalAmount)}원
+                        <p className="text-xs font-medium text-zinc-500">
+                          {item.year}
+                          년
+                          {' '}
+                          {item.month}
+                          월
                         </p>
-                        <p className="text-xs text-zinc-400">{item.count}건</p>
+                        <p className="text-sm font-semibold text-zinc-900 mt-0.5">
+                          {numberToHangulMixed(item.totalAmount)}
+                          원
+                        </p>
+                        <p className="text-xs text-zinc-400">
+                          {item.count}
+                          건
+                        </p>
                       </div>
                     );
                   }}
@@ -223,14 +244,12 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
               <div className="flex justify-between items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold text-zinc-900">
-                    {payment.lesson.student.name}
+                    {payment.student.name}
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    {format(payment.paidAt, 'M월 d일', { locale: ko })}
+                    {format(payment.paidAt, 'M월 d일', { locale: ko, in: tz(timeZone) })}
                     &nbsp;·&nbsp;
-                    {PAYMENT_METHODS[payment.paymentMethod] || payment.paymentMethod}
-                    &nbsp;·&nbsp;
-                    {payment.lesson.title}
+                    {PAYMENT_METHODS[payment.method] || payment.method}
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -241,16 +260,13 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
                       color="accent"
                       onClick={() => {
                         modal.show(PaymentModal, {
-                          lesson: {
-                            uuid: payment.lesson.uuid,
-                            title: payment.lesson.title,
-                            payment: {
-                              uuid: payment.uuid,
-                              amount: payment.amount,
-                              paymentMethod: payment.paymentMethod,
-                              paidAt: payment.paidAt,
-                              notes: payment.notes,
-                            },
+                          studentUuid: payment.student.uuid,
+                          payment: {
+                            uuid: payment.uuid,
+                            amount: payment.amount,
+                            method: payment.method,
+                            paidAt: payment.paidAt,
+                            notes: payment.notes,
                           },
                         });
                       }}

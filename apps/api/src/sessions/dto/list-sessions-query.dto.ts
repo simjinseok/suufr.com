@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, Max, IsArray, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsIn, Min, Max, IsArray, IsDateString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListSessionsQueryDto {
@@ -26,7 +26,11 @@ export class ListSessionsQueryDto {
 
   @IsOptional()
   @IsString()
-  lessonUuid?: string;
+  studentUuid?: string;
+
+  @IsOptional()
+  @IsString()
+  invoiceUuid?: string;
 
   @IsOptional()
   @IsDateString()
@@ -35,4 +39,8 @@ export class ListSessionsQueryDto {
   @IsOptional()
   @IsDateString()
   dateTo?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  order?: 'asc' | 'desc' = 'asc';
 }

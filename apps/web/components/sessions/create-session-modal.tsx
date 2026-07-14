@@ -16,14 +16,23 @@ import { toCalendarDateTime, today } from '@internationalized/date';
 import { Controller, useForm } from 'react-hook-form';
 import { createSession } from '@/actions/session';
 import { useHourCycle, useDefaultDuration } from '@/contexts/time-format';
+import { useTimeZone } from '@/contexts/timezone';
 
-export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
+interface Props {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  studentUuid: string;
+  invoiceUuid?: string;
+}
+
+export default function CreateSessionModal({ isOpen, onOpenChange, studentUuid, invoiceUuid }: Props) {
+  const timeZone = useTimeZone();
   const formId = React.useId();
   const hourCycle = useHourCycle();
   const defaultDuration = useDefaultDuration();
   const { control } = useForm({
     values: {
-      sessionAt: toCalendarDateTime(today('Asia/Seoul')),
+      sessionAt: toCalendarDateTime(today(timeZone)),
       duration: defaultDuration,
       notes: '',
     },
@@ -54,7 +63,8 @@ export default function CreateSessionModal({ isOpen, onOpenChange, lesson }) {
               </Modal.Header>
               <Modal.Body>
                 <Form id={formId} className="p-1 flex flex-col gap-4" action={formAction}>
-                  <input type="hidden" name="lessonUuid" value={lesson.uuid} />
+                  <input type="hidden" name="studentUuid" value={studentUuid} />
+                  {invoiceUuid && <input type="hidden" name="invoiceUuid" value={invoiceUuid} />}
                   <Controller
                     control={control}
                     name="sessionAt"
