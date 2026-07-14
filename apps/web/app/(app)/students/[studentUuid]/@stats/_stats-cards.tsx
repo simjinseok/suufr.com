@@ -1,14 +1,14 @@
 'use client';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
 
 import { Card } from '@heroui/react';
 
 type Props = {
   stats: {
     remainingSessionsCount: number;
-    completedLessonCount: number;
-    unpaidLessonCount: number;
+    completedInvoiceCount: number;
     nextPaymentAt: Date | null;
   };
 };
@@ -27,9 +27,9 @@ export default function StatsCards({ stats }: Props) {
       </Card>
       <Card className="p-3 sm:p-4 border border-transparent dark:border-default-100">
         <div className="flex flex-col gap-y-1 sm:gap-y-2">
-          <dt className="text-xs sm:text-small font-medium text-default-500">완료한 레슨</dt>
+          <dt className="text-xs sm:text-small font-medium text-default-500">완료한 수강권</dt>
           <dd className="text-lg sm:text-2xl font-semibold text-success-600">
-            {stats.completedLessonCount}
+            {stats.completedInvoiceCount}
             회
           </dd>
         </div>
@@ -38,7 +38,8 @@ export default function StatsCards({ stats }: Props) {
         <div className="flex flex-col gap-y-1 sm:gap-y-2">
           <dt className="text-xs sm:text-small font-medium text-default-500">다음 결제 예정일</dt>
           <dd className="text-lg sm:text-2xl font-semibold text-success">
-            {stats.nextPaymentAt ? format(stats.nextPaymentAt, 'MM월 dd일', { locale: ko }) : '-'}
+            {/* 달력 날짜(@db.Date) — 타임존 변환 없이 UTC 고정으로 표기 */}
+            {stats.nextPaymentAt ? format(stats.nextPaymentAt, 'MM월 dd일', { locale: ko, in: tz('UTC') }) : '-'}
           </dd>
         </div>
       </Card>

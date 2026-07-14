@@ -5,6 +5,7 @@ type Settings = {
   use24HourFormat: boolean;
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
+  timezone: string | null;
 };
 
 type SettingsResponse = {
@@ -16,6 +17,7 @@ type UpdateSettingsData = {
   use24HourFormat?: boolean;
   defaultDuration?: number;
   autoUpdateNextPaymentAt?: boolean;
+  timezone?: string;
 };
 
 export const settingsApi = {

@@ -1,24 +1,25 @@
 'use client';
 import type { ModalProps } from '@heroui/react';
-import type { TLesson } from '@/types/index';
+import type { TStudentShare } from '@/types/index';
 
 import * as React from 'react';
 import {
   Button,
+  Checkbox,
   Label,
   Modal,
-  NumberField,
   TextField,
   Input,
 } from '@heroui/react';
 import { CopyIcon, CheckIcon, LinkIcon } from 'lucide-react';
 
-import { createLessonShare, deleteLessonShare } from '@/actions/lesson';
+import { createStudentShare, deleteStudentShare } from '@/actions/student-share';
 
 type Props = {
   isOpen?: ModalProps['isOpen'];
   onOpenChange?: ModalProps['onOpenChange'];
-  lesson: TLesson;
+  studentUuid: string;
+  shares?: TStudentShare[];
 };
 
 type ShareState = {
@@ -26,29 +27,29 @@ type ShareState = {
   expiresAt: string;
 } | null;
 
-export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
-  const activeShare = lesson?.shares?.[0];
+export default function ShareModal({ isOpen, onOpenChange, studentUuid, shares }: Props) {
+  const activeShare = shares?.[0];
   const [shareState, setShareState] = React.useState<ShareState>(
     activeShare ? { shareId: activeShare.shareId, expiresAt: activeShare.expiresAt.toString() } : null,
   );
   const [isLoading, setIsLoading] = React.useState(false);
-  const [expireDays, setExpireDays] = React.useState(60);
+  const [showPayments, setShowPayments] = React.useState(activeShare?.showPayments ?? true);
   const [copied, setCopied] = React.useState(false);
 
   // 공유 링크 생성
   const handleCreateShare = React.useCallback(async () => {
     setIsLoading(true);
     const formData = new FormData();
-    formData.set('lessonUuid', lesson.uuid);
-    formData.set('expireDays', String(expireDays));
+    formData.set('studentUuid', studentUuid);
+    formData.set('showPayments', String(showPayments));
 
-    const result = await createLessonShare({ success: false, timestamp: 0 }, formData);
+    const result = await createStudentShare({ success: false, timestamp: 0 }, formData);
 
     if (result.success && result.shareId && result.expiresAt) {
       setShareState({ shareId: result.shareId, expiresAt: result.expiresAt });
     }
     setIsLoading(false);
-  }, [lesson.uuid, expireDays]);
+  }, [studentUuid, showPayments]);
 
   // 공유 링크 무효화
   const handleRevokeShare = React.useCallback(async () => {
@@ -57,13 +58,12 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
 
     setIsLoading(true);
     const formData = new FormData();
-    formData.set('lessonUuid', lesson.uuid);
     formData.set('shareId', shareState.shareId);
 
-    await deleteLessonShare({ success: false, timestamp: 0 }, formData);
+    await deleteStudentShare({ success: false, timestamp: 0 }, formData);
     setShareState(null);
     setIsLoading(false);
-  }, [lesson.uuid, shareState]);
+  }, [shareState]);
 
   // 클립보드 복사
   const handleCopy = React.useCallback(async () => {
@@ -84,12 +84,12 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
             <React.Fragment>
               <Modal.Header>
                 <Modal.Heading>
-                  레슨 공유
+                  수업 공유
                 </Modal.Heading>
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-gray-600 mb-4">
-                  학생에게 레슨 계획과 진행 상황을 공유할 수 있습니다.
+                  학생·학부모에게 최근 수업과 피드백을 공유할 수 있습니다.
                 </p>
 
                 {shareState ? (
@@ -127,20 +127,19 @@ export default function ShareModal({ isOpen, onOpenChange, lesson }: Props) {
                 ) : (
                   // 활성 공유 링크가 없는 경우
                   <div className="p-1 space-y-4">
-                    <NumberField
+                    {/* Checkbox.Content(클릭 영역)가 Control과 Label을 모두 감싸야 한다 — HeroUI v3 소스 주석 참조 */}
+                    <Checkbox
+                      isSelected={showPayments}
+                      onChange={setShowPayments}
                       variant="secondary"
-                      value={expireDays}
-                      minValue={1}
-                      maxValue={120}
-                      onChange={setExpireDays}
                     >
-                      <Label>만료 기간 (일)</Label>
-                      <NumberField.Group>
-                        <NumberField.DecrementButton />
-                        <NumberField.Input className="w-16 text-center" />
-                        <NumberField.IncrementButton />
-                      </NumberField.Group>
-                    </NumberField>
+                      <Checkbox.Content>
+                        <Checkbox.Control className="size-5">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Label>결제 정보 표시 (다음 결제 예정일 · 납부 상태)</Label>
+                      </Checkbox.Content>
+                    </Checkbox>
 
                     <Button
                       variant="primary"

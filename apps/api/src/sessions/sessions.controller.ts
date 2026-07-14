@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
-import { CreateSessionDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQueryDto } from './dto';
+import { CreateSessionDto, CreateSessionsBulkDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQueryDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
@@ -30,6 +30,15 @@ export class SessionsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sessionsService.create(createSessionDto, user.userId);
+  }
+
+  // 요일·시간·횟수로 계산한 수업 여러 건을 한 번에 생성
+  @Post('bulk')
+  createMany(
+    @Body() createSessionsBulkDto: CreateSessionsBulkDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.createMany(createSessionsBulkDto, user.userId);
   }
 
   @Patch(':uuid')

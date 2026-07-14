@@ -4,14 +4,12 @@ export interface SessionEvent {
   uuid: string;
   sessionAt: Date;
   duration: number; // minutes
-  lessonTitle: string;
   studentName: string;
   userId: string;
   notes: string;
   isDone: boolean;
   updatedAt: Date;
   createdAt: Date;
-  lessonUpdatedAt: Date;
   studentUpdatedAt: Date;
 }
 
@@ -45,15 +43,14 @@ export class ICalendarService {
   sessionToVevent(session: SessionEvent): string {
     const dtstart = this.formatLocalDateTime(session.sessionAt);
     const dtend = this.formatLocalDateTime(new Date(session.sessionAt.getTime() + session.duration * 60 * 1000));
-    // Use effective updatedAt (max of session, lesson, student) for DTSTAMP/LAST-MODIFIED/SEQUENCE
+    // Use effective updatedAt (max of session, student) for DTSTAMP/LAST-MODIFIED/SEQUENCE
     const effectiveUpdatedAt = new Date(Math.max(
       session.updatedAt.getTime(),
-      session.lessonUpdatedAt.getTime(),
       session.studentUpdatedAt.getTime(),
     ));
     const dtstamp = this.formatUtcDateTime(effectiveUpdatedAt);
     const lastModified = this.formatUtcDateTime(effectiveUpdatedAt);
-    const summary = `[${session.studentName}] ${session.lessonTitle}`;
+    const summary = session.studentName;
     const status = session.isDone ? 'COMPLETED' : 'CONFIRMED';
     const sequence = Math.floor(effectiveUpdatedAt.getTime() / 1000) % 1000000;
 

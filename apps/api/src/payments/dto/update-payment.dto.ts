@@ -1,14 +1,14 @@
-import { IsString, IsOptional, IsDateString, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsInt, NotEquals } from 'class-validator';
 
 export class UpdatePaymentDto {
   @IsInt()
-  @Min(0)
+  @NotEquals(0)
   @IsOptional()
   amount?: number;
 
   @IsString()
   @IsOptional()
-  paymentMethod?: string;
+  method?: string;
 
   @IsString()
   @IsOptional()

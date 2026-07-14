@@ -249,7 +249,8 @@ export class S3Service {
         });
 
         await this.s3Client.send(deleteCommand);
-      } catch (deleteError) {
+      }
+      catch (deleteError) {
         // Source deletion failed - rollback by deleting the copied file
         console.error('S3 source delete failed, rolling back copy:', deleteError);
         try {
@@ -258,7 +259,8 @@ export class S3Service {
             Key: destKey,
           });
           await this.s3Client.send(rollbackCommand);
-        } catch (rollbackError) {
+        }
+        catch (rollbackError) {
           console.error('S3 rollback delete failed:', rollbackError);
         }
         return false;
@@ -360,7 +362,8 @@ export class S3Service {
       });
       await this.cloudFrontClient.send(command);
       return true;
-    } catch (error) {
+    }
+    catch (error) {
       console.error('CloudFront cache invalidation failed:', error);
       return false;
     }

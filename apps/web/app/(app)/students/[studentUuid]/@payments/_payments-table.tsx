@@ -2,26 +2,37 @@
 
 import { Button, Chip, Modal, Surface } from '@heroui/react';
 import { format } from 'date-fns';
+import { tz } from '@date-fns/tz';
 import { numberToHangulMixed } from 'es-hangul';
 import { ko } from 'date-fns/locale/ko';
-import PaymentModal from '@/components/lesson/payment-modal';
+import PaymentModal from '@/components/invoice/payment-modal';
 import { modal } from '@/contexts/modal-manager';
+import { useTimeZone } from '@/contexts/timezone';
 
-type Lesson = {
+type Invoice = {
   id: number;
-  title: string;
-  createdAt: Date;
-  payment: {
-    id: number;
-    amount: number;
-    paymentMethod: string;
-    paidAt: Date;
-    notes: string | null;
-  } | null;
+  uuid: string;
+  title: string | null;
+  price: number;
+  periodStart: string | null;
+  periodEnd: string | null;
+};
+
+type Payment = {
+  id: number;
+  uuid: string;
+  amount: number;
+  method: string;
+  paidAt: Date;
+  notes: string | null;
 };
 
 type Props = {
-  lessons: Lesson[];
+  studentUuid: string;
+  invoices: Invoice[];
+  payments: Payment[];
+  outstandingAmount: number;
+  creditAmount: number;
 };
 
 const PAYMENT_METHODS: Record<string, string> = {
@@ -31,125 +42,164 @@ const PAYMENT_METHODS: Record<string, string> = {
   none: '미지정',
 };
 
-export default function PaymentsTable({ lessons }: Props) {
-
-  if (lessons.length === 0) {
-    return (
-      <div className="py-12 text-center text-zinc-500">
-        등록된 레슨이 없습니다
-      </div>
-    );
-  }
-
-  const paidLessons = lessons.filter(s => s.payment !== null);
-  const unpaidLessons = lessons.filter(s => s.payment === null);
-  const totalAmount = paidLessons.reduce(
-    (sum, s) => sum + (s.payment?.amount ?? 0),
-    0,
-  );
+export default function PaymentsTable({ studentUuid, invoices, payments, outstandingAmount, creditAmount }: Props) {
+  const timeZone = useTimeZone();
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <div className="space-y-4">
       <Surface variant="secondary" className="rounded-2xl p-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-primary-600">총 결제액</span>
+          <span className="text-sm font-medium text-primary-600">총 입금액</span>
           <span className="text-lg md:text-xl font-bold text-primary-900 tabular-nums">
-            {numberToHangulMixed(totalAmount)}
+            {numberToHangulMixed(totalPaid)}
             원
           </span>
         </div>
-        <p className="mt-1 text-xs text-primary-600">
-          결제
-          {' '}
-          {paidLessons.length}
-          건
-          {unpaidLessons.length > 0 && (
-            <span className="text-warning-600 font-medium">
-              {' '}
-              · 미결제
-              {' '}
-              {unpaidLessons.length}
-              건
-            </span>
-          )}
-        </p>
+        {outstandingAmount > 0 && (
+          <p className="mt-1 text-xs text-warning-600 font-medium">
+            미수
+            {' '}
+            {numberToHangulMixed(outstandingAmount)}
+            원
+          </p>
+        )}
+        {creditAmount > 0 && (
+          <p className="mt-1 text-xs text-accent-600 font-medium">
+            선납 잔액
+            {' '}
+            {numberToHangulMixed(creditAmount)}
+            원
+          </p>
+        )}
       </Surface>
 
-      <div className="bg-white rounded-2xl overflow-hidden">
-        {lessons.map((lesson, index) => (
-          <div
-            key={lesson.id}
-            className={`
-            p-4
-            ${index !== lessons.length - 1 ? 'border-b border-zinc-100' : ''}
-            ${!lesson.payment ? 'bg-warning-50' : ''}
-          `}
-          >
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-zinc-900">
-                  {lesson.title}
-                </p>
-                {lesson.payment
-                  ? (
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        {format(new Date(lesson.payment.paidAt), 'M월 d일', { locale: ko })}
-                  &nbsp;·&nbsp;
-                        {PAYMENT_METHODS[lesson.payment.paymentMethod]}
+      {/* 수강권(청구) 내역 */}
+      <div>
+        <h3 className="px-1 mb-2 text-sm font-semibold text-zinc-500">수강권</h3>
+        {invoices.length === 0
+          ? (
+              <div className="py-8 text-center text-sm text-zinc-400 bg-white rounded-2xl">
+                등록된 수강권이 없습니다
+              </div>
+            )
+          : (
+              <div className="bg-white rounded-2xl overflow-hidden">
+                {invoices.map((invoice, index) => (
+                  <div
+                    key={invoice.id}
+                    className={`
+                    p-4 flex justify-between items-center gap-3
+                    ${index !== invoices.length - 1 ? 'border-b border-zinc-100' : ''}
+                  `}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-semibold text-zinc-900">
+                        {invoice.title || '수강권'}
                       </p>
-                    )
-                  : (
-                      <Chip size="sm" color="warning" variant="soft" className="mt-0.5">
-                        결제 대기중
-                      </Chip>
-                    )}
-              </div>
-              <div className="shrink-0">
-                {lesson.payment
-                  ? (
-                      <div className="flex flex-col items-end">
-                        <Chip
-                          size="sm"
-                          variant="tertiary"
-                          color="accent"
-                          onClick={() => {
-                            modal.show(PaymentModal, { lesson });
-                          }}
-                        >
-                          수정
-                        </Chip>
-                        <p className="text-base font-bold text-zinc-900 tabular-nums">
-                          {numberToHangulMixed(lesson.payment.amount)}
-                          원
+                      {invoice.periodStart && (
+                        // 달력 날짜(@db.Date) — 타임존 변환 없이 UTC 고정으로 표기
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          {format(new Date(invoice.periodStart), 'M월 d일', { locale: ko, in: tz('UTC') })}
+                          {invoice.periodEnd && (
+                            <span>
+                              {' ~ '}
+                              {format(new Date(invoice.periodEnd), 'M월 d일', { locale: ko, in: tz('UTC') })}
+                            </span>
+                          )}
                         </p>
-                      </div>
-                    )
-                  : (
-                      <Modal>
-                        <Button
-                          size="sm"
-                          variant="danger-soft"
-                        >
-                          결제 등록
-                        </Button>
-                        <PaymentModal lesson={lesson} />
-                      </Modal>
-                    )}
-              </div>
-            </div>
-
-            {/* 메모 (있는 경우만) */}
-            {lesson.payment?.notes && (
-              <div className={`
-              mt-3 p-3 rounded-lg text-sm text-zinc-600 leading-relaxed whitespace-pre-line
-              ${lesson.payment ? 'bg-zinc-50' : 'bg-warning-100'}
-            `}
-              >
-                {lesson.payment.notes}
+                      )}
+                    </div>
+                    <div className="shrink-0 text-right">
+                      {invoice.price === 0
+                        ? (
+                            <Chip size="sm" color="warning" variant="soft">
+                              금액 미입력
+                            </Chip>
+                          )
+                        : (
+                            <p className="text-base font-bold text-zinc-900 tabular-nums">
+                              {numberToHangulMixed(invoice.price)}
+                              원
+                            </p>
+                          )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-        ))}
+      </div>
+
+      {/* 입금 내역 */}
+      <div>
+        <div className="px-1 mb-2 flex justify-between items-center">
+          <h3 className="text-sm font-semibold text-zinc-500">입금</h3>
+          <Modal>
+            <Button size="sm" variant="primary">
+              입금 기록
+            </Button>
+            <PaymentModal studentUuid={studentUuid} defaultAmount={outstandingAmount} />
+          </Modal>
+        </div>
+        {payments.length === 0
+          ? (
+              <div className="py-8 text-center text-sm text-zinc-400 bg-white rounded-2xl">
+                입금 내역이 없습니다
+              </div>
+            )
+          : (
+              <div className="bg-white rounded-2xl overflow-hidden">
+                {payments.map((payment, index) => {
+                  const isRefund = payment.amount < 0;
+                  return (
+                    <div
+                      key={payment.id}
+                      className={`
+                      p-4
+                      ${index !== payments.length - 1 ? 'border-b border-zinc-100' : ''}
+                    `}
+                    >
+                      <div className="flex justify-between items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-zinc-600">
+                            {format(payment.paidAt, 'yyyy년 M월 d일', { locale: ko, in: tz(timeZone) })}
+                            &nbsp;·&nbsp;
+                            {PAYMENT_METHODS[payment.method] || payment.method}
+                            {isRefund && (
+                              <Chip size="sm" color="danger" variant="soft" className="ml-2">
+                                환불
+                              </Chip>
+                            )}
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-3">
+                          <p className={`text-base font-bold tabular-nums ${isRefund ? 'text-danger-600' : 'text-zinc-900'}`}>
+                            {numberToHangulMixed(payment.amount)}
+                            원
+                          </p>
+                          <Chip
+                            size="sm"
+                            variant="tertiary"
+                            color="accent"
+                            onClick={() => {
+                              modal.show(PaymentModal, { studentUuid, payment });
+                            }}
+                          >
+                            수정
+                          </Chip>
+                        </div>
+                      </div>
+
+                      {payment.notes && (
+                        <div className="mt-3 p-3 rounded-lg text-sm text-zinc-600 leading-relaxed whitespace-pre-line bg-zinc-50">
+                          {payment.notes}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
       </div>
     </div>
   );

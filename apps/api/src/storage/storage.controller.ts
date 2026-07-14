@@ -178,7 +178,8 @@ export class StorageController {
       });
 
       return { success: true, data: file };
-    } catch (error) {
+    }
+    catch (error) {
       // 예약/생성 실패 시 업로드된 S3 객체 정리 (쿼터는 트랜잭션 롤백으로 자동 복구)
       await this.s3Service.deleteFile(publicId);
       throw error;
@@ -219,17 +220,20 @@ export class StorageController {
     if (search && search.trim()) {
       // 전체 검색
       where.fileName = { contains: search.trim(), mode: 'insensitive' };
-    } else if (folderId === 'root') {
+    }
+    else if (folderId === 'root') {
       // 루트 레벨만
       where.folderId = null;
-    } else if (folderId) {
+    }
+    else if (folderId) {
       // 특정 폴더
       const folder = await this.prisma.folder.findFirst({
         where: { uuid: folderId, userId: user.userId },
       });
       if (folder) {
         where.folderId = folder.id;
-      } else {
+      }
+      else {
         // 폴더를 찾을 수 없으면 빈 결과
         return { success: true, data: [] };
       }

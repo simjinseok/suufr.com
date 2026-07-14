@@ -3,6 +3,7 @@ export type TUserSettings = {
   use24HourFormat: boolean;
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
+  timezone: string | null; // IANA. null = 미설정(첫 방문 시 브라우저 값으로 자동 초기화)
 };
 
 export type Student = {
@@ -22,21 +23,26 @@ export type Student = {
   nextSessionDate?: Date | null;
   hasUnpaidLesson?: boolean;
   sessions?: TSession[];
-  payments?: TPayment[];
 };
 
 export type TStudent = Student;
 
-export type TLesson = {
+// 청구 단위 (구 Lesson+Payment를 대체, docs/schema-redesign.md 참조)
+export type TInvoice = {
   id: number;
   uuid: string;
-  title: string;
-  notes: string;
+  title: string | null;
+  price: number;
+  // 있으면 회차 수강권(잔여 관리), 없으면 기간 정액
+  totalCount: number | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  autoRenew: boolean;
+  renewDaysBefore: number;
+  notes: string | null;
 
   student?: TStudent;
-  payment?: TPayment;
   sessions: TSession[];
-  shares?: TLessonShare[];
 };
 
 export type TSession = {
@@ -46,7 +52,9 @@ export type TSession = {
   isDone: boolean;
   sessionAt: Date;
   duration: number;
-  lesson?: TLesson;
+  type?: 'regular' | 'trial' | 'comp';
+  student?: TStudent;
+  invoice?: TInvoice | null;
   feedback?: TFeedback;
   sessionMediaFiles?: TSessionMediaFile[];
 };
@@ -57,13 +65,15 @@ export type TFeedback = {
   session?: TSession;
 };
 
+// 입금 1건. 음수 = 환불. 학생 직속 (청구와 연결하지 않는다)
 export type TPayment = {
   id: number;
   uuid: string;
   amount: number;
-  notes: string;
-  paymentMethod: string;
+  notes: string | null;
+  method: string;
   paidAt: Date;
+  student?: TStudent;
 };
 
 export type TMeeting = {
@@ -76,12 +86,11 @@ export type TMeeting = {
   meetingAt: Date;
 };
 
-export type TLessonShare = {
-  id: number;
+export type TStudentShare = {
   shareId: string;
-  lessonId: number;
-  expiresAt: Date;
-  createdAt: Date;
+  showPayments: boolean;
+  expiresAt: Date | string;
+  createdAt: Date | string;
 };
 
 export type ServerActionState<T> = {
@@ -125,7 +134,6 @@ export type Organization = {
   phone?: string;
   address?: string;
 };
-
 
 export type TAppToken = {
   uuid: string;

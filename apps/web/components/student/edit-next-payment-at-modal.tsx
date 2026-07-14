@@ -14,7 +14,7 @@ import {
   Spinner,
 } from '@heroui/react';
 import { CalendarIcon } from 'lucide-react';
-import { fromDate, toCalendarDate } from '@internationalized/date';
+import { parseDate } from '@internationalized/date';
 
 import { updateStudentNextPaymentAt } from '@/actions/student';
 import { useForm, Controller } from 'react-hook-form';
@@ -50,8 +50,9 @@ function Content({ student, close }: ContentProps) {
     nextPaymentAt: CalendarDate | null;
   }>({
     values: {
+      // 달력 날짜(@db.Date, UTC 자정으로 직렬화) — 타임존 변환 없이 날짜 부분만 쓴다
       nextPaymentAt: student.nextPaymentAt
-        ? toCalendarDate(fromDate(new Date(student.nextPaymentAt), 'Asia/Seoul'))
+        ? parseDate(String(student.nextPaymentAt).slice(0, 10))
         : null,
     },
   });

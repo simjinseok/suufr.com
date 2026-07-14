@@ -6,25 +6,20 @@ type Student = {
   name: string;
 };
 
-type Lesson = {
-  id: number;
-  uuid: string;
-  title: string;
-  student: Student;
-};
-
+// 입금 1건. 음수 = 환불. 학생 직속 (청구와 연결하지 않는다)
 type Payment = {
   id: number;
   uuid: string;
   amount: number;
-  paymentMethod: string;
+  method: string;
   paidAt: string;
   notes: string | null;
-  lesson: Lesson;
+  student: Student;
 };
 
 type ListPaymentsParams = {
   organizationUuids?: string[];
+  studentUuid?: string;
   page?: number;
   limit?: number;
   year?: number;
@@ -48,16 +43,16 @@ type PaymentResponse = {
 };
 
 type CreatePaymentData = {
-  lessonUuid: string;
+  studentUuid: string;
   amount: number;
-  paymentMethod: string;
+  method: string;
   paidAt: string;
   notes?: string;
 };
 
 type UpdatePaymentData = {
   amount?: number;
-  paymentMethod?: string;
+  method?: string;
   paidAt?: string;
   notes?: string;
 };

@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { formatTime } from '@/utils/time-format';
+import { useTimeZone } from '@/contexts/timezone';
 
 interface Lesson {
   id: number;
@@ -8,10 +9,8 @@ interface Lesson {
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
-  lesson: {
-    student: {
-      name: string;
-    };
+  student: {
+    name: string;
   };
 }
 
@@ -22,6 +21,8 @@ interface DayViewProps {
 }
 
 export default function DayView({ lessons, onSessionClick, use24HourFormat }: DayViewProps) {
+  const timeZone = useTimeZone();
+
   if (lessons.length === 0) {
     return (
       <div className="py-12 text-center text-zinc-400 bg-white">
@@ -41,7 +42,7 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
         >
           {/* Time */}
           <div className="w-20 text-sm font-medium text-zinc-500 flex-shrink-0">
-            {formatTime(lesson.sessionAt, use24HourFormat)}
+            {formatTime(lesson.sessionAt, use24HourFormat, timeZone)}
           </div>
 
           {/* Status indicator */}
@@ -54,7 +55,7 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="font-medium text-zinc-900">
-              {lesson.lesson.student.name}
+              {lesson.student.name}
             </div>
             {lesson.notes && (
               <div className="text-sm text-zinc-500 truncate mt-0.5">

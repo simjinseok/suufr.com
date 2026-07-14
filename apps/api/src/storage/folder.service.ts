@@ -151,7 +151,8 @@ export class FolderService {
       const node = folderMap.get(folder.id)!;
       if (folder.parentId === null) {
         roots.push(node);
-      } else {
+      }
+      else {
         const parent = folderMap.get(folder.parentId);
         if (parent) {
           parent.children.push(node);
@@ -428,7 +429,8 @@ export class FolderService {
             parentId: true,
           },
         });
-      } else {
+      }
+      else {
         currentFolder = null;
       }
     }

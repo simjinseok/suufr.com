@@ -6,8 +6,7 @@ import { tz } from '@date-fns/tz';
 import { Button, Modal, Spinner } from '@heroui/react';
 import { CheckCircle, Circle, MessageSquare } from 'lucide-react';
 import { getSessionDetail } from '@/actions/session';
-
-const TIMEZONE = 'Asia/Seoul';
+import { useTimeZone } from '@/contexts/timezone';
 
 type SessionData = {
   id: number;
@@ -20,7 +19,7 @@ type SessionData = {
 
 type ModalData = {
   current: SessionData & {
-    lessonTitle: string;
+    invoiceTitle: string | null;
     studentName: string;
   };
   previousSessions: SessionData[];
@@ -82,6 +81,7 @@ interface ContentProps {
 }
 
 function Content({ data, isLoading, error, close }: ContentProps) {
+  const TIMEZONE = useTimeZone();
   return (
     <React.Fragment>
       <Modal.Header>
@@ -114,7 +114,7 @@ function Content({ data, isLoading, error, close }: ContentProps) {
                   in: tz(TIMEZONE),
                 })}
               </p>
-              <p className="text-sm text-zinc-600">{data.current.lessonTitle}</p>
+              <p className="text-sm text-zinc-600">{data.current.invoiceTitle}</p>
               {data.current.notes && (
                 <div className="mt-3 p-3 bg-zinc-50 rounded-lg">
                   <p className="text-sm text-zinc-700 whitespace-pre-wrap">{data.current.notes}</p>

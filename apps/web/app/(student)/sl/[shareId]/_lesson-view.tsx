@@ -1,6 +1,8 @@
 'use client';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
+import { useTimeZone } from '@/contexts/timezone';
 
 import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
 
@@ -21,7 +23,7 @@ interface Props {
     sessions: Array<{
       uuid: string;
       notes: string;
-      sessionAt: Date;
+      sessionAt: Date | string;
       duration: number;
       isDone: boolean;
       sessionMediaFiles?: Array<{
@@ -51,6 +53,7 @@ function getFileIcon(type: 'image' | 'video' | 'document') {
 }
 
 export default function LessonView({ lesson, teacher }: Props) {
+  const timeZone = useTimeZone();
   return (
     <div className="bg-white py-4 border border-gray-100 rounded-xl shadow-xs">
       {/* 레슨 타이틀 */}
@@ -86,13 +89,13 @@ export default function LessonView({ lesson, teacher }: Props) {
                       {/* 날짜/시간 표시 */}
                       <div className="flex items-baseline gap-2 flex-wrap">
                         <p className="font-semibold text-gray-900">
-                          {format(session.sessionAt, 'M월 d일', { locale: ko })}
+                          {format(new Date(session.sessionAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
                         </p>
                         <span className="text-sm text-gray-500">
-                          ({format(session.sessionAt, 'E', { locale: ko })})
+                          ({format(new Date(session.sessionAt), 'E', { locale: ko, in: tz(timeZone) })})
                         </span>
                         <span className="text-sm text-gray-600">
-                          {format(session.sessionAt, 'HH:mm', { locale: ko })}
+                          {format(new Date(session.sessionAt), 'HH:mm', { locale: ko, in: tz(timeZone) })}
                         </span>
                         <span className="text-xs text-gray-400">· {session.duration}분</span>
                       </div>

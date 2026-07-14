@@ -33,7 +33,7 @@ export function Calendar({
     >
       <HeroCalendar.Header>
         <HeroCalendar.NavButton slot="previous" />
-        <HeroCalendar.Heading />
+        <HeroCalendar.Heading className="text-center" />
         <HeroCalendar.NavButton slot="next" />
       </HeroCalendar.Header>
       <HeroCalendar.Grid>

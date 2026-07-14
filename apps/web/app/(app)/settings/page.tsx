@@ -1,16 +1,14 @@
 import Link from 'next/link';
 import { ChevronRight, CreditCard, Link2, Shield } from 'lucide-react';
 
-import { getSession } from '@/utils/auth';
-import { getUserSettings } from '@/actions/settings';
+import { getUserSettings } from '@/utils/user-settings';
 
 import SettingsForm from './_settings-form';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const { user } = await getSession();
-  const settings = await getUserSettings(user.id);
+  const settings = await getUserSettings();
 
   return (
     <div>

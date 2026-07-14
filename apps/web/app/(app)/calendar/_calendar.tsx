@@ -17,6 +17,7 @@ import { ko } from 'date-fns/locale';
 import { tz, TZDate } from '@date-fns/tz';
 import { Button, Tabs } from '@heroui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTimeZone } from '@/contexts/timezone';
 import type { CalendarView } from './page';
 import MonthView from './_month-view';
 import WeekView from './_week-view';
@@ -29,10 +30,8 @@ interface Lesson {
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
-  lesson: {
-    student: {
-      name: string;
-    };
+  student: {
+    name: string;
   };
 }
 
@@ -43,9 +42,8 @@ interface CalendarProps {
   use24HourFormat: boolean;
 }
 
-const TIMEZONE = 'Asia/Seoul';
-
 export default function Calendar({ lessons, selectedDate, view, use24HourFormat }: CalendarProps) {
+  const TIMEZONE = useTimeZone();
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateObj = new TZDate(selectedDate + 'T00:00:00', TIMEZONE);

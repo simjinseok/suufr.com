@@ -60,6 +60,10 @@ model Student {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   lessons       Lesson[]
+  invoices      Invoice[]
+  payments      Payment[]
+  sessions      Session[]
+  shares        StudentShare[]
   comments      StudentComment[]
   statuses      StudentStatus[]
   googleContact StudentGoogleContact?
@@ -82,20 +86,52 @@ model Feedback {
   @@map("feedback")
 }
 
-model Payment {
-  id            Int       @id @default(autoincrement())
-  uuid          String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  amount        Int
-  paymentMethod String    @map("payment_method")
-  notes         String?
-  paidAt        DateTime  @map("paid_at") @db.Timestamptz(0)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(0)
-  lessonId      Int       @unique @map("lesson_id")
-  lesson        Lesson    @relation(fields: [lessonId], references: [id])
+// 청구 단위 (구 payments 테이블을 rename + 개편, docs/schema-redesign.md 참조)
+model Invoice {
+  id              Int              @id @default(autoincrement())
+  uuid            String           @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  title           String? // 라벨 ("3월 8회권") — 구 lesson.title 승계
+  price           Int // 청구액 (원). price=0 && 입금 0건 = "금액 미입력" 파생 상태
+  totalCount      Int?             @map("total_count") // 있으면 회차 동작(잔여 관리·명시 귀속), 없으면 기간 정액(날짜 자동 귀속)
+  periodStart     DateTime?        @map("period_start") @db.Date
+  periodEnd       DateTime?        @map("period_end") @db.Date
+  autoRenew       Boolean          @default(false) @map("auto_renew") // cron 도입 시 사용
+  renewDaysBefore Int              @default(0) @map("renew_days_before") // 마감 X일 전 사전 생성
+  notes           String?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(0)
+  studentId       Int              @map("student_id")
+  student         Student          @relation(fields: [studentId], references: [id])
+  lessonId        Int?             @unique @map("lesson_id") // 전환기 추적용, lessons drop 시 함께 제거
+  lesson          Lesson?          @relation(fields: [lessonId], references: [id])
 
-  @@index([paidAt, deletedAt, lessonId])
+  sessions Session[]
+
+  // NOTE: cron 멱등성용 @@unique([studentId, periodStart])는
+  // 자동 생성(cron) 도입 마이그레이션에서 추가 — 백필 데이터의 우연한 충돌 방지
+  @@index([studentId, deletedAt])
+  @@map("invoices")
+}
+
+// 입금 1건 = 1행. 음수 = 환불.
+// 학생 직속(잔액 모델) — 청구와 연결하지 않는다.
+// 납부 상태는 학생 단위로 파생: 미수 = Σprice − Σ양수입금, 선납 잔액 = Σ전체입금 − Σprice
+model Payment {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  amount    Int
+  method    String // 구 paymentMethod 승계
+  paidAt    DateTime  @map("paid_at") @db.Timestamptz(0)
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
+  studentId Int       @map("student_id")
+  student   Student   @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, deletedAt])
+  @@index([paidAt, deletedAt])
   @@map("payments")
 }
 
@@ -167,23 +203,29 @@ model LessonShare {
 }
 
 model Session {
-  id        Int       @id @default(autoincrement())
-  uuid      String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  id        Int              @id @default(autoincrement())
+  uuid      String           @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   notes     String
-  sessionAt DateTime  @map("session_at") @db.Timestamptz(0)
-  duration  Int       @default(60)
-  isDone    Boolean   @default(false) @map("is_done")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(0)
-  lessonId  Int       @map("lesson_id")
+  sessionAt DateTime         @map("session_at") @db.Timestamptz(0)
+  duration  Int              @default(60)
+  isDone    Boolean          @default(false) @map("is_done")
+  type      SessionTypeValue @default(regular) // trial/comp는 미연결 알림에서 제외
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(0)
+  studentId Int              @map("student_id")
+  invoiceId Int?             @map("invoice_id") // 청구 귀속, nullable
+  lessonId  Int?             @map("lesson_id") // 전환기 추적용, lessons drop 시 함께 제거
 
   feedback          Feedback?
-  lesson            Lesson              @relation(fields: [lessonId], references: [id])
+  student           Student             @relation(fields: [studentId], references: [id])
+  invoice           Invoice?            @relation(fields: [invoiceId], references: [id])
+  lesson            Lesson?             @relation(fields: [lessonId], references: [id])
   googleEvent       SessionGoogleEvent?
   sessionMediaFiles SessionMediaFile[]
 
-  @@index([lessonId, sessionAt, deletedAt])
+  @@index([studentId, sessionAt, deletedAt])
+  @@index([invoiceId])
   @@map("sessions")
 }
 
@@ -198,12 +240,30 @@ model Lesson {
   studentId Int       @map("student_id")
   student   Student   @relation(fields: [studentId], references: [id], map: "syllabuses_student_id_fkey")
 
-  payment  Payment?
+  invoice  Invoice?
   shares   LessonShare[]
   sessions Session[]
 
   @@index([studentId, createdAt, deletedAt])
   @@map("lessons")
+}
+
+// 학생 단위 공유 (LessonShare 대체)
+model StudentShare {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
+  shareId      String    @unique @map("share_id") @db.VarChar(10)
+  showPayments Boolean   @default(true) @map("show_payments") // 결제 섹션(예정일·납부상태) 노출 토글
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(0)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(0)
+  studentId    Int       @map("student_id")
+  student      Student   @relation(fields: [studentId], references: [id])
+
+  @@index([shareId, expiresAt, deletedAt])
+  @@index([studentId, deletedAt])
+  @@map("student_shares")
 }
 
 enum StudentStatusValue {
@@ -215,11 +275,20 @@ enum StudentStatusValue {
   @@map("StudentStatus")
 }
 
+enum SessionTypeValue {
+  regular // 정규 유료 수업
+  trial // 체험
+  comp // 무료 서비스
+
+  @@map("SessionType")
+}
+
 model UserSettings {
   userId                  String   @id @map("user_id") @db.Uuid // Cognito sub 직접 참조
   use24HourFormat         Boolean  @default(false) @map("use_24_hour_format")
   defaultDuration         Int      @default(50) @map("default_duration")
   autoUpdateNextPaymentAt Boolean  @default(true) @map("auto_update_next_payment_at")
+  timezone                String? // IANA 타임존. null = 미설정(웹 첫 방문 시 브라우저 값으로 자동 초기화)
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 

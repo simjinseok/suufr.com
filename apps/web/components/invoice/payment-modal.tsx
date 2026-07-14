@@ -12,6 +12,8 @@ import {
   DatePicker,
   Description,
   NumberField,
+  Tag,
+  TagGroup,
   TextArea,
   Select,
   ListBox,
@@ -24,21 +26,37 @@ import { BanknoteIcon, BookDashedIcon, CreditCardIcon, LandmarkIcon } from 'luci
 import { Controller, useForm } from 'react-hook-form';
 
 import { updatePayment, removePayment } from '@/actions/payment';
-import { fromDate, getLocalTimeZone, toCalendarDate, today } from '@internationalized/date';
+import { fromDate, toCalendarDate, today } from '@internationalized/date';
+import { useTimeZone } from '@/contexts/timezone';
+
+// 학생 앞으로 입금을 기록/수정하는 모달 — 입금은 청구와 연결하지 않는다 (잔액 모델).
+// payment를 넘기면 그 입금을 수정, 없으면 새 입금을 생성한다.
+type PaymentLike = {
+  uuid: string;
+  amount: number;
+  method: string;
+  paidAt: Date | string;
+  notes: string | null;
+};
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
   onOpenChange?: ModalProps['onOpenChange'];
-  lesson: any;
+  studentUuid: string;
+  payment?: PaymentLike | null;
+  // 새 입금의 기본 금액 (학생 미수액 제안)
+  defaultAmount?: number;
 }
-export default function PaymentModal({ isOpen, onOpenChange, lesson }: Props) {
+export default function PaymentModal({ isOpen, onOpenChange, studentUuid, payment, defaultAmount }: Props) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
             <Content
-              lesson={lesson}
+              studentUuid={studentUuid}
+              payment={payment ?? null}
+              defaultAmount={defaultAmount}
               close={close}
             />
           )}
@@ -48,28 +66,38 @@ export default function PaymentModal({ isOpen, onOpenChange, lesson }: Props) {
   );
 }
 
-function Content({ close, lesson }) {
+interface ContentProps {
+  studentUuid: string;
+  payment: PaymentLike | null;
+  defaultAmount?: number;
+  close: () => void;
+}
+function Content({ close, studentUuid, payment, defaultAmount }: ContentProps) {
+  const timeZone = useTimeZone();
   const formId = React.useId();
 
-  const { control } = useForm({
+  // 환불 = 음수 입금 (docs/schema-redesign.md §3). UI는 입금/환불 토글 + 양수 금액으로 받는다
+  const [isRefund, setIsRefund] = React.useState((payment?.amount ?? 0) < 0);
+
+  const { control, watch } = useForm({
     values: {
-      paidAt: lesson?.payment ? toCalendarDate(fromDate(new Date(lesson.payment.paidAt), 'Asia/Seoul')) : today(getLocalTimeZone()),
-      amount: lesson?.payment?.amount || 0,
-      paymentMethod: lesson?.payment?.paymentMethod || 'card',
-      notes: lesson?.payment?.notes || '',
+      paidAt: payment ? toCalendarDate(fromDate(new Date(payment.paidAt), timeZone)) : today(timeZone),
+      amount: Math.abs(payment?.amount ?? defaultAmount ?? 0),
+      method: payment?.method || 'transfer',
+      notes: payment?.notes || '',
     },
   });
 
+  const absAmount = Math.abs(watch('amount') || 0);
+  const signedAmount = isRefund ? -absAmount : absAmount;
+
   const [state, formAction, isPending] = React.useActionState(updatePayment, {});
-  const payment = React.useMemo(() => {
-    return lesson.payment;
-  }, [lesson]);
 
   React.useEffect(() => {
     if (!state.timestamp) return;
 
     if (state.success) {
-      toast.success('결제 정보', {
+      toast.success('입금 내역', {
         description: state.message,
         timeout: 3000,
       });
@@ -80,7 +108,7 @@ function Content({ close, lesson }) {
   return (
     <React.Fragment>
       <Modal.Header>
-        <Modal.Heading>입금내역 수정</Modal.Heading>
+        <Modal.Heading>{payment ? '입금내역 수정' : '입금 기록'}</Modal.Heading>
       </Modal.Header>
       <Modal.Body>
         <Form
@@ -89,8 +117,29 @@ function Content({ close, lesson }) {
           action={formAction}
           validationErrors={state.fieldErrors}
         >
-          <input type="hidden" name="lessonUuid" value={lesson.uuid} />
-          {lesson.payment?.uuid && <input type="hidden" name="paymentUuid" value={lesson.payment.uuid} />}
+          <input type="hidden" name="studentUuid" value={studentUuid} />
+          {payment?.uuid && <input type="hidden" name="paymentUuid" value={payment.uuid} />}
+          {/* 서버로는 부호 적용된 금액 전송 (환불 = 음수) */}
+          <input type="hidden" name="amount" value={signedAmount} />
+
+          {/* 입금 / 환불 구분 */}
+          <TagGroup
+            aria-label="구분"
+            selectionMode="single"
+            disallowEmptySelection
+            selectedKeys={new Set([isRefund ? 'refund' : 'payment'])}
+            onSelectionChange={(keys) => {
+              const key = Array.from(keys as Set<string>)[0];
+              setIsRefund(key === 'refund');
+            }}
+          >
+            <Label>구분</Label>
+            <TagGroup.List>
+              <Tag id="payment" textValue="입금">입금</Tag>
+              <Tag id="refund" textValue="환불">환불</Tag>
+            </TagGroup.List>
+          </TagGroup>
+
           <Controller
             control={control}
             name="paidAt"
@@ -102,21 +151,22 @@ function Content({ close, lesson }) {
           <Controller
             control={control}
             name="amount"
-            render={({ field: { name, value, onChange } }) => (
+            render={({ field: { value, onChange } }) => (
               <React.Fragment>
                 <NumberField
                   variant="secondary"
-                  name={name}
                   value={value}
+                  minValue={0}
                   onInput={(event) => {
-                    onChange(Number(event.currentTarget.value.replaceAll(',', '')));
+                    onChange(Math.abs(Number(event.currentTarget.value.replaceAll(',', '')) || 0));
                   }}
                 >
-                  <Label>금액</Label>
+                  <Label>{isRefund ? '환불 금액' : '금액'}</Label>
                   <NumberField.Group>
                     <NumberField.Input className="col-span-full text-right" />
                   </NumberField.Group>
                   <Description className="text-right">
+                    {isRefund ? '환불 ' : ''}
                     {numberToHangulMixed(value)}
                     원
                   </Description>
@@ -128,7 +178,7 @@ function Content({ close, lesson }) {
 
           <Controller
             control={control}
-            name="paymentMethod"
+            name="method"
             render={({ field: { name, value, onChange } }) => (
               <Select
                 variant="secondary"
@@ -161,10 +211,10 @@ function Content({ close, lesson }) {
                         현금
                       </Label>
                     </ListBox.Item>
-                    <ListBox.Item id="none" textValue="미결제">
+                    <ListBox.Item id="none" textValue="미지정">
                       <BookDashedIcon />
                       <Label>
-                        미결제
+                        미지정
                       </Label>
                     </ListBox.Item>
                   </ListBox>
@@ -211,7 +261,11 @@ function Content({ close, lesson }) {
   );
 }
 
-function DatePickerField({ name, value, onChange }) {
+function DatePickerField({ name, value, onChange }: {
+  name: string;
+  value: ReturnType<typeof today>;
+  onChange: (value: ReturnType<typeof today> | null) => void;
+}) {
   return (
     <DatePicker name={name} value={value} onChange={onChange} granularity="day" hideTimeZone>
       <Label>날짜</Label>
@@ -234,7 +288,10 @@ function DatePickerField({ name, value, onChange }) {
 
 function RemoveButton({ paymentUuid }: { paymentUuid: string }) {
   const formId = React.useId();
-  const [state, formAction, isPending] = React.useActionState(removePayment, {});
+  const [state, formAction, isPending] = React.useActionState(removePayment, {
+    success: false,
+    timestamp: 0,
+  });
 
   React.useEffect(() => {
     if (!state.timestamp) {
@@ -242,7 +299,7 @@ function RemoveButton({ paymentUuid }: { paymentUuid: string }) {
     }
 
     if (state.success) {
-      toast.danger('결제 내역 삭제', {
+      toast.danger('입금 내역 삭제', {
         description: state.message,
         timeout: 3000,
       });
@@ -265,7 +322,7 @@ function RemoveButton({ paymentUuid }: { paymentUuid: string }) {
                 <Modal.Body>
                   <Form id={formId} action={formAction}>
                     <input type="hidden" name="paymentUuid" value={paymentUuid} />
-                    <p>결제내역을 삭제합니다</p>
+                    <p>입금 내역을 삭제합니다</p>
                   </Form>
                 </Modal.Body>
                 <Modal.Footer>

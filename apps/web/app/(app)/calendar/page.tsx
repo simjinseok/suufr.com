@@ -1,5 +1,6 @@
 import { getSession } from '@/utils/auth';
-import { getUserSettings } from '@/actions/settings';
+import { getUserSettings } from '@/utils/user-settings';
+import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 import { sessionsApi } from '@/utils/api';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -14,11 +15,11 @@ export default async function Page(props: PageProps<'/calendar'>) {
   if (!session?.organization) {
     return null;
   }
-  const { user, organization } = session;
-  const settings = await getUserSettings(user.id);
+  const { organization } = session;
+  const settings = await getUserSettings();
 
   const { date, view: viewParam } = await props.searchParams;
-  const TIMEZONE = 'Asia/Seoul';
+  const TIMEZONE = settings.timezone ?? DEFAULT_TIMEZONE;
   const today = new TZDate(new Date(), TIMEZONE);
   const selectedDate = date ? new TZDate(date + 'T00:00:00', TIMEZONE) : today;
   const view: CalendarView = viewParam === 'week' ? 'week' : viewParam === 'month' ? 'month' : 'day';
@@ -53,10 +54,8 @@ export default async function Page(props: PageProps<'/calendar'>) {
     sessionAt: lesson.sessionAt,
     duration: lesson.duration,
     notes: lesson.notes,
-    lesson: {
-      student: {
-        name: lesson.lesson.student.name,
-      },
+    student: {
+      name: lesson.student.name,
     },
   }));
 

@@ -12,8 +12,7 @@ import {
 import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
 import { formatTime } from '@/utils/time-format';
-
-const TIMEZONE = 'Asia/Seoul';
+import { useTimeZone } from '@/contexts/timezone';
 
 interface Lesson {
   id: number;
@@ -21,10 +20,8 @@ interface Lesson {
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
-  lesson: {
-    student: {
-      name: string;
-    };
+  student: {
+    name: string;
   };
 }
 
@@ -36,6 +33,7 @@ interface WeekViewProps {
 }
 
 export default function WeekView({ lessons, selectedDate, onSessionClick, use24HourFormat }: WeekViewProps) {
+  const TIMEZONE = useTimeZone();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -111,9 +109,9 @@ export default function WeekView({ lessons, selectedDate, onSessionClick, use24H
                           : 'bg-blue-100 text-blue-700'
                       }`}
                     >
-                      <span>{lesson.lesson.student.name}</span>
+                      <span>{lesson.student.name}</span>
                       <span className="text-xs ml-2 opacity-70">
-                        {formatTime(lesson.sessionAt, use24HourFormat)}
+                        {formatTime(lesson.sessionAt, use24HourFormat, TIMEZONE)}
                       </span>
                     </button>
                   ))}

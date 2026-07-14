@@ -2,24 +2,24 @@
 
 import React from 'react';
 import { AlertDialog, Button, DangerIcon, Form, ModalProps, toast } from '@heroui/react';
-import { TLesson } from '@/types/index';
-import { removeLesson } from '@/actions/lesson';
+import { TInvoice } from '@/types/index';
+import { removeInvoice } from '@/actions/invoice';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
   onOpenChange?: ModalProps['onOpenChange'];
-  lesson: TLesson;
+  invoice: TInvoice;
 }
 
-export default function DeleteLessonModal({ lesson, isOpen, onOpenChange }: Props) {
+export default function DeleteInvoiceModal({ invoice, isOpen, onOpenChange }: Props) {
   const formId = React.useId();
-  const [state, formAction, isPending] = React.useActionState(removeLesson, {});
+  const [state, formAction, isPending] = React.useActionState(removeInvoice, {});
 
   React.useEffect(() => {
     if (!state.timestamp) return;
 
     if (state.message) {
-      toast.success('레슨 삭제', {
+      toast.success('수강권 삭제', {
         description: state.message,
         timeout: 3000,
       });
@@ -42,8 +42,8 @@ export default function DeleteLessonModal({ lesson, isOpen, onOpenChange }: Prop
             </AlertDialog.Header>
             <AlertDialog.Body>
               <Form id={formId} action={formAction}>
-                <input type="hidden" name="lessonUuid" value={lesson.uuid} />
-                계획을 삭제합니다.
+                <input type="hidden" name="invoiceUuid" value={invoice.uuid} />
+                수강권을 삭제합니다. 입금 내역도 함께 목록에서 사라집니다.
               </Form>
             </AlertDialog.Body>
             <AlertDialog.Footer>

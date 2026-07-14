@@ -6,7 +6,9 @@ import type { GoogleCalendarEvent, SyncResult } from '../dto';
 import * as crypto from 'crypto';
 
 const CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
-const TIMEZONE = 'Asia/Seoul';
+// 이벤트 dateTime을 UTC ISO 문자열로 보내므로 라벨도 UTC로 통일.
+// 단발성 이벤트는 Google이 뷰어의 캘린더 시간대로 표시하므로 이 라벨은 표시에 영향 없음.
+const TIMEZONE = 'UTC';
 
 interface CalendarListEntry {
   id: string;
@@ -140,20 +142,13 @@ export class GoogleCalendarService {
       this.prisma.session.findMany({
         where: {
           deletedAt: null,
-          lesson: {
+          student: {
+            userId,
             deletedAt: null,
-            student: {
-              userId,
-              deletedAt: null,
-            },
           },
         },
         include: {
-          lesson: {
-            include: {
-              student: true,
-            },
-          },
+          student: true,
           googleEvent: true,
         },
       }),
@@ -166,8 +161,7 @@ export class GoogleCalendarService {
           session: {
             OR: [
               { deletedAt: { not: null } },
-              { lesson: { deletedAt: { not: null } } },
-              { lesson: { student: { deletedAt: { not: null } } } },
+              { student: { deletedAt: { not: null } } },
             ],
           },
         },
@@ -344,18 +338,13 @@ export class GoogleCalendarService {
       where: {
         id: sessionId,
         deletedAt: null,
-        lesson: {
+        student: {
+          userId,
           deletedAt: null,
-          student: {
-            userId,
-            deletedAt: null,
-          },
         },
       },
       include: {
-        lesson: {
-          include: { student: true },
-        },
+        student: true,
         googleEvent: true,
       },
     });
@@ -537,16 +526,11 @@ export class GoogleCalendarService {
       where: {
         uuid: suufrUuid,
         deletedAt: null,
-        lesson: {
-          deletedAt: null,
-          student: { userId, deletedAt: null },
-        },
+        student: { userId, deletedAt: null },
       },
       include: {
         googleEvent: true,
-        lesson: {
-          include: { student: true },
-        },
+        student: true,
       },
     });
 
@@ -591,7 +575,7 @@ export class GoogleCalendarService {
     }
 
     // Restore summary if it was changed (not allowed)
-    const expectedSummary = `[${session.lesson.student.name}] ${session.lesson.title}`;
+    const expectedSummary = session.student.name;
     if (event.summary !== expectedSummary && event.id) {
       await this.updateEvent(calendarId, event.id, {
         ...event,
@@ -634,10 +618,7 @@ export class GoogleCalendarService {
       duration: number;
       notes: string;
       googleEvent: { id: number } | null;
-      lesson: {
-        title: string;
-        student: { name: string; userId: string };
-      };
+      student: { name: string; userId: string };
     },
     userId: string,
     calendarId: string,
@@ -679,15 +660,12 @@ export class GoogleCalendarService {
     sessionAt: Date;
     duration: number;
     notes: string;
-    lesson: {
-      title: string;
-      student: { name: string };
-    };
+    student: { name: string };
   }): GoogleCalendarEvent {
     const endAt = new Date(session.sessionAt.getTime() + session.duration * 60 * 1000);
 
     return {
-      summary: `[${session.lesson.student.name}] ${session.lesson.title}`,
+      summary: session.student.name,
       description: session.notes || '',
       start: {
         dateTime: session.sessionAt.toISOString(),

@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
+import { useTimeZone } from '@/contexts/timezone';
 import {
   Button,
   Modal,
@@ -26,6 +28,7 @@ type Props = {
 };
 
 export default function Comments({ comments, studentUuid }: Props) {
+  const timeZone = useTimeZone();
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -49,7 +52,7 @@ export default function Comments({ comments, studentUuid }: Props) {
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-zinc-400">
-                        {format(new Date(comment.createdAt), 'M월 d일', { locale: ko })}
+                        {format(new Date(comment.createdAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
                       </p>
                       <p className="mt-1 text-sm text-zinc-900 whitespace-pre-wrap leading-relaxed">
                         {comment.content}

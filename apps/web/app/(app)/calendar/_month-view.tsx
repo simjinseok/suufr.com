@@ -14,8 +14,7 @@ import {
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
-
-const TIMEZONE = 'Asia/Seoul';
+import { useTimeZone } from '@/contexts/timezone';
 
 interface Lesson {
   id: number;
@@ -23,10 +22,8 @@ interface Lesson {
   sessionAt: string;
   isDone: boolean;
   notes: string | null;
-  lesson: {
-    student: {
-      name: string;
-    };
+  student: {
+    name: string;
   };
 }
 
@@ -39,6 +36,7 @@ interface MonthViewProps {
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function MonthView({ lessons, selectedDate, onSessionClick }: MonthViewProps) {
+  const TIMEZONE = useTimeZone();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -134,7 +132,7 @@ export default function MonthView({ lessons, selectedDate, onSessionClick }: Mon
                         : 'bg-blue-100 text-blue-700'}
                     `}
                   >
-                    {lesson.lesson.student.name}
+                    {lesson.student.name}
                   </span>
                 ))}
                 {dayLessons.length > 2 && (

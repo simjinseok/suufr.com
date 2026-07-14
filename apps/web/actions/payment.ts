@@ -8,13 +8,17 @@ import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { paymentsApi } from '@/utils/api/payments';
+import { getUserSettings } from '@/utils/user-settings';
+import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 
-const updateScheme = z.object({
-  amount: z.coerce.number().min(0),
-  paymentMethod: z.enum(['card', 'transfer', 'cash', 'none']),
+const updateScheme = (timeZone: string) => z.object({
+  // 음수 = 환불, 0원은 기록 불가
+  amount: z.coerce.number().int().refine(v => v !== 0, { error: '0원은 기록할 수 없습니다' }),
+  method: z.enum(['card', 'transfer', 'cash', 'none']),
+  // 입금일은 유저 설정 타임존의 그 날짜 자정 instant로 저장
   paidAt: z.string().transform((val, ctx) => {
     try {
-      return parseDate(val).toDate('Asia/Seoul');
+      return parseDate(val).toDate(timeZone);
     }
     catch {
       ctx.addIssue({
@@ -31,7 +35,7 @@ const updateScheme = z.object({
 type UpdatePaymentState = ServerActionState<{
   amount: number;
   paidAt: string;
-  paymentMethod: string;
+  method: string;
   notes: string;
 }>;
 export async function updatePayment(prevState: UpdatePaymentState, formData: FormData) {
@@ -43,20 +47,21 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
       recordResponse: true,
     },
     async () => {
-      const { lessonUuid, paymentUuid, ...data } = Object.fromEntries(formData.entries());
+      const { studentUuid, paymentUuid, ...data } = Object.fromEntries(formData.entries());
 
       const state: UpdatePaymentState = {
         success: false,
         fields: {
           amount: Number(data.amount as string),
           paidAt: data.paidAt as string,
-          paymentMethod: data.paymentMethod as string,
+          method: data.method as string,
           notes: data.notes as string,
         },
         timestamp: Date.now(),
       };
 
-      const validationResult = updateScheme.safeParse(data);
+      const settings = await getUserSettings();
+      const validationResult = updateScheme(settings.timezone ?? DEFAULT_TIMEZONE).safeParse(data);
 
       if (!validationResult.success) {
         state.fieldErrors = z.flattenError(validationResult.error).fieldErrors;
@@ -66,7 +71,7 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
       try {
         const paymentData = {
           amount: validationResult.data.amount,
-          paymentMethod: validationResult.data.paymentMethod,
+          method: validationResult.data.method,
           paidAt: (validationResult.data.paidAt as Date).toISOString(),
           notes: validationResult.data.notes,
         };
@@ -76,12 +81,11 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         }
         else {
           await paymentsApi.create({
-            lessonUuid: lessonUuid as string,
+            studentUuid: studentUuid as string,
             ...paymentData,
           });
         }
 
-        revalidatePath('/lessons', 'page');
         revalidatePath('/payments', 'page');
         revalidatePath('/students', 'layout');
         state.success = true;
@@ -96,7 +100,12 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
   );
 }
 
-export async function removePayment(prevState: any, formData: FormData) {
+type RemovePaymentState = {
+  success: boolean;
+  message?: string;
+  timestamp: number;
+};
+export async function removePayment(prevState: RemovePaymentState, formData: FormData): Promise<RemovePaymentState> {
   return await Sentry.withServerActionInstrumentation(
     'removePayment',
     {
@@ -114,7 +123,6 @@ export async function removePayment(prevState: any, formData: FormData) {
       try {
         await paymentsApi.remove(paymentUuid);
 
-        revalidatePath('/lessons', 'page');
         revalidatePath('/payments', 'page');
         revalidatePath('/students', 'layout');
         return { success: true, timestamp: Date.now() };

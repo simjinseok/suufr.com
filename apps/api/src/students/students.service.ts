@@ -6,6 +6,7 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { ListStudentsQueryDto } from './dto/list-students-query.dto';
 import { Prisma } from '@prisma/generated/client';
+import { getStudentBalances, EMPTY_BALANCE } from '../common/utils/student-balance';
 
 @Injectable()
 export class StudentsService {
@@ -105,16 +106,31 @@ export class StudentsService {
       }
     }
 
-    const student = await this.prisma.student.create({
-      data: {
-        name: dto.name,
-        notes: dto.notes ?? '',
-        phone: dto.phone,
-        email: dto.email,
-        nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
-        organizationId: organization.id,
-        userId,
-      },
+    // 상태를 지정해 등록하면 상태 이력도 함께 남긴다(상태변경 트랜잭션과 동일한 불변식: Student.status = 최신 이력).
+    const student = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.student.create({
+        data: {
+          name: dto.name,
+          notes: dto.notes ?? '',
+          phone: dto.phone,
+          email: dto.email,
+          nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
+          status: dto.status,
+          organizationId: organization.id,
+          userId,
+        },
+      });
+
+      if (dto.status) {
+        await tx.studentStatus.create({
+          data: {
+            status: dto.status,
+            studentId: created.id,
+          },
+        });
+      }
+
+      return created;
     });
 
     return { success: true, data: student };
@@ -216,46 +232,43 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    type StatsResult = {
-      remainingSessionsCount: number;
-      completedLessonCount: number;
-      unpaidLessonCount: number;
-    };
+    // 파생 계산: 잔여 세션 수 + 학생 잔액 + 청구 완료 수 (docs/schema-redesign.md §3)
+    const [remainingSessionsCount, invoices, balances] = await Promise.all([
+      this.prisma.session.count({
+        where: { studentId: student.id, isDone: false, deletedAt: null },
+      }),
+      this.prisma.invoice.findMany({
+        where: { studentId: student.id, deletedAt: null },
+        select: {
+          price: true,
+          sessions: { where: { deletedAt: null }, select: { isDone: true } },
+        },
+      }),
+      getStudentBalances(this.prisma, [student.id]),
+    ]);
 
-    const [stats] = await this.prisma.$queryRaw<StatsResult[]>`
-      SELECT
-        CAST(COUNT(sess.id) FILTER (
-          WHERE sess.is_done = false AND sess.deleted_at IS NULL
-        ) AS INT) AS "remainingSessionsCount",
-        CAST(COUNT(DISTINCT les.id) FILTER (
-          WHERE les.deleted_at IS NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM sessions sess2
-            WHERE sess2.lesson_id = les.id
-            AND sess2.deleted_at IS NULL
-            AND sess2.is_done = false
-          )
-        ) AS INT) AS "completedLessonCount",
-        CAST(COUNT(DISTINCT les.id) FILTER (
-          WHERE les.deleted_at IS NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM payments p
-            WHERE p.lesson_id = les.id
-            AND p.deleted_at IS NULL
-          )
-        ) AS INT) AS "unpaidLessonCount"
-      FROM students s
-      LEFT JOIN lessons les ON les.student_id = s.id
-      LEFT JOIN sessions sess ON sess.lesson_id = les.id
-      WHERE s.uuid = ${uuid}::uuid
-        AND s.deleted_at IS NULL
-      GROUP BY s.id
-    `;
+    let completedInvoiceCount = 0;
+    let needsPriceCount = 0;
+    for (const invoice of invoices) {
+      if (invoice.sessions.every(s => s.isDone)) {
+        completedInvoiceCount += 1;
+      }
+      // price=0 = "금액 미입력" — 잔액에 잡히지 않으므로 별도 노출
+      if (invoice.price === 0) {
+        needsPriceCount += 1;
+      }
+    }
+
+    const balance = balances.get(student.id) ?? EMPTY_BALANCE;
 
     return {
       success: true,
       data: {
-        ...(stats ?? { remainingSessionsCount: 0, completedLessonCount: 0, unpaidLessonCount: 0 }),
+        remainingSessionsCount,
+        completedInvoiceCount,
+        outstandingAmount: balance.outstandingAmount,
+        creditAmount: balance.creditAmount,
+        needsPriceCount,
         nextPaymentAt: student.nextPaymentAt,
       },
     };

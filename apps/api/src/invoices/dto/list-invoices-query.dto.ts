@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsInt, Min, Max, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class ListLessonsQueryDto {
+export class ListInvoicesQueryDto {
   @IsOptional()
   @Transform(({ value }) => {
     if (!value) return undefined;

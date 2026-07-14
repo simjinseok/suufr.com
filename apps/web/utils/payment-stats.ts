@@ -1,23 +1,23 @@
 import type { MonthlyPaymentStats, YearlyPaymentStats } from '@/types/index';
-import { toKstParts } from '@/utils/kst';
+import { TZDate } from '@date-fns/tz';
 
 type PaymentWithStudent = {
   amount: number;
   paidAt: Date;
-  lesson: {
-    student: {
-      id: number;
-      name: string;
-    };
+  student: {
+    id: number;
+    name: string;
   };
 };
 
-export function groupPaymentsByMonth(payments: PaymentWithStudent[]): MonthlyPaymentStats[] {
+export function groupPaymentsByMonth(payments: PaymentWithStudent[], timeZone: string): MonthlyPaymentStats[] {
   const grouped = new Map<string, MonthlyPaymentStats>();
 
   for (const payment of payments) {
-    // KST 기준으로 월 분류 (UTC 서버 SSR에서도 정확)
-    const { year, month } = toKstParts(new Date(payment.paidAt));
+    // 유저 설정 타임존 기준으로 월 분류 (서버 런타임 타임존과 무관하게 정확)
+    const zoned = new TZDate(payment.paidAt, timeZone);
+    const year = zoned.getFullYear();
+    const month = zoned.getMonth() + 1;
     const key = `${year}-${month}`;
 
     if (!grouped.has(key)) {
@@ -35,12 +35,12 @@ export function groupPaymentsByMonth(payments: PaymentWithStudent[]): MonthlyPay
     stats.totalAmount += payment.amount;
 
     let studentStat = stats.students.find(
-      (s: { id: number }) => s.id === payment.lesson.student.id
+      (s: { id: number }) => s.id === payment.student.id,
     );
     if (!studentStat) {
       studentStat = {
-        id: payment.lesson.student.id,
-        name: payment.lesson.student.name,
+        id: payment.student.id,
+        name: payment.student.name,
         count: 0,
         totalAmount: 0,
       };
@@ -56,8 +56,8 @@ export function groupPaymentsByMonth(payments: PaymentWithStudent[]): MonthlyPay
   });
 }
 
-export function groupPaymentsByYear(payments: PaymentWithStudent[]): YearlyPaymentStats[] {
-  const monthlyStats = groupPaymentsByMonth(payments);
+export function groupPaymentsByYear(payments: PaymentWithStudent[], timeZone: string): YearlyPaymentStats[] {
+  const monthlyStats = groupPaymentsByMonth(payments, timeZone);
   const grouped = new Map<number, YearlyPaymentStats>();
 
   for (const monthly of monthlyStats) {

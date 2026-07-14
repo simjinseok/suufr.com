@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, Max, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min, Max, IsArray, IsUUID, IsTimeZone } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListPaymentsQueryDto {
@@ -10,6 +10,10 @@ export class ListPaymentsQueryDto {
   @IsArray()
   @IsString({ each: true })
   organizationUuids?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  studentUuid?: string;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
@@ -35,4 +39,9 @@ export class ListPaymentsQueryDto {
   @Min(1)
   @Max(12)
   month?: number;
+
+  /** 월/연 경계를 계산할 IANA 타임존. 미지정 시 유저 설정 > UTC 순으로 해석. */
+  @IsOptional()
+  @IsTimeZone()
+  timezone?: string;
 }

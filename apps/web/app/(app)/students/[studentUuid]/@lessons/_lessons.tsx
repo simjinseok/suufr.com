@@ -1,12 +1,15 @@
 'use client';
-import type { TLesson, TSession } from '@/types/index';
+import type { TInvoice, TSession, TStudentShare } from '@/types/index';
 
 import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
+import { numberToHangulMixed } from 'es-hangul';
 
-import { Button, Dropdown, Modal, Surface } from '@heroui/react';
+import { Button, Chip, Dropdown, Modal, Surface } from '@heroui/react';
 import {
   AlertTriangleIcon,
+  CalendarPlusIcon,
   CreditCardIcon,
   FileIcon,
   GlobeIcon,
@@ -23,14 +26,17 @@ import React from 'react';
 import EditSessionModal from '@/components/sessions/edit-session-modal';
 import EditFeedbackModal from '@/components/sessions/edit-feedback-modal';
 import EditSessionFilesModal from '@/components/sessions/edit-session-files-modal';
-import EditLessonModal from '@/components/lesson/edit-lesson-modal';
+import EditInvoiceModal from '@/components/invoice/edit-invoice-modal';
 import CreateSessionModal from '@/components/sessions/create-session-modal';
-import PaymentModal from '@/components/lesson/payment-modal';
-import ShareModal from '@/components/lesson/share-modal';
-import CreateLessonModal from '@/components/lesson/create-lesson-modal';
+import GenerateSessionsModal from '@/components/sessions/generate-sessions-modal';
+import SettleSessionModal from '@/components/invoice/settle-session-modal';
+import ShareModal from '@/components/invoice/share-modal';
+import CreateInvoiceModal from '@/components/invoice/create-invoice-modal';
 import { useParams, useRouter } from 'next/navigation';
 import { toggleSessionDone } from '@/actions/session';
-import DeleteLessonModal from '@/components/lesson/delete-lesson-modal';
+import DeleteInvoiceModal from '@/components/invoice/delete-invoice-modal';
+import { getRemainingCount } from '@/utils/invoice-status';
+import { useTimeZone } from '@/contexts/timezone';
 
 function AnimatedCheckIcon({
   checked,
@@ -87,18 +93,22 @@ function FileTypeIcon({ type, className }: { type: string; className?: string })
   }
 }
 
-export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; use24HourFormat: boolean }) {
+export default function Invoices({ invoices, shares, unattachedSessions, use24HourFormat }: { invoices: any[]; shares: TStudentShare[]; unattachedSessions: any[]; use24HourFormat: boolean }) {
+  const timeZone = useTimeZone();
   const { studentUuid } = useParams<{ studentUuid: string }>();
   const router = useRouter();
+  const [settleSessionTarget, setSettleSessionTarget] = React.useState<TSession | null>(null);
 
   const [selectedSession, setSelectedSession] = React.useState<TSession | null>(null);
-  const [isLessonCreating, setIsLessonCreating] = React.useState<TLesson | null>(null);
+  const [sessionCreatingInvoice, setSessionCreatingInvoice] = React.useState<TInvoice | null>(null);
+  // 수강권 시작일 기준 요일·시간·횟수로 수업 일괄 생성
+  const [generateInvoice, setGenerateInvoice] = React.useState<TInvoice | null>(null);
+  const [isSessionCreateOpen, setIsSessionCreateOpen] = React.useState(false);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
   const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
-  const [editLesson, setEditLesson] = React.useState<TLesson | null>(null);
-  const [deleteLesson, setDeleteLesson] = React.useState<TLesson | null>(null);
-  const [shareLesson, setShareLesson] = React.useState<TLesson | null>(null);
-  const [paymentLesson, setPaymentLesson] = React.useState<TLesson | null>(null);
+  const [editInvoice, setEditInvoice] = React.useState<TInvoice | null>(null);
+  const [deleteInvoice, setDeleteInvoice] = React.useState<TInvoice | null>(null);
+  const [isShareOpen, setIsShareOpen] = React.useState(false);
 
   // 체크 토글 애니메이션 상태
   const [togglingSessionUuid, setTogglingSessionUuid] = React.useState<string | null>(null);
@@ -131,239 +141,315 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
 
   return (
     <React.Fragment>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {/* 학생 단위 공유 */}
+        <Button
+          variant={shares.length ? 'primary' : 'secondary'}
+          size="sm"
+          onPress={() => setIsShareOpen(true)}
+        >
+          {shares.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
+          {shares.length ? '공유중' : '공유'}
+        </Button>
+        {/* 단독 수업 추가 — 청구 없이 생성 (회당 정산·보강 등), monthly/period 기간이 커버하면 서버가 자동 귀속 */}
+        <Button variant="secondary" size="sm" onPress={() => setIsSessionCreateOpen(true)}>
+          <PlusIcon className="size-4" />
+          수업 추가
+        </Button>
         <Modal>
           <Button variant="secondary" size="sm">
             <PlusIcon className="size-4" />
-            레슨 추가
+            수강권 추가
           </Button>
-          <CreateLessonModal studentUuid={studentUuid} />
+          <CreateInvoiceModal studentUuid={studentUuid} />
         </Modal>
       </div>
 
-      {lessons.length > 0 ? (
-        <ul className="mt-5 flex flex-col gap-5">
-          {lessons.map((lesson) => (
-            <li key={lesson.id}>
-              <Surface
-                className={`rounded-xl shadow-xs overflow-hidden ${
-                  !lesson.payment ? 'border-red-200' : 'border-gray-50'
-                }`}
+      {/* 정산되지 않은 수업 (invoice 미귀속) — 회당 정산 진입점이자 매출 누수 방지 */}
+      {unattachedSessions.length > 0 && (
+        <Surface className="mt-5 rounded-xl border-amber-200 overflow-hidden">
+          <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
+            <AlertTriangleIcon className="size-4 text-amber-600" />
+            <span className="text-sm font-semibold text-amber-700">
+              수강권 없는 수업
+              {' '}
+              {unattachedSessions.length}
+              개
+            </span>
+          </div>
+          <ul className="px-5 py-2">
+            {unattachedSessions.map((session, index) => (
+              <li
+                key={session.uuid}
+                className={`flex items-center justify-between gap-3 py-2 ${index > 0 ? 'border-t border-gray-50' : ''}`}
               >
-                {/* 결제필요 배너 (카드 상단) */}
-                {!lesson.payment && (
-                  <div className="px-5 py-2 bg-red-50 border-b border-red-100 flex items-center gap-1.5">
-                    <AlertTriangleIcon className="size-4 text-red-600" />
-                    <span className="text-sm font-semibold text-red-600">결제필요</span>
-                  </div>
-                )}
+                <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                  <p className="font-semibold text-gray-900">
+                    {format(new Date(session.sessionAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
+                  </p>
+                  <span className="text-sm text-gray-500">
+                    (
+                    {format(new Date(session.sessionAt), 'E', { locale: ko, in: tz(timeZone) })}
+                    )
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {format(new Date(session.sessionAt), use24HourFormat ? 'HH:mm' : 'a h:mm', { locale: ko, in: tz(timeZone) })}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    ·
+                    {session.duration}
+                    분
+                  </span>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="shrink-0"
+                  onPress={() => setSettleSessionTarget(session)}
+                >
+                  <CreditCardIcon className="size-4" />
+                  입금 기록
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Surface>
+      )}
 
-                {/* 카드 본문 */}
-                <div className="px-5 py-3">
-                  {/* 헤더: 제목 + 수정 버튼 */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-xl font-bold">{lesson.title}</p>
-                    <div className="flex items-center gap-2">
-                      {/* 결제 - 모바일 */}
-                      <Button variant={lesson.payment ? 'secondary' : 'danger-soft'} size="sm" isIconOnly
-                        className="sm:hidden" onPress={() => setPaymentLesson(lesson)}>
-                        <CreditCardIcon className="size-4" />
-                      </Button>
-                      {/* 결제 - 데스크탑 */}
-                      <Button variant={lesson.payment ? 'secondary' : 'danger-soft'} size="sm"
-                        className="hidden sm:inline-flex" onPress={() => setPaymentLesson(lesson)}>
-                        <CreditCardIcon className="size-4" />
-                        {lesson.payment ? '결제완료' : '결제필요'}
-                      </Button>
+      {invoices.length > 0 ? (
+        <ul className="mt-5 flex flex-col gap-5">
+          {invoices.map((invoice) => {
+            const remainingCount = getRemainingCount(invoice);
+            // 납부 상태는 학생 단위 잔액으로 판정하므로 카드에는 표시하지 않는다.
+            // 단 "금액 미입력"(price=0)은 잔액에 잡히지 않아 카드에서 수정을 유도한다 (§3)
+            const needsPrice = invoice.price === 0;
 
-                      {/* 공유 - 모바일 */}
-                      <Button variant={lesson.shares?.length ? 'primary' : 'secondary'} size="sm" isIconOnly className="sm:hidden"
-                        onPress={() => setShareLesson(lesson)}>
-                        {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
-                      </Button>
-                      {/* 공유 - 데스크탑 */}
-                      <Button variant={lesson.shares?.length ? 'primary' : 'secondary'} size="sm" className="hidden sm:inline-flex"
-                        onPress={() => setShareLesson(lesson)}>
-                        {lesson.shares?.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
-                        {lesson.shares?.length ? '공유중' : '공유'}
-                      </Button>
-
-                      <Dropdown>
-                        <Button variant="secondary" size="sm" isIconOnly>
-                          <EllipsisIcon className="size-4" />
-                        </Button>
-                        <Dropdown.Popover placement="bottom end" className="min-w-40">
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              key="edit-lesson"
-                              onClick={() => setEditLesson(lesson)}
-                            >
-                              레슨 수정
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              key="create-session"
-                              onClick={() => setIsLessonCreating(lesson)}
-                            >
-                              수업 추가
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              key="delete-lesson"
-                              className="text-red-600"
-                              onClick={() => setDeleteLesson(lesson)}
-                            >
-                              삭제
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown.Popover>
-                      </Dropdown>
+            return (
+              <li key={invoice.id}>
+                <Surface
+                  className={`rounded-xl shadow-xs overflow-hidden ${
+                    needsPrice ? 'border-amber-200' : 'border-gray-50'
+                  }`}
+                >
+                  {/* 금액 미입력 배너 (카드 상단) */}
+                  {needsPrice && (
+                    <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
+                      <AlertTriangleIcon className="size-4 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-700">금액 미입력</span>
                     </div>
-                  </div>
-
-                  {lesson.notes && (
-                    <Text className="mt-1 whitespace-pre-wrap">{lesson.notes}</Text>
                   )}
 
-                  <Divider className="my-3" />
+                  {/* 카드 본문 */}
+                  <div className="px-5 py-3">
+                    {/* 헤더: 제목 + 수정 버튼 */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-2 min-w-0">
+                        <p className="text-xl font-bold truncate">{invoice.title || '수강권'}</p>
+                        {remainingCount !== null && (
+                          <Chip size="sm" color="accent" variant="soft" className="shrink-0">
+                            잔여
+                            {' '}
+                            {remainingCount}
+                            회
+                          </Chip>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Dropdown>
+                          <Button variant="secondary" size="sm" isIconOnly>
+                            <EllipsisIcon className="size-4" />
+                          </Button>
+                          <Dropdown.Popover placement="bottom end" className="min-w-40">
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                key="edit-invoice"
+                                onClick={() => setEditInvoice(invoice)}
+                              >
+                                수강권 수정
+                              </Dropdown.Item>
+                              {/* 횟수가 다 찬 수강권은 수업 추가 숨김 (잔여 초과 방지, 회당 정산 1회권 포함) */}
+                              {!(invoice.totalCount != null && invoice.totalCount > 0 && invoice.sessions.length >= invoice.totalCount) && (
+                                <Dropdown.Item
+                                  key="create-session"
+                                  onClick={() => setSessionCreatingInvoice(invoice)}
+                                >
+                                  수업 추가
+                                </Dropdown.Item>
+                              )}
+                              <Dropdown.Item
+                                key="delete-invoice"
+                                className="text-red-600"
+                                onClick={() => setDeleteInvoice(invoice)}
+                              >
+                                삭제
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
+                        </Dropdown>
+                      </div>
+                    </div>
 
-                  {/* 세션 목록 */}
-                  {lesson.sessions.length > 0 ? (
-                    <ul>
-                      {lesson.sessions.map((session: any, index: number) => (
-                        <li
-                          key={session.id}
-                          className={index > 0 ? 'border-t border-gray-50 pt-2 mt-2' : ''}
-                        >
-                          <div className="flex items-start gap-3">
-                            {/* 완료/미완료 아이콘 (클릭으로 토글) */}
-                            <button
-                              type="button"
-                              className="mt-0.5 shrink-0 cursor-pointer active:scale-90 transition-transform"
-                              onTouchStart={() => {}}
-                              onClick={(e) => handleToggleDone(session, e)}
-                            >
-                              <AnimatedCheckIcon
-                                checked={getIsDone(session)}
-                                animating={togglingSessionUuid === session.uuid}
-                              />
-                            </button>
+                    {invoice.price > 0 && (
+                      <p className="mt-0.5 text-sm text-gray-500 tabular-nums">
+                        {numberToHangulMixed(invoice.price)}
+                        원
+                      </p>
+                    )}
 
-                            <div className="flex-1 min-w-0">
-                              {/* 세션 내용 영역 */}
-                              <div>
-                                <div className="flex items-baseline gap-2 flex-wrap">
-                                  <p className="font-semibold text-gray-900">
-                                    {format(new Date(session.sessionAt), 'M월 d일', { locale: ko })}
-                                  </p>
-                                  <span className="text-sm text-gray-500">
-                                    (
-                                    {format(new Date(session.sessionAt), 'E', { locale: ko })}
-                                    )
-                                  </span>
-                                  <span className="text-sm text-gray-600">
-                                    {format(new Date(session.sessionAt), use24HourFormat ? 'HH:mm' : 'a h:mm', { locale: ko })}
-                                  </span>
-                                  <span className="text-xs text-gray-400">
-                                    ·
-                                    {session.duration}
-                                    분
-                                  </span>
+                    {invoice.notes && (
+                      <Text className="mt-1 whitespace-pre-wrap">{invoice.notes}</Text>
+                    )}
+
+                    <Divider className="my-3" />
+
+                    {/* 세션 목록 */}
+                    {invoice.sessions.length > 0 ? (
+                      <ul>
+                        {invoice.sessions.map((session: any, index: number) => (
+                          <li
+                            key={session.id}
+                            className={index > 0 ? 'border-t border-gray-50 pt-2 mt-2' : ''}
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* 완료/미완료 아이콘 (클릭으로 토글) */}
+                              <button
+                                type="button"
+                                className="mt-0.5 shrink-0 cursor-pointer active:scale-90 transition-transform"
+                                onTouchStart={() => {}}
+                                onClick={(e) => handleToggleDone(session, e)}
+                              >
+                                <AnimatedCheckIcon
+                                  checked={getIsDone(session)}
+                                  animating={togglingSessionUuid === session.uuid}
+                                />
+                              </button>
+
+                              <div className="flex-1 min-w-0">
+                                {/* 세션 내용 영역 */}
+                                <div>
+                                  <div className="flex items-baseline gap-2 flex-wrap">
+                                    <p className="font-semibold text-gray-900">
+                                      {format(new Date(session.sessionAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
+                                    </p>
+                                    <span className="text-sm text-gray-500">
+                                      (
+                                      {format(new Date(session.sessionAt), 'E', { locale: ko, in: tz(timeZone) })}
+                                      )
+                                    </span>
+                                    <span className="text-sm text-gray-600">
+                                      {format(new Date(session.sessionAt), use24HourFormat ? 'HH:mm' : 'a h:mm', { locale: ko, in: tz(timeZone) })}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      ·
+                                      {session.duration}
+                                      분
+                                    </span>
+                                  </div>
+                                  {session.notes && (
+                                    <Text className="mt-1 whitespace-pre-wrap text-sm">
+                                      {session.notes}
+                                    </Text>
+                                  )}
                                 </div>
-                                {session.notes && (
-                                  <Text className="mt-1 whitespace-pre-wrap text-sm">
-                                    {session.notes}
-                                  </Text>
+
+                                {/* 피드백 영역 */}
+                                {getIsDone(session) && session.feedback && (
+                                  <div className="mt-2.5 p-2.5 bg-gray-50 rounded-lg">
+                                    <p className="text-xs font-semibold text-indigo-600 mb-1">
+                                      피드백
+                                    </p>
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                      {session.feedback.notes}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* 세션 첨부파일 */}
+                                {session.sessionMediaFiles?.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {session.sessionMediaFiles.map((file: any) => (
+                                      <a
+                                        key={file.mediaFile.uuid}
+                                        href={file.mediaFile.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600 hover:bg-gray-200"
+                                      >
+                                        <FileTypeIcon
+                                          type={file.mediaFile.type}
+                                          className="size-3 text-gray-500"
+                                        />
+                                        {file.mediaFile.fileName || '파일'}
+                                      </a>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
 
-                              {/* 피드백 영역 */}
-                              {getIsDone(session) && session.feedback && (
-                                <div className="mt-2.5 p-2.5 bg-gray-50 rounded-lg">
-                                  <p className="text-xs font-semibold text-indigo-600 mb-1">
-                                    피드백
-                                  </p>
-                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                    {session.feedback.notes}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* 세션 첨부파일 */}
-                              {session.sessionMediaFiles?.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                  {session.sessionMediaFiles.map((file: any) => (
-                                    <a
-                                      key={file.mediaFile.uuid}
-                                      href={file.mediaFile.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600 hover:bg-gray-200"
-                                    >
-                                      <FileTypeIcon
-                                        type={file.mediaFile.type}
-                                        className="size-3 text-gray-500"
-                                      />
-                                      {file.mediaFile.fileName || '파일'}
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* 세션 메뉴 드롭다운 */}
-                            <Dropdown>
-                              <Button variant="ghost" size="sm" isIconOnly className="shrink-0 -mt-1 -mr-2">
-                                <MoreVerticalIcon className="size-4 text-gray-400" />
-                              </Button>
-                              <Dropdown.Popover placement="bottom end" className="min-w-36">
-                                <Dropdown.Menu>
-                                  <Dropdown.Item
-                                    key="edit-session"
-                                    onClick={() => setSelectedSession(session)}
-                                  >
-                                    수업 수정
-                                  </Dropdown.Item>
-                                  {getIsDone(session) && (
+                              {/* 세션 메뉴 드롭다운 */}
+                              <Dropdown>
+                                <Button variant="ghost" size="sm" isIconOnly className="shrink-0 -mt-1 -mr-2">
+                                  <MoreVerticalIcon className="size-4 text-gray-400" />
+                                </Button>
+                                <Dropdown.Popover placement="bottom end" className="min-w-36">
+                                  <Dropdown.Menu>
                                     <Dropdown.Item
-                                      key="edit-feedback"
-                                      onClick={() => setFeedbackSession(session)}
+                                      key="edit-session"
+                                      onClick={() => setSelectedSession(session)}
                                     >
-                                      피드백 수정
+                                      수업 수정
                                     </Dropdown.Item>
-                                  )}
-                                  <Dropdown.Item
-                                    key="edit-files"
-                                    onClick={() => setFilesSession(session)}
-                                  >
-                                    파일 첨부
-                                  </Dropdown.Item>
-                                </Dropdown.Menu>
-                              </Dropdown.Popover>
-                            </Dropdown>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="py-5 flex flex-col gap-3 items-center justify-center">
-                      <p className="text-gray-500">설정된 수업이 없습니다</p>
-                    </div>
-                  )}
+                                    {getIsDone(session) && (
+                                      <Dropdown.Item
+                                        key="edit-feedback"
+                                        onClick={() => setFeedbackSession(session)}
+                                      >
+                                        피드백 수정
+                                      </Dropdown.Item>
+                                    )}
+                                    <Dropdown.Item
+                                      key="edit-files"
+                                      onClick={() => setFilesSession(session)}
+                                    >
+                                      파일 첨부
+                                    </Dropdown.Item>
+                                  </Dropdown.Menu>
+                                </Dropdown.Popover>
+                              </Dropdown>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="py-5 flex flex-col gap-3 items-center justify-center">
+                        <p className="text-gray-500">설정된 수업이 없습니다</p>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onPress={() => setGenerateInvoice(invoice)}
+                        >
+                          <CalendarPlusIcon className="size-4" />
+                          수업 만들기
+                        </Button>
+                      </div>
+                    )}
 
-                </div>
+                  </div>
 
-              </Surface>
-            </li>
-          ))}
+                </Surface>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="mt-5 text-gray-500">일정이 없습니다.</p>
       )}
 
-      {editLesson && (
-        <EditLessonModal
-          isOpen={!!editLesson}
-          onOpenChange={() => setEditLesson(null)}
-          lesson={editLesson}
+      {editInvoice && (
+        <EditInvoiceModal
+          isOpen={!!editInvoice}
+          onOpenChange={() => setEditInvoice(null)}
+          invoice={editInvoice}
         />
       )}
 
@@ -375,11 +461,39 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
         />
       )}
 
-      {isLessonCreating && (
+      {sessionCreatingInvoice && (
         <CreateSessionModal
-          isOpen={isLessonCreating !== null}
-          onOpenChange={() => setIsLessonCreating(null)}
-          lesson={isLessonCreating}
+          isOpen={sessionCreatingInvoice !== null}
+          onOpenChange={() => setSessionCreatingInvoice(null)}
+          studentUuid={studentUuid}
+          invoiceUuid={sessionCreatingInvoice.uuid}
+        />
+      )}
+
+      {isSessionCreateOpen && (
+        <CreateSessionModal
+          isOpen={isSessionCreateOpen}
+          onOpenChange={() => setIsSessionCreateOpen(false)}
+          studentUuid={studentUuid}
+        />
+      )}
+
+      {generateInvoice && (
+        <GenerateSessionsModal
+          isOpen={!!generateInvoice}
+          onOpenChange={() => setGenerateInvoice(null)}
+          studentUuid={studentUuid}
+          invoice={generateInvoice}
+          use24HourFormat={use24HourFormat}
+        />
+      )}
+
+      {settleSessionTarget && (
+        <SettleSessionModal
+          isOpen={!!settleSessionTarget}
+          onOpenChange={() => setSettleSessionTarget(null)}
+          studentUuid={studentUuid}
+          session={settleSessionTarget}
         />
       )}
 
@@ -399,27 +513,18 @@ export default function Lessons({ lessons, use24HourFormat }: { lessons: any[]; 
         />
       )}
 
-      {shareLesson && (
-        <ShareModal
-          isOpen={!!shareLesson}
-          onOpenChange={() => setShareLesson(null)}
-          lesson={shareLesson}
-        />
-      )}
+      <ShareModal
+        isOpen={isShareOpen}
+        onOpenChange={() => setIsShareOpen(false)}
+        studentUuid={studentUuid}
+        shares={shares}
+      />
 
-      {paymentLesson && (
-        <PaymentModal
-          isOpen={!!paymentLesson}
-          onOpenChange={() => setPaymentLesson(null)}
-          lesson={paymentLesson}
-        />
-      )}
-
-      {deleteLesson && (
-        <DeleteLessonModal
-          isOpen={!!deleteLesson}
-          onOpenChange={() => setDeleteLesson(null)}
-          lesson={deleteLesson}
+      {deleteInvoice && (
+        <DeleteInvoiceModal
+          isOpen={!!deleteInvoice}
+          onOpenChange={() => setDeleteInvoice(null)}
+          invoice={deleteInvoice}
         />
       )}
     </React.Fragment>

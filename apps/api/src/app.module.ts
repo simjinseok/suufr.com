@@ -11,9 +11,10 @@ import { CarddavModule } from './carddav/carddav.module';
 import { CaldavModule } from './caldav/caldav.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { StudentsModule } from './students/students.module';
-import { LessonsModule } from './lessons/lessons.module';
+import { InvoicesModule } from './invoices/invoices.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PaymentsModule } from './payments/payments.module';
+import { StudentSharesModule } from './student-shares/student-shares.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { StudentStatusesModule } from './student-statuses/student-statuses.module';
@@ -40,8 +41,9 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     HealthModule,
     DashboardModule,
     StudentsModule,
-    LessonsModule,
+    InvoicesModule,
     SessionsModule,
+    StudentSharesModule,
     PaymentsModule,
     OrganizationsModule,
     MeetingsModule,
