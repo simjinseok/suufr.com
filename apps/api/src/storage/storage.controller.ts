@@ -6,7 +6,7 @@ import { S3Service } from '../s3/s3.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { randomUUID } from 'crypto';
-import { CreateFolderDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
+import { CreateFileDto, CreateFolderDto, CreatePresignedUrlDto, UpdateFolderDto, MoveFileDto, UpdateFileDto } from './dto';
 import { folderByContentType } from '../common/utils/content-type';
 import {
   SUPPORTED_UPLOAD_TYPES,
@@ -14,6 +14,8 @@ import {
   MAX_VIDEO_SIZE,
   MAX_DOCUMENT_SIZE,
   MAX_SIZE_BY_TYPE,
+  SUPPORTED_PROFILE_IMAGE_TYPES,
+  MAX_PROFILE_IMAGE_SIZE,
 } from '../common/constants/file-constraints';
 
 @Controller('api/storage')
@@ -39,33 +41,45 @@ export class StorageController {
    */
   @Post('presigned-url')
   async getPresignedUrl(
-    @Body() body: { fileName: string; contentType: string; fileSize: number },
+    @Body() body: CreatePresignedUrlDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const { fileName, contentType, fileSize } = body;
+    const { fileName, contentType, fileSize, purpose } = body;
 
-    // 1. Validate contentType
-    if (!SUPPORTED_UPLOAD_TYPES.includes(contentType)) {
-      throw new BadRequestException('지원하지 않는 파일 형식입니다.');
+    // 1-2. Validate contentType + file size (purpose=profile은 더 좁은 규칙)
+    if (purpose === 'profile') {
+      if (!SUPPORTED_PROFILE_IMAGE_TYPES.includes(contentType)) {
+        throw new BadRequestException('지원하지 않는 파일 형식입니다.');
+      }
+      if (fileSize > MAX_PROFILE_IMAGE_SIZE) {
+        throw new BadRequestException('파일 크기가 최대 크기(2MB)를 초과했습니다.');
+      }
     }
+    else {
+      if (!SUPPORTED_UPLOAD_TYPES.includes(contentType)) {
+        throw new BadRequestException('지원하지 않는 파일 형식입니다.');
+      }
 
-    // 2. Validate file size
-    const isImage = contentType.startsWith('image/');
-    const isVideo = contentType.startsWith('video/');
-    const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_DOCUMENT_SIZE;
+      const isImage = contentType.startsWith('image/');
+      const isVideo = contentType.startsWith('video/');
+      const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_DOCUMENT_SIZE;
 
-    if (fileSize > maxSize) {
-      const maxSizeMB = isImage ? '10MB' : isVideo ? '100MB' : '50MB';
-      throw new BadRequestException(
-        `파일 크기가 최대 크기(${maxSizeMB})를 초과했습니다.`,
-      );
+      if (fileSize > maxSize) {
+        const maxSizeMB = isImage ? '10MB' : isVideo ? '100MB' : '50MB';
+        throw new BadRequestException(
+          `파일 크기가 최대 크기(${maxSizeMB})를 초과했습니다.`,
+        );
+      }
     }
 
     // 3. Generate unique S3 key (바로 영구 경로에 저장)
+    //    profile: 공개 prefix — iOS/공유 뷰가 서명 없이 읽는다. MediaFile 미등록,
+    //    커밋(pending 태그 제거)은 PATCH students/organizations가 수행.
     const ext = fileName.split('.').pop();
     const uuid = randomUUID();
-    const folder = folderByContentType(contentType);
-    const key = `users/${user.userId}/${folder}/${uuid}.${ext}`;
+    const key = purpose === 'profile'
+      ? `images/profiles/${user.userId}/${uuid}.${ext}`
+      : `users/${user.userId}/${folderByContentType(contentType)}/${uuid}.${ext}`;
 
     // 4. Generate presigned URL
     const presignedUrl = await this.s3Service.getPresignedUploadUrl(
@@ -85,6 +99,8 @@ export class StorageController {
         key,
         cdnUrl: cdnUrl ? `${cdnUrl}/${key}` : null,
         expiresAt,
+        // 클라이언트가 S3 PUT 시 그대로 에코해야 하는 서명 헤더 (누락 시 403)
+        requiredHeaders: this.s3Service.getPresignedUploadRequiredHeaders(),
       },
     };
   }
@@ -95,20 +111,10 @@ export class StorageController {
     */
   @Post('files')
   async createFile(
-    @Body() body: {
-      // url/type/fileSize는 클라이언트가 보내지만 신뢰하지 않고 서버에서 재도출한다.
-      publicId: string;
-      fileName: string;
-      folderUuid?: string;
-    },
+    @Body() body: CreateFileDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const { publicId, fileName, folderUuid } = body;
-
-    // 유효성 검사
-    if (!publicId || !fileName) {
-      throw new BadRequestException('필수 필드가 누락되었습니다.');
-    }
 
     // 1. 키가 반드시 본인 소유 경로(users/{userId}/)인지 검증 → 크로스테넌트 등록/삭제 차단
     const ownPrefix = `users/${user.userId}/`;
@@ -136,7 +142,15 @@ export class StorageController {
       throw new BadRequestException('파일 크기가 허용 범위를 초과했습니다.');
     }
 
-    // 4. URL은 신뢰 가능한 키로부터 서버가 재구성 (클라이언트 url 미신뢰)
+    // 4. pending 태그 제거 — 라이프사이클 회수 대상에서 제외.
+    //    반드시 DB 등록 전에 수행: "등록됐는데 태그가 남아 라이프사이클에 삭제당하는" 케이스를 구조적으로 차단.
+    //    (태그만 지우고 아래 트랜잭션이 실패하면 catch에서 S3 객체를 삭제하므로 고아가 남지 않는다)
+    const tagsCleared = await this.s3Service.clearObjectTags(publicId);
+    if (!tagsCleared) {
+      throw new InternalServerErrorException('파일 등록에 실패했습니다. 다시 시도해주세요.');
+    }
+
+    // 5. URL은 신뢰 가능한 키로부터 서버가 재구성 (클라이언트 url 미신뢰)
     const cdnUrl = process.env.CDN_URL;
     const url = cdnUrl ? `${cdnUrl}/${publicId}` : publicId;
 
@@ -177,7 +191,8 @@ export class StorageController {
         });
       });
 
-      return { success: true, data: file };
+      // 목록 조회(listFiles) 응답과 형태를 맞춘다 — 방금 등록한 파일은 어디에도 연결 전
+      return { success: true, data: { ...file, isInUse: false } };
     }
     catch (error) {
       // 예약/생성 실패 시 업로드된 S3 객체 정리 (쿼터는 트랜잭션 롤백으로 자동 복구)
@@ -244,7 +259,7 @@ export class StorageController {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        _count: { select: { sessionMediaFiles: true } },
+        _count: { select: { sessionMediaFiles: true, curriculumItemMediaFiles: true } },
         folder: {
           select: { id: true, uuid: true, name: true },
         },
@@ -253,7 +268,7 @@ export class StorageController {
 
     const filesWithInUse = files.map((file) => ({
       ...file,
-      isInUse: file._count.sessionMediaFiles > 0,
+      isInUse: file._count.sessionMediaFiles + file._count.curriculumItemMediaFiles > 0,
       _count: undefined,
     }));
 
@@ -274,6 +289,7 @@ export class StorageController {
       where: { uuid },
       include: {
         sessionMediaFiles: { take: 1 },
+        curriculumItemMediaFiles: { take: 1 },
       },
     });
 
@@ -287,7 +303,7 @@ export class StorageController {
     }
 
     // 연결된 곳이 있으면 삭제 불가
-    if (file.sessionMediaFiles.length > 0) {
+    if (file.sessionMediaFiles.length > 0 || file.curriculumItemMediaFiles.length > 0) {
       throw new ForbiddenException('다른 곳에서 사용 중인 파일은 삭제할 수 없습니다.');
     }
 
@@ -300,13 +316,13 @@ export class StorageController {
     // CloudFront 캐시 무효화 (실패해도 S3/DB 삭제는 진행, 캐시는 TTL 후 자동 만료됨)
     await this.s3Service.invalidateCloudFrontCache(file.publicId);
 
-    // S3 삭제 성공 후에만 DB에서 삭제 (hard delete)
-    await this.prisma.mediaFile.delete({
-      where: { id: file.id },
+    // S3 삭제 성공 후에만 DB 삭제 + 용량 차감을 원자적으로 (폴더 삭제와 동일 패턴)
+    await this.prisma.$transaction(async (tx) => {
+      await tx.mediaFile.delete({
+        where: { id: file.id },
+      });
+      await this.storageQuotaService.decreaseUsage(user.userId, file.fileSize, tx);
     });
-
-    // 용량 감소
-    await this.storageQuotaService.decreaseUsage(user.userId, file.fileSize);
 
     return { success: true };
   }

@@ -10,7 +10,12 @@ import {
   MAX_IMAGE_SIZE,
   MAX_VIDEO_SIZE,
   MAX_DOCUMENT_SIZE,
+  SUPPORTED_PROFILE_IMAGE_TYPES,
+  MAX_PROFILE_IMAGE_SIZE,
 } from '@/utils/file-constraints';
+
+/** 'profile': MediaFile 미등록 프로필성 이미지 — 공개 prefix로 발급되고 엔티티 저장 시 커밋된다 */
+export type UploadPurpose = 'profile';
 
 export type ResourceType = 'image' | 'video' | 'document';
 
@@ -44,7 +49,17 @@ export function getResourceType(file: File): ResourceType | null {
 /**
  * 파일 유효성 검사
  */
-export function validateFile(file: File): { valid: true } | { valid: false; error: string } {
+export function validateFile(file: File, purpose?: UploadPurpose): { valid: true } | { valid: false; error: string } {
+  if (purpose === 'profile') {
+    if (!SUPPORTED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      return { valid: false, error: 'JPG, PNG, WebP 형식만 지원합니다.' };
+    }
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      return { valid: false, error: '이미지는 2MB 이하만 업로드할 수 있습니다.' };
+    }
+    return { valid: true };
+  }
+
   const resourceType = getResourceType(file);
 
   if (!resourceType) {
@@ -76,10 +91,11 @@ export async function uploadToS3(
   file: File,
   options?: {
     onProgress?: (percentage: number) => void;
+    purpose?: UploadPurpose;
   }
 ): Promise<UploadResult> {
   // 1. 클라이언트 측 유효성 검사
-  const validation = validateFile(file);
+  const validation = validateFile(file, options?.purpose);
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
@@ -95,6 +111,7 @@ export async function uploadToS3(
         fileName: file.name,
         contentType: file.type,
         fileSize: file.size,
+        ...(options?.purpose && { purpose: options.purpose }),
       }),
     });
 
@@ -107,10 +124,10 @@ export async function uploadToS3(
     }
 
     const { data } = await presignedResponse.json();
-    const { presignedUrl, key, cdnUrl } = data;
+    const { presignedUrl, key, cdnUrl, requiredHeaders } = data;
 
-    // 3. S3로 직접 업로드
-    await uploadToS3Direct(presignedUrl, file, file.type, options?.onProgress);
+    // 3. S3로 직접 업로드 (서명에 포함된 헤더는 그대로 에코해야 함 — 누락 시 403)
+    await uploadToS3Direct(presignedUrl, file, file.type, requiredHeaders, options?.onProgress);
 
     // 4. 백엔드에서 받은 CDN URL 반환 (없으면 key만 반환)
     return {
@@ -134,6 +151,7 @@ async function uploadToS3Direct(
   presignedUrl: string,
   file: File,
   contentType: string,
+  requiredHeaders?: Record<string, string>,
   onProgress?: (percentage: number) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -162,6 +180,9 @@ async function uploadToS3Direct(
     // PUT 요청으로 S3에 업로드
     xhr.open('PUT', presignedUrl);
     xhr.setRequestHeader('Content-Type', contentType);
+    for (const [name, value] of Object.entries(requiredHeaders ?? {})) {
+      xhr.setRequestHeader(name, value);
+    }
     xhr.send(file);
   });
 }

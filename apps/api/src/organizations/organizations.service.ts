@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { S3Service } from '../s3/s3.service';
+import { ProfileImageService, ProfileImageChange } from '../s3/profile-image.service';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Injectable()
 export class OrganizationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly s3Service: S3Service,
+    private readonly profileImageService: ProfileImageService,
   ) {}
 
   async findAll(userId: string) {
@@ -53,73 +53,50 @@ export class OrganizationsService {
       throw new ForbiddenException('Access denied');
     }
 
-    // profileImageUrl 처리
-    let finalProfileImageUrl: string | null | undefined = undefined;
-    let oldProfileImageUrl: string | null = null;
+    // profileImageUrl / logoImageUrl 커밋 (검증 + pending 태그 제거).
+    // 한쪽 커밋 뒤 이후 단계가 실패하면 커밋된 신규 객체를 정리해 고아를 남기지 않는다
+    const profileChange = await this.profileImageService.commitChange(
+      userId,
+      dto.profileImageUrl,
+      organization.profileImageUrl,
+    );
 
-    if (dto.profileImageUrl !== undefined) {
-      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동
-        const moved = await this.s3Service.moveFileByContentType(dto.profileImageUrl, 'image/jpeg');
-        finalProfileImageUrl = moved?.url ?? null;
-        oldProfileImageUrl = organization.profileImageUrl;
-      }
-      else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
-        finalProfileImageUrl = null;
-        oldProfileImageUrl = organization.profileImageUrl;
-      }
-      else {
-        finalProfileImageUrl = dto.profileImageUrl;
-      }
+    let logoChange: ProfileImageChange;
+    try {
+      logoChange = await this.profileImageService.commitChange(
+        userId,
+        dto.logoImageUrl,
+        organization.logoImageUrl,
+      );
+    }
+    catch (error) {
+      this.profileImageService.scheduleDeletion(profileChange.url);
+      throw error;
     }
 
-    // logoImageUrl 처리
-    let finalLogoImageUrl: string | null | undefined = undefined;
-    let oldLogoImageUrl: string | null = null;
-
-    if (dto.logoImageUrl !== undefined) {
-      if (dto.logoImageUrl && dto.logoImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동
-        const moved = await this.s3Service.moveFileByContentType(dto.logoImageUrl, 'image/png');
-        finalLogoImageUrl = moved?.url ?? null;
-        oldLogoImageUrl = organization.logoImageUrl;
-      }
-      else if (dto.logoImageUrl === null || dto.logoImageUrl === '') {
-        finalLogoImageUrl = null;
-        oldLogoImageUrl = organization.logoImageUrl;
-      }
-      else {
-        finalLogoImageUrl = dto.logoImageUrl;
-      }
+    let updated;
+    try {
+      updated = await this.prisma.organization.update({
+        where: { uuid },
+        data: {
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.phone !== undefined && { phone: dto.phone }),
+          ...(dto.address !== undefined && { address: dto.address }),
+          ...(dto.profileName !== undefined && { profileName: dto.profileName }),
+          ...(profileChange.url !== undefined && { profileImageUrl: profileChange.url }),
+          ...(logoChange.url !== undefined && { logoImageUrl: logoChange.url }),
+        },
+      });
     }
-
-    const updated = await this.prisma.organization.update({
-      where: { uuid },
-      data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.address !== undefined && { address: dto.address }),
-        ...(dto.profileName !== undefined && { profileName: dto.profileName }),
-        ...(finalProfileImageUrl !== undefined && { profileImageUrl: finalProfileImageUrl }),
-        ...(finalLogoImageUrl !== undefined && { logoImageUrl: finalLogoImageUrl }),
-      },
-    });
+    catch (error) {
+      this.profileImageService.scheduleDeletion(profileChange.url);
+      this.profileImageService.scheduleDeletion(logoChange.url);
+      throw error;
+    }
 
     // 기존 이미지 삭제 (response 후 비동기로 처리)
-    if (oldProfileImageUrl) {
-      setImmediate(() => {
-        this.s3Service.deleteByUrl(oldProfileImageUrl).catch((err) => {
-          console.error('Failed to delete old profile image:', err);
-        });
-      });
-    }
-    if (oldLogoImageUrl) {
-      setImmediate(() => {
-        this.s3Service.deleteByUrl(oldLogoImageUrl).catch((err) => {
-          console.error('Failed to delete old logo image:', err);
-        });
-      });
-    }
+    this.profileImageService.scheduleDeletion(profileChange.previousUrlToDelete);
+    this.profileImageService.scheduleDeletion(logoChange.previousUrlToDelete);
 
     return { success: true, data: updated };
   }

@@ -15,16 +15,18 @@ interface UploadFileModalProps {
   onOpenChange: ModalProps['onOpenChange'];
   quota: TStorageQuota | null;
   folderUuid?: string;
+  /** 페이지 드래그앤드롭으로 모달이 열린 경우 즉시 업로드할 파일 */
+  initialFiles?: File[];
 }
 
 
-export default function UploadFileModal({ isOpen, onOpenChange, quota, folderUuid }: UploadFileModalProps) {
+export default function UploadFileModal({ isOpen, onOpenChange, quota, folderUuid, initialFiles }: UploadFileModalProps) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container className="max-w-lg">
         <Modal.Dialog>
           {({ close }) => (
-            <Content quota={quota} folderUuid={folderUuid} close={close} />
+            <Content quota={quota} folderUuid={folderUuid} initialFiles={initialFiles} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -35,10 +37,11 @@ export default function UploadFileModal({ isOpen, onOpenChange, quota, folderUui
 interface ContentProps {
   quota: TStorageQuota | null;
   folderUuid?: string;
+  initialFiles?: File[];
   close: () => void;
 }
 
-function Content({ quota, folderUuid, close }: ContentProps) {
+function Content({ quota, folderUuid, initialFiles, close }: ContentProps) {
   const router = useRouter();
   const [localQuota, setLocalQuota] = React.useState<TStorageQuota | null>(quota);
   const [uploadedFiles, setUploadedFiles] = React.useState<TMediaFile[]>([]);
@@ -48,14 +51,10 @@ function Content({ quota, folderUuid, close }: ContentProps) {
   const isNearQuota = usagePercent >= 80;
 
   const handleUploadComplete = async (file: TTempMediaFile) => {
-    // S3 업로드 완료 후 DB에 저장
+    // S3 업로드 완료 후 DB에 저장 (크기/타입은 서버가 S3에서 재도출)
     const result = await createMediaFile({
-      url: file.url,
       publicId: file.publicId,
-      type: file.type,
-      contentType: file.contentType,
       fileName: file.fileName,
-      fileSize: file.fileSize,
       folderUuid,
     });
 
@@ -129,6 +128,7 @@ function Content({ quota, folderUuid, close }: ContentProps) {
             onUploadComplete={handleUploadComplete}
             disabled={isOverQuota}
             remainingBytes={localQuota?.remainingBytes}
+            initialFiles={initialFiles}
           />
 
           {/* 업로드 완료된 파일 목록 */}

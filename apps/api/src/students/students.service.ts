@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { S3Service } from '../s3/s3.service';
+import { ProfileImageService } from '../s3/profile-image.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -12,7 +12,7 @@ import { getStudentBalances, EMPTY_BALANCE } from '../common/utils/student-balan
 export class StudentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly s3Service: S3Service,
+    private readonly profileImageService: ProfileImageService,
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
@@ -149,51 +149,37 @@ export class StudentsService {
       throw new NotFoundException(`Student with UUID ${uuid} not found`);
     }
 
-    // profileImageUrl 처리: temp URL이면 images 폴더로 이동
-    let finalProfileImageUrl: string | null | undefined = undefined;
-    let oldImageUrlToDelete: string | null = null;
+    // profileImageUrl 커밋 (검증 + pending 태그 제거). 실패 시 여기서 throw → DB 미변경
+    const imageChange = await this.profileImageService.commitChange(
+      userId,
+      dto.profileImageUrl,
+      existing.profileImageUrl,
+    );
 
-    if (dto.profileImageUrl !== undefined) {
-      if (dto.profileImageUrl && dto.profileImageUrl.includes('suufr/temp/')) {
-        // temp에서 images로 이동
-        const moved = await this.s3Service.moveFileByContentType(dto.profileImageUrl, 'image/jpeg');
-        finalProfileImageUrl = moved?.url ?? null;
-        // 기존 이미지는 response 후에 삭제
-        oldImageUrlToDelete = existing.profileImageUrl;
-      }
-      else if (dto.profileImageUrl === null || dto.profileImageUrl === '') {
-        // 이미지 제거
-        finalProfileImageUrl = null;
-        oldImageUrlToDelete = existing.profileImageUrl;
-      }
-      else {
-        // 이미 정식 URL인 경우 (변경 없음)
-        finalProfileImageUrl = dto.profileImageUrl;
-      }
-    }
-
-    const student = await this.prisma.student.update({
-      where: { uuid },
-      data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.notes !== undefined && { notes: dto.notes }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.email !== undefined && { email: dto.email }),
-        ...(dto.nextPaymentAt !== undefined && {
-          nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
-        }),
-        ...(finalProfileImageUrl !== undefined && { profileImageUrl: finalProfileImageUrl }),
-      },
-    });
-
-    // 기존 이미지 삭제 (response 후 비동기로 처리)
-    if (oldImageUrlToDelete) {
-      setImmediate(() => {
-        this.s3Service.deleteByUrl(oldImageUrlToDelete).catch((err) => {
-          console.error('Failed to delete old image:', err);
-        });
+    let student;
+    try {
+      student = await this.prisma.student.update({
+        where: { uuid },
+        data: {
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.notes !== undefined && { notes: dto.notes }),
+          ...(dto.phone !== undefined && { phone: dto.phone }),
+          ...(dto.email !== undefined && { email: dto.email }),
+          ...(dto.nextPaymentAt !== undefined && {
+            nextPaymentAt: dto.nextPaymentAt ? new Date(dto.nextPaymentAt) : null,
+          }),
+          ...(imageChange.url !== undefined && { profileImageUrl: imageChange.url }),
+        },
       });
     }
+    catch (error) {
+      // 커밋(태그 제거)까지 된 신규 객체가 참조 없이 남지 않도록 정리
+      this.profileImageService.scheduleDeletion(imageChange.url);
+      throw error;
+    }
+
+    // 기존 이미지 삭제 (response 후 비동기로 처리)
+    this.profileImageService.scheduleDeletion(imageChange.previousUrlToDelete);
 
     return { success: true, data: student };
   }

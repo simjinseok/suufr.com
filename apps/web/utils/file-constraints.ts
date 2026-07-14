@@ -18,3 +18,10 @@ export const UPLOAD_ACCEPT_ATTR = SUPPORTED_UPLOAD_TYPES.join(',');
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 export const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 export const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB (PDF)
+
+/**
+ * 프로필성 이미지(학생 프로필, 조직 프로필/로고) 전용 제약.
+ * MediaFile/쿼터에 등록되지 않는 purpose=profile 업로드에 적용된다.
+ */
+export const SUPPORTED_PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB

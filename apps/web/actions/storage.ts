@@ -74,13 +74,10 @@ export async function getMyMediaFiles(params?: { folderId?: string; search?: str
   );
 }
 
+// url/type/fileSize는 서버가 S3 HEAD로 재도출하므로 보내지 않는다 (API DTO가 여분 필드를 400 처리)
 export type CreateMediaFileData = {
-  url: string;
   publicId: string;
-  type: 'image' | 'video' | 'document';
-  contentType: string;
   fileName: string;
-  fileSize: number;
   folderUuid?: string;
 };
 

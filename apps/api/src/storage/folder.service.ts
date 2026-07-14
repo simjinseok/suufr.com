@@ -274,6 +274,18 @@ export class FolderService {
       },
     });
 
+    // 세션/커리큘럼에서 사용 중인 파일이 하나라도 있으면 폴더 삭제 차단 (파일 단건 삭제 가드와 일관)
+    if (files.length > 0) {
+      const fileIds = files.map(f => f.id);
+      const [sessionRefs, curriculumRefs] = await Promise.all([
+        this.prisma.sessionMediaFile.count({ where: { mediaFileId: { in: fileIds } } }),
+        this.prisma.curriculumItemMediaFile.count({ where: { mediaFileId: { in: fileIds } } }),
+      ]);
+      if (sessionRefs + curriculumRefs > 0) {
+        throw new BadRequestException('사용 중인 파일이 포함된 폴더는 삭제할 수 없습니다.');
+      }
+    }
+
     const totalBytes = files.reduce((sum, f) => sum + f.fileSize, 0);
 
     // 1. DB를 원자적으로 정리: 파일 레코드 + 폴더 + 쿼터 차감 (부분 실패로 인한 불일치 방지)

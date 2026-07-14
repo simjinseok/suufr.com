@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, FileTextIcon, Loader2Icon } from 'lucide-react';
+import { UploadCloudIcon, XIcon, FileIcon, ImageIcon, VideoIcon, FileTextIcon } from 'lucide-react';
 import { Button, Surface } from '@heroui/react';
 import { uploadToS3, validateFile, getResourceType } from '@/utils/s3-upload';
 import { UPLOAD_ACCEPT_ATTR } from '@/utils/file-constraints';
@@ -18,9 +18,14 @@ interface Props {
   onUploadComplete: (file: TTempMediaFile) => void;
   disabled?: boolean;
   remainingBytes?: number;
+  /** 마운트 시 바로 업로드를 시작할 파일 (페이지 드래그앤드롭 → 모달 오픈 경로) */
+  initialFiles?: File[];
 }
 
-export default function MediaFileUploadZone({ onUploadComplete, disabled, remainingBytes }: Props) {
+/** 동시 업로드 개수 상한 */
+const UPLOAD_CONCURRENCY = 3;
+
+export default function MediaFileUploadZone({ onUploadComplete, disabled, remainingBytes, initialFiles }: Props) {
   const [isDragging, setIsDragging] = React.useState(false);
   const [uploadingFiles, setUploadingFiles] = React.useState<UploadingFile[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -28,50 +33,77 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
   const handleFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
 
+    // 검증 + 큐 구성. 잔여 용량은 이번에 선택한 파일들의 누적 합으로 판정
+    let budget = remainingBytes;
+    const queue: UploadingFile[] = [];
+    const rejected: UploadingFile[] = [];
+
     for (const file of fileArray) {
-      // 유효성 검사
       const validation = validateFile(file);
       if (!validation.valid) {
-        setUploadingFiles((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), file, progress: 0, error: validation.error },
-        ]);
+        rejected.push({ id: crypto.randomUUID(), file, progress: 0, error: validation.error });
         continue;
       }
 
-      // 용량 확인
-      if (remainingBytes !== undefined && file.size > remainingBytes) {
-        setUploadingFiles((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), file, progress: 0, error: '스토리지 용량이 부족합니다.' },
-        ]);
+      if (budget !== undefined && file.size > budget) {
+        rejected.push({ id: crypto.randomUUID(), file, progress: 0, error: '스토리지 용량이 부족합니다.' });
         continue;
       }
-
-      const uploadId = crypto.randomUUID();
-      setUploadingFiles((prev) => [...prev, { id: uploadId, file, progress: 0 }]);
-
-      // 업로드 시작
-      const result = await uploadToS3(file);
-
-      if (result.success) {
-        onUploadComplete({
-          url: result.url,
-          publicId: result.key,
-          type: result.resourceType,
-          contentType: file.type,
-          fileName: file.name,
-          fileSize: result.fileSize,
-        });
-        setUploadingFiles((prev) => prev.filter((f) => f.id !== uploadId));
+      if (budget !== undefined) {
+        budget -= file.size;
       }
-      else {
-        setUploadingFiles((prev) =>
-          prev.map((f) => (f.id === uploadId ? { ...f, error: result.error } : f)),
-        );
-      }
+
+      queue.push({ id: crypto.randomUUID(), file, progress: 0 });
     }
+
+    setUploadingFiles((prev) => [...prev, ...queue, ...rejected]);
+
+    // 워커 풀: 최대 UPLOAD_CONCURRENCY개 파일을 동시에 업로드
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < queue.length) {
+        const item = queue[cursor++];
+        const result = await uploadToS3(item.file, {
+          onProgress: (percentage) => {
+            setUploadingFiles((prev) =>
+              prev.map((f) => (f.id === item.id ? { ...f, progress: percentage } : f)),
+            );
+          },
+        });
+
+        if (result.success) {
+          onUploadComplete({
+            url: result.url,
+            publicId: result.key,
+            type: result.resourceType,
+            contentType: item.file.type,
+            fileName: item.file.name,
+            fileSize: result.fileSize,
+          });
+          setUploadingFiles((prev) => prev.filter((f) => f.id !== item.id));
+        }
+        else {
+          setUploadingFiles((prev) =>
+            prev.map((f) => (f.id === item.id ? { ...f, error: result.error } : f)),
+          );
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(UPLOAD_CONCURRENCY, queue.length) }, () => worker()),
+    );
   };
+
+  // initialFiles는 마운트 시 1회만 처리
+  const initialFilesProcessed = React.useRef(false);
+  React.useEffect(() => {
+    if (!initialFilesProcessed.current && initialFiles && initialFiles.length > 0 && !disabled) {
+      initialFilesProcessed.current = true;
+      handleFiles(initialFiles);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -159,8 +191,15 @@ export default function MediaFileUploadZone({ onUploadComplete, disabled, remain
                   <p className="text-xs text-danger">{item.error}</p>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Loader2Icon className="size-3 animate-spin text-accent" />
-                    <span className="text-xs text-default-400">업로드 중...</span>
+                    <div className="h-1.5 flex-1 bg-default-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent transition-all"
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-default-400 tabular-nums w-9 text-right">
+                      {item.progress}%
+                    </span>
                   </div>
                 )}
               </div>

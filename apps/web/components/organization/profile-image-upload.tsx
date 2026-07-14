@@ -4,8 +4,9 @@ import * as React from 'react';
 import { Spinner } from '@heroui/react';
 import { CameraIcon, XIcon, UserIcon } from 'lucide-react';
 import { uploadToS3 } from '@/utils/s3-upload';
+import { SUPPORTED_PROFILE_IMAGE_TYPES } from '@/utils/file-constraints';
 
-const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_FORMATS = SUPPORTED_PROFILE_IMAGE_TYPES;
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 
 interface Props {
@@ -39,8 +40,8 @@ export default function ProfileImageUpload({ value, onChange, disabled, currentI
     setIsUploading(true);
 
     try {
-      // S3로 직접 업로드
-      const result = await uploadToS3(file);
+      // S3로 직접 업로드 (profile: 공개 prefix, 저장 시 커밋)
+      const result = await uploadToS3(file, { purpose: 'profile' });
 
       if (!result.success) {
         setError(result.error);

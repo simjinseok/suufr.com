@@ -211,12 +211,8 @@ export default function MediaFileAttachModal({
 
   const handleUploadComplete = async (tempFile: TTempMediaFile) => {
     const result = await createMediaFile({
-      url: tempFile.url,
       publicId: tempFile.publicId,
-      type: tempFile.type,
-      contentType: tempFile.contentType,
       fileName: tempFile.fileName,
-      fileSize: tempFile.fileSize,
       folderUuid: currentFolderUuid || undefined,
     });
 

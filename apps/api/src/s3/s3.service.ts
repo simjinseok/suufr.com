@@ -3,7 +3,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
-  CopyObjectCommand,
+  DeleteObjectTaggingCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import {
@@ -17,6 +17,13 @@ import {
 } from '@aws-sdk/cloudfront-signer';
 import { randomUUID } from 'crypto';
 import { folderByContentType } from '../common/utils/content-type';
+
+/**
+ * 등록 전 업로드 객체에 붙는 태그.
+ * S3 라이프사이클 룰이 이 태그가 남은(=등록되지 않은) 객체를 1일 후 회수한다.
+ * 룰 설정은 docs/s3-pending-lifecycle.md 참고.
+ */
+export const PENDING_UPLOAD_TAG = 'status=pending';
 
 @Injectable()
 export class S3Service {
@@ -53,6 +60,10 @@ export class S3Service {
 
   /**
    * Generate presigned URL for client-side upload
+   *
+   * 업로드 직후의 객체에는 status=pending 태그가 붙는다. 등록(POST /files)이 태그를
+   * 제거하기 전까지는 라이프사이클 룰의 회수 대상 (docs/s3-pending-lifecycle.md 참고).
+   *
    * @param key - S3 object key (e.g., 'temp/uuid.jpg')
    * @param contentType - MIME type (e.g., 'image/jpeg')
    * @param expiresIn - URL expiration in seconds (default: 300 = 5 minutes)
@@ -68,14 +79,45 @@ export class S3Service {
         Bucket: this.bucketName,
         Key: key,
         ContentType: contentType,
+        Tagging: PENDING_UPLOAD_TAG,
       });
 
-      const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+      // x-amz-tagging은 쿼리 파라미터로 호이스팅되면 S3가 무시하므로 서명 헤더에 남긴다.
+      // 그 결과 클라이언트가 같은 값의 헤더를 보내지 않으면 403 → 태그 누락이 조용히 지나가지 않는다.
+      const url = await getSignedUrl(this.s3Client, command, {
+        expiresIn,
+        unhoistableHeaders: new Set(['x-amz-tagging']),
+      });
       return url;
     }
     catch (error) {
       console.error('S3 presigned URL generation error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * presigned PUT 시 클라이언트가 그대로 에코해야 하는 서명 헤더
+   */
+  getPresignedUploadRequiredHeaders(): Record<string, string> {
+    return { 'x-amz-tagging': PENDING_UPLOAD_TAG };
+  }
+
+  /**
+   * 객체의 태그 전체 제거 (pending 태그 해제 = 라이프사이클 회수 대상에서 제외)
+   * @returns 성공 여부
+   */
+  async clearObjectTags(key: string): Promise<boolean> {
+    try {
+      await this.s3Client.send(new DeleteObjectTaggingCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      }));
+      return true;
+    }
+    catch (error) {
+      console.error('S3 clearObjectTags error:', error);
+      return false;
     }
   }
 
@@ -135,25 +177,6 @@ export class S3Service {
       console.error('S3 upload error:', error);
       return null;
     }
-  }
-
-  /**
-   * Get file extension from content type
-   * @param contentType - MIME type
-   * @returns File extension with dot (e.g., '.png')
-   */
-  private getExtensionFromContentType(contentType: string): string {
-    const map: Record<string, string> = {
-      'image/jpeg': '.jpg',
-      'image/png': '.png',
-      'image/webp': '.webp',
-      'image/gif': '.gif',
-      'video/mp4': '.mp4',
-      'video/quicktime': '.mov',
-      'video/webm': '.webm',
-      'application/pdf': '.pdf',
-    };
-    return map[contentType] || '';
   }
 
   /**
@@ -220,98 +243,6 @@ export class S3Service {
     catch (error) {
       console.error('S3 delete by URL error:', error);
       return false;
-    }
-  }
-
-  /**
-   * Move file from source to destination (copy + delete)
-   * If source deletion fails, the copied file is rolled back to maintain atomicity.
-   * @param sourceKey - Source S3 object key
-   * @param destKey - Destination S3 object key
-   * @returns true on success, false on error
-   */
-  async moveFile(sourceKey: string, destKey: string): Promise<boolean> {
-    try {
-      // Copy object to new location
-      const copyCommand = new CopyObjectCommand({
-        Bucket: this.bucketName,
-        CopySource: `${this.bucketName}/${sourceKey}`,
-        Key: destKey,
-      });
-
-      await this.s3Client.send(copyCommand);
-
-      // Delete original object
-      try {
-        const deleteCommand = new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: sourceKey,
-        });
-
-        await this.s3Client.send(deleteCommand);
-      }
-      catch (deleteError) {
-        // Source deletion failed - rollback by deleting the copied file
-        console.error('S3 source delete failed, rolling back copy:', deleteError);
-        try {
-          const rollbackCommand = new DeleteObjectCommand({
-            Bucket: this.bucketName,
-            Key: destKey,
-          });
-          await this.s3Client.send(rollbackCommand);
-        }
-        catch (rollbackError) {
-          console.error('S3 rollback delete failed:', rollbackError);
-        }
-        return false;
-      }
-
-      return true;
-    }
-    catch (error) {
-      console.error('S3 move file error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Move file from temp to appropriate folder based on content type
-   * @param tempUrl - Temporary S3 URL
-   * @param contentType - MIME type to determine destination folder
-   * @param userId - Optional user ID for protected path (users/{userId}/...)
-   * @returns { url, key } or null
-   */
-  async moveFileByContentType(
-    tempUrl: string,
-    contentType: string,
-    userId?: string,
-  ): Promise<{ url: string; key: string } | null> {
-    const sourceKey = this.extractKeyFromUrl(tempUrl);
-    if (!sourceKey || !sourceKey.startsWith('temp/')) {
-      console.error('Invalid temp URL:', tempUrl);
-      return null;
-    }
-
-    const folder = folderByContentType(contentType);
-    const ext = this.getExtensionFromContentType(contentType);
-    const key = randomUUID();
-    // userId가 있으면 보호된 경로, 없으면 공개 경로
-    const destKey = userId
-      ? `users/${userId}/${folder}/${key}${ext}`
-      : `${folder}/${key}${ext}`;
-
-    try {
-      const success = await this.moveFile(sourceKey, destKey);
-      if (!success) {
-        return null;
-      }
-
-      const url = `${process.env.CDN_URL}/${destKey}`;
-      return { url, key: destKey };
-    }
-    catch (error) {
-      console.error('Move file error:', error);
-      return null;
     }
   }
 

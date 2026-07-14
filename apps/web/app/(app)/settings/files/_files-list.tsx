@@ -24,7 +24,7 @@ interface FilesListProps {
 }
 
 export default function FilesList({ files, folders, sortOrder, searchQuery, currentFolderUuid }: FilesListProps) {
-  const [previewFile, setPreviewFile] = React.useState<TMediaFile | null>(null);
+  const [previewIndex, setPreviewIndex] = React.useState<number | null>(null);
   const [deleteFile, setDeleteFile] = React.useState<TMediaFile | null>(null);
   const [moveFile, setMoveFile] = React.useState<TMediaFile | null>(null);
   const [deleteFolder, setDeleteFolder] = React.useState<TFolder | null>(null);
@@ -133,7 +133,7 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
         ))}
 
         {/* 파일 목록 */}
-        {filteredAndSortedFiles.map((file) => (
+        {filteredAndSortedFiles.map((file, index) => (
           <FileRow
             key={file.uuid}
             file={file}
@@ -141,7 +141,7 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
             onStartEdit={() => handleStartEditFile(file)}
             onCancelEdit={handleCancelEdit}
             onEditSuccess={() => handleEditSuccess('파일 이름이 변경되었습니다.')}
-            onPreview={() => setPreviewFile(file)}
+            onPreview={() => setPreviewIndex(index)}
             onDelete={() => setDeleteFile(file)}
             onMove={() => setMoveFile(file)}
           />
@@ -149,9 +149,11 @@ export default function FilesList({ files, folders, sortOrder, searchQuery, curr
       </Surface>
 
       <FilePreviewModal
-        isOpen={!!previewFile}
-        onOpenChange={(open) => !open && setPreviewFile(null)}
-        file={previewFile}
+        isOpen={previewIndex !== null}
+        onOpenChange={(open) => !open && setPreviewIndex(null)}
+        files={filteredAndSortedFiles}
+        index={previewIndex}
+        onNavigate={setPreviewIndex}
       />
 
       <DeleteFileModal
@@ -188,6 +190,8 @@ interface FileRowProps {
 
 function FileRow({ file, isEditing, onStartEdit, onCancelEdit, onEditSuccess, onPreview, onDelete, onMove }: FileRowProps) {
   const fileName = file.fileName || 'Untitled';
+  // 썸네일 로드 실패(예: CDN 인증 없음) 시 타입 아이콘으로 폴백
+  const [thumbnailError, setThumbnailError] = React.useState(false);
 
   // 확장자 분리
   const lastDotIndex = fileName.lastIndexOf('.');
@@ -239,10 +243,21 @@ function FileRow({ file, isEditing, onStartEdit, onCancelEdit, onEditSuccess, on
     <div className="group flex items-center gap-4 p-2 hover:bg-gray-50 transition-colors">
       <button
         type="button"
-        className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${getIconBgColor()}`}
+        className={`shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${getIconBgColor()}`}
         onClick={onPreview}
       >
-        {getTypeIcon()}
+        {file.type === 'image' && !thumbnailError ? (
+          <img
+            src={file.url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="w-10 h-10 object-cover"
+            onError={() => setThumbnailError(true)}
+          />
+        ) : (
+          getTypeIcon()
+        )}
       </button>
 
       {isEditing ? (
