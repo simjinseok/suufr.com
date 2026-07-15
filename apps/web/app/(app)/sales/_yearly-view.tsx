@@ -60,7 +60,7 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
         {monthlyTrend.length > 0 && (
           <div className="bg-gradient-to-br from-indigo-50/80 to-violet-50/50 rounded-2xl p-5">
             <h3 className="text-sm font-medium text-zinc-500 mb-2">
-              월별 입금 추이
+              월별 결제 추이
             </h3>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +129,7 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
         )}
 
         <div className="text-center py-12 text-default-500">
-          해당 연도에 입금 내역이 없습니다.
+          해당 연도에 결제 내역이 없습니다.
         </div>
       </div>
     );
@@ -166,7 +166,7 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
       {monthlyTrend.length > 0 && (
         <div className="bg-gradient-to-br from-indigo-50/80 to-violet-50/50 rounded-2xl p-5">
           <h3 className="text-sm font-medium text-zinc-500 mb-2">
-            월별 입금 추이
+            월별 결제 추이
           </h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">

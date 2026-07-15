@@ -58,6 +58,7 @@ type ListSessionsParams = {
   invoiceUuid?: string;
   dateFrom?: string;
   dateTo?: string;
+  order?: 'asc' | 'desc';
 };
 
 type ListSessionsResponse = {

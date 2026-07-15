@@ -3,11 +3,11 @@ import { createLoader, parseAsInteger, parseAsString } from 'nuqs/server';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
-import NewPayment from './_new-payment';
-import PaymentsList from './_payments-list';
-import { StudentFilter } from '@/components/student/student-filter';
+import NewInvoice from './_new-invoice';
+import InvoicesList from './_invoices-list';
 import { getSession } from '@/utils/auth';
-import { paymentsApi, studentsApi } from '@/utils/api';
+import { invoicesApi, studentsApi } from '@/utils/api';
+import { getUserSettings } from '@/utils/user-settings';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -16,7 +16,7 @@ const loadSearchParams = createLoader({
   student: parseAsString.withDefault(''),
 });
 
-export default async function Page(props: PageProps<'/payments'>) {
+export default async function Page(props: PageProps<'/invoices'>) {
   const { page, student } = await loadSearchParams(props.searchParams);
 
   const session = await getSession();
@@ -25,8 +25,9 @@ export default async function Page(props: PageProps<'/payments'>) {
   }
   const { organization } = session;
 
-  const [{ data: payments, meta }, selectedStudent] = await Promise.all([
-    paymentsApi.list({
+  const [settings, { data: invoices, meta }, selectedStudent] = await Promise.all([
+    getUserSettings(),
+    invoicesApi.list({
       organizationUuids: [organization.uuid],
       page,
       limit: PAGE_SIZE,
@@ -43,27 +44,34 @@ export default async function Page(props: PageProps<'/payments'>) {
   return (
     <div className="mt-3">
       <div className="flex items-end justify-between">
-        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">결제</h1>
-        <NewPayment />
+        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">수강권</h1>
+        <NewInvoice />
       </div>
 
-      <div className="mt-5 flex justify-between">
-        <StudentFilter selected={selectedStudent} />
-      </div>
-
-      <PaymentsList
-        payments={payments.map(p => ({
-          id: p.id,
-          uuid: p.uuid,
-          amount: p.amount,
-          method: p.method,
-          paidAt: p.paidAt,
-          notes: p.notes,
+      <InvoicesList
+        invoices={invoices.map(invoice => ({
+          uuid: invoice.uuid,
+          title: invoice.title,
+          price: invoice.price,
+          totalCount: invoice.totalCount,
+          periodStart: invoice.periodStart,
+          periodEnd: invoice.periodEnd,
+          // 수업 목록은 수업일 내림차순 (API 기본은 오름차순)
+          sessions: invoice.sessions
+            .map(s => ({
+              uuid: s.uuid,
+              sessionAt: s.sessionAt,
+              duration: s.duration,
+              isDone: s.isDone,
+            }))
+            .sort((a, b) => b.sessionAt.localeCompare(a.sessionAt)),
           student: {
-            uuid: p.student.uuid,
-            name: p.student.name,
+            uuid: invoice.student.uuid,
+            name: invoice.student.name,
           },
         }))}
+        selectedStudent={selectedStudent}
+        use24HourFormat={settings.use24HourFormat}
       />
 
       <div className="mt-5 flex justify-between">
