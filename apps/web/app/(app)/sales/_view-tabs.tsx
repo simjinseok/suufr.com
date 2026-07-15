@@ -15,7 +15,7 @@ export default function ViewTabs({ view }: Props) {
     const params = new URLSearchParams(searchParams.toString());
     params.set('view', newView);
     params.delete('date');
-    router.push(`/payments?${params.toString()}`);
+    router.push(`/sales?${params.toString()}`);
   };
 
   return (

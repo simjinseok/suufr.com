@@ -42,7 +42,7 @@ export default function MonthlyView({ stats, payments }: Props) {
   if (!stats || stats.count === 0) {
     return (
       <div className="mt-6 text-center py-12 text-default-500">
-        해당 월에 입금 내역이 없습니다.
+        해당 월에 결제 내역이 없습니다.
       </div>
     );
   }

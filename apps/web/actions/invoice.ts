@@ -47,7 +47,7 @@ export async function createInvoice(prevState: CreateInvoiceState, formData: For
       });
 
       revalidatePath('/students', 'layout');
-      revalidatePath('/payments', 'page');
+      revalidatePath('/invoices', 'page');
       state.success = true;
       state.message = '수강권을 추가하였습니다';
       return state;
@@ -97,8 +97,12 @@ export async function settleSession(prevState: SettleSessionState, formData: For
         initialPayment: { method, paidAt: new Date().toISOString() },
       });
 
+      // 회당 정산은 수강권·입금·수업 귀속을 한 번에 바꾼다
       revalidatePath('/students', 'layout');
+      revalidatePath('/invoices', 'page');
       revalidatePath('/payments', 'page');
+      revalidatePath('/sales', 'page');
+      revalidatePath('/sessions', 'page');
       state.success = true;
       state.message = '수업을 정산하였습니다';
       return state;
@@ -158,6 +162,7 @@ export async function updateInvoice(state: UpdateInvoiceState, formData: FormDat
       });
 
       revalidatePath('/students', 'layout');
+      revalidatePath('/invoices', 'page');
       state.success = true;
       return state;
     },
@@ -189,6 +194,8 @@ export async function removeInvoice(prevState: any, formData: FormData) {
       await invoicesApi.remove(invoiceUuid);
 
       revalidatePath('/students', 'layout');
+      revalidatePath('/invoices', 'page');
+      revalidatePath('/sessions', 'page');
       state.success = true;
       state.message = '수강권을 삭제하였습니다';
       return state;

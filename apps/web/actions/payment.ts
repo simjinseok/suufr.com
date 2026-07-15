@@ -87,6 +87,7 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         }
 
         revalidatePath('/payments', 'page');
+        revalidatePath('/sales', 'page');
         revalidatePath('/students', 'layout');
         state.success = true;
         state.message = '입금내역을 수정하였습니다.';
@@ -124,6 +125,7 @@ export async function removePayment(prevState: RemovePaymentState, formData: For
         await paymentsApi.remove(paymentUuid);
 
         revalidatePath('/payments', 'page');
+        revalidatePath('/sales', 'page');
         revalidatePath('/students', 'layout');
         return { success: true, timestamp: Date.now() };
       }

@@ -3,24 +3,15 @@
 import {
   MenuIcon,
   LogOutIcon,
-  HomeIcon,
-  BookUserIcon,
-  ReceiptIcon,
-  UserRoundCheckIcon,
-  CalendarIcon,
   SettingsIcon,
   ShieldIcon,
   BuildingIcon,
   ChevronsUpDownIcon,
   CheckIcon,
-  HardDriveIcon,
-  BookOpenIcon,
   CreditCardIcon,
 } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
-import { AppNavigation } from '@/components/app-navigation';
+import { AppNavigation, mainMenuItems, subMenuItems } from '@/components/app-navigation';
 import { PlanBadge } from '@/components/plan-badge';
 import { UserMenu } from './_user-menu';
 
@@ -39,11 +30,9 @@ type Props = {
 };
 
 export function Sidebar({ currentOrg, organizations, plan }: Props) {
-  const pathname = usePathname();
   const profileName = currentOrg.profileName ?? currentOrg.name;
   const profileImageUrl = currentOrg.profileImageUrl;
   const profileInitial = profileName.charAt(profileName.length - 1);
-  const isFilesActive = pathname.startsWith('/settings/files');
 
   const handleMobileAction = (key: string | number) => {
     const keyStr = String(key);
@@ -85,26 +74,10 @@ export function Sidebar({ currentOrg, organizations, plan }: Props) {
         </div>
       </div>
       <AppNavigation />
-      <div className="px-3 py-2">
-        <Link
-          href="/settings/files"
-          className={`
-            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-            transition-all duration-200
-            ${
-              isFilesActive
-                ? 'text-indigo-700 bg-white/80 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-            }
-          `}
-        >
-          <HardDriveIcon
-            className={`w-[18px] h-[18px] ${isFilesActive ? 'text-indigo-600' : 'text-gray-400'}`}
-            strokeWidth={isFilesActive ? 2 : 1.5}
-          />
-          <span>파일 관리</span>
-        </Link>
-      </div>
+      <AppNavigation
+        items={subMenuItems}
+        className="px-3 py-2 space-y-1 border-t border-gray-200/60"
+      />
       <UserMenu currentOrg={currentOrg} organizations={organizations} plan={plan} />
     </>
   );
@@ -128,9 +101,11 @@ export function Sidebar({ currentOrg, organizations, plan }: Props) {
           <Dropdown>
             <Button variant="ghost" className="h-auto py-1.5 px-2 gap-2">
               <Avatar className="size-6">
-                {profileImageUrl ? (
-                  <Avatar.Image src={profileImageUrl} alt={profileName} />
-                ) : null}
+                {profileImageUrl
+                  ? (
+                      <Avatar.Image src={profileImageUrl} alt={profileName} />
+                    )
+                  : null}
                 <Avatar.Fallback className="text-[10px]">{profileInitial}</Avatar.Fallback>
               </Avatar>
               <div className="text-left">
@@ -220,63 +195,27 @@ export function Sidebar({ currentOrg, organizations, plan }: Props) {
             </Button>
             <Dropdown.Popover placement="bottom end" className="min-w-40 w-auto! animate-none!">
               <Dropdown.Menu aria-label="메뉴">
-                <Dropdown.Item id="dashboard" href="/dashboard" textValue="메인">
-                  <div>
-                    <HomeIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>대시보드</Label>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="students" href="/students" textValue="수강생">
-                  <div>
-                    <BookUserIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>수강생</Label>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="payments" href="/payments" textValue="입금내역">
-                  <div>
-                    <ReceiptIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>입금내역</Label>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="meetings" href="/meetings" textValue="상담">
-                  <div>
-                    <UserRoundCheckIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>상담</Label>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="calendar" href="/calendar" textValue="캘린더">
-                  <div>
-                    <CalendarIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>캘린더</Label>
-                  </div>
-                </Dropdown.Item>
+                {mainMenuItems.map(item => (
+                  <Dropdown.Item key={item.href} id={item.href} href={item.href} textValue={item.label}>
+                    <div>
+                      <item.icon strokeWidth={1.5} className="size-5" />
+                    </div>
+                    <div>
+                      <Label>{item.label}</Label>
+                    </div>
+                  </Dropdown.Item>
+                ))}
                 <Separator />
-                <Dropdown.Item id="curriculums" href="/curriculums" textValue="커리큘럼">
-                  <div>
-                    <BookOpenIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>커리큘럼</Label>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item id="files" href="/settings/files" textValue="파일 관리">
-                  <div>
-                    <HardDriveIcon strokeWidth={1.5} className="size-5" />
-                  </div>
-                  <div>
-                    <Label>파일 관리</Label>
-                  </div>
-                </Dropdown.Item>
+                {subMenuItems.map(item => (
+                  <Dropdown.Item key={item.href} id={item.href} href={item.href} textValue={item.label}>
+                    <div>
+                      <item.icon strokeWidth={1.5} className="size-5" />
+                    </div>
+                    <div>
+                      <Label>{item.label}</Label>
+                    </div>
+                  </Dropdown.Item>
+                ))}
               </Dropdown.Menu>
             </Dropdown.Popover>
           </Dropdown>

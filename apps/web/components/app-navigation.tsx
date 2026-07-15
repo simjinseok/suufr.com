@@ -1,38 +1,56 @@
 'use client';
 
+import type { LucideIcon } from 'lucide-react';
+
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   HomeIcon,
   BookUserIcon,
-  ReceiptIcon,
+  TicketIcon,
+  CreditCardIcon,
   UserRoundCheckIcon,
   CalendarIcon,
   BookOpenIcon,
+  HardDriveIcon,
 } from 'lucide-react';
 
-const menuItems = [
+type MenuItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+export const mainMenuItems: MenuItem[] = [
   { href: '/dashboard', label: '메인', icon: HomeIcon },
   { href: '/students', label: '수강생', icon: BookUserIcon },
-  { href: '/payments', label: '입금내역', icon: ReceiptIcon },
+  { href: '/calendar', label: '수업', icon: CalendarIcon },
+  { href: '/invoices', label: '수강권', icon: TicketIcon },
+  { href: '/sales', label: '결제', icon: CreditCardIcon },
+];
+
+// 하단 그룹 — 도구/보조 메뉴
+export const subMenuItems: MenuItem[] = [
   { href: '/meetings', label: '상담', icon: UserRoundCheckIcon },
-  { href: '/calendar', label: '캘린더', icon: CalendarIcon },
   { href: '/curriculums', label: '커리큘럼', icon: BookOpenIcon },
+  { href: '/settings/files', label: '파일 관리', icon: HardDriveIcon },
 ];
 
 interface AppNavigationProps {
+  items?: MenuItem[];
+  className?: string;
   onItemClick?: () => void;
 }
 
-export function AppNavigation({ onItemClick }: AppNavigationProps) {
+export function AppNavigation({ items = mainMenuItems, className = 'flex-1 px-3 py-2 space-y-1 overflow-y-auto', onItemClick }: AppNavigationProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-      {menuItems.map((item) => {
-        const isActive =
-          pathname === item.href ||
-          (item.href !== '/' && pathname.startsWith(item.href + '/'));
+    <nav className={className}>
+      {items.map((item) => {
+        const isActive
+          = pathname === item.href
+            || (item.href !== '/' && pathname.startsWith(item.href + '/'));
 
         return (
           <Link
@@ -43,10 +61,10 @@ export function AppNavigation({ onItemClick }: AppNavigationProps) {
               flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
               transition-all duration-200
               ${
-                isActive
-                  ? 'text-indigo-700 bg-white/80 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-              }
+          isActive
+            ? 'text-indigo-700 bg-white/80 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+          }
             `}
           >
             <item.icon
