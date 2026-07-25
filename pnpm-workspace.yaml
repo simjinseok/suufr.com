@@ -1,10 +1,17 @@
 packages:
   - 'apps/*'
   - 'packages/*'
-onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "@prisma/engines"
-  - "@sentry/cli"
-  - "esbuild"
-  - "prisma"
-  - "sharp"
+
+# pnpm 11: onlyBuiltDependencies 를 대체. 미등록 패키지는 strictDepBuilds(기본 true)로 설치 실패한다.
+allowBuilds:
+  "@prisma/engines": true
+  "@sentry/cli": true
+  "@sentry/node-cpu-profiler": true
+  esbuild: true
+  prisma: true
+  sharp: true
+
+# pnpm 11 기본값은 install. web 은 --config.node-linker=hoisted 로 설치한 뒤
+# 플래그 없이 `pnpm turbo build` 를 돌리므로, 자동 검증이 isolated 재설치를 유발해
+# hoisted 레이아웃(Next standalone 전제)을 무너뜨린다.
+verifyDepsBeforeRun: false

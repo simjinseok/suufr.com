@@ -1,12 +1,17 @@
 version: 0.2
 
+env:
+  variables:
+    # TTY 없는 환경에서 빌드 스크립트 승인 프롬프트로 멈추지 않도록
+    CI: "true"
+
 phases:
   install:
     runtime-versions:
       nodejs: 24
     commands:
       - corepack enable
-      - corepack prepare pnpm@10 --activate
+      - corepack prepare pnpm@11 --activate
 
   pre_build:
     commands:
