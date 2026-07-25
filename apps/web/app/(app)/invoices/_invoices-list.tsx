@@ -111,16 +111,10 @@ export default function InvoicesList({ invoices, selectedStudent, use24HourForma
                           {' '}
                           {invoice.sessions.length}
                         </Chip>
-                        {invoice.price === 0
-                          ? (
-                              <Chip size="sm" color="warning" variant="soft">금액 미입력</Chip>
-                            )
-                          : (
-                              <p className="text-base font-bold text-gray-900 tabular-nums">
-                                {numberToHangulMixed(invoice.price)}
-                                원
-                              </p>
-                            )}
+                        <p className="text-base font-bold text-gray-900 tabular-nums">
+                          {numberToHangulMixed(invoice.price)}
+                          원
+                        </p>
                       </div>
                     </div>
 

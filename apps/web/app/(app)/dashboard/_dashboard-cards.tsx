@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { Card, Chip, Modal, Button } from '@heroui/react';
+import { Card, Modal, Button } from '@heroui/react';
 import { numberToHangulMixed } from 'es-hangul';
 import { BanknoteXIcon, ChevronRightIcon, UserRoundCheckIcon, UserRoundMinusIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -12,28 +12,18 @@ type UnpaidStudent = {
   outstandingAmount: number;
 };
 
-type NeedsPriceInvoice = {
-  uuid: string;
-  title: string | null;
-  createdAt: string;
-  student: {
-    uuid: string;
-    name: string;
-  };
-};
-
 interface Props {
   currentActiveStudentCount: number;
   leftStudentsCount: number;
   unpaidStudents: UnpaidStudent[];
-  needsPriceInvoices: NeedsPriceInvoice[];
+  unpaidStudentsCount: number;
 }
 
 export default function DashboardCards({
   currentActiveStudentCount,
   leftStudentsCount,
   unpaidStudents,
-  needsPriceInvoices,
+  unpaidStudentsCount,
 }: Props) {
   return (
     <div className="mt-3 flex flex-col gap-3 md:grid md:grid-cols-3">
@@ -75,17 +65,9 @@ export default function DashboardCards({
           <div className="grow flex flex-col gap-y-2">
             <dt className="text-small font-medium text-default-500">미납</dt>
             <dd className="text-2xl font-semibold text-default-700">
-              {unpaidStudents.length}
+              {unpaidStudentsCount}
               명
             </dd>
-            {needsPriceInvoices.length > 0 && (
-              <p className="text-xs text-warning-600">
-                금액 미입력
-                {' '}
-                {needsPriceInvoices.length}
-                건
-              </p>
-            )}
           </div>
           <div className="">
             <Modal>
@@ -101,7 +83,6 @@ export default function DashboardCards({
                     {({ close }) => (
                       <ModalContent
                         students={unpaidStudents}
-                        needsPriceInvoices={needsPriceInvoices}
                         close={close}
                       />
                     )}
@@ -119,20 +100,17 @@ export default function DashboardCards({
 
 interface ModalContentProps {
   students: UnpaidStudent[];
-  needsPriceInvoices: NeedsPriceInvoice[];
   close: () => void;
 }
 
-function ModalContent({ students, needsPriceInvoices, close }: ModalContentProps) {
-  const isEmpty = students.length === 0 && needsPriceInvoices.length === 0;
-
+function ModalContent({ students, close }: ModalContentProps) {
   return (
     <React.Fragment>
       <Modal.Header>
         <Modal.Heading>입금 확인이 필요한 학생</Modal.Heading>
       </Modal.Header>
       <Modal.Body className="overflow-y-auto flex-1">
-        {isEmpty
+        {students.length === 0
           ? (
               <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
                 <BanknoteXIcon className="size-10 mb-2 opacity-50" />
@@ -155,27 +133,6 @@ function ModalContent({ students, needsPriceInvoices, close }: ModalContentProps
                           {numberToHangulMixed(student.outstandingAmount)}
                           원
                         </span>
-                        <ChevronRightIcon className="size-4 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors" />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-                {needsPriceInvoices.map(invoice => (
-                  <li key={invoice.uuid}>
-                    <Link
-                      href={`/students/${invoice.student.uuid}`}
-                      className="group flex items-center justify-between p-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-colors"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                          {invoice.student.name}
-                        </span>
-                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {invoice.title || '수강권'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Chip size="sm" color="warning" variant="soft">금액 미입력</Chip>
                         <ChevronRightIcon className="size-4 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 transition-colors" />
                       </div>
                     </Link>

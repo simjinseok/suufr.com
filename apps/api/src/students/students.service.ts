@@ -226,7 +226,6 @@ export class StudentsService {
       this.prisma.invoice.findMany({
         where: { studentId: student.id, deletedAt: null },
         select: {
-          price: true,
           sessions: { where: { deletedAt: null }, select: { isDone: true } },
         },
       }),
@@ -234,14 +233,9 @@ export class StudentsService {
     ]);
 
     let completedInvoiceCount = 0;
-    let needsPriceCount = 0;
     for (const invoice of invoices) {
       if (invoice.sessions.every(s => s.isDone)) {
         completedInvoiceCount += 1;
-      }
-      // price=0 = "금액 미입력" — 잔액에 잡히지 않으므로 별도 노출
-      if (invoice.price === 0) {
-        needsPriceCount += 1;
       }
     }
 
@@ -254,7 +248,6 @@ export class StudentsService {
         completedInvoiceCount,
         outstandingAmount: balance.outstandingAmount,
         creditAmount: balance.creditAmount,
-        needsPriceCount,
         nextPaymentAt: student.nextPaymentAt,
       },
     };

@@ -23,7 +23,7 @@ export default async function Page() {
   const {
     activeStudentCount,
     unpaidStudents,
-    needsPriceInvoices,
+    unpaidStudentsCount,
     leftStudentsCount,
     uncheckedMeetings,
   } = response.data;
@@ -34,7 +34,7 @@ export default async function Page() {
         currentActiveStudentCount={activeStudentCount}
         leftStudentsCount={leftStudentsCount}
         unpaidStudents={unpaidStudents}
-        needsPriceInvoices={needsPriceInvoices}
+        unpaidStudentsCount={unpaidStudentsCount}
       />
 
       {uncheckedMeetings.length > 0 && (
