@@ -14,6 +14,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   devIndicators: false,
+  // /sales 는 /payments 로 통합됨 — 기존 북마크 보호
+  async redirects() {
+    return [
+      { source: '/sales', destination: '/payments', permanent: true },
+    ];
+  },
   serverExternalPackages: [
     'require-in-the-middle',
     'import-in-the-middle',
