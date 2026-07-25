@@ -7,7 +7,7 @@ import { PlusIcon } from 'lucide-react';
 import StudentPickerModal from '@/components/student/student-picker-modal';
 import PaymentModal from '@/components/invoice/payment-modal';
 
-export default function NewPayment() {
+export default function NewPaymentButton() {
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [studentUuid, setStudentUuid] = React.useState<string | null>(null);
 

@@ -101,7 +101,6 @@ export async function settleSession(prevState: SettleSessionState, formData: For
       revalidatePath('/students', 'layout');
       revalidatePath('/invoices', 'page');
       revalidatePath('/payments', 'page');
-      revalidatePath('/sales', 'page');
       revalidatePath('/sessions', 'page');
       state.success = true;
       state.message = '수업을 정산하였습니다';

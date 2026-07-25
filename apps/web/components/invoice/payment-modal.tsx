@@ -11,10 +11,10 @@ import {
   DateField,
   DatePicker,
   Description,
+  Input,
   NumberField,
   Tag,
   TagGroup,
-  TextArea,
   Select,
   ListBox,
   Label,
@@ -234,7 +234,7 @@ function Content({ close, studentUuid, payment, defaultAmount }: ContentProps) {
                 onChange={onChange}
               >
                 <Label>메모</Label>
-                <TextArea variant="secondary" rows={3} className="resize-none" />
+                <Input variant="secondary" />
               </TextField>
             )}
           />

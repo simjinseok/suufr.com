@@ -1,10 +1,45 @@
 packages:
   - 'apps/*'
   - 'packages/*'
-onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "@prisma/engines"
-  - "@sentry/cli"
-  - "esbuild"
-  - "prisma"
-  - "sharp"
+
+# pnpm 11: onlyBuiltDependencies 를 대체. 미등록 패키지는 strictDepBuilds(기본 true)로 설치 실패한다.
+allowBuilds:
+  "@prisma/engines": true
+  "@sentry/cli": true
+  "@sentry/node-cpu-profiler": true
+  esbuild: true
+  prisma: true
+  sharp: true
+
+# 한시적. minimumReleaseAge(기본 1일) 컷오프에 걸린 AWS SDK 버전들로,
+# 2026-07-24T18:47Z 배포분이라 2026-07-25T18:47Z 이후에는 목록 없이도 설치가 통과한다.
+# 다음 의존성 업데이트 때 통째로 지울 것.
+minimumReleaseAgeExclude:
+  - '@aws-sdk/checksums@3.1000.20'
+  - '@aws-sdk/client-cloudfront@3.1095.0'
+  - '@aws-sdk/client-cognito-identity-provider@3.1095.0'
+  - '@aws-sdk/client-s3@3.1095.0'
+  - '@aws-sdk/cloudfront-signer@3.1095.0'
+  - '@aws-sdk/core@3.977.0'
+  - '@aws-sdk/credential-provider-env@3.972.61'
+  - '@aws-sdk/credential-provider-http@3.972.63'
+  - '@aws-sdk/credential-provider-ini@3.973.6'
+  - '@aws-sdk/credential-provider-login@3.972.68'
+  - '@aws-sdk/credential-provider-node@3.972.72'
+  - '@aws-sdk/credential-provider-process@3.972.61'
+  - '@aws-sdk/credential-provider-sso@3.973.5'
+  - '@aws-sdk/credential-provider-web-identity@3.972.67'
+  - '@aws-sdk/middleware-sdk-s3@3.972.66'
+  - '@aws-sdk/nested-clients@3.997.35'
+  - '@aws-sdk/s3-request-presigner@3.1095.0'
+  - '@aws-sdk/signature-v4-multi-region@3.996.42'
+  - '@aws-sdk/token-providers@3.1095.0'
+  - '@aws-sdk/xml-builder@3.972.37'
+  - nuqs@2.9.2
+  - postcss@8.5.23
+  - react-hook-form@7.83.0
+
+# pnpm 11 기본값은 install. web 은 --config.node-linker=hoisted 로 설치한 뒤
+# 플래그 없이 `pnpm turbo build` 를 돌리므로, 자동 검증이 isolated 재설치를 유발해
+# hoisted 레이아웃(Next standalone 전제)을 무너뜨린다.
+verifyDepsBeforeRun: false

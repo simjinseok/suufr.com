@@ -26,7 +26,7 @@ export const mainMenuItems: MenuItem[] = [
   { href: '/students', label: '수강생', icon: BookUserIcon },
   { href: '/calendar', label: '수업', icon: CalendarIcon },
   { href: '/invoices', label: '수강권', icon: TicketIcon },
-  { href: '/sales', label: '결제', icon: CreditCardIcon },
+  { href: '/payments', label: '결제', icon: CreditCardIcon },
 ];
 
 // 하단 그룹 — 도구/보조 메뉴

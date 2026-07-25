@@ -29,7 +29,6 @@ export class DashboardService {
           activeStudentCount: 0,
           unpaidStudents: [],
           unpaidStudentsCount: 0,
-          needsPriceInvoices: [],
           leftStudentsCount: 0,
           uncheckedMeetings: [],
           uncheckedMeetingsCount: 0,
@@ -47,7 +46,7 @@ export class DashboardService {
     const startOfToday = zonedDayStart(year, month, day, timezone);
     const endOfToday = zonedDayStart(year, month, day + 1, timezone);
 
-    const [activeStudentCount, students, needsPriceInvoices, leftStudentsCount, uncheckedMeetings, todayRemainingSessionCount] = await Promise.all([
+    const [activeStudentCount, students, leftStudentsCount, uncheckedMeetings, todayRemainingSessionCount] = await Promise.all([
       // 1. Active student count
       this.prisma.student.count({
         where: {
@@ -68,32 +67,6 @@ export class DashboardService {
           uuid: true,
           name: true,
         },
-      }),
-
-      // 2-1. "금액 미입력" 청구(price=0) — 잔액에 잡히지 않으므로 별도 노출해 수동 수정 유도
-      this.prisma.invoice.findMany({
-        where: {
-          price: 0,
-          deletedAt: null,
-          student: {
-            deletedAt: null,
-            organizationId: { in: organizationIds },
-          },
-        },
-        select: {
-          uuid: true,
-          title: true,
-          periodStart: true,
-          periodEnd: true,
-          createdAt: true,
-          student: {
-            select: {
-              uuid: true,
-              name: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
       }),
 
       // 3. Left students count (this month)
@@ -164,7 +137,6 @@ export class DashboardService {
         activeStudentCount,
         unpaidStudents,
         unpaidStudentsCount: unpaidStudents.length,
-        needsPriceInvoices,
         leftStudentsCount,
         uncheckedMeetings,
         uncheckedMeetingsCount: uncheckedMeetings.length,

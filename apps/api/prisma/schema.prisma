@@ -91,7 +91,7 @@ model Invoice {
   id              Int              @id @default(autoincrement())
   uuid            String           @unique @default(dbgenerated("uuidv7()")) @db.Uuid
   title           String? // 라벨 ("3월 8회권") — 구 lesson.title 승계
-  price           Int // 청구액 (원). price=0 && 입금 0건 = "금액 미입력" 파생 상태
+  price           Int // 청구액 (원). 0원도 그대로 0원 (구 "금액 미입력" 파생 상태는 §6-21에서 폐기)
   totalCount      Int?             @map("total_count") // 있으면 회차 동작(잔여 관리·명시 귀속), 없으면 기간 정액(날짜 자동 귀속)
   periodStart     DateTime?        @map("period_start") @db.Date
   periodEnd       DateTime?        @map("period_end") @db.Date

@@ -218,25 +218,10 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
       {invoices.length > 0 ? (
         <ul className="mt-5 flex flex-col gap-5">
           {invoices.map((invoice) => {
-            // 납부 상태는 학생 단위 잔액으로 판정하므로 카드에는 표시하지 않는다.
-            // 단 "금액 미입력"(price=0)은 잔액에 잡히지 않아 카드에서 수정을 유도한다 (§3)
-            const needsPrice = invoice.price === 0;
-
+            // 납부 상태는 학생 단위 잔액으로 판정하므로 카드에는 표시하지 않는다 (§3)
             return (
               <li key={invoice.id}>
-                <Surface
-                  className={`rounded-xl shadow-xs overflow-hidden ${
-                    needsPrice ? 'border-amber-200' : 'border-gray-50'
-                  }`}
-                >
-                  {/* 금액 미입력 배너 (카드 상단) */}
-                  {needsPrice && (
-                    <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
-                      <AlertTriangleIcon className="size-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-700">금액 미입력</span>
-                    </div>
-                  )}
-
+                <Surface className="rounded-xl shadow-xs overflow-hidden border-gray-50">
                   {/* 카드 본문 */}
                   <div className="px-5 py-3">
                     {/* 헤더: 제목 + 수정 버튼 */}

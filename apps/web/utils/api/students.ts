@@ -43,7 +43,6 @@ type StudentStats = {
   // 학생 단위 잔액 파생 (docs/schema-redesign.md §3)
   outstandingAmount: number; // 미수액
   creditAmount: number; // 선납 잔액
-  needsPriceCount: number; // 금액 미입력(price=0) 수강권 수
   nextPaymentAt: Date | null;
 };
 

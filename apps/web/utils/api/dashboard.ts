@@ -7,19 +7,6 @@ type UnpaidStudent = {
   outstandingAmount: number;
 };
 
-// "금액 미입력" 청구(price=0) — 잔액에 잡히지 않으므로 별도 노출
-type NeedsPriceInvoice = {
-  uuid: string;
-  title: string | null;
-  periodStart: string | null;
-  periodEnd: string | null;
-  createdAt: string;
-  student: {
-    uuid: string;
-    name: string;
-  };
-};
-
 type UncheckedMeeting = {
   uuid: string;
   name: string;
@@ -32,7 +19,6 @@ type DashboardData = {
   activeStudentCount: number;
   unpaidStudents: UnpaidStudent[];
   unpaidStudentsCount: number;
-  needsPriceInvoices: NeedsPriceInvoice[];
   leftStudentsCount: number;
   uncheckedMeetings: UncheckedMeeting[];
   uncheckedMeetingsCount: number;
