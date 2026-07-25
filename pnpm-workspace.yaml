@@ -35,6 +35,9 @@ minimumReleaseAgeExclude:
   - '@aws-sdk/signature-v4-multi-region@3.996.42'
   - '@aws-sdk/token-providers@3.1095.0'
   - '@aws-sdk/xml-builder@3.972.37'
+  - nuqs@2.9.2
+  - postcss@8.5.23
+  - react-hook-form@7.83.0
 
 # pnpm 11 기본값은 install. web 은 --config.node-linker=hoisted 로 설치한 뒤
 # 플래그 없이 `pnpm turbo build` 를 돌리므로, 자동 검증이 isolated 재설치를 유발해
