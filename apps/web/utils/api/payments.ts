@@ -6,7 +6,7 @@ type Student = {
   name: string;
 };
 
-// 입금 1건. 음수 = 환불. 학생 직속 (청구와 연결하지 않는다)
+// 입금 1건. 음수 = 환불. 학생 직속 — 수강권과는 선택적 연결만 (§6-22)
 type Payment = {
   id: number;
   uuid: string;
@@ -15,6 +15,8 @@ type Payment = {
   paidAt: string;
   notes: string | null;
   student: Student;
+  // 연결된 미삭제 수강권 (연결 UI 초기값용)
+  invoices: Array<{ uuid: string; title: string | null }>;
 };
 
 type ListPaymentsParams = {
@@ -48,6 +50,8 @@ type CreatePaymentData = {
   method: string;
   paidAt: string;
   notes?: string;
+  // 이 입금이 커버하는 수강권 (§6-22)
+  invoiceUuids?: string[];
 };
 
 type UpdatePaymentData = {
@@ -55,6 +59,8 @@ type UpdatePaymentData = {
   method?: string;
   paidAt?: string;
   notes?: string;
+  // set 의미론: undefined = 연결 불변, [] = 전부 해제
+  invoiceUuids?: string[];
 };
 
 type MonthlyTrendResponse = {

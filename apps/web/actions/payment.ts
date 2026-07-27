@@ -68,12 +68,20 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
         return state;
       }
 
+      // 수강권 연결(§6-22): invoiceLinkScope 마커가 있는 폼만 연결 상태를 전달한다.
+      // 마커 없는 폼은 undefined = 서버가 연결을 건드리지 않음(안전장치).
+      // 다중 엔트리 대비 getAll로 추출한다 (Object.fromEntries는 마지막 값만 남음).
+      const invoiceUuids = formData.has('invoiceLinkScope')
+        ? formData.getAll('invoiceUuids').map(String)
+        : undefined;
+
       try {
         const paymentData = {
           amount: validationResult.data.amount,
           method: validationResult.data.method,
           paidAt: (validationResult.data.paidAt as Date).toISOString(),
           notes: validationResult.data.notes,
+          ...(invoiceUuids !== undefined && { invoiceUuids }),
         };
 
         if (paymentUuid) {
@@ -88,6 +96,7 @@ export async function updatePayment(prevState: UpdatePaymentState, formData: For
 
         revalidatePath('/payments', 'page');
         revalidatePath('/students', 'layout');
+        revalidatePath('/invoices', 'page');
         state.success = true;
         state.message = '입금내역을 수정하였습니다.';
         return state;
@@ -125,6 +134,8 @@ export async function removePayment(prevState: RemovePaymentState, formData: For
 
         revalidatePath('/payments', 'page');
         revalidatePath('/students', 'layout');
+        // 연결된 입금이 삭제되면 수강권이 미납으로 복귀하므로 수강권 화면도 갱신
+        revalidatePath('/invoices', 'page');
         return { success: true, timestamp: Date.now() };
       }
       catch {

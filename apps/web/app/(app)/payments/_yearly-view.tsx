@@ -24,6 +24,8 @@ type Payment = {
   method: string;
   notes: string | null;
   paidAt: Date;
+  // 수정 모달의 "연결된 수강권" 초기값 (§6-22)
+  invoices: Array<{ uuid: string; title: string | null }>;
   student: {
     uuid: string;
     id: number;
@@ -267,6 +269,7 @@ export default function YearlyView({ stats, payments, monthlyTrend }: Props) {
                             method: payment.method,
                             paidAt: payment.paidAt,
                             notes: payment.notes,
+                            invoices: payment.invoices,
                           },
                         });
                       }}

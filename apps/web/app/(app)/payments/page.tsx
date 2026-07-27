@@ -76,6 +76,8 @@ export default async function Page({ searchParams }: Props) {
       id: p.student.id,
       name: p.student.name,
     },
+    // 수정 모달의 "연결된 수강권" 초기값 (§6-22)
+    invoices: p.invoices,
   }));
 
   const monthlyStats = groupPaymentsByMonth(payments, timeZone);
