@@ -6,8 +6,6 @@ import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
 import { Prisma } from '@prisma/generated/client';
 import { zonedMonthStart, zonedParts } from '../common/utils/timezone';
 import { SettingsService } from '../settings/settings.service';
-import { ActivitiesService } from '../activities/activities.service';
-import { buildChanges } from '../activities/activity-payload';
 
 // 목록/상세 공통 include — 매출 화면이 학생 단위 그룹핑에 student를 사용
 // invoicePayments는 §6-22 순수 연결 표시용 — 납부 상태 파생은 여전히 학생 단위 잔액
@@ -31,7 +29,6 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settingsService: SettingsService,
-    private readonly activitiesService: ActivitiesService,
   ) {}
 
   async findAll(query: ListPaymentsQueryDto, userId: string) {
@@ -76,7 +73,7 @@ export class PaymentsService {
       where.paidAt = { gte: zonedMonthStart(year, 1, timezone), lt: zonedMonthStart(year + 1, 1, timezone) };
     }
 
-    const [payments, totalCount, amountSum] = await Promise.all([
+    const [payments, totalCount] = await Promise.all([
       this.prisma.payment.findMany({
         where,
         include: PAYMENT_INCLUDE,
@@ -85,7 +82,6 @@ export class PaymentsService {
         take: limit,
       }),
       this.prisma.payment.count({ where }),
-      this.prisma.payment.aggregate({ where, _sum: { amount: true } }),
     ]);
 
     return {
@@ -96,8 +92,6 @@ export class PaymentsService {
         limit,
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
-        // 조회 조건 전체의 입금 합계(환불 음수 포함) — 페이지네이션과 무관한 통계용
-        totalAmount: amountSum._sum.amount ?? 0,
       },
     };
   }
@@ -174,21 +168,6 @@ export class PaymentsService {
       return created;
     });
 
-    const linkedUuids = [...new Set(dto.invoiceUuids ?? [])];
-    await this.activitiesService.record({
-      userId,
-      entityType: 'payment',
-      action: 'created',
-      entityUuid: payment.uuid,
-      student: { uuid: student.uuid, name: student.name },
-      payload: {
-        amount: payment.amount,
-        method: payment.method,
-        paidAt: payment.paidAt.toISOString(),
-        ...(linkedUuids.length > 0 && { invoiceUuids: linkedUuids }),
-      },
-    });
-
     const full = await this.prisma.payment.findUniqueOrThrow({
       where: { id: payment.id },
       include: PAYMENT_INCLUDE,
@@ -204,25 +183,19 @@ export class PaymentsService {
         deletedAt: null,
         student: { organization: { userId, deletedAt: null } },
       },
-      include: {
-        invoicePayments: {
-          where: { invoice: { deletedAt: null } },
-          include: { invoice: { select: { uuid: true } } },
-        },
-      },
     });
 
     if (!payment) {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
     }
 
-    // set 의미론: undefined = 연결 불변, [] = 전부 해제
+    // set 의미론: undefined = 연결 불변, [] = 전부 해제 (§6-22)
     const nextInvoiceIds = dto.invoiceUuids !== undefined
       ? await this.resolveInvoiceIds(dto.invoiceUuids, payment.studentId)
       : undefined;
 
-    const updatedPayment = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.payment.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.payment.update({
         where: { uuid },
         data: {
           ...(dto.amount !== undefined && { amount: dto.amount }),
@@ -230,7 +203,6 @@ export class PaymentsService {
           ...(dto.notes !== undefined && { notes: dto.notes }),
           ...(dto.paidAt !== undefined && { paidAt: new Date(dto.paidAt) }),
         },
-        include: PAYMENT_INCLUDE,
       });
 
       if (nextInvoiceIds !== undefined) {
@@ -242,44 +214,8 @@ export class PaymentsService {
           });
         }
       }
-
-      return updated;
     });
 
-    const built = buildChanges(payment, dto, {
-      diff: ['amount', 'method', 'paidAt'],
-      changedOnly: ['notes'],
-      dateFields: ['paidAt'],
-    });
-
-    // 연결 변화는 buildChanges(스칼라 전용) 밖에서 수동 병합
-    const prevInvoiceUuids = payment.invoicePayments.map(ip => ip.invoice.uuid).sort();
-    const nextInvoiceUuids = dto.invoiceUuids !== undefined
-      ? [...new Set(dto.invoiceUuids)].sort()
-      : prevInvoiceUuids;
-    const linksChanged = JSON.stringify(prevInvoiceUuids) !== JSON.stringify(nextInvoiceUuids);
-
-    if (built || linksChanged) {
-      await this.activitiesService.record({
-        userId,
-        entityType: 'payment',
-        action: 'updated',
-        entityUuid: uuid,
-        student: { uuid: updatedPayment.student.uuid, name: updatedPayment.student.name },
-        payload: {
-          changes: {
-            ...(built?.changes ?? {}),
-            ...(linksChanged && { invoiceUuids: { from: prevInvoiceUuids, to: nextInvoiceUuids } }),
-          },
-          changedFields: [
-            ...(built?.changedFields ?? []),
-            ...(linksChanged ? ['invoiceUuids'] : []),
-          ],
-        },
-      });
-    }
-
-    // 연결 교체가 update의 include 이후에 일어나므로 최신 상태를 다시 읽는다
     const full = await this.prisma.payment.findUniqueOrThrow({
       where: { id: payment.id },
       include: PAYMENT_INCLUDE,
@@ -295,7 +231,6 @@ export class PaymentsService {
         deletedAt: null,
         student: { organization: { userId, deletedAt: null } },
       },
-      include: PAYMENT_INCLUDE,
     });
 
     if (!payment) {
@@ -305,15 +240,6 @@ export class PaymentsService {
     await this.prisma.payment.update({
       where: { uuid },
       data: { deletedAt: new Date() },
-    });
-
-    await this.activitiesService.record({
-      userId,
-      entityType: 'payment',
-      action: 'deleted',
-      entityUuid: uuid,
-      student: { uuid: payment.student.uuid, name: payment.student.name },
-      payload: { amount: payment.amount, method: payment.method, paidAt: payment.paidAt.toISOString() },
     });
 
     return { success: true };
