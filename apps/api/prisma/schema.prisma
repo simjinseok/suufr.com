@@ -106,7 +106,8 @@ model Invoice {
   lessonId        Int?             @unique @map("lesson_id") // 전환기 추적용, lessons drop 시 함께 제거
   lesson          Lesson?          @relation(fields: [lessonId], references: [id])
 
-  sessions Session[]
+  sessions        Session[]
+  invoicePayments InvoicePayment[]
 
   // NOTE: cron 멱등성용 @@unique([studentId, periodStart])는
   // 자동 생성(cron) 도입 마이그레이션에서 추가 — 백필 데이터의 우연한 충돌 방지
@@ -130,9 +131,28 @@ model Payment {
   studentId Int       @map("student_id")
   student   Student   @relation(fields: [studentId], references: [id])
 
+  invoicePayments InvoicePayment[]
+
   @@index([studentId, deletedAt])
   @@index([paidAt, deletedAt])
   @@map("payments")
+}
+
+// 수강권 ↔ 입금 연결 (§6-22). 순수 연결만 — 금액 배분/파생 로직 없음.
+// 연결된 미삭제 입금이 1건이라도 있으면 "입금 확인", 없으면 미납 표시.
+// soft delete는 양끝(invoice/payment)의 deletedAt으로 필터 — 조인 행 자체엔 없다.
+model InvoicePayment {
+  id        Int      @id @default(autoincrement())
+  invoiceId Int      @map("invoice_id")
+  paymentId Int      @map("payment_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@unique([invoiceId, paymentId])
+  @@index([paymentId])
+  @@map("invoice_payments")
 }
 
 model Meeting {

@@ -21,6 +21,8 @@ export default async function PaymentsPage({
     method: payment.method,
     paidAt: new Date(payment.paidAt),
     notes: payment.notes,
+    // 수정 모달의 "연결된 수강권" 초기값 (§6-22)
+    invoices: payment.invoices,
   }));
 
   return (

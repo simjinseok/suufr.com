@@ -43,6 +43,8 @@ export type TInvoice = {
 
   student?: TStudent;
   sessions: TSession[];
+  // 연결된 미삭제 입금 (§6-22 순수 연결) — 1건 이상이면 "입금 확인", 없으면 미납 표시
+  payments?: Array<{ uuid: string; amount: number; method: string; paidAt: string }>;
 };
 
 export type TSession = {
@@ -65,7 +67,7 @@ export type TFeedback = {
   session?: TSession;
 };
 
-// 입금 1건. 음수 = 환불. 학생 직속 (청구와 연결하지 않는다)
+// 입금 1건. 음수 = 환불. 학생 직속 — 수강권과는 선택적 연결만 (§6-22)
 export type TPayment = {
   id: number;
   uuid: string;
@@ -74,6 +76,7 @@ export type TPayment = {
   method: string;
   paidAt: Date;
   student?: TStudent;
+  invoices?: Array<{ uuid: string; title: string | null }>;
 };
 
 export type TMeeting = {

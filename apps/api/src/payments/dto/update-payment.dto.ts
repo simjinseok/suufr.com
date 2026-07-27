@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDateString, IsInt, NotEquals } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsInt, IsArray, IsUUID, NotEquals } from 'class-validator';
 
 export class UpdatePaymentDto {
   @IsInt()
@@ -17,4 +17,10 @@ export class UpdatePaymentDto {
   @IsDateString()
   @IsOptional()
   paidAt?: string;
+
+  // set 의미론: undefined = 연결 불변, [] = 전부 해제 (§6-22)
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @IsOptional()
+  invoiceUuids?: string[];
 }

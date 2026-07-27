@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -6,17 +6,32 @@ import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
 import { Prisma } from '@prisma/generated/client';
 import { zonedMonthStart, zonedParts } from '../common/utils/timezone';
 import { SettingsService } from '../settings/settings.service';
+import { ActivitiesService } from '../activities/activities.service';
+import { buildChanges } from '../activities/activity-payload';
 
 // 목록/상세 공통 include — 매출 화면이 학생 단위 그룹핑에 student를 사용
+// invoicePayments는 §6-22 순수 연결 표시용 — 납부 상태 파생은 여전히 학생 단위 잔액
 const PAYMENT_INCLUDE = {
   student: true,
+  invoicePayments: {
+    where: { invoice: { deletedAt: null } },
+    include: { invoice: { select: { uuid: true, title: true } } },
+  },
 } satisfies Prisma.PaymentInclude;
+
+type PaymentWithInclude = Prisma.PaymentGetPayload<{ include: typeof PAYMENT_INCLUDE }>;
+
+// 응답에서 조인 행을 감추고 연결된 수강권만 평탄화해 노출
+function serialize({ invoicePayments, ...payment }: PaymentWithInclude) {
+  return { ...payment, invoices: invoicePayments.map(ip => ip.invoice) };
+}
 
 @Injectable()
 export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settingsService: SettingsService,
+    private readonly activitiesService: ActivitiesService,
   ) {}
 
   async findAll(query: ListPaymentsQueryDto, userId: string) {
@@ -61,7 +76,7 @@ export class PaymentsService {
       where.paidAt = { gte: zonedMonthStart(year, 1, timezone), lt: zonedMonthStart(year + 1, 1, timezone) };
     }
 
-    const [payments, totalCount] = await Promise.all([
+    const [payments, totalCount, amountSum] = await Promise.all([
       this.prisma.payment.findMany({
         where,
         include: PAYMENT_INCLUDE,
@@ -70,16 +85,19 @@ export class PaymentsService {
         take: limit,
       }),
       this.prisma.payment.count({ where }),
+      this.prisma.payment.aggregate({ where, _sum: { amount: true } }),
     ]);
 
     return {
       success: true,
-      data: payments,
+      data: payments.map(serialize),
       meta: {
         page,
         limit,
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
+        // 조회 조건 전체의 입금 합계(환불 음수 포함) — 페이지네이션과 무관한 통계용
+        totalAmount: amountSum._sum.amount ?? 0,
       },
     };
   }
@@ -98,7 +116,24 @@ export class PaymentsService {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
     }
 
-    return { success: true, data: payment };
+    return { success: true, data: serialize(payment) };
+  }
+
+  // 연결 대상 수강권 검증 — 같은 학생 소유·미삭제만 허용 (invoices.service의 세션 귀속 검증 미러)
+  private async resolveInvoiceIds(invoiceUuids: string[], studentId: number) {
+    const uuids = [...new Set(invoiceUuids)];
+    if (uuids.length === 0) return [];
+
+    const invoices = await this.prisma.invoice.findMany({
+      where: { uuid: { in: uuids }, studentId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (invoices.length !== uuids.length) {
+      throw new BadRequestException('일부 수강권을 찾을 수 없거나 이 학생의 수강권이 아닙니다.');
+    }
+
+    return invoices.map(i => i.id);
   }
 
   async create(dto: CreatePaymentDto, userId: string) {
@@ -114,18 +149,52 @@ export class PaymentsService {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
 
-    const payment = await this.prisma.payment.create({
-      data: {
-        amount: dto.amount,
-        method: dto.method,
-        notes: dto.notes,
-        paidAt: new Date(dto.paidAt),
-        studentId: student.id,
+    const invoiceIds = dto.invoiceUuids?.length
+      ? await this.resolveInvoiceIds(dto.invoiceUuids, student.id)
+      : [];
+
+    const payment = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.payment.create({
+        data: {
+          amount: dto.amount,
+          method: dto.method,
+          notes: dto.notes,
+          paidAt: new Date(dto.paidAt),
+          studentId: student.id,
+        },
+      });
+
+      if (invoiceIds.length > 0) {
+        await tx.invoicePayment.createMany({
+          data: invoiceIds.map(invoiceId => ({ invoiceId, paymentId: created.id })),
+          skipDuplicates: true,
+        });
+      }
+
+      return created;
+    });
+
+    const linkedUuids = [...new Set(dto.invoiceUuids ?? [])];
+    await this.activitiesService.record({
+      userId,
+      entityType: 'payment',
+      action: 'created',
+      entityUuid: payment.uuid,
+      student: { uuid: student.uuid, name: student.name },
+      payload: {
+        amount: payment.amount,
+        method: payment.method,
+        paidAt: payment.paidAt.toISOString(),
+        ...(linkedUuids.length > 0 && { invoiceUuids: linkedUuids }),
       },
+    });
+
+    const full = await this.prisma.payment.findUniqueOrThrow({
+      where: { id: payment.id },
       include: PAYMENT_INCLUDE,
     });
 
-    return { success: true, data: payment };
+    return { success: true, data: serialize(full) };
   }
 
   async update(uuid: string, dto: UpdatePaymentDto, userId: string) {
@@ -135,24 +204,88 @@ export class PaymentsService {
         deletedAt: null,
         student: { organization: { userId, deletedAt: null } },
       },
+      include: {
+        invoicePayments: {
+          where: { invoice: { deletedAt: null } },
+          include: { invoice: { select: { uuid: true } } },
+        },
+      },
     });
 
     if (!payment) {
       throw new NotFoundException(`Payment with UUID ${uuid} not found`);
     }
 
-    const updatedPayment = await this.prisma.payment.update({
-      where: { uuid },
-      data: {
-        ...(dto.amount !== undefined && { amount: dto.amount }),
-        ...(dto.method !== undefined && { method: dto.method }),
-        ...(dto.notes !== undefined && { notes: dto.notes }),
-        ...(dto.paidAt !== undefined && { paidAt: new Date(dto.paidAt) }),
-      },
+    // set 의미론: undefined = 연결 불변, [] = 전부 해제
+    const nextInvoiceIds = dto.invoiceUuids !== undefined
+      ? await this.resolveInvoiceIds(dto.invoiceUuids, payment.studentId)
+      : undefined;
+
+    const updatedPayment = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.payment.update({
+        where: { uuid },
+        data: {
+          ...(dto.amount !== undefined && { amount: dto.amount }),
+          ...(dto.method !== undefined && { method: dto.method }),
+          ...(dto.notes !== undefined && { notes: dto.notes }),
+          ...(dto.paidAt !== undefined && { paidAt: new Date(dto.paidAt) }),
+        },
+        include: PAYMENT_INCLUDE,
+      });
+
+      if (nextInvoiceIds !== undefined) {
+        await tx.invoicePayment.deleteMany({ where: { paymentId: payment.id } });
+        if (nextInvoiceIds.length > 0) {
+          await tx.invoicePayment.createMany({
+            data: nextInvoiceIds.map(invoiceId => ({ invoiceId, paymentId: payment.id })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      return updated;
+    });
+
+    const built = buildChanges(payment, dto, {
+      diff: ['amount', 'method', 'paidAt'],
+      changedOnly: ['notes'],
+      dateFields: ['paidAt'],
+    });
+
+    // 연결 변화는 buildChanges(스칼라 전용) 밖에서 수동 병합
+    const prevInvoiceUuids = payment.invoicePayments.map(ip => ip.invoice.uuid).sort();
+    const nextInvoiceUuids = dto.invoiceUuids !== undefined
+      ? [...new Set(dto.invoiceUuids)].sort()
+      : prevInvoiceUuids;
+    const linksChanged = JSON.stringify(prevInvoiceUuids) !== JSON.stringify(nextInvoiceUuids);
+
+    if (built || linksChanged) {
+      await this.activitiesService.record({
+        userId,
+        entityType: 'payment',
+        action: 'updated',
+        entityUuid: uuid,
+        student: { uuid: updatedPayment.student.uuid, name: updatedPayment.student.name },
+        payload: {
+          changes: {
+            ...(built?.changes ?? {}),
+            ...(linksChanged && { invoiceUuids: { from: prevInvoiceUuids, to: nextInvoiceUuids } }),
+          },
+          changedFields: [
+            ...(built?.changedFields ?? []),
+            ...(linksChanged ? ['invoiceUuids'] : []),
+          ],
+        },
+      });
+    }
+
+    // 연결 교체가 update의 include 이후에 일어나므로 최신 상태를 다시 읽는다
+    const full = await this.prisma.payment.findUniqueOrThrow({
+      where: { id: payment.id },
       include: PAYMENT_INCLUDE,
     });
 
-    return { success: true, data: updatedPayment };
+    return { success: true, data: serialize(full) };
   }
 
   async remove(uuid: string, userId: string) {
@@ -162,6 +295,7 @@ export class PaymentsService {
         deletedAt: null,
         student: { organization: { userId, deletedAt: null } },
       },
+      include: PAYMENT_INCLUDE,
     });
 
     if (!payment) {
@@ -171,6 +305,15 @@ export class PaymentsService {
     await this.prisma.payment.update({
       where: { uuid },
       data: { deletedAt: new Date() },
+    });
+
+    await this.activitiesService.record({
+      userId,
+      entityType: 'payment',
+      action: 'deleted',
+      entityUuid: uuid,
+      student: { uuid: payment.student.uuid, name: payment.student.name },
+      payload: { amount: payment.amount, method: payment.method, paidAt: payment.paidAt.toISOString() },
     });
 
     return { success: true };

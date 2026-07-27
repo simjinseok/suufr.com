@@ -2,6 +2,9 @@
 import type { ModalProps } from '@heroui/react';
 
 import { numberToHangulMixed } from 'es-hangul';
+import { format } from 'date-fns/format';
+import { ko } from 'date-fns/locale/ko';
+import { tz } from '@date-fns/tz';
 
 import React from 'react';
 import {
@@ -29,7 +32,8 @@ import { updatePayment, removePayment } from '@/actions/payment';
 import { fromDate, toCalendarDate, today } from '@internationalized/date';
 import { useTimeZone } from '@/contexts/timezone';
 
-// 학생 앞으로 입금을 기록/수정하는 모달 — 입금은 청구와 연결하지 않는다 (잔액 모델).
+// 학생 앞으로 입금을 기록/수정하는 모달. 금액의 진실 소스는 학생 단위 잔액(잔액 모델)이고,
+// 수강권과는 선택적 연결만 한다 (§6-22 — 어느 수강권을 커버하는 입금인지 표시용).
 // payment를 넘기면 그 입금을 수정, 없으면 새 입금을 생성한다.
 type PaymentLike = {
   uuid: string;
@@ -37,6 +41,17 @@ type PaymentLike = {
   method: string;
   paidAt: Date | string;
   notes: string | null;
+  // 연결된 수강권 (수정 시 초기 선택값)
+  invoices?: Array<{ uuid: string; title: string | null }>;
+};
+
+// 연결 선택지로 보여줄 수강권 — 모달이 뜰 때 /api/invoices 프록시로 불러온다
+type InvoiceOption = {
+  uuid: string;
+  title: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  price: number;
 };
 
 interface Props {
@@ -46,8 +61,10 @@ interface Props {
   payment?: PaymentLike | null;
   // 새 입금의 기본 금액 (학생 미수액 제안)
   defaultAmount?: number;
+  // 새 입금에서 미리 선택할 수강권 (수강권 카드의 미납 뱃지 진입점)
+  defaultInvoiceUuid?: string;
 }
-export default function PaymentModal({ isOpen, onOpenChange, studentUuid, payment, defaultAmount }: Props) {
+export default function PaymentModal({ isOpen, onOpenChange, studentUuid, payment, defaultAmount, defaultInvoiceUuid }: Props) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
@@ -57,6 +74,7 @@ export default function PaymentModal({ isOpen, onOpenChange, studentUuid, paymen
               studentUuid={studentUuid}
               payment={payment ?? null}
               defaultAmount={defaultAmount}
+              defaultInvoiceUuid={defaultInvoiceUuid}
               close={close}
             />
           )}
@@ -70,14 +88,46 @@ interface ContentProps {
   studentUuid: string;
   payment: PaymentLike | null;
   defaultAmount?: number;
+  defaultInvoiceUuid?: string;
   close: () => void;
 }
-function Content({ close, studentUuid, payment, defaultAmount }: ContentProps) {
+function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUuid }: ContentProps) {
   const timeZone = useTimeZone();
   const formId = React.useId();
 
   // 환불 = 음수 입금 (docs/schema-redesign.md §3). UI는 입금/환불 토글 + 양수 금액으로 받는다
   const [isRefund, setIsRefund] = React.useState((payment?.amount ?? 0) < 0);
+
+  // 연결된 수강권 (§6-22) — 단일 선택. UI는 입금 1건 = 수강권 1개만 연결한다 (모델은 M:N 유지)
+  const [linkedInvoiceUuid, setLinkedInvoiceUuid] = React.useState<string>(
+    payment
+      ? payment.invoices?.[0]?.uuid ?? ''
+      : defaultInvoiceUuid ?? '',
+  );
+
+  // 선택지는 모달이 뜬 뒤 불러온다 — 부모가 목록을 미리 들고 있을 필요가 없다
+  const [invoiceOptions, setInvoiceOptions] = React.useState<InvoiceOption[] | null>(null);
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        const response = await fetch(`/api/invoices?studentUuid=${encodeURIComponent(studentUuid)}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('failed');
+
+        const json = await response.json();
+        setInvoiceOptions(json.data);
+      }
+      catch (error) {
+        if ((error as Error).name !== 'AbortError') setInvoiceOptions([]);
+      }
+    };
+
+    load();
+    return () => controller.abort();
+  }, [studentUuid]);
 
   const { control, watch } = useForm({
     values: {
@@ -121,6 +171,48 @@ function Content({ close, studentUuid, payment, defaultAmount }: ContentProps) {
           {payment?.uuid && <input type="hidden" name="paymentUuid" value={payment.uuid} />}
           {/* 서버로는 부호 적용된 금액 전송 (환불 = 음수) */}
           <input type="hidden" name="amount" value={signedAmount} />
+          {/* 연결 마커 (§6-22) — 이 폼은 항상 연결 상태를 보내고, 빈 값 = 연결 없음 */}
+          <input type="hidden" name="invoiceLinkScope" value="1" />
+          {linkedInvoiceUuid && <input type="hidden" name="invoiceUuids" value={linkedInvoiceUuid} />}
+
+          {/* 연결된 수강권 (§6-22) — 단일 선택 Select. 선택지는 모달 오픈 시 로드 */}
+          {invoiceOptions !== null && invoiceOptions.length > 0 && (
+            <Select
+              variant="secondary"
+              selectedKey={linkedInvoiceUuid}
+              onSelectionChange={key => setLinkedInvoiceUuid((key as string) ?? '')}
+            >
+              <Label>연결된 수강권</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item id="" textValue="연결 안 함">
+                    <Label>연결 안 함</Label>
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                  {invoiceOptions.map(invoice => (
+                    <ListBox.Item key={invoice.uuid} id={invoice.uuid} textValue={invoiceOptionLabel(invoice)}>
+                      {/* 기간은 윗줄 작은 muted, 아랫줄 제목 · 금액 */}
+                      <div className="flex-1 flex flex-col items-start gap-0.5 min-w-0">
+                        {invoicePeriodLabel(invoice) && (
+                          <span className="text-xs text-zinc-400">{invoicePeriodLabel(invoice)}</span>
+                        )}
+                        <span className="truncate">
+                          {invoice.title || '수강권'}
+                          {invoice.price > 0 && ` · ${numberToHangulMixed(invoice.price)}원`}
+                        </span>
+                      </div>
+                      {/* 선택된 항목 오른쪽 체크 표시 */}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          )}
 
           {/* 입금 / 환불 구분 */}
           <TagGroup
@@ -259,6 +351,26 @@ function Content({ close, studentUuid, payment, defaultAmount }: ContentProps) {
       </Modal.Footer>
     </React.Fragment>
   );
+}
+
+// 기간 표기 — date-only는 UTC 고정 (suufr 타임존 규칙)
+function invoicePeriodLabel(invoice: InvoiceOption) {
+  if (!invoice.periodStart) return null;
+
+  const start = format(new Date(invoice.periodStart), 'M월 d일', { locale: ko, in: tz('UTC') });
+  const end = invoice.periodEnd
+    ? format(new Date(invoice.periodEnd), 'M월 d일', { locale: ko, in: tz('UTC') })
+    : '';
+
+  return `${start}~${end}`;
+}
+
+// 접근성/타이프어헤드용 전체 라벨
+function invoiceOptionLabel(invoice: InvoiceOption) {
+  const title = invoice.title || '수강권';
+  const price = invoice.price > 0 ? `${numberToHangulMixed(invoice.price)}원` : null;
+
+  return [invoicePeriodLabel(invoice), title, price].filter(Boolean).join(' · ');
 }
 
 function DatePickerField({ name, value, onChange }: {

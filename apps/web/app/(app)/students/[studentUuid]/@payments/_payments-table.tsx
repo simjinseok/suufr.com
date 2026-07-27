@@ -16,6 +16,8 @@ type Payment = {
   method: string;
   paidAt: Date;
   notes: string | null;
+  // 연결된 수강권 (§6-22) — 수정 모달의 초기 선택값
+  invoices: Array<{ uuid: string; title: string | null }>;
 };
 
 type Props = {

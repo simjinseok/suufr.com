@@ -42,6 +42,8 @@ export type Invoice = {
   notes: string | null;
   student: Student;
   sessions: Session[];
+  // 연결된 미삭제 입금 (§6-22 순수 연결) — 1건 이상이면 "입금 확인", 없으면 미납 표시
+  payments: Array<{ uuid: string; amount: number; method: string; paidAt: string }>;
 };
 
 type ListInvoicesParams = {

@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { numberToHangulMixed } from 'es-hangul';
 
-import { Button, Dropdown, Modal, Surface } from '@heroui/react';
+import { Button, Chip, Dropdown, Modal, Surface } from '@heroui/react';
 import {
   AlertTriangleIcon,
   CalendarPlusIcon,
@@ -30,6 +30,7 @@ import EditInvoiceModal from '@/components/invoice/edit-invoice-modal';
 import CreateSessionModal from '@/components/sessions/create-session-modal';
 import GenerateSessionsModal from '@/components/sessions/generate-sessions-modal';
 import SettleSessionModal from '@/components/invoice/settle-session-modal';
+import PaymentModal from '@/components/invoice/payment-modal';
 import ShareModal from '@/components/invoice/share-modal';
 import CreateInvoiceModal from '@/components/invoice/create-invoice-modal';
 import { useParams, useRouter } from 'next/navigation';
@@ -107,6 +108,8 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
   const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
   const [editInvoice, setEditInvoice] = React.useState<TInvoice | null>(null);
   const [deleteInvoice, setDeleteInvoice] = React.useState<TInvoice | null>(null);
+  // 미납 뱃지 → 이 수강권이 미리 연결된 입금 기록 모달 (§6-22)
+  const [paymentInvoice, setPaymentInvoice] = React.useState<TInvoice | null>(null);
   const [isShareOpen, setIsShareOpen] = React.useState(false);
 
   // 체크 토글 애니메이션 상태
@@ -218,7 +221,8 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
       {invoices.length > 0 ? (
         <ul className="mt-5 flex flex-col gap-5">
           {invoices.map((invoice) => {
-            // 납부 상태는 학생 단위 잔액으로 판정하므로 카드에는 표시하지 않는다 (§3)
+            // 미수/선납 금액은 학생 단위 잔액으로 판정한다 (§3) — 카드 푸터의 미납 뱃지는
+            // 금액 파생이 아니라 "연결된 입금이 없다"는 사실 표시 (§6-22 순수 연결)
             return (
               <li key={invoice.id}>
                 <Surface className="rounded-xl shadow-xs overflow-hidden border-gray-50">
@@ -263,13 +267,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                         </Dropdown>
                       </div>
                     </div>
-
-                    {invoice.price > 0 && (
-                      <p className="mt-0.5 text-sm text-gray-500 tabular-nums">
-                        {numberToHangulMixed(invoice.price)}
-                        원
-                      </p>
-                    )}
 
                     {invoice.notes && (
                       <Text className="mt-1 whitespace-pre-wrap">{invoice.notes}</Text>
@@ -409,6 +406,44 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                       </div>
                     )}
 
+                    {/* 정산 푸터: 왼편 수강금액, 오른편 연결된 입금 또는 미납 뱃지 (§6-22).
+                        연결 존재 = 입금 확인 — 금액 검증은 하지 않는다(잔액모델이 진실 소스).
+                        0원 수강권은 푸터 생략 (미납 뱃지 노이즈 방지) */}
+                    {invoice.price > 0 && (
+                      <React.Fragment>
+                        <Divider className="my-3" />
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm text-gray-500 tabular-nums">
+                            {numberToHangulMixed(invoice.price)}
+                            원
+                          </p>
+                          {invoice.payments?.length > 0
+                            ? (
+                                <div className="flex flex-col items-end gap-0.5">
+                                  {invoice.payments.map((payment: any) => (
+                                    <p key={payment.uuid} className="text-sm text-gray-600 tabular-nums">
+                                      {format(new Date(payment.paidAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
+                                      {' 입금 · '}
+                                      {numberToHangulMixed(payment.amount)}
+                                      원
+                                    </p>
+                                  ))}
+                                </div>
+                              )
+                            : (
+                                <Chip
+                                  size="sm"
+                                  color="warning"
+                                  variant="soft"
+                                  onClick={() => setPaymentInvoice(invoice)}
+                                >
+                                  미납
+                                </Chip>
+                              )}
+                        </div>
+                      </React.Fragment>
+                    )}
+
                   </div>
 
                 </Surface>
@@ -460,6 +495,16 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
           studentUuid={studentUuid}
           invoice={generateInvoice}
           use24HourFormat={use24HourFormat}
+        />
+      )}
+
+      {paymentInvoice && (
+        <PaymentModal
+          isOpen={!!paymentInvoice}
+          onOpenChange={() => setPaymentInvoice(null)}
+          studentUuid={studentUuid}
+          defaultAmount={paymentInvoice.price}
+          defaultInvoiceUuid={paymentInvoice.uuid}
         />
       )}
 
