@@ -5,11 +5,17 @@
 # 빌드 컨텍스트는 모노레포 루트다:
 #   docker build -f apps/api/Dockerfile -t suufr-api .
 #
-# alpine 이 아니라 slim(debian) 을 쓰는 이유:
-#   런타임 Prisma Client 는 driver adapter 방식이라 엔진 바이너리가 필요 없지만,
-#   entrypoint 에서 돌리는 `prisma migrate deploy` 의 CLI 가 @prisma/engines 를
-#   prod 의존성으로 끌고 오고, 그 postinstall 이 네이티브 schema-engine 을
-#   내려받는다. glibc + openssl 이 필요하다.
+# 베이스가 alpine 이 아니라 slim(debian) 인 것은 **선택**이지 제약이 아니다.
+#   entrypoint 의 `prisma migrate deploy` 가 @prisma/engines 의 네이티브
+#   schema-engine 을 쓰는데, alpine 에서도 동작한다 — 실측으로 확인했다
+#   (@prisma/engines 가 schema-engine-linux-musl-openssl-3.0.x 를 제공하고,
+#   @sentry/profiling-node 도 musl 에서 정상 로드된다. 마이그레이션과 전체
+#   모델 쿼리 통과. 이미지는 557MB → 약 488MB).
+#   그럼에도 glibc 를 택한 이유는 musl 의 malloc 동작 차이로 인한 성능
+#   리스크와 장애 시 원인 파악 난이도 때문이다. 69MB 와 맞바꾸지 않았다.
+#   자세한 근거는 docs/deploy-coolify.md §9.
+#
+# openssl 은 schema-engine 바이너리가 요구하므로 두 스테이지 모두에 설치한다.
 
 ARG NODE_VERSION=24-slim
 
@@ -121,6 +127,30 @@ RUN rm -rf /app/node_modules/.pnpm/@electric-sql+pglite@* \
            /app/node_modules/.pnpm/elkjs@* \
   && echo "--- prune 후 prisma CLI 로딩 검증 ---" \
   && /app/apps/api/node_modules/.bin/prisma --version \
+  && echo "--- 검증 통과 ---"
+
+# 안 쓰는 DB 의 쿼리 컴파일러 제거 (약 61MB)
+#
+# @prisma/client/runtime 은 postgresql / mysql / sqlite / sqlserver /
+# cockroachdb 5종 × fast·small 2변형 × .js·.mjs 2포맷의 wasm-base64 번들을
+# 전부 담고 있어 75M 이다. 생성된 클라이언트가 실제로 참조하는 것은
+# `query_compiler_fast_bg.postgresql.js` 뿐이다 (dist/generated/prisma 에서
+# grep 으로 확인). postgres 전용 프로젝트이므로 나머지는 죽은 무게다.
+#
+# 실측: 75M → 14M. 삭제 후 migrate deploy, findMany, count, aggregate 모두 정상.
+# ($queryRaw 만으로는 컴파일러를 안 탈 수 있어 모델 쿼리로 검증했다.)
+#
+# 다른 DB 로 갈 일이 생기면 이 블록부터 지울 것.
+RUN RT=$(ls -d /app/node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/runtime) \
+  && cd "$RT" \
+  && rm -f query_compiler_*bg.mysql.* \
+           query_compiler_*bg.sqlite.* \
+           query_compiler_*bg.sqlserver.* \
+           query_compiler_*bg.cockroachdb.* \
+           query_compiler_small_bg.postgresql.* \
+  && echo "--- postgres 컴파일러 잔존 확인 ---" \
+  && test -f query_compiler_fast_bg.postgresql.js \
+  && test -f query_compiler_fast_bg.postgresql.wasm-base64.js \
   && echo "--- 검증 통과 ---"
 
 # ---------------------------------------------------------------------------
