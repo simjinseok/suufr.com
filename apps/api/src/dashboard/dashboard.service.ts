@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { zonedDayStart, zonedMonthStart, zonedParts } from '../common/utils/timezone';
-import { getStudentBalances } from '../common/utils/student-balance';
 import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
@@ -27,8 +26,8 @@ export class DashboardService {
         success: true,
         data: {
           activeStudentCount: 0,
-          unpaidStudents: [],
-          unpaidStudentsCount: 0,
+          unpaidInvoices: [],
+          unpaidInvoicesCount: 0,
           leftStudentsCount: 0,
           uncheckedMeetings: [],
           uncheckedMeetingsCount: 0,
@@ -46,7 +45,7 @@ export class DashboardService {
     const startOfToday = zonedDayStart(year, month, day, timezone);
     const endOfToday = zonedDayStart(year, month, day + 1, timezone);
 
-    const [activeStudentCount, students, leftStudentsCount, uncheckedMeetings, todayRemainingSessionCount] = await Promise.all([
+    const [activeStudentCount, unpaidInvoices, leftStudentsCount, uncheckedMeetings, todayRemainingSessionCount] = await Promise.all([
       // 1. Active student count
       this.prisma.student.count({
         where: {
@@ -56,17 +55,32 @@ export class DashboardService {
         },
       }),
 
-      // 2. 미수 후보 — 납부 상태는 학생 단위 잔액으로 파생(§3)하므로 학생 목록을 가져와 아래에서 판정
-      this.prisma.student.findMany({
+      // 2. 미납 수강권 — 연결된 미삭제 입금이 1건도 없는 수강권 (§6-22 연결 기준, 금액 파생 아님).
+      //    0원 수강권은 제외(체험·서비스 성격), 미래 수강권은 포함("곧 받을 돈"), 학생은 active/pending만.
+      this.prisma.invoice.findMany({
         where: {
           deletedAt: null,
-          organizationId: { in: organizationIds },
+          price: { gt: 0 },
+          student: {
+            deletedAt: null,
+            status: { in: ['active', 'pending'] },
+            organizationId: { in: organizationIds },
+          },
+          invoicePayments: { none: { payment: { deletedAt: null } } },
         },
         select: {
-          id: true,
           uuid: true,
-          name: true,
+          title: true,
+          price: true,
+          periodStart: true,
+          periodEnd: true,
+          student: { select: { uuid: true, name: true } },
         },
+        // 오래 밀린 것부터 위로. 기간 없는 건 뒤로 보내고 생성순으로 안정 정렬
+        orderBy: [
+          { periodStart: { sort: 'asc', nulls: 'last' } },
+          { createdAt: 'asc' },
+        ],
       }),
 
       // 3. Left students count (this month)
@@ -119,24 +133,12 @@ export class DashboardService {
       }),
     ]);
 
-    // 미수 판정: 학생 단위 잔액 — 미수액 = max(Σprice − Σ양수입금, 0).
-    // 환불(음수)은 "돌려준 돈"이지 "안 낸 돈"이 아니므로 미수 판정에서 제외 (§6-17의 학생 레벨 이식)
-    const balances = await getStudentBalances(this.prisma, students.map(s => s.id));
-    const unpaidStudents = students
-      .map(student => ({
-        uuid: student.uuid,
-        name: student.name,
-        outstandingAmount: balances.get(student.id)?.outstandingAmount ?? 0,
-      }))
-      .filter(s => s.outstandingAmount > 0)
-      .sort((a, b) => b.outstandingAmount - a.outstandingAmount);
-
     return {
       success: true,
       data: {
         activeStudentCount,
-        unpaidStudents,
-        unpaidStudentsCount: unpaidStudents.length,
+        unpaidInvoices,
+        unpaidInvoicesCount: unpaidInvoices.length,
         leftStudentsCount,
         uncheckedMeetings,
         uncheckedMeetingsCount: uncheckedMeetings.length,

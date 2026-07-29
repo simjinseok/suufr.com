@@ -2,9 +2,6 @@
 import type { ModalProps } from '@heroui/react';
 
 import { numberToHangulMixed } from 'es-hangul';
-import { format } from 'date-fns/format';
-import { ko } from 'date-fns/locale/ko';
-import { tz } from '@date-fns/tz';
 
 import React from 'react';
 import {
@@ -29,6 +26,7 @@ import { BanknoteIcon, BookDashedIcon, CreditCardIcon, LandmarkIcon } from 'luci
 import { Controller, useForm } from 'react-hook-form';
 
 import { updatePayment, removePayment } from '@/actions/payment';
+import { invoiceOptionLabel, invoicePeriodLabel } from '@/utils/invoice-label';
 import { fromDate, toCalendarDate, today } from '@internationalized/date';
 import { useTimeZone } from '@/contexts/timezone';
 
@@ -351,26 +349,6 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
       </Modal.Footer>
     </React.Fragment>
   );
-}
-
-// 기간 표기 — date-only는 UTC 고정 (suufr 타임존 규칙)
-function invoicePeriodLabel(invoice: InvoiceOption) {
-  if (!invoice.periodStart) return null;
-
-  const start = format(new Date(invoice.periodStart), 'M월 d일', { locale: ko, in: tz('UTC') });
-  const end = invoice.periodEnd
-    ? format(new Date(invoice.periodEnd), 'M월 d일', { locale: ko, in: tz('UTC') })
-    : '';
-
-  return `${start}~${end}`;
-}
-
-// 접근성/타이프어헤드용 전체 라벨
-function invoiceOptionLabel(invoice: InvoiceOption) {
-  const title = invoice.title || '수강권';
-  const price = invoice.price > 0 ? `${numberToHangulMixed(invoice.price)}원` : null;
-
-  return [invoicePeriodLabel(invoice), title, price].filter(Boolean).join(' · ');
 }
 
 function DatePickerField({ name, value, onChange }: {
