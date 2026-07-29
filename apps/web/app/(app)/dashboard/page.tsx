@@ -22,8 +22,8 @@ export default async function Page() {
   const response = await dashboardApi.get();
   const {
     activeStudentCount,
-    unpaidStudents,
-    unpaidStudentsCount,
+    unpaidInvoices,
+    unpaidInvoicesCount,
     leftStudentsCount,
     uncheckedMeetings,
   } = response.data;
@@ -33,8 +33,8 @@ export default async function Page() {
       <DashboardCards
         currentActiveStudentCount={activeStudentCount}
         leftStudentsCount={leftStudentsCount}
-        unpaidStudents={unpaidStudents}
-        unpaidStudentsCount={unpaidStudentsCount}
+        unpaidInvoices={unpaidInvoices}
+        unpaidInvoicesCount={unpaidInvoicesCount}
       />
 
       {uncheckedMeetings.length > 0 && (
