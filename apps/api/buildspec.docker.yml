@@ -1,0 +1,54 @@
+version: 0.2
+
+# apps/api 이미지를 빌드해 ECR 로 push 한다.
+#
+# CodeBuild 프로젝트 요구사항:
+#   - privilegedMode: true          (docker 데몬 필요)
+#   - 이미지: aws/codebuild/amazonlinux2-x86_64-standard:5.0 이상
+#             (Coolify 호스트와 아키텍처를 맞출 것 — x86_64)
+#   - 서비스 역할에 ECR 권한:
+#       ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability,
+#       ecr:InitiateLayerUpload, ecr:UploadLayerPart,
+#       ecr:CompleteLayerUpload, ecr:PutImage
+#   - cache.mode: LOCAL_DOCKER_LAYER_CACHE 권장
+#
+# CodeBuild 는 phase 마다 셸을 새로 띄우므로 pre_build 에서 만든 변수가
+# build/post_build 로 넘어가지 않는다. /tmp/build.env 에 적어 두고 source 한다.
+#
+# 기존 buildspec.yml (EB 배포용) 은 컷오버가 끝날 때까지 그대로 둔다.
+
+env:
+  variables:
+    DOCKER_BUILDKIT: "1"
+    AWS_REGION: ap-northeast-2
+    ECR_REPO: suufr/api
+
+phases:
+  pre_build:
+    commands:
+      - |
+        REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+        SHA_TAG=sha-$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+        {
+          echo "export IMAGE=$REGISTRY/$ECR_REPO"
+          echo "export SHA_TAG=$SHA_TAG"
+        } > /tmp/build.env
+      - . /tmp/build.env
+      - echo "building $IMAGE:$SHA_TAG"
+      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${IMAGE%%/*}"
+
+  build:
+    commands:
+      - . /tmp/build.env
+      # 컨텍스트는 반드시 모노레포 루트
+      - docker build -f apps/api/Dockerfile -t "$IMAGE:$SHA_TAG" -t "$IMAGE:latest" .
+
+  post_build:
+    commands:
+      # 빌드가 실패해도 post_build 는 실행되므로 결과를 확인하고 중단한다
+      - if [ "$CODEBUILD_BUILD_SUCCEEDING" != "1" ]; then echo "build failed - skipping push"; exit 1; fi
+      - . /tmp/build.env
+      - docker push "$IMAGE:$SHA_TAG"
+      - docker push "$IMAGE:latest"
+      - echo "pushed $IMAGE:$SHA_TAG and :latest"
+      - echo "Coolify 에서 수동으로 redeploy 하세요 (api 먼저, 그다음 web)"

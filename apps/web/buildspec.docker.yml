@@ -1,0 +1,67 @@
+version: 0.2
+
+# apps/web 이미지를 빌드해 ECR 로 push 한다.
+#
+# CodeBuild 프로젝트 요구사항: apps/api/buildspec.docker.yml 주석 참고.
+# 추가로 이 프로젝트에는 아래 환경변수를 등록해야 한다. NEXT_PUBLIC_* 는
+# 빌드 타임에 번들로 인라인되므로 Coolify 런타임 변수로 대체할 수 없다.
+#   NEXT_PUBLIC_BASE_URL, NEXT_PUBLIC_CDN_URL, NEXT_PUBLIC_SENTRY_DSN
+# 선택: SENTRY_AUTH_TOKEN (Secrets Manager 참조 — 소스맵 업로드용)
+#
+# CodeBuild 는 phase 마다 셸을 새로 띄우므로 pre_build 에서 만든 변수가
+# build/post_build 로 넘어가지 않는다. /tmp/build.env 에 적어 두고 source 한다.
+#
+# 기존 buildspec.yml (EB 배포용) 은 컷오버가 끝날 때까지 그대로 둔다.
+
+env:
+  variables:
+    DOCKER_BUILDKIT: "1"
+    AWS_REGION: ap-northeast-2
+    ECR_REPO: suufr/web
+
+phases:
+  pre_build:
+    commands:
+      - test -n "$NEXT_PUBLIC_BASE_URL" || { echo "NEXT_PUBLIC_BASE_URL 미설정"; exit 1; }
+      - test -n "$NEXT_PUBLIC_CDN_URL" || { echo "NEXT_PUBLIC_CDN_URL 미설정"; exit 1; }
+      - |
+        REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+        SHA_TAG=sha-$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+        {
+          echo "export IMAGE=$REGISTRY/$ECR_REPO"
+          echo "export SHA_TAG=$SHA_TAG"
+        } > /tmp/build.env
+      # SENTRY_AUTH_TOKEN 이 있으면 BuildKit secret 으로 넘긴다 (이미지 레이어에 남지 않음)
+      - |
+        if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+          printf '%s' "$SENTRY_AUTH_TOKEN" > /tmp/sentry_auth_token
+          echo "export SECRET_ARG='--secret id=sentry_auth_token,src=/tmp/sentry_auth_token'" >> /tmp/build.env
+        else
+          echo "export SECRET_ARG=" >> /tmp/build.env
+        fi
+      - . /tmp/build.env
+      - echo "building $IMAGE:$SHA_TAG"
+      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${IMAGE%%/*}"
+
+  build:
+    commands:
+      - . /tmp/build.env
+      # 컨텍스트는 반드시 모노레포 루트
+      - |
+        docker build -f apps/web/Dockerfile \
+          --build-arg NEXT_PUBLIC_BASE_URL="$NEXT_PUBLIC_BASE_URL" \
+          --build-arg NEXT_PUBLIC_CDN_URL="$NEXT_PUBLIC_CDN_URL" \
+          --build-arg NEXT_PUBLIC_SENTRY_DSN="$NEXT_PUBLIC_SENTRY_DSN" \
+          $SECRET_ARG \
+          -t "$IMAGE:$SHA_TAG" -t "$IMAGE:latest" .
+
+  post_build:
+    commands:
+      - rm -f /tmp/sentry_auth_token
+      # 빌드가 실패해도 post_build 는 실행되므로 결과를 확인하고 중단한다
+      - if [ "$CODEBUILD_BUILD_SUCCEEDING" != "1" ]; then echo "build failed - skipping push"; exit 1; fi
+      - . /tmp/build.env
+      - docker push "$IMAGE:$SHA_TAG"
+      - docker push "$IMAGE:latest"
+      - echo "pushed $IMAGE:$SHA_TAG and :latest"
+      - echo "Coolify 에서 수동으로 redeploy 하세요 (api 먼저, 그다음 web)"

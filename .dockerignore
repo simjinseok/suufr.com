@@ -1,0 +1,45 @@
+# 빌드 컨텍스트는 모노레포 루트다 (docker build -f apps/<app>/Dockerfile .)
+# pnpm workspace 링크와 next.config.mjs 의 outputFileTracingRoot: '../../' 때문에
+# 앱 디렉터리만으로는 빌드가 되지 않는다.
+
+node_modules
+**/node_modules
+
+.git
+.gitignore
+.github
+
+.turbo
+**/.turbo
+**/.next
+**/dist
+
+# 이미지 안에서 prisma generate 를 다시 돌린다
+apps/api/src/generated
+
+# 컨테이너 빌드와 무관
+apps/ios
+docs
+.claude
+**/*.md
+!**/README.md
+
+# 로컬 산출물 / 테스트
+**/coverage
+**/.vitest
+**/*.log
+
+# ⚠️ 필수: Next 의 output file tracing 이 apps/web/.env 를 standalone 산출물로
+# 그대로 복사한다. 지금까지는 CodeBuild 가 git clone(=.env 없음) 으로 빌드해서
+# 문제가 없었지만, Docker 는 로컬 디렉터리가 컨텍스트라 이 줄이 없으면
+# 개발자 .env 가 운영 이미지에 박힌다.
+**/.env
+**/.env.*
+!**/.env.example
+
+*.pem
+*.key
+
+.DS_Store
+**/.vscode
+**/.idea
