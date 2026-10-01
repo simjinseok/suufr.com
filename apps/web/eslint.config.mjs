@@ -2,7 +2,7 @@ import baseConfig from '@suufr/eslint-config/base';
 import nextPlugin from '@next/eslint-plugin-next';
 
 export default [
-  { ignores: ['.next/**', 'node_modules/**'] },
+  { ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts'] },
   ...baseConfig,
   {
     files: ['**/*.{ts,tsx}'],

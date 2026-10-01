@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { sentryDataCollection } from './sentry.data-collection';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -8,6 +9,8 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
+
+  dataCollection: sentryDataCollection,
 
   replaysOnErrorSampleRate: 1.0,
 

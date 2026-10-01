@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { sentryDataCollection } from './sentry.data-collection';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -10,4 +11,6 @@ Sentry.init({
   debug: false,
 
   environment: process.env.SENTRY_ENVIRONMENT,
+
+  dataCollection: sentryDataCollection,
 });
