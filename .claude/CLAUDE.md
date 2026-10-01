@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Turborepo + pnpm workspaces. 두 앱 + 공유 설정 패키지로 구성:
 
 - **`apps/web`** — Next.js 16 (App Router) 프론트엔드. **Prisma를 직접 쓰지 않는다.** 모든 데이터 접근은 HTTP로 `apps/api`를 호출한다 (`utils/api-client.ts`, `utils/api/*`). 서버 액션은 Zod 검증 + `Sentry.withServerActionInstrumentation`으로 감싼 얇은 프록시.
-- **`apps/api`** — NestJS 11 (Fastify) 백엔드. Prisma 7로 PostgreSQL 접근, AWS Cognito 인증, S3/CloudFront 파일 저장. 소유권 격리·소프트 삭제 등 도메인 규칙이 여기 있다.
+- **`apps/api`** — NestJS 12 (Fastify) 백엔드. Prisma 7로 PostgreSQL 접근, AWS Cognito 인증, S3/CloudFront 파일 저장. 소유권 격리·소프트 삭제 등 도메인 규칙이 여기 있다.
 - **`packages/*`** — 공유 설정 (`@suufr/eslint-config`, `@suufr/typescript-config`).
 
 ## Development Commands
@@ -36,7 +36,7 @@ pnpm --filter api prisma:studio
 
 **apps/web**: Next.js 16 (App Router), React 19, TypeScript, HeroUI v3 (beta), Tailwind CSS 4, React Hook Form + Zod, Sentry. 데이터는 `apps/api`를 HTTP로만 호출 (Prisma 없음).
 
-**apps/api**: NestJS 11 + Fastify, Prisma 7 (`prisma-client` 제너레이터 + `@prisma/adapter-pg` 드라이버 어댑터, 설정은 `apps/api/prisma.config.mjs`), PostgreSQL, AWS Cognito (`aws-jwt-verify`), S3 + CloudFront, `@nestjs/throttler`, Sentry.
+**apps/api**: NestJS 12 + Fastify, Prisma 7 (`prisma-client` 제너레이터 + `@prisma/adapter-pg` 드라이버 어댑터, 설정은 `apps/api/prisma.config.mjs`), PostgreSQL, AWS Cognito (`aws-jwt-verify`), S3 + CloudFront, `@nestjs/throttler`, Sentry.
 
 > **Prisma 버전 주의**: CLI(`prisma`)와 런타임(`@prisma/client`, `@prisma/adapter-pg`)의 버전이 **정확히 일치**해야 한다. 어긋나면 클라이언트 생성/런타임에서 깨진다.
 
