@@ -1,0 +1,92 @@
+name: Build & Deploy (GHCR → Coolify)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, api]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/suufr-${{ matrix.app }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+            type=ref,event=branch
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+          # web 전용: NEXT_PUBLIC_* 는 빌드 타임 인라인 → Repository variables 에 등록
+          build-args: |
+            NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
+            NEXT_PUBLIC_CDN_URL=${{ vars.NEXT_PUBLIC_CDN_URL }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT }}
+          secrets: |
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  deploy:
+    name: Trigger Coolify
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Coolify > 리소스 > Webhooks 탭의 URL 과 API 토큰(Keys & Tokens > API tokens, deploy 권한).
+      # 시크릿이 비어 있으면 건너뛴다 (Coolify 쪽 폴링/수동 배포로 운영하는 경우).
+      - name: Deploy api
+        env:
+          WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK_API }}
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        if: env.WEBHOOK != '' && env.TOKEN != ''
+        run: |
+          curl --fail-with-body -sS -X GET "$WEBHOOK" -H "Authorization: Bearer $TOKEN"
+
+      - name: Deploy web
+        env:
+          WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK_WEB }}
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        if: env.WEBHOOK != '' && env.TOKEN != ''
+        run: |
+          curl --fail-with-body -sS -X GET "$WEBHOOK" -H "Authorization: Bearer $TOKEN"

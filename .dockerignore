@@ -1,0 +1,35 @@
+# 의존성/빌드 산출물 — 이미지 안에서 다시 설치/빌드한다
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/src/generated
+
+# 로컬 환경/비밀
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+
+# 레거시 배포(CodeBuild/Elastic Beanstalk)
+**/buildspec.yml
+**/Procfile
+**/.ebextensions
+**/.platform
+
+# 기타
+.git
+.github
+.claude
+.idea
+.vscode
+*.log
+*.tsbuildinfo
+.DS_Store
