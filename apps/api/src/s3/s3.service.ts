@@ -64,26 +64,41 @@ export class S3Service {
    * 업로드 직후의 객체에는 status=pending 태그가 붙는다. 등록(POST /files)이 태그를
    * 제거하기 전까지는 라이프사이클 룰의 회수 대상 (docs/s3-pending-lifecycle.md 참고).
    *
+   * 선언된 크기(contentLength)는 서명에 포함된다 (X-Amz-SignedHeaders에 content-length).
+   * 클라이언트가 다른 크기의 바디를 PUT 하면 S3가 SignatureDoesNotMatch(403)로 거부하므로,
+   * presign 단계의 크기 제한이 S3 단계에서도 강제된다. 등록 단계의 headObject 재검증은
+   * 그대로 두 번째 방어선으로 유지한다.
+   *
    * @param key - S3 object key (e.g., 'temp/uuid.jpg')
    * @param contentType - MIME type (e.g., 'image/jpeg')
+   * @param contentLength - 클라이언트가 선언한 바디 크기(bytes). 서명에 묶인다
    * @param expiresIn - URL expiration in seconds (default: 300 = 5 minutes)
    * @returns Presigned PUT URL
    */
   async getPresignedUploadUrl(
     key: string,
     contentType: string,
+    contentLength: number,
     expiresIn = 300,
   ): Promise<string> {
+    if (!Number.isInteger(contentLength) || contentLength <= 0) {
+      throw new Error(`Invalid contentLength for presigned upload: ${contentLength}`);
+    }
+
     try {
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: key,
         ContentType: contentType,
+        ContentLength: contentLength,
         Tagging: PENDING_UPLOAD_TAG,
       });
 
       // x-amz-tagging은 쿼리 파라미터로 호이스팅되면 S3가 무시하므로 서명 헤더에 남긴다.
       // 그 결과 클라이언트가 같은 값의 헤더를 보내지 않으면 403 → 태그 누락이 조용히 지나가지 않는다.
+      // content-length는 presigner가 기본적으로 호이스팅하지 않고 서명 헤더에 남긴다
+      // (X-Amz-SignedHeaders에 포함). 모든 HTTP 클라이언트가 바디 크기로 자동 설정하는 헤더이므로
+      // requiredHeaders에는 넣지 않는다 (브라우저는 Content-Length를 수동 설정할 수 없음).
       const url = await getSignedUrl(this.s3Client, command, {
         expiresIn,
         unhoistableHeaders: new Set(['x-amz-tagging']),
@@ -97,7 +112,8 @@ export class S3Service {
   }
 
   /**
-   * presigned PUT 시 클라이언트가 그대로 에코해야 하는 서명 헤더
+   * presigned PUT 시 클라이언트가 그대로 에코해야 하는 서명 헤더.
+   * Content-Length도 서명되지만 HTTP 클라이언트가 바디에서 자동 설정하므로 여기 포함하지 않는다.
    */
   getPresignedUploadRequiredHeaders(): Record<string, string> {
     return { 'x-amz-tagging': PENDING_UPLOAD_TAG };
