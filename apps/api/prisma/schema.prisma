@@ -627,3 +627,104 @@ enum ConsentTypeValue {
 
   @@map("ConsentType")
 }
+
+// better-auth 사용자. id = 기존 Cognito sub(uuid), 신규 가입자는 uuid v4.
+// Organization/UserSettings 등 기존 테이블의 user_id 가 이 id 를 가리킨다 (FK 는 추가하지 않음 — 삭제된 사용자 잔존 데이터 허용).
+model User {
+  id                     String    @id @db.Uuid
+  name                   String
+  email                  String    @unique // 소문자 정규화 (better-auth 조회 기준)
+  emailVerified          Boolean   @default(false) @map("email_verified")
+  image                  String?
+  cognitoMigratedAt      DateTime? @map("cognito_migrated_at") @db.Timestamptz(0) // lazy migration 으로 비밀번호가 옮겨진 시각
+  cognitoMfaEnabled      Boolean   @default(false) @map("cognito_mfa_enabled") // export 시점 Cognito TOTP 설정 여부
+  requiresTwoFactorSetup Boolean   @default(false) @map("requires_two_factor_setup") // Cognito MFA 사용자 → better-auth TOTP 재등록 안내
+  twoFactorEnabled       Boolean?  @map("two_factor_enabled") // better-auth twoFactor 플러그인
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  sessions   AuthSession[]
+  accounts   Account[]
+  twoFactors TwoFactor[]
+
+  @@map("users")
+}
+
+// better-auth 세션. 기존 수업 모델 Session(sessions) 과 충돌하므로 이름을 바꿈 — auth.config.ts 의 session.modelName: 'authSession'
+model AuthSession {
+  id        String   @id @db.Uuid
+  token     String   @unique
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(0)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+// better-auth 인증 수단. providerId = 'credential'(이메일+비밀번호, password 에 scrypt 해시) | 추후 'google' 등
+model Account {
+  id                    String    @id @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(0)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(0)
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// better-auth 검증 토큰/OTP 저장 (이메일 인증 OTP, 비밀번호 재설정 OTP)
+model Verification {
+  id         String   @id @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// better-auth JWT 플러그인 서명 키 (private_key 는 BETTER_AUTH_SECRET 으로 AES-256-GCM 암호화됨)
+model Jwks {
+  id         String    @id @db.Uuid
+  publicKey  String    @map("public_key")
+  privateKey String    @map("private_key")
+  alg        String? // 서명 알고리즘 (기본 EdDSA)
+  crv        String? // 곡선 (EdDSA: Ed25519)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(0)
+
+  @@map("jwks")
+}
+
+// better-auth twoFactor 플러그인 (TOTP 시드·백업코드)
+model TwoFactor {
+  id                      String    @id @db.Uuid
+  userId                  String    @map("user_id") @db.Uuid
+  secret                  String
+  backupCodes             String    @map("backup_codes")
+  verified                Boolean   @default(false)
+  failedVerificationCount Int       @default(0) @map("failed_verification_count")
+  lockedUntil             DateTime? @map("locked_until") @db.Timestamptz(0)
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factors")
+}

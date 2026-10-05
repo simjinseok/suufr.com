@@ -8,10 +8,12 @@
 \set ON_ERROR_STOP on
 
 CREATE TEMP TABLE cognito_export (
-  sub         uuid PRIMARY KEY,
-  email       text,
-  status      text,
-  mfa_enabled boolean
+  sub            uuid PRIMARY KEY,
+  email          text,
+  name           text,
+  email_verified boolean,
+  status         text,
+  mfa_enabled    boolean
 );
 \copy cognito_export FROM :'csv' WITH (FORMAT csv, HEADER true)
 

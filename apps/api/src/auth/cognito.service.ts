@@ -23,7 +23,18 @@ import {
 import { createHmac } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConsentsService } from './consents.service';
+import { UserProvisioningService } from './user-provisioning.service';
 import { SignupDto } from './dto';
+
+/** 비밀번호 검증 결과 (lazy migration 용). 세션 발급·DB 변경 없음 */
+export type CognitoAuthOutcome
+  = | { kind: 'authenticated'; sub: string; name?: string }
+    | { kind: 'mfa-required'; sub: string; name?: string; session: string }
+    | { kind: 'new-password-required'; session: string }
+    | { kind: 'not-confirmed' }
+    | { kind: 'not-authorized' }
+    | { kind: 'not-found' }
+    | { kind: 'unavailable' };
 
 @Injectable()
 export class CognitoService {
@@ -36,6 +47,7 @@ export class CognitoService {
     private configService: ConfigService,
     private prisma: PrismaService,
     private consentsService: ConsentsService,
+    private provisioning: UserProvisioningService,
   ) {
     this.client = new CognitoIdentityProviderClient({
       region: this.configService.get('AWS_REGION') || 'ap-northeast-2',
@@ -63,8 +75,11 @@ export class CognitoService {
     const { AccessToken, RefreshToken, ExpiresIn } = authResult;
     const payload = this.decodeJwt(AccessToken!);
     const userId = payload.sub as string;
+    const name = payload.name as string | undefined;
 
-    await this.ensureUserWithOrganization(userId, email, payload.name as string);
+    // Phase 1: users 행을 먼저 보장한다 (id = Cognito sub). 로그인에 성공했으므로 이메일은 인증된 상태.
+    await this.provisioning.ensureUser({ id: userId, email, name, emailVerified: true });
+    await this.provisioning.ensureOrganization(userId, email, name);
 
     return {
       success: true,
@@ -73,6 +88,47 @@ export class CognitoService {
       expiresIn: ExpiresIn,
       cognitoUsername: userId,
     };
+  }
+
+  /**
+   * 비밀번호만 검증한다 (토큰 발급·users/Organization 생성 없음). better-auth lazy migration 훅이 사용.
+   * MFA 챌린지는 비밀번호가 맞을 때만 오므로 '비밀번호 검증 성공'으로 취급한다.
+   * sub 는 MFA 챌린지 응답에 없어 users 백필 행 또는 AdminGetUser 로 보강해야 하는데,
+   * 여기서는 ChallengeParameters.USER_ID_FOR_SRP(=sub 또는 username) 를 쓴다 — 이메일 alias 유저풀에서는 sub 다.
+   */
+  async authenticate(email: string, password: string): Promise<CognitoAuthOutcome> {
+    const secretHash = this.computeSecretHash(email);
+    try {
+      const response = await this.client.send(new InitiateAuthCommand({
+        AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
+        ClientId: this.clientId,
+        AuthParameters: {
+          USERNAME: email,
+          PASSWORD: password,
+          ...(secretHash && { SECRET_HASH: secretHash }),
+        },
+      }));
+
+      if (response.AuthenticationResult?.AccessToken) {
+        const payload = this.decodeJwt(response.AuthenticationResult.AccessToken);
+        return { kind: 'authenticated', sub: payload.sub as string, name: payload.name as string | undefined };
+      }
+      if (response.ChallengeName === ChallengeNameType.SOFTWARE_TOKEN_MFA && response.Session) {
+        const sub = response.ChallengeParameters?.USER_ID_FOR_SRP;
+        if (!sub) return { kind: 'unavailable' };
+        return { kind: 'mfa-required', sub, session: response.Session };
+      }
+      if (response.ChallengeName === ChallengeNameType.NEW_PASSWORD_REQUIRED && response.Session) {
+        return { kind: 'new-password-required', session: response.Session };
+      }
+      return { kind: 'unavailable' };
+    }
+    catch (error) {
+      if (error instanceof NotAuthorizedException) return { kind: 'not-authorized' };
+      if (error instanceof UserNotFoundException) return { kind: 'not-found' };
+      if (error instanceof UserNotConfirmedException) return { kind: 'not-confirmed' };
+      throw error;
+    }
   }
 
   async login(email: string, password: string) {
@@ -380,30 +436,5 @@ export class CognitoService {
       }
       throw error;
     }
-  }
-
-  private async ensureUserWithOrganization(userId: string, email: string, name?: string) {
-    const existingOrganization = await this.prisma.organization.findFirst({
-      where: { userId },
-    });
-
-    if (existingOrganization) return;
-
-    await this.prisma.$transaction(async (tx) => {
-      const orgName = name || email.split('@')[0];
-      await tx.organization.create({
-        data: {
-          name: orgName,
-          userId,
-          profileName: orgName,
-        },
-      });
-
-      await tx.userSettings.upsert({
-        where: { userId },
-        create: { userId },
-        update: {},
-      });
-    });
   }
 }

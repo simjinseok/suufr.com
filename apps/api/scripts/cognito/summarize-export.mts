@@ -3,7 +3,7 @@
  *
  * 출력:
  *   - 콘솔: 상태별 인원, MFA 사용자 수, 미인증 수, 임시비밀번호 수, 이메일 누락, 소문자 기준 중복 이메일
- *   - <out>/cognito-subs.csv : sub,email,status,mfa_enabled  (db-crosscheck.sql 의 \copy 입력)
+ *   - <out>/cognito-subs.csv : sub,email,name,email_verified,status,mfa_enabled  (db-crosscheck.sql / backfill-users.sql 의 \copy 입력)
  *
  * 실행 (apps/api 에서):
  *   node scripts/cognito/summarize-export.mts [export경로] [출력디렉터리]
@@ -52,8 +52,10 @@ if (duplicateEmails.length > 0) {
 }
 
 mkdirSync(outDir, { recursive: true });
-const csv = ['sub,email,status,mfa_enabled', ...users.filter(u => u.sub).map(u =>
-  [u.sub, u.email ?? '', u.status, u.mfaEnabled ? 'true' : 'false'].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','),
+// 컬럼은 db-crosscheck.sql / backfill-users.sql 의 임시 테이블 정의와 일치해야 한다
+const csv = ['sub,email,name,email_verified,status,mfa_enabled', ...users.filter(u => u.sub).map(u =>
+  [u.sub, u.email ?? '', u.name ?? '', u.emailVerified ? 'true' : 'false', u.status, u.mfaEnabled ? 'true' : 'false']
+    .map(v => `"${String(v).replace(/"/g, '""')}"`).join(','),
 )].join('\n');
 const csvPath = resolve(outDir, 'cognito-subs.csv');
 writeFileSync(csvPath, csv + '\n');

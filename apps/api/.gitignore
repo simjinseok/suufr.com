@@ -3,3 +3,4 @@
 
 # prisma generated
 generated
+.env.e2e
