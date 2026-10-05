@@ -2,6 +2,11 @@
   "name": "api",
   "version": "1.0.0",
   "private": true,
+  "files": [
+    "dist",
+    "prisma",
+    "prisma.config.mjs"
+  ],
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch --debug",
