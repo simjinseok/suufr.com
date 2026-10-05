@@ -18,6 +18,9 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: LayoutProps<'/'>) {
+  // 런타임 환경변수 (빌드 타임 인라인 아님). 미설정이면 GA를 로드하지 않는다 — 개발/스테이징에서 프로덕션 속성으로 전송 방지
+  const gaMeasurementId = process.env.GA_MEASUREMENT_ID;
+
   return (
     <html lang="ko">
       <head>
@@ -31,7 +34,7 @@ export default function RootLayout({
           {children}
         </Providers>
       </body>
-      <GoogleAnalytics gaId="G-70QL7WW6SQ" />
+      {gaMeasurementId && <GoogleAnalytics gaId={gaMeasurementId} />}
     </html>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { LegalList, LegalSection, LegalTitle } from '../_legal';
+import { TERMS_VERSION, formatLegalDate } from '@/constants/legal';
 
 export const metadata: Metadata = {
   title: '이용약관 - 스프',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <LegalTitle effectiveDate="2026년 7월 8일">이용약관</LegalTitle>
+      <LegalTitle effectiveDate={formatLegalDate(TERMS_VERSION)}>이용약관</LegalTitle>
 
       <LegalSection title="제1조 (목적)">
         <p>
@@ -62,7 +63,7 @@ export default function TermsPage() {
           items={[
             '회원은 정확한 정보로 계정을 생성해야 하며, 계정 정보가 변경된 경우 이를 갱신해야 합니다.',
             '계정과 비밀번호의 관리 책임은 회원에게 있으며, 제3자에게 계정을 양도하거나 대여할 수 없습니다.',
-            '회원은 언제든지 서비스 내 설정에서 탈퇴할 수 있으며, 탈퇴 시 관련 법령 및 개인정보처리방침에 따라 데이터가 삭제됩니다.',
+            '회원은 언제든지 support@suufr.com으로 탈퇴를 요청할 수 있으며, 서비스는 요청을 확인한 후 지체 없이 계정과 데이터를 관련 법령 및 개인정보처리방침에 따라 삭제합니다. 서비스 내 탈퇴 기능은 추후 제공 예정입니다.',
           ]}
         />
       </LegalSection>
@@ -146,7 +147,12 @@ export default function TermsPage() {
       </LegalSection>
 
       <LegalSection title="부칙">
-        <p>이 약관은 2026년 7월 8일부터 시행합니다.</p>
+        <p>
+          이 약관은
+          {' '}
+          {formatLegalDate(TERMS_VERSION)}
+          부터 시행합니다.
+        </p>
         <p>
           문의:
           {' '}

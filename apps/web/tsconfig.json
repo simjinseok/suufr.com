@@ -4,6 +4,7 @@
     "paths": {
       "@/actions/*": ["./actions/*"],
       "@/components/*": ["./components/*"],
+      "@/constants/*": ["./constants/*"],
       "@/contexts/*": ["./contexts/*"],
       "@/lib/*": ["./lib/*"],
       "@/prisma/*": ["./prisma/*"],

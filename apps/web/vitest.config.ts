@@ -16,6 +16,7 @@ export default defineConfig({
     alias: {
       '@/actions': path.resolve(__dirname, './actions'),
       '@/components': path.resolve(__dirname, './components'),
+      '@/constants': path.resolve(__dirname, './constants'),
       '@/contexts': path.resolve(__dirname, './contexts'),
       '@/schemas': path.resolve(__dirname, './schemas'),
       '@/types': path.resolve(__dirname, './types'),
