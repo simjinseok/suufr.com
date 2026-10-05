@@ -13,13 +13,26 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { signup } from '@/actions/auth';
+import ConsentCheckboxes, { EMPTY_CONSENTS, isAllConsented, type ConsentValues } from '@/components/auth/consent-checkboxes';
 
 export default function SignupForm() {
   const router = useRouter();
 
   const [state, formAction, isPending] = React.useActionState(signup, {
-    fields: { name: '', email: '', password: '', passwordConfirm: '' },
+    fields: { name: '', email: '', password: '', passwordConfirm: '', ...EMPTY_CONSENTS },
   });
+
+  const [consents, setConsents] = React.useState<ConsentValues>(EMPTY_CONSENTS);
+
+  // 서버 액션 실패 후 체크 상태 복원
+  React.useEffect(() => {
+    if (!state.timestamp || state.success || !state.fields) return;
+    setConsents({
+      agreeTerms: state.fields.agreeTerms,
+      agreePrivacy: state.fields.agreePrivacy,
+      agreeOverseasTransfer: state.fields.agreeOverseasTransfer,
+    });
+  }, [state.timestamp, state.success, state.fields]);
 
   const { control } = useForm({
     values: {
@@ -129,14 +142,18 @@ export default function SignupForm() {
             )}
           />
 
+          <ConsentCheckboxes values={consents} onChange={setConsents} errors={state.fieldErrors} />
+
           <Button
             type="submit"
             variant="primary"
             isPending={isPending}
+            isDisabled={!isAllConsented(consents)}
             className="w-full mt-2"
           >
             가입하기
           </Button>
+          <p className="text-center text-xs text-gray-400">가입하면 만 14세 이상임을 확인하는 것입니다.</p>
         </Form>
 
         <div className="mt-6 text-center text-sm text-gray-500">

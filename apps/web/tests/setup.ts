@@ -1,5 +1,8 @@
 import { vi } from 'vitest';
 
+// 서버 전용 모듈 가드 (vitest 에서는 패키지 해석 불가)
+vi.mock('server-only', () => ({}));
+
 // Mock next/headers
 vi.mock('next/headers', () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
