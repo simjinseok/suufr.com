@@ -16,7 +16,7 @@ function fieldErrors(result: z.ZodSafeParseResult<unknown>) {
 }
 
 describe('signupSchema 동의 필드', () => {
-  it("'true' 문자열 세 개가 모두 있으면 통과하고 불리언 true 로 변환된다", () => {
+  it('\'true\' 문자열 세 개가 모두 있으면 통과하고 불리언 true 로 변환된다', () => {
     const result = signupSchema.safeParse({ ...base, ...agreed });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -25,7 +25,7 @@ describe('signupSchema 동의 필드', () => {
     }
   });
 
-  it("네이티브 체크박스 값 'on' 도 동의로 인식한다", () => {
+  it('네이티브 체크박스 값 \'on\' 도 동의로 인식한다', () => {
     const result = signupSchema.safeParse({
       ...base,
       agreeTerms: 'on',
@@ -42,7 +42,7 @@ describe('signupSchema 동의 필드', () => {
     expect(errors.agreeOverseasTransfer).toEqual(['개인정보 국외 이전에 동의해주세요']);
   });
 
-  it("'false' 는 미동의다", () => {
+  it('\'false\' 는 미동의다', () => {
     const errors = fieldErrors(signupSchema.safeParse({ ...base, ...agreed, agreePrivacy: 'false' }));
     expect(Object.keys(errors)).toEqual(['agreePrivacy']);
   });
