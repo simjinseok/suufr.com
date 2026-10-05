@@ -602,3 +602,28 @@ model PaddleWebhookEvent {
 
   @@map("paddle_webhook_events")
 }
+
+// 약관·개인정보 동의 이력 (추가 전용, 수정·삭제하지 않음)
+// userId = Cognito sub. 가입 직후 SignUp 응답의 UserSub 로 기록되므로 이메일 미인증 상태에서도 행이 존재한다.
+// 철회는 agreed=false 행을 추가한다. 재동의 필요 여부는 타입별 최신 행의 docVersion 을 common/constants/legal.ts 와 비교해 판단.
+model UserConsent {
+  id          Int              @id @default(autoincrement())
+  userId      String           @map("user_id") @db.Uuid
+  type        ConsentTypeValue
+  docVersion  String           @map("doc_version") // 동의한 문서 시행일 'YYYY-MM-DD'
+  agreed      Boolean          @default(true)
+  ipAddress   String?          @map("ip_address") @db.VarChar(45) // IPv6 최대 45자
+  userAgent   String?          @map("user_agent") @db.VarChar(512)
+  consentedAt DateTime         @default(now()) @map("consented_at") @db.Timestamptz(0)
+
+  @@index([userId, type, consentedAt])
+  @@map("user_consents")
+}
+
+enum ConsentTypeValue {
+  terms
+  privacy
+  overseas_transfer
+
+  @@map("ConsentType")
+}

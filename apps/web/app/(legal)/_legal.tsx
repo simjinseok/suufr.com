@@ -33,3 +33,28 @@ export function LegalList({ items }: { items: React.ReactNode[] }) {
     </ul>
   );
 }
+
+export function LegalTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <table className="w-full min-w-[760px] text-sm border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200 text-left text-gray-900">
+            {headers.map(header => (
+              <th key={header} scope="col" className="py-2 pr-4 font-semibold align-bottom whitespace-nowrap">{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex} className="border-b border-gray-100 align-top">
+              {row.map((cell, cellIndex) => (
+                <td key={cellIndex} className="py-2.5 pr-4 leading-relaxed">{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

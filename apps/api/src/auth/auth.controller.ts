@@ -5,6 +5,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { AuthenticatedUser } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { CognitoService } from './cognito.service';
+import { ConsentsService } from './consents.service';
 import { S3Service } from '../s3/s3.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import {
@@ -13,6 +14,7 @@ import {
   NewPasswordDto,
   RefreshTokenDto,
   SignupDto,
+  ConsentsDto,
   VerifyEmailDto,
   ResendVerificationDto,
   ForgotPasswordDto,
@@ -27,6 +29,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly cognitoService: CognitoService,
+    private readonly consentsService: ConsentsService,
     private readonly s3Service: S3Service,
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
@@ -38,6 +41,7 @@ export class AuthController {
     const settings = await this.authService.getOrCreateUserSettings(user.userId);
     const organizations = await this.authService.getUserOrganizations(user.userId);
     const subscription = await this.subscriptionsService.getEntitlements(user.userId);
+    const consents = await this.consentsService.getStatus(user.userId);
 
     return {
       user: {
@@ -49,7 +53,21 @@ export class AuthController {
       organizations,
       settings,
       subscription,
+      consents,
     };
+  }
+
+  /**
+   * 약관·개인정보 재동의 기록 (기존 가입자, 방침 개정 후).
+   * /me 의 consents.required 가 true 인 동안 web 이 재동의 모달을 띄우고 이 엔드포인트로 제출한다.
+   */
+  @Post('consents')
+  async submitConsents(@CurrentUser() user: AuthenticatedUser, @Body() dto: ConsentsDto) {
+    await this.consentsService.record(user.userId, dto, {
+      ipAddress: dto.ipAddress,
+      userAgent: dto.userAgent,
+    });
+    return { success: true, consents: await this.consentsService.getStatus(user.userId) };
   }
 
   @Public()
@@ -74,7 +92,7 @@ export class AuthController {
   @Public()
   @Post('signup')
   async signup(@Body() dto: SignupDto) {
-    return this.cognitoService.signup(dto.name, dto.email, dto.password);
+    return this.cognitoService.signup(dto);
   }
 
   @Public()

@@ -61,3 +61,6 @@ next-env.d.ts
 
 # local tool artifacts
 .sisyphus/
+
+# Claude Code 설정 (로컬 전용)
+.claude/

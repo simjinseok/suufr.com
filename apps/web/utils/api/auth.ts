@@ -40,6 +40,28 @@ type ResetPasswordResponse = {
   message: string;
 };
 
+export type ConsentPayload = {
+  terms: true;
+  privacy: true;
+  overseasTransfer: true;
+  termsVersion: string;
+  privacyVersion: string;
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+export type ConsentStatus = {
+  terms: string | null;
+  privacy: string | null;
+  overseasTransfer: string | null;
+  required: boolean;
+};
+
+type SubmitConsentsResponse = {
+  success: boolean;
+  consents: ConsentStatus;
+};
+
 type RefreshTokenResponse = {
   success: boolean;
   accessToken: string;
@@ -56,8 +78,12 @@ export const authApi = {
   newPassword: (data: { email: string; password: string; session: string }) =>
     apiClient<MfaResponse>('/api/auth/new-password', { method: 'POST', body: data }),
 
-  signup: (data: { name: string; email: string; password: string }) =>
+  signup: (data: { name: string; email: string; password: string; consents: ConsentPayload }) =>
     apiClient<SignupResponse>('/api/auth/signup', { method: 'POST', body: data }),
+
+  // 기존 가입자 재동의 (인증 필요)
+  submitConsents: (data: ConsentPayload) =>
+    apiClient<SubmitConsentsResponse>('/api/auth/consents', { method: 'POST', body: data }),
 
   verifyEmail: (data: { email: string; code: string }) =>
     apiClient<VerifyEmailResponse>('/api/auth/verify-email', { method: 'POST', body: data }),

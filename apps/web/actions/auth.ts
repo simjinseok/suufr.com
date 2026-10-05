@@ -14,6 +14,7 @@ import {
   newPasswordSchema,
 } from '@/schemas/auth';
 import { authApi } from '@/utils/api/auth';
+import { buildConsentPayload } from '@/utils/consent';
 
 // 로그인 성공 시 토큰 쿠키 세팅 (login/respondToMfa/respondToNewPassword 공용)
 async function setTokenCookies(response: {
@@ -245,7 +246,16 @@ export async function respondToNewPassword(
 }
 
 // Signup action
-type SignupFields = { name: string; email: string; password: string; passwordConfirm: string };
+type SignupFields = {
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  // 실패 시 체크 상태 복원용
+  agreeTerms: boolean;
+  agreePrivacy: boolean;
+  agreeOverseasTransfer: boolean;
+};
 type SignupState = ServerActionState<SignupFields>;
 
 export async function signup(
@@ -264,6 +274,9 @@ export async function signup(
           email: (data.email as string) || '',
           password: '',
           passwordConfirm: '',
+          agreeTerms: data.agreeTerms === 'true',
+          agreePrivacy: data.agreePrivacy === 'true',
+          agreeOverseasTransfer: data.agreeOverseasTransfer === 'true',
         },
         timestamp: Date.now(),
       };
@@ -279,6 +292,8 @@ export async function signup(
           name: validation.data.name,
           email: validation.data.email,
           password: validation.data.password,
+          // 동의 3종은 Zod 에서 true 로 확정됨. 동의 시점의 문서 버전·IP·UA 를 함께 기록
+          consents: await buildConsentPayload(),
         });
 
         state.success = true;
