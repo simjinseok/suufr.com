@@ -4,9 +4,20 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@prisma/generated/*": ["./src/generated/prisma/*"]
-    }
+      "@prisma/generated/*": [
+        "./src/generated/prisma/*"
+      ]
+    },
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

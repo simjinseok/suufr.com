@@ -13,7 +13,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-cloudfront": "^3.1095.0",
@@ -52,6 +54,7 @@
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "eslint": "^10.11.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2"
   }
 }

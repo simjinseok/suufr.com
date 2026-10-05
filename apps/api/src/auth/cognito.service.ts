@@ -22,6 +22,8 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { createHmac } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConsentsService } from './consents.service';
+import { SignupDto } from './dto';
 
 @Injectable()
 export class CognitoService {
@@ -33,6 +35,7 @@ export class CognitoService {
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    private consentsService: ConsentsService,
   ) {
     this.client = new CognitoIdentityProviderClient({
       region: this.configService.get('AWS_REGION') || 'ap-northeast-2',
@@ -199,7 +202,8 @@ export class CognitoService {
     }
   }
 
-  async signup(name: string, email: string, password: string) {
+  async signup(dto: SignupDto) {
+    const { name, email, password, consents } = dto;
     try {
       const secretHash = this.computeSecretHash(email);
       const command = new SignUpCommand({
@@ -213,7 +217,22 @@ export class CognitoService {
         ],
       });
 
-      await this.client.send(command);
+      const response = await this.client.send(command);
+
+      // 가입 직후 동의 이력 기록 (이메일 미인증 상태라 DB에 다른 레코드는 없고, Cognito sub만 키로 쓴다).
+      // 기록 실패는 가입 실패로 돌리지 않는다 — 이미 생성된 Cognito 사용자를 되돌릴 수 없고,
+      // 재가입 시도는 UsernameExists 로 막혀 인증 화면에도 못 가는 막다른 길이 된다.
+      // 누락분은 첫 로그인의 /me consents.required → 재동의 모달이 보완한다.
+      if (response.UserSub) {
+        await this.consentsService.recordSafely(response.UserSub, consents, {
+          ipAddress: consents.ipAddress,
+          userAgent: consents.userAgent,
+        });
+      }
+      else {
+        this.logger.error(`SignUp 응답에 UserSub 가 없어 동의 이력을 기록하지 못했습니다 (email=${email})`);
+      }
+
       return { success: true, message: '인증 이메일이 발송되었습니다' };
     }
     catch (error) {
