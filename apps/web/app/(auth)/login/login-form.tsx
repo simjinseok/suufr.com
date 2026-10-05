@@ -197,7 +197,7 @@ export default function LoginForm() {
               2단계 인증
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              인증 앱의 6자리 코드를 입력하세요
+              인증 앱의 6자리 코드 또는 백업코드를 입력하세요
             </p>
           </div>
 
@@ -222,12 +222,12 @@ export default function LoginForm() {
                   onChange={onChange}
                   isRequired
                 >
-                  <Label>MFA 코드</Label>
+                  <Label>인증 코드</Label>
                   <Input
                     variant="secondary"
                     type="text"
-                    inputMode="numeric"
-                    maxLength={6}
+                    inputMode="text"
+                    maxLength={32}
                     placeholder="000000"
                     autoComplete="one-time-code"
                   />

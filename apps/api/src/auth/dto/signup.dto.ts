@@ -1,4 +1,5 @@
-import { IsDefined, IsEmail, IsString, MinLength, ValidateNested } from 'class-validator';
+import { Matches, IsDefined, IsEmail, IsString, MinLength, ValidateNested } from 'class-validator';
+import { PASSWORD_POLICY, PASSWORD_POLICY_MESSAGE } from './password-policy';
 import { Type } from 'class-transformer';
 import { ConsentsDto } from './consent.dto';
 
@@ -11,7 +12,7 @@ export class SignupDto {
   email!: string;
 
   @IsString()
-  @MinLength(8)
+  @Matches(PASSWORD_POLICY, { message: PASSWORD_POLICY_MESSAGE })
   password!: string;
 
   // 이용약관·개인정보 수집·이용·국외 이전 동의 (모두 필수)

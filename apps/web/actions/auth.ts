@@ -16,7 +16,12 @@ import {
 import { authApi } from '@/utils/api/auth';
 import { buildConsentPayload } from '@/utils/consent';
 
+// refresh_token(= better-auth 세션 토큰) 쿠키 수명. api 의 세션 수명(30일)과 같다
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30;
+
 // 로그인 성공 시 토큰 쿠키 세팅 (login/respondToMfa/respondToNewPassword 공용)
+// access_token = better-auth JWT(1시간), refresh_token = better-auth 세션 토큰(30일).
+// cognito_username 쿠키는 Cognito 토큰(점 포함 JWE refresh token)일 때만 설정한다 — Cognito refresh 에 필요.
 async function setTokenCookies(response: {
   accessToken: string;
   refreshToken: string;
@@ -37,13 +42,20 @@ async function setTokenCookies(response: {
     httpOnly: true,
     secure: isProduction,
     sameSite: 'lax',
+    maxAge: REFRESH_TOKEN_MAX_AGE,
   });
 
-  cookieStore.set('cognito_username', response.cognitoUsername, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-  });
+  if (response.refreshToken.includes('.')) {
+    cookieStore.set('cognito_username', response.cognitoUsername, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+    });
+  }
+  else {
+    cookieStore.delete('cognito_username');
+  }
 }
 
 // Login action

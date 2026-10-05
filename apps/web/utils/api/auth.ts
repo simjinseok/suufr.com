@@ -68,6 +68,17 @@ type RefreshTokenResponse = {
   expiresIn: number;
 };
 
+type TwoFactorEnableResponse = {
+  success: boolean;
+  totpURI: string;
+  backupCodes: string[];
+};
+
+type TwoFactorBackupCodesResponse = {
+  success: boolean;
+  backupCodes: string[];
+};
+
 export const authApi = {
   login: (data: { email: string; password: string }) =>
     apiClient<LoginResponse>('/api/auth/login', { method: 'POST', body: data }),
@@ -97,6 +108,23 @@ export const authApi = {
   resetPassword: (data: { email: string; code: string; password: string }) =>
     apiClient<ResetPasswordResponse>('/api/auth/reset-password', { method: 'POST', body: data }),
 
-  refresh: (data: { refreshToken: string; username: string }) =>
+  // username 은 Cognito refresh token 에만 필요 (이전 기간). better-auth 세션 토큰이면 생략
+  refresh: (data: { refreshToken: string; username?: string }) =>
     apiClient<RefreshTokenResponse>('/api/auth/refresh', { method: 'POST', body: data }),
+
+  // 서버 세션 폐기 (refresh_token 쿠키 값). access_token 만료 여부와 무관
+  logout: (data: { refreshToken: string }) =>
+    apiClient<{ success: boolean }>('/api/auth/logout', { method: 'POST', body: data }),
+
+  // 2단계 인증(TOTP) 관리 — 세션 토큰 필요
+  twoFactor: {
+    enable: (data: { password: string }) =>
+      apiClient<TwoFactorEnableResponse>('/api/auth/two-factor/enable', { method: 'POST', body: data, withSessionToken: true }),
+    verifySetup: (data: { code: string }) =>
+      apiClient<SignupResponse>('/api/auth/two-factor/verify-setup', { method: 'POST', body: data, withSessionToken: true }),
+    disable: (data: { password: string }) =>
+      apiClient<SignupResponse>('/api/auth/two-factor/disable', { method: 'POST', body: data, withSessionToken: true }),
+    regenerateBackupCodes: (data: { password: string }) =>
+      apiClient<TwoFactorBackupCodesResponse>('/api/auth/two-factor/backup-codes', { method: 'POST', body: data, withSessionToken: true }),
+  },
 };

@@ -19,13 +19,16 @@ type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
   params?: Record<string, string | number | string[] | number[] | undefined>;
+  // 세션이 필요한 요청(2단계 인증 관리 등)에 refresh_token 쿠키(= better-auth 세션 토큰)를 X-Session-Token 으로 함께 보낸다
+  withSessionToken?: boolean;
 };
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, params } = options;
+  const { method = 'GET', body, params, withSessionToken = false } = options;
 
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
+  const sessionToken = withSessionToken ? cookieStore.get('refresh_token')?.value : undefined;
 
   let url = `${API_URL}${path}`;
   if (params) {
@@ -51,6 +54,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     headers: {
       ...(body ? { 'Content-Type': 'application/json' } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(sessionToken ? { 'X-Session-Token': sessionToken } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
