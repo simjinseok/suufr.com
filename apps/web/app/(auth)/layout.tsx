@@ -19,9 +19,10 @@ export default async function UnauthenticatedLayout({
 
   // 2. access_token이 없지만 refresh_token이 있으면 갱신 시도
   const refreshToken = cookieStore.get('refresh_token')?.value;
+  // Cognito refresh token 에만 필요. better-auth 세션 토큰이면 없다
   const username = cookieStore.get('cognito_username')?.value;
 
-  if (refreshToken && username) {
+  if (refreshToken) {
     try {
       const result = await authApi.refresh({ refreshToken, username });
 
@@ -36,7 +37,8 @@ export default async function UnauthenticatedLayout({
 
       // 세션이 있으므로 dashboard로 리다이렉트
       redirect('/dashboard');
-    } catch {
+    }
+    catch {
       // 갱신 실패 시 children 렌더링
     }
   }

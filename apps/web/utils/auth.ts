@@ -6,6 +6,9 @@ export type Session = {
     id: string;
     email?: string;
     name?: string;
+    // better-auth 2단계 인증 상태. requiresTwoFactorSetup = Cognito MFA 사용자가 이전 후 TOTP 재등록을 아직 안 함
+    twoFactorEnabled?: boolean;
+    requiresTwoFactorSetup?: boolean;
   };
   organization: {
     id: number;
@@ -93,7 +96,8 @@ export async function getSession(): Promise<Session | null> {
       subscription: data.subscription ?? FREE_SUBSCRIPTION,
       consents: data.consents ?? NO_CONSENT_INFO,
     };
-  } catch {
+  }
+  catch {
     return null;
   }
 }
