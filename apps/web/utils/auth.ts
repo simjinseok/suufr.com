@@ -6,7 +6,7 @@ export type Session = {
     id: string;
     email?: string;
     name?: string;
-    // better-auth 2단계 인증 상태. requiresTwoFactorSetup = Cognito MFA 사용자가 이전 후 TOTP 재등록을 아직 안 함
+    // 2단계 인증 상태. requiresTwoFactorSetup = 이전 Cognito MFA 사용자가 TOTP 재등록을 아직 안 함
     twoFactorEnabled?: boolean;
     requiresTwoFactorSetup?: boolean;
   };

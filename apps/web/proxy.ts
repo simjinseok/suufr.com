@@ -10,12 +10,10 @@ export async function proxy(request: NextRequest) {
 
   if (!accessToken) {
     const refreshToken = cookieStore.get('refresh_token')?.value;
-    // Cognito refresh token 에만 필요. better-auth 세션 토큰이면 없다
-    const username = cookieStore.get('cognito_username')?.value;
 
     if (refreshToken) {
       try {
-        const result = await authApi.refresh({ refreshToken, username });
+        const result = await authApi.refresh({ refreshToken });
 
         // 1. Request cookies 업데이트 (서버 컴포넌트용 - 같은 요청 사이클)
         request.cookies.set('access_token', result.accessToken);

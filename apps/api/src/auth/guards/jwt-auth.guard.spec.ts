@@ -2,7 +2,7 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
-import { JwtAuthGuard, peekIssuer } from './jwt-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import type { BetterAuthService } from '../better-auth/better-auth.service';
 
 const ISSUER = 'https://api.example.test';
@@ -46,13 +46,13 @@ async function signToken(privateKey: PrivateKey, claims: Record<string, unknown>
 describe('JwtAuthGuard', () => {
   it('@Public() 라우트는 토큰 없이 통과한다', async () => {
     const { context, reflector } = makeContext(undefined, true);
-    const guard = new JwtAuthGuard(reflector, makeConfig({}));
+    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService);
     await expect(guard.canActivate(context)).resolves.toBe(true);
   });
 
   it('토큰이 없으면 401', async () => {
     const { context, reflector } = makeContext(undefined);
-    const guard = new JwtAuthGuard(reflector, makeConfig({}));
+    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService);
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -94,17 +94,10 @@ describe('JwtAuthGuard', () => {
     await expect(guard.canActivate(makeContext(`Bearer ${expired}`).context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('iss 가 better-auth 가 아니고 Cognito 수용이 꺼져 있으면 401', async () => {
-    const { privateKey } = await makeKeys();
-    const token = await signToken(privateKey, {}, { iss: 'https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_x' });
-    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER, AUTH_ACCEPT_COGNITO_TOKENS: 'false' }));
+  it('iss 가 다른 JWT 는 401', async () => {
+    const { privateKey, jwks } = await makeKeys();
+    const token = await signToken(privateKey, {}, { iss: 'https://other-issuer.example.test' });
+    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService);
     await expect(guard.canActivate(makeContext(`Bearer ${token}`).context)).rejects.toBeInstanceOf(UnauthorizedException);
-  });
-
-  it('peekIssuer 는 서명 검증 없이 iss 만 읽는다', async () => {
-    const { privateKey } = await makeKeys();
-    expect(peekIssuer(await signToken(privateKey, {}))).toBe(ISSUER);
-    expect(peekIssuer('not-a-jwt')).toBeUndefined();
-    expect(peekIssuer('a.b.c')).toBeUndefined();
   });
 });

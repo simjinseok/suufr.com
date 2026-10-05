@@ -41,7 +41,7 @@ export class AuthService {
     return null;
   }
 
-  /** /me 의 user 에 실리는 2FA 상태. users 행이 없는(아직 Cognito 만 있는) 사용자는 기본값 */
+  /** /me 의 user 에 실리는 2FA 상태 */
   async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean; requiresTwoFactorSetup: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -51,6 +51,10 @@ export class AuthService {
       twoFactorEnabled: user?.twoFactorEnabled ?? false,
       requiresTwoFactorSetup: user?.requiresTwoFactorSetup ?? false,
     };
+  }
+
+  async findUserByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
   }
 
   async clearTwoFactorSetupRequirement(userId: string) {

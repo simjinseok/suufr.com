@@ -12,12 +12,11 @@ import { Controller, useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { login, respondToMfa, respondToNewPassword } from '@/actions/auth';
+import { login, respondToMfa } from '@/actions/auth';
 
 export default function LoginForm() {
   const router = useRouter();
   const [showMfa, setShowMfa] = React.useState(false);
-  const [showNewPassword, setShowNewPassword] = React.useState(false);
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -30,13 +29,6 @@ export default function LoginForm() {
     respondToMfa,
     {
       fields: { code: '' },
-    },
-  );
-
-  const [newPasswordState, newPasswordAction, isNewPasswordPending] = React.useActionState(
-    respondToNewPassword,
-    {
-      fields: { password: '', passwordConfirm: '' },
     },
   );
 
@@ -53,13 +45,6 @@ export default function LoginForm() {
     },
   });
 
-  const newPasswordForm = useForm({
-    values: {
-      password: '',
-      passwordConfirm: '',
-    },
-  });
-
   React.useEffect(() => {
     if (!loginState.timestamp) return;
 
@@ -69,10 +54,7 @@ export default function LoginForm() {
     else if (loginState.requiresMfa) {
       setShowMfa(true);
     }
-    else if (loginState.requiresNewPassword) {
-      setShowNewPassword(true);
-    }
-  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, loginState.requiresNewPassword, router]);
+  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, router]);
 
   React.useEffect(() => {
     if (!mfaState.timestamp) return;
@@ -82,109 +64,8 @@ export default function LoginForm() {
     }
   }, [mfaState.timestamp, mfaState.success, router]);
 
-  React.useEffect(() => {
-    if (!newPasswordState.timestamp) return;
-
-    if (newPasswordState.success) {
-      router.push('/dashboard');
-    }
-  }, [newPasswordState.timestamp, newPasswordState.success, router]);
-
-  // 각 화면 루트의 key는 필수 — 세 화면의 JSX 구조가 같아 key가 없으면 React가 폼을
+  // 각 화면 루트의 key는 필수 — 두 화면의 JSX 구조가 같아 key가 없으면 React가 폼을
   // 리마운트하지 않고 재활용하는데, 그러면 RHF Controller가 다른 폼의 control에 묶여 입력이 안 된다.
-  if (showNewPassword) {
-    return (
-      <div key="new-password" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
-        <div className="w-full max-w-sm mx-auto px-6">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <span className="text-2xl font-bold text-white">스</span>
-            </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">
-              새 비밀번호 설정
-            </h1>
-            <p className="mt-2 text-sm text-gray-500">
-              계속하려면 새 비밀번호를 설정해야 합니다
-            </p>
-          </div>
-
-          <Form
-            className="flex flex-col gap-4"
-            action={newPasswordAction}
-            validationErrors={newPasswordState.fieldErrors}
-          >
-            {newPasswordState.message && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-                {newPasswordState.message}
-              </div>
-            )}
-
-            <Controller
-              control={newPasswordForm.control}
-              name="password"
-              render={({ field: { name, value, onChange } }) => (
-                <TextField
-                  name={name}
-                  value={value}
-                  onChange={onChange}
-                  isRequired
-                >
-                  <Label>새 비밀번호</Label>
-                  <Input
-                    variant="secondary"
-                    type="password"
-                    placeholder="8자 이상"
-                    autoComplete="new-password"
-                  />
-                  <FieldError />
-                </TextField>
-              )}
-            />
-
-            <Controller
-              control={newPasswordForm.control}
-              name="passwordConfirm"
-              render={({ field: { name, value, onChange } }) => (
-                <TextField
-                  name={name}
-                  value={value}
-                  onChange={onChange}
-                  isRequired
-                >
-                  <Label>새 비밀번호 확인</Label>
-                  <Input
-                    variant="secondary"
-                    type="password"
-                    placeholder="비밀번호 재입력"
-                    autoComplete="new-password"
-                  />
-                  <FieldError />
-                </TextField>
-              )}
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              isPending={isNewPasswordPending}
-              className="w-full"
-            >
-              비밀번호 설정
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(false)}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              다시 로그인
-            </button>
-          </Form>
-        </div>
-      </div>
-    );
-  }
-
   if (showMfa) {
     return (
       <div key="mfa" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">

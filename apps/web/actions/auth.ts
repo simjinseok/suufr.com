@@ -11,7 +11,6 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   mfaSchema,
-  newPasswordSchema,
 } from '@/schemas/auth';
 import { authApi } from '@/utils/api/auth';
 import { buildConsentPayload } from '@/utils/consent';
@@ -19,14 +18,12 @@ import { buildConsentPayload } from '@/utils/consent';
 // refresh_token(= better-auth 세션 토큰) 쿠키 수명. api 의 세션 수명(30일)과 같다
 const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30;
 
-// 로그인 성공 시 토큰 쿠키 세팅 (login/respondToMfa/respondToNewPassword 공용)
+// 로그인 성공 시 토큰 쿠키 세팅 (login/respondToMfa 공용)
 // access_token = better-auth JWT(1시간), refresh_token = better-auth 세션 토큰(30일).
-// cognito_username 쿠키는 Cognito 토큰(점 포함 JWE refresh token)일 때만 설정한다 — Cognito refresh 에 필요.
 async function setTokenCookies(response: {
   accessToken: string;
   refreshToken: string;
   expiresIn?: number;
-  cognitoUsername: string;
 }) {
   const cookieStore = await cookies();
   const isProduction = process.env.NODE_ENV === 'production';
@@ -44,25 +41,12 @@ async function setTokenCookies(response: {
     sameSite: 'lax',
     maxAge: REFRESH_TOKEN_MAX_AGE,
   });
-
-  if (response.refreshToken.includes('.')) {
-    cookieStore.set('cognito_username', response.cognitoUsername, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      maxAge: REFRESH_TOKEN_MAX_AGE,
-    });
-  }
-  else {
-    cookieStore.delete('cognito_username');
-  }
 }
 
 // Login action
 type LoginFields = { email: string; password: string };
 type LoginState = ServerActionState<LoginFields> & {
   requiresMfa?: boolean;
-  requiresNewPassword?: boolean;
   challengeName?: string;
 };
 
@@ -96,8 +80,8 @@ export async function login(
           password: validation.data.password,
         });
 
-        // 추가 인증 챌린지 (MFA 코드 입력 또는 새 비밀번호 설정) — 세션을 쿠키에 보관
-        if (response.requiresMfa || response.requiresNewPassword) {
+        // 2단계 인증 챌린지 — two_factor 쿠키 쌍(session)을 5분간 쿠키에 보관
+        if (response.requiresMfa) {
           const cookieStore = await cookies();
           cookieStore.set('mfa_session', response.session!, {
             httpOnly: true,
@@ -105,15 +89,8 @@ export async function login(
             sameSite: 'strict',
             maxAge: 300,
           });
-          cookieStore.set('mfa_email', validation.data.email, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 300,
-          });
 
-          state.requiresMfa = response.requiresMfa;
-          state.requiresNewPassword = response.requiresNewPassword;
+          state.requiresMfa = true;
           state.challengeName = response.challengeName;
           return state;
         }
@@ -123,7 +100,6 @@ export async function login(
             accessToken: response.accessToken,
             refreshToken: response.refreshToken!,
             expiresIn: response.expiresIn,
-            cognitoUsername: response.cognitoUsername!,
           });
 
           state.success = true;
@@ -167,16 +143,14 @@ export async function respondToMfa(
 
       const cookieStore = await cookies();
       const session = cookieStore.get('mfa_session')?.value;
-      const email = cookieStore.get('mfa_email')?.value;
 
-      if (!session || !email) {
+      if (!session) {
         state.message = 'MFA 세션이 만료되었습니다. 다시 로그인해주세요.';
         return state;
       }
 
       try {
         const response = await authApi.mfa({
-          email,
           code: validation.data.code,
           session,
         });
@@ -184,72 +158,11 @@ export async function respondToMfa(
         await setTokenCookies(response);
 
         cookieStore.delete('mfa_session');
-        cookieStore.delete('mfa_email');
 
         state.success = true;
       }
       catch (error: any) {
         state.message = error.message || 'MFA 인증 중 오류가 발생했습니다';
-      }
-
-      return state;
-    },
-  );
-}
-
-// NEW_PASSWORD_REQUIRED 챌린지 대응 — 임시 비밀번호 계정의 새 비밀번호 설정
-type NewPasswordFields = { password: string; passwordConfirm: string };
-type NewPasswordState = ServerActionState<NewPasswordFields>;
-
-export async function respondToNewPassword(
-  prevState: NewPasswordState,
-  formData: FormData,
-): Promise<NewPasswordState> {
-  return await Sentry.withServerActionInstrumentation(
-    'respondToNewPassword',
-    { formData, headers: await headers(), recordResponse: true },
-    async () => {
-      const data = Object.fromEntries(formData);
-      const state: NewPasswordState = {
-        success: false,
-        fields: {
-          password: '',
-          passwordConfirm: '',
-        },
-        timestamp: Date.now(),
-      };
-
-      const validation = newPasswordSchema.safeParse(data);
-      if (!validation.success) {
-        state.fieldErrors = z.flattenError(validation.error).fieldErrors;
-        return state;
-      }
-
-      const cookieStore = await cookies();
-      const session = cookieStore.get('mfa_session')?.value;
-      const email = cookieStore.get('mfa_email')?.value;
-
-      if (!session || !email) {
-        state.message = '세션이 만료되었습니다. 다시 로그인해주세요.';
-        return state;
-      }
-
-      try {
-        const response = await authApi.newPassword({
-          email,
-          password: validation.data.password,
-          session,
-        });
-
-        await setTokenCookies(response);
-
-        cookieStore.delete('mfa_session');
-        cookieStore.delete('mfa_email');
-
-        state.success = true;
-      }
-      catch (error: any) {
-        state.message = error.message || '비밀번호 변경 중 오류가 발생했습니다';
       }
 
       return state;

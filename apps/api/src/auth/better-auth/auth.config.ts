@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer, emailOTP, jwt, twoFactor } from 'better-auth/plugins';
-import type { createAuthMiddleware } from 'better-auth/api';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
 import { existingUserSignupAttemptMail, resetPasswordMail, verifyEmailMail } from '../../mail/templates/auth-mails';
@@ -24,8 +23,6 @@ export type AuthConfigDeps = {
   mail: MailService;
   /** users 행 생성 직후(가입) — Organization/UserSettings 부트스트랩 */
   onUserCreated: (user: { id: string; email: string; name: string }) => Promise<void>;
-  /** /sign-in/email 전에 실행되는 Cognito lazy migration 훅 (Phase 4). 없으면 등록하지 않음 */
-  beforeHook?: ReturnType<typeof createAuthMiddleware>;
 };
 
 /**
@@ -121,10 +118,8 @@ export function createAuthOptions(deps: AuthConfigDeps) {
         },
       },
     },
-    ...(deps.beforeHook ? { hooks: { before: deps.beforeHook } } : {}),
-
     advanced: {
-      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4. 기존 사용자 행은 lazy migration 이 Cognito sub 로 직접 만든다
+      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4 (기존 사용자 행은 Cognito 이전 당시 sub 로 생성됨)
       database: { generateId: () => randomUUID() },
       // web 서버→api 서버 호출이므로 쿠키 보안 속성은 의미 없음. 실제 쿠키는 web 이 자체 설정한다
       useSecureCookies: process.env.NODE_ENV === 'production',

@@ -2,9 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
- * 사용자 최초 진입 시 필요한 행(users, organizations, user_settings)을 보장한다.
- * Cognito 로그인(이전 기간)과 better-auth 가입(databaseHooks.user.create.after) 양쪽에서 호출된다.
- * users.id 는 항상 인증 제공자의 사용자 식별자(Cognito sub = better-auth user.id)다.
+ * 사용자 최초 진입 시 필요한 행(organizations, user_settings)을 보장한다.
+ * better-auth 가입(databaseHooks.user.create.after) 에서 호출된다. users.id 는 better-auth user.id(Cognito 이전 사용자는 당시 sub)다.
  */
 @Injectable()
 export class UserProvisioningService {
@@ -25,7 +24,7 @@ export class UserProvisioningService {
     });
   }
 
-  /** 첫 로그인 시 Organization + UserSettings 생성 (기존 CognitoService.ensureUserWithOrganization 이동). */
+  /** 첫 진입 시 Organization + UserSettings 생성. */
   async ensureOrganization(userId: string, email: string, name?: string | null) {
     const existing = await this.prisma.organization.findFirst({ where: { userId } });
     if (existing) return;

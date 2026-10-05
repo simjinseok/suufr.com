@@ -19,12 +19,10 @@ export default async function UnauthenticatedLayout({
 
   // 2. access_token이 없지만 refresh_token이 있으면 갱신 시도
   const refreshToken = cookieStore.get('refresh_token')?.value;
-  // Cognito refresh token 에만 필요. better-auth 세션 토큰이면 없다
-  const username = cookieStore.get('cognito_username')?.value;
 
   if (refreshToken) {
     try {
-      const result = await authApi.refresh({ refreshToken, username });
+      const result = await authApi.refresh({ refreshToken });
 
       // 토큰 갱신 성공 시 쿠키 설정
       const isProduction = process.env.NODE_ENV === 'production';
