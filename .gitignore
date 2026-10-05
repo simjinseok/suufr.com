@@ -64,3 +64,6 @@ next-env.d.ts
 
 # Claude Code 설정 (로컬 전용)
 .claude/
+
+# Phase 0 Cognito export (개인정보 — 커밋 금지)
+apps/api/scripts/cognito/out/
