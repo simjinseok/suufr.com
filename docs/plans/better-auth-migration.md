@@ -21,6 +21,7 @@
 | 인증코드 UX | **emailOTP 플러그인(6자리, 5분)** 으로 이메일 인증·비밀번호 재설정 모두 처리. 링크 방식 미사용. | 현재 web의 `verify-email`, `reset-password` 페이지가 6자리 코드 입력 UI다. 그대로 유지한다. |
 | MFA | **twoFactor 플러그인(TOTP + 백업코드)**. 기존 Cognito MFA 사용자는 재등록 필수(시드 export 불가). | 재등록 전까지 `requiresTwoFactorSetup` 플래그로 설정 페이지로 강제 유도한다. |
 | 세션 테이블 이름 충돌 | better-auth `session` 모델을 **`AuthSession` / `@@map("auth_sessions")`** 로 지정. | 기존 수업 모델 `Session`(`sessions` 테이블)과 Prisma 모델명·테이블명 모두 충돌하기 때문. `session.modelName: "authSession"`. |
+| Google 로그인 | **Phase 7**에서 `socialProviders.google` + `oneTimeToken` 플러그인으로 추가. 캘린더 연동용 Google OAuth(`external_service_tokens`)와는 **별도 OAuth 클라이언트·별도 저장**. | 콜백은 api 도메인에 떨어지고 web은 자체 쿠키(JWT/세션 토큰)를 쓰므로, 일회용 토큰으로 api→web에 세션을 넘긴다. 같은 이메일의 기존 사용자(Cognito sub)에 자동 연결되어 ID가 보존된다. |
 
 ---
 
@@ -69,6 +70,8 @@
 | Prisma 모델명 해석 | 어댑터 코드 확인: `getModelName`이 첫 글자를 소문자로 바꿔 `prisma[model]`로 접근. 기본 `session`은 **`prisma.session`(수업 Session)** 을 가리키므로 충돌이 실제로 발생한다. `modelName: 'authSession'` → `prisma.authSession`. |
 | 로그인 응답 | `signInEmail`은 본문에 `{ redirect, token(세션 토큰), user }`를 돌려준다. bearer 플러그인의 `set-auth-token` 헤더를 파싱할 필요 없이 본문 `token`을 쓰면 된다. 점(`.`)이 없는 토큰은 bearer 훅이 서버 시크릿으로 서명해 쿠키로 변환(`requireSignature` 기본 false). |
 | emailOTP와 가입 | 패키지 코드 확인: `overrideDefaultEmailVerification: true`이면 `sendVerificationOnSignUp`은 **무시**되고, 코어 `sign-up`이 `requireEmailVerification`에 따라 (덮어쓴) `sendVerificationEmail`로 OTP를 보낸다. 미인증 사용자의 로그인 시도마다 OTP가 재발송된다(코어 `sign-in` 339~351행). |
+| 소셜 로그인 | 엔드포인트 확인: `/sign-in/social`(서버 `auth.api.signInSocial` → 리다이렉트 `url` 반환), `/callback/:id`, `/link-social`. 계정 연결(`oauth2/link-account.mjs`): 제공자가 `trustedProviders`에 있거나 제공자 이메일이 검증됐고, **기존 DB 사용자의 `emailVerified`가 true**(`requireLocalEmailVerified` 기본 true)일 때 같은 이메일의 기존 사용자에 암묵적으로 연결. 2FA 플러그인의 로그인 가로채기는 `/sign-in/email·username·phone-number`에만 적용되어 소셜 로그인은 2FA를 거치지 않는다. |
+| oneTimeToken 플러그인 | `/one-time-token/generate`(세션 필요) → 토큰, `/one-time-token/verify` → 세션. 기본 만료 3분, `storeToken: 'hashed'` 옵션. 교차 도메인(api→web) 세션 전달용. |
 | 2FA 쿠키 | `createAuthCookie('two_factor')`로 생성 → 이름은 `<cookiePrefix>.two_factor`, 운영(secure)에서는 `__Secure-` 접두사가 붙는다. 서버 흐름에서는 `returnHeaders`로 받은 `set-cookie` 값을 그대로 다음 호출 `cookie` 헤더에 넣는 방식이 안전하다. |
 | JWT 기본값 | `sign.mjs` 확인: `expirationTime` 기본 `15m`, `iss`/`aud` 기본 `options.baseURL`. `/token`은 `sessionMiddleware`를 사용하므로 Bearer 세션 토큰이 필요하다. `/jwks` 첫 호출 시 키가 없으면 생성. |
 | NestJS 통합 | 공식 문서는 커뮤니티 패키지 `@thallesp/nestjs-better-auth`를 안내(Fastify 지원 "beta", 자체 전역 가드 등록). **이 계획은 쓰지 않는다**(§3.2). |
@@ -424,6 +427,32 @@ web 쪽 변경 파일
 **롤백**: 유저풀을 폐기하기 전까지는 코드 롤백으로 복귀 가능. **유저풀 폐기 이후에는 되돌릴 수 없다** — 이 단계만 비가역.
 **사용자 변화**: 잔여 Cognito 세션 재로그인, 미이전자 재설정.
 
+### Phase 7 — Google 로그인 추가 (Cognito 제거 이후, 선택)
+
+전제: Phase 6 완료(모든 사용자가 `users`에 존재). Phase 6 이전에 하려면 아래 "ID 보존 훅"이 필수다.
+
+**설계**
+- better-auth `socialProviders.google`에 **로그인 전용 OAuth 클라이언트**를 쓴다. 기존 캘린더/주소록 연동(`apps/api/src/google/*`, `external_service_tokens`, 환경변수 `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`)과 분리한다. 같은 클라이언트에 리다이렉트 URI만 추가해도 동작하지만, 로그인(openid/email/profile)과 캘린더(offline access, calendar/contacts 스코프)의 동의 화면·토큰 수명이 섞이는 것을 피하기 위해 분리를 권장한다. 캘린더 토큰을 better-auth `accounts`로 옮기는 것은 범위 밖.
+- 흐름(web·api 도메인이 다르고 web이 자체 쿠키를 쓰는 구조에 맞춤):
+  1. web `/login`의 "Google로 계속" 버튼 → 서버 액션 `signInWithGoogle` → api `POST /api/auth/social/google/start` → api가 `auth.api.signInSocial({ body: { provider: 'google', callbackURL: '<BETTER_AUTH_URL>/api/auth/social/complete', errorCallbackURL: '<WEB_URL>/login?error=social' } })` → 반환된 `url`로 web이 브라우저를 리다이렉트.
+  2. Google → `GET <BETTER_AUTH_URL>/api/better-auth/callback/google`(better-auth 핸들러, Google 콘솔에 등록할 리다이렉트 URI) → better-auth가 사용자/계정 생성 또는 연결, **api 도메인**에 세션 쿠키 설정 → `callbackURL`로 리다이렉트.
+  3. api `GET /api/auth/social/complete`(@Public, Nest): 브라우저가 보낸 api 도메인 세션 쿠키로 `auth.api.generateOneTimeToken({ headers })` → `302 <WEB_URL>/auth/social/callback?token=<ott>`. 세션 쿠키는 즉시 만료 처리(api 도메인에 세션 쿠키를 남기지 않음).
+  4. web `app/auth/social/callback/route.ts`: api `POST /api/auth/social/exchange { token }` → api가 `auth.api.verifyOneTimeToken` → 세션 토큰 → `auth.api.getToken`으로 JWT → `{ accessToken, refreshToken, expiresIn, cognitoUsername: user.id }`(로그인 응답과 동일 형태) → web이 `setTokenCookies` 재사용 → `/dashboard`.
+- **계정 연결**: 같은 이메일의 기존 사용자(백필된 Cognito sub)는 better-auth가 자동 연결한다(Google은 이메일 검증 제공, 기존 사용자 `emailVerified` true 필요). 비밀번호를 한 번도 옮기지 않은 사용자도 Google로 바로 로그인할 수 있고, 이후 비밀번호 로그인은 lazy migration을 그대로 탄다.
+- **ID 보존 훅(Phase 6 이전에 도입할 경우)**: `databaseHooks.user.create.before`에서 `users`에 없는 이메일이면 Cognito `ListUsers(filter email)`로 sub를 찾아 `id`로 사용한다. 그렇지 않으면 export 이후 가입한 Cognito 사용자가 Google 로그인 시 새 UUID로 중복 생성되어 기존 Organization과 끊긴다.
+- **동의 이력**: 소셜 가입에는 가입 폼이 없다. 로그인 페이지의 Google 버튼 앞에 동의 체크 3종을 두고 동의 상태를 5분 쿠키(`social_consent`)에 보관 → 4단계 교환 시 `ConsentsService.recordSafely`. 누락 시 기존 `ReconsentModal`이 앱 사용을 막으므로 안전망이 있다.
+- **2FA**: better-auth는 소셜 로그인에 2FA를 강제하지 않는다. TOTP 사용자가 Google로 로그인하면 2FA를 건너뛰게 되므로, `hooks.after`에서 `ctx.path === '/callback/:id'`이고 `newSession.user.twoFactorEnabled`면 세션을 폐기하고 2FA 챌린지로 보내는 처리를 넣는다(또는 Phase 7 초기에는 "2FA 사용자는 Google 로그인 불가" 안내).
+- **Organization 부트스트랩**: `databaseHooks.user.create.after`(Phase 2) 그대로 동작.
+
+**변경 파일**
+- api: `auth.config.ts`(`socialProviders.google`, `oneTimeToken({ storeToken: 'hashed' })`, `account.accountLinking.trustedProviders: ['google']`, after 훅), `auth.controller.ts`(`social/google/start`, `social/complete`, `social/exchange`), `.env.example`.
+- web: `app/(auth)/login/login-form.tsx`(버튼·동의 체크), `actions/auth.ts`(`signInWithGoogle`), `app/auth/social/callback/route.ts`, `utils/api/auth.ts`, `proxy.ts` matcher에 `auth/social` 제외 확인(기존 `auth` 접두 제외 규칙으로 이미 제외됨).
+
+**패키지**: 없음(better-auth 내장). **환경변수(api)**: `GOOGLE_AUTH_CLIENT_ID`, `GOOGLE_AUTH_CLIENT_SECRET`(기존 캘린더용 `GOOGLE_CLIENT_ID`와 별도). Google 콘솔 리다이렉트 URI: `<BETTER_AUTH_URL>/api/better-auth/callback/google`. **마이그레이션**: 없음(`accounts` 테이블 재사용).
+**검증**: (1) 신규 Google 가입 → `users`/`accounts(providerId=google)`/`organizations`/`user_consents` 생성, (2) 기존 이메일 사용자 Google 로그인 → 새 `users` 행 없이 `accounts` 연결, 기존 데이터 유지, (3) 동의 미체크 상태 → 버튼 비활성, (4) 2FA 사용자 Google 로그인 → 챌린지 또는 차단, (5) 일회용 토큰 재사용 → 401, 3분 후 만료, (6) 캘린더 연동 연결/해제가 영향 없음.
+**롤백**: `socialProviders` 제거 배포. 이미 연결된 `accounts(google)` 행은 무해.
+**사용자 변화**: 로그인 페이지에 Google 버튼.
+
 ---
 
 ## 6. 위험 요소와 완화책
@@ -447,6 +476,9 @@ web 쪽 변경 파일
 | 중복 가입 응답 변화 | 409 → 200(열거 방지) | 가입 폼 문구를 "입력한 이메일로 인증 코드를 보냈습니다"로 통일, 기존 사용자에겐 `onExistingUserSignUp` 메일 |
 | JWT 키 관리 | `jwks.private_key`가 `BETTER_AUTH_SECRET`으로 암호화 | 시크릿 회전 시 키 재생성 필요 → 로테이션 절차 문서화. `rotationInterval` 미설정(필요 시 추후) |
 | 이메일 대소문자/중복 | Cognito는 이메일 alias 대소문자 비구분 가능 | Phase 0 export에서 `lower(email)` 중복 검사, better-auth `email @unique`는 대소문자 구분 → 가입/로그인 시 소문자 정규화 훅 |
+| Google 로그인 교차 도메인 | api 도메인에 세션 쿠키가 설정되고 web은 자체 쿠키를 씀 | oneTimeToken으로 전달하고 api 세션 쿠키는 즉시 만료. web/api가 같은 상위 도메인이면 `crossSubDomainCookies` 대안 검토 |
+| Google 로그인 ID 중복 | export 이후 가입한 Cognito 사용자가 Google로 먼저 로그인하면 새 UUID 생성 | Phase 6 이후에 도입하거나 `user.create.before`에서 Cognito sub 조회 |
+| Google 로그인 2FA 우회 | 소셜 로그인은 2FA 미적용(패키지 코드 확인) | `/callback/:id` after 훅으로 2FA 챌린지 강제 |
 | 운영 중 Cognito 장애·요금 | 병행 기간 Cognito 호출 지속 | lazy migration 성공 시 이후 호출 없음. 30일 후 종료 |
 | 테스트 범위 | 가드·훅·refresh 판별 회귀 | 기존 api vitest(`*.spec.ts`, mock 주입)로 가드·에러맵·refresh 판별·lazy migration 훅 단위 테스트 추가 |
 | 동의 이력과 열거 방지 | 중복 가입 응답의 합성 `user.id`로 `user_consents`를 기록하면 존재하지 않는 사용자 행이 생김 | 가입 후 `users`를 이메일로 조회해 id 일치 시에만 기록(Phase 4) |
@@ -456,7 +488,7 @@ web 쪽 변경 파일
 
 ## 7. 범위 밖 (명시)
 
-- 소셜 로그인(Google 등) 추가. 단 `accounts` 테이블·핸들러 마운트(`/api/better-auth/*`)·`trustedOrigins`로 추후 `socialProviders` 추가만으로 확장 가능하게 설계했다. web은 그때 api의 `/api/better-auth/sign-in/social`로 리다이렉트하는 방식이 된다.
+- Google 외 소셜 로그인(Apple, Kakao, Naver 등). Google은 Phase 7로 포함했고, 다른 제공자는 같은 구조(`socialProviders` 또는 `genericOAuth` 플러그인)로 추가 가능하다.
 - 조직 다중 멤버십(better-auth `organization` 플러그인 포함). 현재 `Organization.userId` 1:N 소유 모델 유지.
 - 기존 테이블 `user_id` 컬럼에 대한 FK 추가·재작성, `Student.userId`/`Meeting.userId` 제거.
 - CalDAV AppToken 인증의 이메일 대조 강화.
@@ -478,7 +510,8 @@ web 쪽 변경 파일
 9. **`cognitoUsername` 응답 필드/`cognito_username` 쿠키 이름**: Phase 6에서 개명할지, 호환성을 위해 그대로 둘지.
 10. **삭제된 Cognito 사용자의 잔존 데이터**: `organizations.user_id`에 있으나 유저풀에 없는 sub가 있다면 `users`에 플레이스홀더 행을 만들지, 그대로 둘지.
 11. **JWT 만료 1시간**: 현재 Cognito 기본과 같지만, 15분(better-auth 기본)으로 줄이고 갱신을 더 자주 할지.
-12. **다중 api 인스턴스**: 가드의 JWKS 캐시는 인스턴스별이며 DB 기반이라 공유에 문제 없음. 다만 better-auth `rateLimit`(기본 메모리) 대신 기존 `@nestjs/throttler`만 쓰는 것으로 가정했는데, better-auth 핸들러 직접 노출(`/api/better-auth/*`)에도 Throttler를 걸어야 하는지.
+12. **Google 로그인 범위**: Phase 7을 Phase 6 이후로 미룰지(권장), Phase 4 직후에 넣을지. 캘린더 연동 OAuth 클라이언트와 분리할지. 소셜 가입 시 동의 수집을 버튼 앞 체크로 할지, `ReconsentModal`에만 맡길지. 2FA 사용자의 Google 로그인을 차단할지 챌린지로 보낼지.
+13. **다중 api 인스턴스**: 가드의 JWKS 캐시는 인스턴스별이며 DB 기반이라 공유에 문제 없음. 다만 better-auth `rateLimit`(기본 메모리) 대신 기존 `@nestjs/throttler`만 쓰는 것으로 가정했는데, better-auth 핸들러 직접 노출(`/api/better-auth/*`)에도 Throttler를 걸어야 하는지.
 
 ---
 
