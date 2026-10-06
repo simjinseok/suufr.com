@@ -81,10 +81,12 @@ export class StorageController {
       ? `images/profiles/${user.userId}/${uuid}.${ext}`
       : `users/${user.userId}/${folderByContentType(contentType)}/${uuid}.${ext}`;
 
-    // 4. Generate presigned URL
+    // 4. Generate presigned URL — 선언한 fileSize가 서명에 묶이므로(content-length 서명 헤더)
+    //    다른 크기의 바디를 PUT 하면 S3가 403으로 거부한다. 위 크기 제한이 S3 단계에서 강제된다.
     const presignedUrl = await this.s3Service.getPresignedUploadUrl(
       key,
       contentType,
+      fileSize,
       300, // 5 minutes
     );
 
@@ -101,6 +103,8 @@ export class StorageController {
         expiresAt,
         // 클라이언트가 S3 PUT 시 그대로 에코해야 하는 서명 헤더 (누락 시 403)
         requiredHeaders: this.s3Service.getPresignedUploadRequiredHeaders(),
+        // 서명에 묶인 바디 크기. 이 크기와 다른 PUT은 S3가 거부한다 (Content-Length는 클라이언트가 자동 설정)
+        contentLength: fileSize,
       },
     };
   }
@@ -136,7 +140,7 @@ export class StorageController {
       throw new BadRequestException('지원하지 않는 파일이거나 손상된 파일입니다.');
     }
 
-    // 3. 실제 크기로 서버측 사이즈 제한 재검증 (presigned PUT은 실제 크기를 강제하지 않음)
+    // 3. 실제 크기로 서버측 사이즈 제한 재검증 (presign이 content-length를 서명하지만 방어선으로 유지)
     if (fileSize > MAX_SIZE_BY_TYPE[type]) {
       await this.s3Service.deleteFile(publicId);
       throw new BadRequestException('파일 크기가 허용 범위를 초과했습니다.');

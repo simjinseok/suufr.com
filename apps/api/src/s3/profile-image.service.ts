@@ -81,7 +81,7 @@ export class ProfileImageService {
       || head.contentLength <= 0
       || head.contentLength > MAX_PROFILE_IMAGE_SIZE
     ) {
-      // presigned PUT은 실제 타입/크기를 강제하지 않으므로 실측 검증 실패 시 정리
+      // presign이 content-length를 서명하지만 타입은 강제하지 않으므로 실측 검증을 방어선으로 유지
       await this.s3Service.deleteFile(key);
       throw new BadRequestException('지원하지 않는 이미지이거나 크기가 허용 범위를 초과했습니다.');
     }
