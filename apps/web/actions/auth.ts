@@ -24,8 +24,7 @@ import { buildConsentPayload } from '@/utils/consent';
  * api /auth/google/start → Google → api /auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
  */
 export async function startGoogleLogin() {
-  const apiUrl = process.env.PUBLIC_API_URL;
-  redirect(apiUrl ? `${apiUrl}/auth/google/start` : '/login?error=social');
+  redirect(`${process.env.API_URL}/auth/google/start`);
 }
 
 // Login action
