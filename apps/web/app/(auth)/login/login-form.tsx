@@ -3,6 +3,7 @@ import * as React from 'react';
 import {
   Form,
   Input,
+  InputOTP,
   Button,
   TextField,
   Label,
@@ -22,6 +23,11 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   // Google 로그인 콜백이 2FA 챌린지를 mfa_session 쿠키에 담고 ?step=mfa 로 보낸다
   const [showMfa, setShowMfa] = React.useState(searchParams.get('step') === 'mfa');
+  // 기본은 인증 앱 6자리(InputOTP), 백업코드(xxxxx-xxxxx)는 일반 입력으로 전환
+  const [useBackupCode, setUseBackupCode] = React.useState(false);
+  // InputOTP 는 TextField 와 달리 Form 의 validationErrors 를 모르므로, 제출 에러를 직접 넘기고
+  // 다시 입력을 시작하면(해당 제출의 timestamp 를 기억해) 에러 표시를 지운다
+  const [otpErrorDismissedAt, setOtpErrorDismissedAt] = React.useState<number | undefined>();
   const socialError = searchParams.get('error') === 'social' ? SOCIAL_ERROR_MESSAGE : null;
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
@@ -73,6 +79,8 @@ export default function LoginForm() {
   // 각 화면 루트의 key는 필수 — 두 화면의 JSX 구조가 같아 key가 없으면 React가 폼을
   // 리마운트하지 않고 재활용하는데, 그러면 RHF Controller가 다른 폼의 control에 묶여 입력이 안 된다.
   if (showMfa) {
+    const otpError = otpErrorDismissedAt === mfaState.timestamp ? undefined : mfaState.fieldErrors?.code?.[0];
+
     return (
       <div key="mfa" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
         <div className="w-full max-w-sm mx-auto px-6">
@@ -84,7 +92,7 @@ export default function LoginForm() {
               2단계 인증
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              인증 앱의 6자리 코드 또는 백업코드를 입력하세요
+              {useBackupCode ? '백업코드를 입력하세요' : '인증 앱의 6자리 코드를 입력하세요'}
             </p>
           </div>
 
@@ -99,29 +107,69 @@ export default function LoginForm() {
               </div>
             )}
 
-            <Controller
-              control={mfaForm.control}
-              name="code"
-              render={({ field: { name, value, onChange } }) => (
-                <TextField
-                  name={name}
-                  value={value}
-                  onChange={onChange}
-                  isRequired
-                >
-                  <Label>인증 코드</Label>
-                  <Input
-                    variant="secondary"
-                    type="text"
-                    inputMode="text"
-                    maxLength={32}
-                    placeholder="000000"
-                    autoComplete="one-time-code"
+            {useBackupCode
+              ? (
+                  <Controller
+                    control={mfaForm.control}
+                    name="code"
+                    render={({ field: { name, value, onChange } }) => (
+                      <TextField
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        isRequired
+                      >
+                        <Label>백업코드</Label>
+                        <Input
+                          variant="secondary"
+                          type="text"
+                          inputMode="text"
+                          maxLength={32}
+                          placeholder="xxxxx-xxxxx"
+                          autoComplete="off"
+                          autoFocus
+                        />
+                        <FieldError />
+                      </TextField>
+                    )}
                   />
-                  <FieldError />
-                </TextField>
-              )}
-            />
+                )
+              : (
+                  <Controller
+                    control={mfaForm.control}
+                    name="code"
+                    render={({ field: { name, value, onChange } }) => (
+                      <div className="flex flex-col items-center gap-2">
+                        <InputOTP
+                          name={name}
+                          value={value}
+                          onChange={(next) => {
+                            onChange(next);
+                            setOtpErrorDismissedAt(mfaState.timestamp);
+                          }}
+                          maxLength={6}
+                          pattern={'^\\d*$'}
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          autoFocus
+                          variant="secondary"
+                          aria-label="인증 코드"
+                          isInvalid={!!otpError}
+                          validationErrors={otpError ? [otpError] : undefined}
+                        >
+                          <InputOTP.Group>
+                            {Array.from({ length: 6 }, (_, i) => (
+                              <InputOTP.Slot key={i} index={i} />
+                            ))}
+                          </InputOTP.Group>
+                        </InputOTP>
+                        {otpError && (
+                          <p className="text-sm text-danger">{otpError}</p>
+                        )}
+                      </div>
+                    )}
+                  />
+                )}
 
             <Button
               type="submit"
@@ -132,13 +180,25 @@ export default function LoginForm() {
               인증
             </Button>
 
-            <button
-              type="button"
-              onClick={() => setShowMfa(false)}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              다시 로그인
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  mfaForm.setValue('code', '');
+                  setUseBackupCode(v => !v);
+                }}
+                className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+              >
+                {useBackupCode ? '인증 앱 코드로 인증' : '백업코드로 인증'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMfa(false)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                다시 로그인
+              </button>
+            </div>
           </Form>
         </div>
       </div>
