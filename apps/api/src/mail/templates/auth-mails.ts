@@ -55,6 +55,6 @@ export function mfaReenrollMail(to: string, settingsUrl: string) {
       '로그인 후 보안 설정에서 인증 앱을 다시 등록해주세요. 등록 전까지 2단계 인증 없이 로그인됩니다.',
       `보안 설정: ${settingsUrl}`,
     ],
-    footer: '문의가 필요하면 이 메일에 회신해주세요.',
+    footer: '',
   });
 }
