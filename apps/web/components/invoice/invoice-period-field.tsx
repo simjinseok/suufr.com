@@ -102,12 +102,6 @@ export function InvoicePeriodField({ value, onChange }: Props) {
           </DateRangePicker>
         </>
       )}
-
-      <p className="text-xs text-default-500">
-        {enabled
-          ? '이 기간에 추가하는 수업은 자동으로 이 수강권에 묶여요.'
-          : '기간을 정하지 않으면 수업을 직접 연결해야 해요.'}
-      </p>
     </div>
   );
 }
