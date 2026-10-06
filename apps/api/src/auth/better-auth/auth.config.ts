@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer, emailOTP, jwt, twoFactor } from 'better-auth/plugins';
+import { createSocialTwoFactorHook } from './social-two-factor.hook';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
 import { existingUserSignupAttemptMail, resetPasswordMail, verifyEmailMail } from '../../mail/templates/auth-mails';
@@ -23,6 +24,8 @@ export type AuthConfigDeps = {
   mail: MailService;
   /** users 행 생성 직후(가입) — Organization/UserSettings 부트스트랩 */
   onUserCreated: (user: { id: string; email: string; name: string }) => Promise<void>;
+  /** Google 로그인. 캘린더 연동과 같은 OAuth 클라이언트를 쓴다. 둘 다 없으면 소셜 로그인 비활성 */
+  google?: { clientId: string; clientSecret: string };
 };
 
 /**
@@ -30,7 +33,7 @@ export type AuthConfigDeps = {
  * 반환 타입을 넓히지 않아야(satisfies) auth.api 에 플러그인 엔드포인트 타입이 추론된다.
  */
 export function createAuthOptions(deps: AuthConfigDeps) {
-  const { prisma, baseURL, secret, webUrl, mail } = deps;
+  const { prisma, baseURL, secret, webUrl, mail, google } = deps;
 
   return {
     appName: '스프',
@@ -41,6 +44,20 @@ export function createAuthOptions(deps: AuthConfigDeps) {
     secret,
     trustedOrigins: [webUrl],
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
+
+    // Google 콘솔에 등록하는 리디렉션 URI: <baseURL>/auth/google/callback (GoogleLoginCallbackController 가 받아 넘긴다)
+    ...(google
+      ? {
+          socialProviders: {
+            google: {
+              clientId: google.clientId,
+              clientSecret: google.clientSecret,
+              redirectURI: `${baseURL}/auth/google/callback`,
+              prompt: 'select_account',
+            },
+          },
+        }
+      : {}),
 
     emailAndPassword: {
       enabled: true,
@@ -76,7 +93,12 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       expiresIn: SESSION_TTL_SECONDS,
       updateAge: SESSION_UPDATE_AGE_SECONDS,
     },
-    account: { modelName: 'account' },
+    account: {
+      modelName: 'account',
+      // 같은 이메일의 기존 사용자(비밀번호 계정)에 Google 계정을 자동 연결 — users.id 가 유지된다.
+      // better-auth 는 기존 사용자의 emailVerified 가 true 일 때만 연결한다
+      accountLinking: { enabled: true, trustedProviders: ['google'] },
+    },
     verification: { modelName: 'verification' },
 
     plugins: [
@@ -108,6 +130,9 @@ export function createAuthOptions(deps: AuthConfigDeps) {
     ],
     // OTP 단독 로그인(비밀번호 우회)은 제공하지 않는다
     disabledPaths: ['/sign-in/email-otp'],
+
+    // OAuth 콜백에도 2FA 챌린지 적용 (twoFactor 플러그인은 자격증명 로그인만 다룬다)
+    hooks: { after: createSocialTwoFactorHook() },
 
     databaseHooks: {
       user: {

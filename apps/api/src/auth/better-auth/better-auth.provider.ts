@@ -29,6 +29,8 @@ export const betterAuthProvider: Provider = {
     mail: MailService,
     provisioning: UserProvisioningService,
   ): Auth => {
+    const googleClientId = config.get<string>('GOOGLE_CLIENT_ID');
+    const googleClientSecret = config.get<string>('GOOGLE_CLIENT_SECRET');
     return createAuth({
       prisma,
       baseURL: requireEnv(config, 'BETTER_AUTH_URL'),
@@ -36,6 +38,7 @@ export const betterAuthProvider: Provider = {
       webUrl: config.get<string>('WEB_URL') || 'http://localhost:3000',
       mail,
       onUserCreated: user => provisioning.ensureOrganization(user.id, user.email, user.name),
+      google: googleClientId && googleClientSecret ? { clientId: googleClientId, clientSecret: googleClientSecret } : undefined,
     });
   },
 };

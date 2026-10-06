@@ -79,7 +79,21 @@ type TwoFactorBackupCodesResponse = {
   backupCodes: string[];
 };
 
+type SocialStartResponse = { success: boolean; url?: string; message?: string };
+type SocialExchangeResponse
+  = | (MfaResponse & { requiresMfa?: undefined })
+    | { success: true; requiresMfa: true; challengeName: 'TOTP'; session: string }
+    | { success: false; message: string };
+
 export const authApi = {
+  // 소셜 로그인 (Google). start 는 인증 URL, exchange 는 api 콜백이 발급한 일회용 코드를 토큰으로 교환
+  social: {
+    start: (provider: 'google') =>
+      apiClient<SocialStartResponse>(`/api/auth/social/${provider}/start`, { method: 'POST', body: {} }),
+    exchange: (data: { code: string }) =>
+      apiClient<SocialExchangeResponse>('/api/auth/social/exchange', { method: 'POST', body: data }),
+  },
+
   login: (data: { email: string; password: string }) =>
     apiClient<LoginResponse>('/api/auth/login', { method: 'POST', body: data }),
 
