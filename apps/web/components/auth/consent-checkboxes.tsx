@@ -2,27 +2,25 @@
 import * as React from 'react';
 import { Checkbox } from '@heroui/react';
 
-export type ConsentKey = 'agreeTerms' | 'agreePrivacy' | 'agreeOverseasTransfer';
+export type ConsentKey = 'agreeTerms' | 'agreePrivacy';
 export type ConsentValues = Record<ConsentKey, boolean>;
 
 export const EMPTY_CONSENTS: ConsentValues = {
   agreeTerms: false,
   agreePrivacy: false,
-  agreeOverseasTransfer: false,
 };
 
 export function isAllConsented(values: ConsentValues): boolean {
-  return values.agreeTerms && values.agreePrivacy && values.agreeOverseasTransfer;
+  return values.agreeTerms && values.agreePrivacy;
 }
 
 const ITEMS: Array<{ key: ConsentKey; label: string; href: string; description?: string }> = [
   { key: 'agreeTerms', label: '이용약관 동의', href: '/terms' },
-  { key: 'agreePrivacy', label: '개인정보 수집·이용 동의', href: '/privacy' },
   {
-    key: 'agreeOverseasTransfer',
-    label: '개인정보 국외 이전 동의',
-    href: '/privacy#overseas-transfer',
-    description: '결제(Paddle, 영국), 오류 분석(Sentry, 미국), 이용 통계(Google, 미국)에 필요한 최소 정보가 이전됩니다.',
+    key: 'agreePrivacy',
+    label: '개인정보 수집·이용 동의',
+    href: '/privacy',
+    description: '서버·데이터베이스·이메일 발송은 AWS 일본(도쿄) 리전에서 처리되며, 결제(Paddle, 영국)·오류 분석(Sentry, 미국)·이용 통계(Google, 미국) 위탁을 포함합니다.',
   },
 ];
 
@@ -34,7 +32,7 @@ type Props = {
 };
 
 /**
- * 가입·재동의 공용 동의 체크박스 (전체 동의 + 필수 3개).
+ * 가입·재동의 공용 동의 체크박스 (전체 동의 + 필수 2개).
  * 각 항목은 hidden input 으로 'true' | 'false' 를 FormData 에 싣는다 (name 은 schemas/auth consentFields 와 동일).
  * "보기" 링크는 Checkbox.Content(클릭 영역) 바깥에 두어 링크 클릭이 체크를 토글하지 않게 한다.
  */
@@ -43,7 +41,7 @@ export default function ConsentCheckboxes({ values, onChange, errors }: Props) {
   const someChecked = !allChecked && Object.values(values).some(Boolean);
 
   const setAll = (checked: boolean) =>
-    onChange({ agreeTerms: checked, agreePrivacy: checked, agreeOverseasTransfer: checked });
+    onChange({ agreeTerms: checked, agreePrivacy: checked });
 
   const messages = ITEMS
     .map(item => errors?.[item.key])

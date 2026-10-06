@@ -21,11 +21,10 @@ const consentField = (message: string) =>
     z.literal(true, { error: message }),
   );
 
-// 가입·재동의 공용 동의 3종 (모두 필수)
+// 가입·재동의 공용 동의 2종 (모두 필수)
 export const consentFields = {
   agreeTerms: consentField('이용약관에 동의해주세요'),
   agreePrivacy: consentField('개인정보 수집·이용에 동의해주세요'),
-  agreeOverseasTransfer: consentField('개인정보 국외 이전에 동의해주세요'),
 };
 
 export const consentSchema = z.object(consentFields);

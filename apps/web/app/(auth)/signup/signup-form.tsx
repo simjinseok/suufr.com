@@ -30,7 +30,6 @@ export default function SignupForm() {
     setConsents({
       agreeTerms: state.fields.agreeTerms,
       agreePrivacy: state.fields.agreePrivacy,
-      agreeOverseasTransfer: state.fields.agreeOverseasTransfer,
     });
   }, [state.timestamp, state.success, state.fields]);
 

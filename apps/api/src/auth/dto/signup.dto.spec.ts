@@ -12,7 +12,6 @@ const pipe = new ValidationPipe({
 const validConsents = {
   terms: true,
   privacy: true,
-  overseasTransfer: true,
   termsVersion: '2026-07-08',
   privacyVersion: '2026-07-08',
 };
@@ -38,10 +37,10 @@ async function expectRejected(body: unknown, messageIncludes?: string) {
 }
 
 describe('SignupDto', () => {
-  it('세 동의가 모두 true 이면 통과하고 DTO 인스턴스로 변환된다', async () => {
+  it('두 동의가 모두 true 이면 통과하고 DTO 인스턴스로 변환된다', async () => {
     const dto = await validate(validBody);
     expect(dto).toBeInstanceOf(SignupDto);
-    expect(dto.consents.overseasTransfer).toBe(true);
+    expect(dto.consents.privacy).toBe(true);
   });
 
   it('consents 가 없으면 거부된다', async () => {
@@ -51,7 +50,6 @@ describe('SignupDto', () => {
   it.each([
     ['terms', '이용약관'],
     ['privacy', '개인정보 수집·이용'],
-    ['overseasTransfer', '국외 이전'],
   ])('%s 가 false 이면 해당 메시지로 거부된다', async (key, message) => {
     await expectRejected({ ...validBody, consents: { ...validConsents, [key]: false } }, message);
   });

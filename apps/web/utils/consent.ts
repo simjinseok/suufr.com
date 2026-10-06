@@ -21,7 +21,6 @@ export async function buildConsentPayload(): Promise<ConsentPayload> {
   return {
     terms: true,
     privacy: true,
-    overseasTransfer: true,
     termsVersion: TERMS_VERSION,
     privacyVersion: PRIVACY_POLICY_VERSION,
     ipAddress: extractClientIp(requestHeaders),

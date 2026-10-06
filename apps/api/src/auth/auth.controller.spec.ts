@@ -14,7 +14,7 @@ function build() {
   return { controller, betterAuth, authService, consents };
 }
 
-const consentsDto = { terms: true, privacy: true, overseasTransfer: true, termsVersion: '2026-07-08', privacyVersion: '2026-07-08' } as const;
+const consentsDto = { terms: true, privacy: true, termsVersion: '2026-07-08', privacyVersion: '2026-07-08' } as const;
 
 describe('AuthController', () => {
   it('mfa: two_factor 쿠키 쌍과 코드를 그대로 위임한다', async () => {

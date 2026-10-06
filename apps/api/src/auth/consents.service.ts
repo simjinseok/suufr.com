@@ -7,7 +7,6 @@ import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../common/constants/legal
 export type ConsentInput = {
   terms: boolean;
   privacy: boolean;
-  overseasTransfer: boolean;
   termsVersion: string;
   privacyVersion: string;
 };
@@ -21,17 +20,16 @@ export type ConsentMeta = {
 export type ConsentStatus = {
   terms: string | null;
   privacy: string | null;
-  overseasTransfer: string | null;
   // 하나라도 현재 문서 버전에 동의하지 않았으면 true → 재동의 모달
   required: boolean;
 };
 
-// 국외 이전 동의는 개인정보처리방침에 귀속된다 (별도 문서 없음)
-const REQUIRED_VERSIONS: Record<ConsentTypeValue, string> = {
+// 국외 처리(AWS 도쿄 리전 등)는 개인정보처리방침에 공개하는 것으로 갈음한다 — 별도 동의 종류를 두지 않는다.
+// overseas_transfer 는 과거 이력 행에만 남아 있고 더 기록하지 않는다.
+const REQUIRED_VERSIONS = {
   terms: TERMS_VERSION,
   privacy: PRIVACY_POLICY_VERSION,
-  overseas_transfer: PRIVACY_POLICY_VERSION,
-};
+} as const;
 
 const MAX_UA_LENGTH = 512;
 const MAX_IP_LENGTH = 45;
@@ -43,7 +41,7 @@ export class ConsentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * 동의 3종을 한 번에 기록한다 (추가 전용).
+   * 동의 2종(이용약관·개인정보처리방침)을 한 번에 기록한다 (추가 전용).
    * web이 보낸 문서 버전을 그대로 남긴다 — 이용자가 실제로 본 문서가 그 버전이다.
    * 상수와 다르면 getStatus().required 가 true 가 되어 재동의로 수렴한다.
    */
@@ -55,14 +53,13 @@ export class ConsentsService {
       data: [
         { userId, type: ConsentTypeValue.terms, docVersion: input.termsVersion, agreed: input.terms, ipAddress, userAgent },
         { userId, type: ConsentTypeValue.privacy, docVersion: input.privacyVersion, agreed: input.privacy, ipAddress, userAgent },
-        { userId, type: ConsentTypeValue.overseas_transfer, docVersion: input.privacyVersion, agreed: input.overseasTransfer, ipAddress, userAgent },
       ],
     });
   }
 
   /**
    * record()와 같지만 실패를 호출자에게 전파하지 않는다.
-   * 가입 흐름에서 사용: Cognito 사용자가 이미 생성된 뒤라 실패해도 가입을 되돌릴 수 없고,
+   * 가입 흐름에서 사용: 사용자가 이미 생성된 뒤라 실패해도 가입을 되돌릴 수 없고,
    * 실패 시에도 첫 로그인의 재동의 모달(getStatus().required)이 이력을 보완한다.
    */
   async recordSafely(userId: string, input: ConsentInput, meta: ConsentMeta = {}) {
@@ -96,13 +93,11 @@ export class ConsentsService {
     const status = {
       terms: versionOf(ConsentTypeValue.terms),
       privacy: versionOf(ConsentTypeValue.privacy),
-      overseasTransfer: versionOf(ConsentTypeValue.overseas_transfer),
     };
 
     const required
       = status.terms !== REQUIRED_VERSIONS.terms
-        || status.privacy !== REQUIRED_VERSIONS.privacy
-        || status.overseasTransfer !== REQUIRED_VERSIONS.overseas_transfer;
+        || status.privacy !== REQUIRED_VERSIONS.privacy;
 
     return { ...status, required };
   }

@@ -2,10 +2,10 @@ import { ConsentsService } from './consents.service';
 import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../common/constants/legal';
 import type { PrismaService } from '../prisma/prisma.service';
 
-type Row = { type: 'terms' | 'privacy' | 'overseas_transfer'; docVersion: string; agreed: boolean };
+type Row = { type: 'terms' | 'privacy' | 'overseas_transfer'; docVersion: string; agreed: boolean }; // overseas_transfer: 과거 이력 행
 
 function makeService(rows: Row[] = []) {
-  const createMany = vi.fn().mockResolvedValue({ count: 3 });
+  const createMany = vi.fn().mockResolvedValue({ count: 2 });
   const findMany = vi.fn().mockResolvedValue(rows);
   const prisma = { userConsent: { createMany, findMany } } as unknown as PrismaService;
   return { service: new ConsentsService(prisma), createMany, findMany };
@@ -14,20 +14,19 @@ function makeService(rows: Row[] = []) {
 const input = {
   terms: true,
   privacy: true,
-  overseasTransfer: true,
   termsVersion: TERMS_VERSION,
   privacyVersion: PRIVACY_POLICY_VERSION,
 };
 
 describe('ConsentsService.record', () => {
-  it('동의 3종을 한 번에 기록하고 국외 이전은 방침 버전에 귀속한다', async () => {
+  it('동의 2종(약관·방침)을 한 번에 기록하고 국외 이전 행은 만들지 않는다', async () => {
     const { service, createMany } = makeService();
     await service.record('user-1', input, { ipAddress: '1.2.3.4', userAgent: 'UA' });
 
     const { data } = createMany.mock.calls[0][0];
-    expect(data).toHaveLength(3);
-    expect(data.map((d: { type: string }) => d.type)).toEqual(['terms', 'privacy', 'overseas_transfer']);
-    expect(data[2].docVersion).toBe(PRIVACY_POLICY_VERSION);
+    expect(data).toHaveLength(2);
+    expect(data.map((d: { type: string }) => d.type)).toEqual(['terms', 'privacy']);
+    expect(data[1].docVersion).toBe(PRIVACY_POLICY_VERSION);
     expect(data[0]).toMatchObject({ userId: 'user-1', ipAddress: '1.2.3.4', userAgent: 'UA' });
   });
 
@@ -50,12 +49,12 @@ describe('ConsentsService.getStatus', () => {
   it('이력이 없으면 모두 null 이고 required 다', async () => {
     const { service } = makeService([]);
     const status = await service.getStatus('user-1');
-    expect(status).toEqual({ terms: null, privacy: null, overseasTransfer: null, required: true });
+    expect(status).toEqual({ terms: null, privacy: null, required: true });
   });
 
-  it('현재 버전에 모두 동의했으면 required 가 아니다', async () => {
+  it('현재 버전에 모두 동의했으면 required 가 아니다 (과거 국외 이전 행은 무시)', async () => {
     const { service } = makeService([
-      { type: 'overseas_transfer', docVersion: PRIVACY_POLICY_VERSION, agreed: true },
+      { type: 'overseas_transfer', docVersion: '2000-01-01', agreed: true },
       { type: 'privacy', docVersion: PRIVACY_POLICY_VERSION, agreed: true },
       { type: 'terms', docVersion: TERMS_VERSION, agreed: true },
     ]);
@@ -66,8 +65,7 @@ describe('ConsentsService.getStatus', () => {
 
   it('구 버전 동의만 있으면 required 다', async () => {
     const { service } = makeService([
-      { type: 'overseas_transfer', docVersion: '2000-01-01', agreed: true },
-      { type: 'privacy', docVersion: PRIVACY_POLICY_VERSION, agreed: true },
+      { type: 'privacy', docVersion: '2000-01-01', agreed: true },
       { type: 'terms', docVersion: TERMS_VERSION, agreed: true },
     ]);
     expect((await service.getStatus('user-1')).required).toBe(true);

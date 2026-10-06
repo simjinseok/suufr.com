@@ -23,7 +23,7 @@ export default function ReconsentModal() {
           <Modal.Body>
             <Form className="p-1 flex flex-col gap-4" action={formAction} validationErrors={state.fieldErrors}>
               <p className="text-sm text-gray-600">
-                스프를 계속 이용하려면 이용약관과 개인정보 수집·이용, 국외 이전에 동의해주세요.
+                스프를 계속 이용하려면 이용약관과 개인정보 수집·이용에 동의해주세요.
               </p>
 
               {state.message && !state.success && (
