@@ -77,10 +77,7 @@ type TwoFactorBackupCodesResponse = {
   backupCodes: string[];
 };
 
-type SocialExchangeResponse
-  = | (MfaResponse & { requiresMfa?: undefined })
-    | { success: true; requiresMfa: true; challengeName: 'TOTP'; session: string }
-    | { success: false; message: string };
+type SocialExchangeResponse = MfaResponse | { success: false; message: string };
 
 export const authApi = {
   // 소셜 로그인 (Google). 시작은 브라우저가 api /auth/google/start 로 직접 간다(actions/auth.ts startGoogleLogin).

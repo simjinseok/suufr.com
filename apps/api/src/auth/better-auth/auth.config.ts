@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer, emailOTP, jwt, twoFactor } from 'better-auth/plugins';
-import { createSocialTwoFactorHook } from './social-two-factor.hook';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
 import { existingUserSignupAttemptMail, resetPasswordMail, verifyEmailMail } from '../../mail/templates/auth-mails';
@@ -126,9 +125,6 @@ export function createAuthOptions(deps: AuthConfigDeps) {
     ],
     // OTP 단독 로그인(비밀번호 우회)은 제공하지 않는다
     disabledPaths: ['/sign-in/email-otp'],
-
-    // OAuth 콜백에도 2FA 챌린지 적용 (twoFactor 플러그인은 자격증명 로그인만 다룬다)
-    hooks: { after: createSocialTwoFactorHook() },
 
     databaseHooks: {
       user: {

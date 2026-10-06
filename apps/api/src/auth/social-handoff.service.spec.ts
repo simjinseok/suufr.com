@@ -21,19 +21,19 @@ function makeService() {
 describe('SocialHandoffService', () => {
   it('코드를 해시로 저장하고 한 번만 교환할 수 있다', async () => {
     const { service, rows } = makeService();
-    const code = await service.create({ kind: 'session', sessionToken: 'tok', userId: 'u1' });
+    const code = await service.create({ sessionToken: 'tok', userId: 'u1' });
     expect(code.length).toBeGreaterThan(30);
     const stored = [...rows.values()][0]!;
     expect(stored.identifier.startsWith('social-handoff:')).toBe(true);
     expect(stored.identifier).not.toContain(code);
 
-    await expect(service.consume(code)).resolves.toEqual({ kind: 'session', sessionToken: 'tok', userId: 'u1' });
+    await expect(service.consume(code)).resolves.toEqual({ sessionToken: 'tok', userId: 'u1' });
     await expect(service.consume(code)).resolves.toBeNull();
   });
 
   it('만료된 코드는 삭제되고 null', async () => {
     const { service, rows } = makeService();
-    const code = await service.create({ kind: 'mfa', cookiePairs: 'better-auth.two_factor=x.y' });
+    const code = await service.create({ sessionToken: 'tok2', userId: 'u2' });
     [...rows.values()][0]!.expiresAt = new Date(Date.now() - 1000);
     await expect(service.consume(code)).resolves.toBeNull();
     expect(rows.size).toBe(0);
