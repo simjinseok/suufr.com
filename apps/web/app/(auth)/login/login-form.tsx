@@ -9,14 +9,20 @@ import {
   FieldError,
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 import { login, respondToMfa } from '@/actions/auth';
+import GoogleLoginButton from '@/components/auth/google-login-button';
+
+const SOCIAL_ERROR_MESSAGE = 'Google 로그인에 실패했습니다. 다시 시도해주세요.';
 
 export default function LoginForm() {
   const router = useRouter();
-  const [showMfa, setShowMfa] = React.useState(false);
+  const searchParams = useSearchParams();
+  // Google 로그인 콜백이 2FA 챌린지를 mfa_session 쿠키에 담고 ?step=mfa 로 보낸다
+  const [showMfa, setShowMfa] = React.useState(searchParams.get('step') === 'mfa');
+  const socialError = searchParams.get('error') === 'social' ? SOCIAL_ERROR_MESSAGE : null;
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -155,9 +161,9 @@ export default function LoginForm() {
           action={loginAction}
           validationErrors={loginState.fieldErrors}
         >
-          {loginState.message && (
+          {(loginState.message || socialError) && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-              {loginState.message}
+              {loginState.message || socialError}
             </div>
           )}
 
@@ -204,6 +210,14 @@ export default function LoginForm() {
             로그인
           </Button>
         </Form>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-gray-400">
+          <div className="h-px grow bg-gray-200" />
+          또는
+          <div className="h-px grow bg-gray-200" />
+        </div>
+
+        <GoogleLoginButton />
 
         <div className="mt-6 flex flex-col gap-2 text-center text-sm">
           <Link

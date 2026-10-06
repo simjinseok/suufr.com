@@ -3,6 +3,7 @@ import type { ServerActionState } from '@/types/index';
 
 import * as Sentry from '@sentry/nextjs';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import {
   loginSchema,
@@ -14,34 +15,23 @@ import {
 } from '@/schemas/auth';
 import { authApi } from '@/utils/api/auth';
 import { ApiError } from '@/utils/api-client';
+import { setMfaSessionCookie, setTokenCookies } from '@/utils/auth-cookies';
 import { buildConsentPayload } from '@/utils/consent';
 
-// refresh_token(= better-auth 세션 토큰) 쿠키 수명. api 의 세션 수명(30일)과 같다
-const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30;
-
-// 로그인 성공 시 토큰 쿠키 세팅 (login/respondToMfa 공용)
-// access_token = better-auth JWT(1시간), refresh_token = better-auth 세션 토큰(30일).
-async function setTokenCookies(response: {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn?: number;
-}) {
-  const cookieStore = await cookies();
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  cookieStore.set('access_token', response.accessToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-    maxAge: (response.expiresIn || 3600) - 60,
-  });
-
-  cookieStore.set('refresh_token', response.refreshToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-    maxAge: REFRESH_TOKEN_MAX_AGE,
-  });
+/**
+ * Google 로그인 시작. api 가 만든 Google 인증 URL 로 브라우저를 보낸다.
+ * Google → api /api/auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
+ */
+export async function startGoogleLogin() {
+  let url: string | undefined;
+  try {
+    const response = await authApi.social.start('google');
+    if (response.success && response.url) url = response.url;
+  }
+  catch {
+    url = undefined;
+  }
+  redirect(url ?? '/login?error=social');
 }
 
 // Login action
@@ -83,13 +73,7 @@ export async function login(
 
         // 2단계 인증 챌린지 — two_factor 쿠키 쌍(session)을 5분간 쿠키에 보관
         if (response.requiresMfa) {
-          const cookieStore = await cookies();
-          cookieStore.set('mfa_session', response.session!, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 300,
-          });
+          await setMfaSessionCookie(response.session!);
 
           state.requiresMfa = true;
           state.challengeName = response.challengeName;

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
 import { toHttpException } from './better-auth-error.map';
+import { TWO_FACTOR_COOKIE_NAME } from './social-two-factor.hook';
 
 /** 로그인 성공 응답. accessToken = JWT(1h), refreshToken = 세션 토큰(30일) */
 export type IssuedTokens = {
@@ -152,4 +153,58 @@ export class BetterAuthService {
   async getJwks() {
     return this.auth.api.getJwks();
   }
+
+  // ---- 소셜 로그인 ----
+
+  /** 제공자 인증 페이지 URL. state 는 better-auth 가 verifications 에 저장하므로 브라우저 쿠키가 필요 없다 */
+  async getSocialSignInUrl(provider: 'google', urls: { callbackURL: string; errorCallbackURL: string }): Promise<string> {
+    const result = await this.run(() => this.auth.api.signInSocial({
+      body: { provider, callbackURL: urls.callbackURL, errorCallbackURL: urls.errorCallbackURL, disableRedirect: true },
+    }));
+    if (!result.url) throw toHttpException(new Error('소셜 로그인 URL 을 만들지 못했습니다'));
+    return result.url;
+  }
+
+  /**
+   * OAuth 콜백 뒤 api 도메인에 설정된 better-auth 쿠키를 해석한다.
+   * - 세션 쿠키가 유효하면 세션 토큰 (web 이 refresh_token 으로 이어받는다)
+   * - two_factor 쿠키만 있으면 2FA 챌린지 (web 의 mfa 흐름에 쿠키 쌍을 그대로 넘긴다)
+   * expireCookies 는 api 도메인 쿠키를 지우는 set-cookie 줄이다.
+   */
+  async readSocialCallbackCookies(cookieHeader: string): Promise<
+    | { kind: 'session'; sessionToken: string; userId: string; expireCookies: string[] }
+    | { kind: 'mfa'; cookiePairs: string; expireCookies: string[] }
+    | null
+  > {
+    const ctx = await this.auth.$context;
+    const sessionCookieName = ctx.authCookies.sessionToken.name;
+    const twoFactorCookie = ctx.createAuthCookie(TWO_FACTOR_COOKIE_NAME);
+    const cookies = parseCookieHeader(cookieHeader);
+    const secure = ctx.authCookies.sessionToken.attributes.secure === true;
+    const expire = (name: string) => `${name}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`;
+    const expireCookies = [expire(sessionCookieName), expire(twoFactorCookie.name)];
+
+    if (cookies.has(sessionCookieName)) {
+      const session = await this.auth.api.getSession({ headers: new Headers({ cookie: cookieHeader }) }).catch(() => null);
+      if (session?.session.token) {
+        return { kind: 'session', sessionToken: session.session.token, userId: session.user.id, expireCookies };
+      }
+    }
+
+    const twoFactorValue = cookies.get(twoFactorCookie.name);
+    if (twoFactorValue) {
+      return { kind: 'mfa', cookiePairs: `${twoFactorCookie.name}=${twoFactorValue}`, expireCookies };
+    }
+    return null;
+  }
+}
+
+function parseCookieHeader(header: string): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx <= 0) continue;
+    map.set(part.slice(0, idx).trim(), part.slice(idx + 1).trim());
+  }
+  return map;
 }
