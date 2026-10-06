@@ -1,6 +1,9 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*"],
+  // 모든 패키지의 해시(= CI 의 --affected 판정)에 포함되는 루트 파일.
+  // 루트 package.json(engines/packageManager), .dockerignore, 배포 워크플로가 바뀌면 web/api 둘 다 다시 빌드한다.
+  // pnpm-lock.yaml 과 turbo.json 은 turbo 가 기본으로 추적한다.
+  "globalDependencies": ["**/.env.*", "package.json", ".dockerignore", ".github/workflows/deploy.yml"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
