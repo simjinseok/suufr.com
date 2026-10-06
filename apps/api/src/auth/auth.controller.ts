@@ -177,13 +177,8 @@ export class AuthController {
   }
 
   @Post('two-factor/verify-setup')
-  async verifyTwoFactorSetup(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: TwoFactorCodeDto,
-    @Headers() headers: Record<string, string | undefined>,
-  ) {
+  async verifyTwoFactorSetup(@Body() dto: TwoFactorCodeDto, @Headers() headers: Record<string, string | undefined>) {
     await this.betterAuth.verifyTwoFactorSetup(this.requireSessionToken(headers), dto.code);
-    await this.authService.clearTwoFactorSetupRequirement(user.userId);
     return { success: true, message: '2단계 인증이 활성화되었습니다' };
   }
 

@@ -66,8 +66,6 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       modelName: 'user',
       additionalFields: {
         cognitoMigratedAt: { type: 'date', required: false, input: false, returned: false },
-        cognitoMfaEnabled: { type: 'boolean', required: false, input: false, returned: false, defaultValue: false },
-        requiresTwoFactorSetup: { type: 'boolean', required: false, input: false, defaultValue: false },
       },
     },
     // 기존 수업 모델 Session(prisma.session) 과 충돌 → prisma.authSession

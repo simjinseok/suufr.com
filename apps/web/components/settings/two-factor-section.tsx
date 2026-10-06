@@ -16,8 +16,6 @@ import {
 
 type Props = {
   enabled: boolean;
-  /** Cognito MFA 사용자가 이전 후 아직 재등록하지 않음 — 안내 강조 */
-  requiresSetup: boolean;
 };
 
 /**
@@ -25,7 +23,7 @@ type Props = {
  * 등록: 비밀번호 확인 → QR(인증 앱) + 백업코드 표시 → 인증 앱 코드 확인 → 활성화.
  * QR 은 브라우저에서 그린다(TOTP URI 는 비밀이므로 외부 QR 서비스에 보내지 않는다).
  */
-export default function TwoFactorSection({ enabled, requiresSetup }: Props) {
+export default function TwoFactorSection({ enabled }: Props) {
   const [mode, setMode] = React.useState<'idle' | 'enroll' | 'disable' | 'backup'>('idle');
 
   return (
@@ -41,11 +39,6 @@ export default function TwoFactorSection({ enabled, requiresSetup }: Props) {
               ? '로그인할 때 비밀번호와 함께 인증 앱의 코드를 요구합니다.'
               : 'Google Authenticator, 1Password 같은 인증 앱으로 로그인을 한 번 더 보호합니다.'}
           </p>
-          {requiresSetup && !enabled && (
-            <p className="mt-2 text-sm text-warning">
-              로그인 시스템이 바뀌어 기존 2단계 인증 설정을 이어받을 수 없습니다. 인증 앱을 다시 등록해주세요.
-            </p>
-          )}
         </div>
         {mode === 'idle' && (
           enabled

@@ -42,23 +42,16 @@ export class AuthService {
   }
 
   /** /me 의 user 에 실리는 2FA 상태 */
-  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean; requiresTwoFactorSetup: boolean }> {
+  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { twoFactorEnabled: true, requiresTwoFactorSetup: true },
+      select: { twoFactorEnabled: true },
     });
-    return {
-      twoFactorEnabled: user?.twoFactorEnabled ?? false,
-      requiresTwoFactorSetup: user?.requiresTwoFactorSetup ?? false,
-    };
+    return { twoFactorEnabled: user?.twoFactorEnabled ?? false };
   }
 
   async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
-  }
-
-  async clearTwoFactorSetupRequirement(userId: string) {
-    await this.prisma.user.updateMany({ where: { id: userId, requiresTwoFactorSetup: true }, data: { requiresTwoFactorSetup: false } });
   }
 
   async getUserOrganizations(userId: string) {
