@@ -19,19 +19,13 @@ import { setMfaSessionCookie, setTokenCookies } from '@/utils/auth-cookies';
 import { buildConsentPayload } from '@/utils/consent';
 
 /**
- * Google 로그인 시작. api 가 만든 Google 인증 URL 로 브라우저를 보낸다.
- * Google → api /api/auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
+ * Google 로그인 시작. 브라우저를 api 의 /auth/google/start 로 보낸다 (서버 간 호출이 아니라 브라우저가 직접 가야 한다 —
+ * better-auth 가 거기서 발급하는 state 쿠키를 콜백에서 대조하기 때문).
+ * api /auth/google/start → Google → api /auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
  */
 export async function startGoogleLogin() {
-  let url: string | undefined;
-  try {
-    const response = await authApi.social.start('google');
-    if (response.success && response.url) url = response.url;
-  }
-  catch {
-    url = undefined;
-  }
-  redirect(url ?? '/login?error=social');
+  const apiUrl = process.env.PUBLIC_API_URL;
+  redirect(apiUrl ? `${apiUrl}/auth/google/start` : '/login?error=social');
 }
 
 // Login action
