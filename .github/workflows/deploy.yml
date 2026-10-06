@@ -18,7 +18,9 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-26.04
+    # 모든 잡은 arm64 러너를 쓴다. Coolify 서버가 ARM 이라 이미지를 네이티브로 빌드해야 하고,
+    # 테스트도 운영과 같은 아키텍처에서 돌리기 위해서다 (공개 저장소는 무료).
+    runs-on: ubuntu-26.04-arm
     outputs:
       apps: ${{ steps.affected.outputs.apps }}
     steps:
@@ -70,7 +72,6 @@ jobs:
     needs: test
     # PR 에서는 테스트만 돌리고 도커 빌드는 하지 않는다
     if: github.event_name != 'pull_request' && needs.test.outputs.apps != '[]'
-    # Coolify 서버가 ARM 이라 arm64 네이티브 러너로 빌드한다 (공개 저장소는 무료)
     runs-on: ubuntu-26.04-arm
     permissions:
       contents: read
@@ -143,7 +144,7 @@ jobs:
   deploy:
     name: Deploy
     needs: [test, build]
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-26.04-arm
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     env:
       COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
