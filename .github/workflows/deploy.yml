@@ -11,52 +11,19 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
+  TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
-  # 바뀐 경로로 빌드 대상을 고른다. 공통 파일이 바뀌면 둘 다, 수동 실행이면 둘 다.
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-26.04
-    outputs:
-      apps: ${{ steps.apps.outputs.apps }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            shared: &shared
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'packages/**'
-              - '.dockerignore'
-              - '.github/workflows/deploy.yml'
-            web:
-              - *shared
-              - 'apps/web/**'
-            api:
-              - *shared
-              - 'apps/api/**'
-      - name: Build list
-        id: apps
-        env:
-          WEB: ${{ steps.filter.outputs.web }}
-          API: ${{ steps.filter.outputs.api }}
-          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          apps=()
-          if [ "$MANUAL" = "true" ] || [ "$WEB" = "true" ]; then apps+=('"web"'); fi
-          if [ "$MANUAL" = "true" ] || [ "$API" = "true" ]; then apps+=('"api"'); fi
-          list="[$(IFS=,; echo "${apps[*]}")]"
-          echo "apps=$list" >> "$GITHUB_OUTPUT"
-          echo "build targets: $list"
-
   test:
     name: Test
     runs-on: ubuntu-26.04
+    outputs:
+      apps: ${{ steps.affected.outputs.apps }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # turbo --affected 가 base 커밋(github.event.before)까지 diff 할 수 있어야 한다
+          fetch-depth: 0
       # pnpm 버전은 루트 package.json 의 packageManager 가 결정한다 (version 입력을 주면 충돌로 실패)
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -69,10 +36,36 @@ jobs:
       - run: pnpm --filter api test:run
       - run: pnpm --filter web test:run
 
+      # 빌드 대상 선정: turbo 의존성 그래프로 base..HEAD 사이에 영향받은 패키지만 고른다.
+      # - apps/*, packages/* 변경은 그래프를 따라 전파된다 (packages/* 가 바뀌면 web/api 둘 다)
+      # - pnpm-lock.yaml 은 의미 단위로 비교된다 (실제 의존성 버전이 바뀐 패키지만)
+      # - 루트 파일은 turbo.json 의 globalDependencies 가 결정한다
+      # - base 를 찾지 못하면(새 브랜치, force push) turbo 가 경고 후 전체를 반환한다
+      # - 수동 실행은 항상 둘 다 빌드한다
+      - name: Detect affected apps
+        id: affected
+        env:
+          TURBO_SCM_BASE: ${{ github.event.before }}
+          TURBO_SCM_HEAD: ${{ github.sha }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$MANUAL" = "true" ]; then
+            apps='["web","api"]'
+          else
+            apps=$(pnpm exec turbo run build --affected --dry-run=json | node -e '
+              const raw = require("fs").readFileSync(0, "utf8");
+              const json = JSON.parse(raw.slice(raw.indexOf("{")));
+              const affected = new Set(json.packages);
+              process.stdout.write(JSON.stringify(["web", "api"].filter(a => affected.has(a))));
+            ')
+          fi
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "build targets: $apps"
+
   build:
     name: Build ${{ matrix.app }}
-    needs: [changes, test]
-    if: needs.changes.outputs.apps != '[]'
+    needs: test
+    if: needs.test.outputs.apps != '[]'
     # Coolify 서버가 ARM 이라 arm64 네이티브 러너로 빌드한다 (공개 저장소는 무료)
     runs-on: ubuntu-26.04-arm
     permissions:
@@ -81,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJSON(needs.changes.outputs.apps) }}
+        app: ${{ fromJSON(needs.test.outputs.apps) }}
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
 
@@ -145,7 +138,7 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: [changes, build]
+    needs: [test, build]
     runs-on: ubuntu-26.04
     if: github.ref == 'refs/heads/main'
     env:
@@ -161,7 +154,7 @@ jobs:
       - name: Deploy api
         env:
           APP_UUID: ${{ secrets.COOLIFY_APP_UUID_API }}
-        if: contains(fromJSON(needs.changes.outputs.apps), 'api') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
+        if: contains(fromJSON(needs.test.outputs.apps), 'api') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
         run: |
           curl --fail-with-body -sS -X PATCH "$COOLIFY_URL/api/v1/applications/$APP_UUID" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" -H "Content-Type: application/json" \
@@ -172,7 +165,7 @@ jobs:
       - name: Deploy web
         env:
           APP_UUID: ${{ secrets.COOLIFY_APP_UUID_WEB }}
-        if: contains(fromJSON(needs.changes.outputs.apps), 'web') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
+        if: contains(fromJSON(needs.test.outputs.apps), 'web') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
         run: |
           curl --fail-with-body -sS -X PATCH "$COOLIFY_URL/api/v1/applications/$APP_UUID" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" -H "Content-Type: application/json" \
