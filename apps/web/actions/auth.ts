@@ -22,16 +22,15 @@ import { buildConsentPayload } from '@/utils/consent';
  * Google → api /api/auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
  */
 export async function startGoogleLogin() {
-  let url: string;
+  let url: string | undefined;
   try {
     const response = await authApi.social.start('google');
-    if (!response.success || !response.url) redirect('/login?error=social');
-    url = response.url;
+    if (response.success && response.url) url = response.url;
   }
   catch {
-    redirect('/login?error=social');
+    url = undefined;
   }
-  redirect(url);
+  redirect(url ?? '/login?error=social');
 }
 
 // Login action
