@@ -52,7 +52,7 @@ export default function PrivacyPage() {
             '회원이 직접 생성한 공유 링크를 통한 수강생·보호자의 수업 기록 열람',
             '유료 구독의 결제·갱신·해지 처리 및 결제 내역 안내',
             '서비스 오류 분석 및 품질 개선',
-            '서비스 이용 통계 분석(Google Analytics)',
+            '서비스 이용 통계 분석',
             '이용약관·개인정보처리방침 동의 이력의 보존 및 분쟁 대응',
             '공지사항 전달 등 회원과의 소통',
             '관련 법령상 의무의 이행',
@@ -108,7 +108,6 @@ export default function PrivacyPage() {
           rows={[
             ['Amazon Web Services, Inc. (미국)', '서버·데이터베이스 운영(도쿄 리전), 인증·알림 이메일 발송(Amazon SES, 도쿄 리전), 파일 저장·전송(S3, CloudFront, 서울 리전)'],
             ['Functional Software, Inc. (Sentry, 미국)', '서비스 오류·성능 모니터링, 오류 발생 시 세션 리플레이 수집'],
-            ['Google LLC (미국)', '서비스 이용 통계 분석(Google Analytics)'],
           ]}
         />
         <p>
@@ -167,26 +166,8 @@ export default function PrivacyPage() {
               '서비스 오류 분석 및 품질 개선',
               '90일',
             ],
-            [
-              <>
-                Google LLC (Google Analytics)
-                <br />
-                (
-                <ExternalLink href="https://policies.google.com/privacy">개인정보처리방침</ExternalLink>
-                )
-              </>,
-              '미국',
-              '페이지 접속 시 네트워크를 통해 전송',
-              '쿠키 식별자, 방문 페이지, 접속 일시, 기기·브라우저 정보, 축약된 IP 주소',
-              '서비스 이용 통계 분석',
-              'Google Analytics 데이터 보존 설정에 따름 (최대 14개월)',
-            ],
           ]}
         />
-        <p>
-          Google Analytics에 의한 이전은 제12조에 안내된 방법으로 거부할 수 있으며, 거부해도 서비스 이용에
-          제한이 없습니다.
-        </p>
       </LegalSection>
 
       <LegalSection title="8. Google 캘린더 연동">
@@ -243,17 +224,40 @@ export default function PrivacyPage() {
         <LegalList
           items={[
             '필수 쿠키: 로그인 상태 유지, 추가 인증(MFA) 처리, 선택한 과외방 기억, 보호된 파일 접근 권한 확인에 사용합니다. 브라우저에서 차단할 수 있으나 이 경우 로그인이 필요한 기능을 이용할 수 없습니다.',
-            <>
-              분석 쿠키: Google Analytics가 방문 페이지, 접속 기기, 유입 경로 등 방문 통계를 수집합니다.
-              브라우저의 쿠키 설정 또는
-              {' '}
-              <ExternalLink href="https://tools.google.com/dlpage/gaoptout">Google 애널리틱스 차단 브라우저 부가기능</ExternalLink>
-              으로 거부할 수 있으며, 거부해도 서비스 이용에 제한이 없습니다.
-            </>,
             '오류 분석: Sentry가 오류 발생 시 직전의 화면 조작 기록을 전송합니다. 입력한 텍스트는 마스킹되고 이미지·동영상은 차단됩니다.',
           ]}
         />
-        <p>스프는 광고 목적의 쿠키를 사용하지 않습니다.</p>
+        <p>
+          또한 스프는 웹사이트 이용 통계를 파악하기 위해 아래의 제3자가 자동 수집 장치를 통해 행태정보를
+          수집해 가도록 허용하고 있습니다. 이 행태정보는 개인을 식별하지 않는 방식으로 처리되며, 스프는 이를
+          회원 정보와 결합하지 않습니다.
+        </p>
+        <LegalTable
+          headers={['수집 장치 명칭', '수집 장치 종류', '수집해 가는 사업자', '수집해 가는 행태정보 항목', '수집 목적', '보유 기간']}
+          rows={[
+            [
+              'Google 애널리틱스 태그',
+              '자바스크립트 (웹페이지)',
+              <>
+                Google LLC (미국)
+                <br />
+                (
+                <ExternalLink href="https://policies.google.com/privacy">개인정보처리방침</ExternalLink>
+                )
+              </>,
+              '방문 페이지, 접속 일시, 유입 경로, 기기·브라우저 정보, 쿠키 식별자. IP 주소는 접속 지역 추정에만 사용되고 저장되지 않습니다.',
+              '웹사이트 이용 통계 분석',
+              '최대 14개월',
+            ],
+          ]}
+        />
+        <p>
+          행태정보 수집은 브라우저의 쿠키 차단 설정 또는
+          {' '}
+          <ExternalLink href="https://tools.google.com/dlpage/gaoptout">Google 애널리틱스 차단 브라우저 부가기능</ExternalLink>
+          으로 거부할 수 있으며, 거부해도 서비스 이용에 제한이 없습니다. 스프는 광고 목적의 쿠키를 사용하지
+          않으며, 수집된 행태정보를 맞춤형 광고에 활용하지 않습니다.
+        </p>
       </LegalSection>
 
       <LegalSection title="13. 개인정보 보호책임자 및 문의처">
