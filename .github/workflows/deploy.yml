@@ -1,4 +1,4 @@
-name: Build & Deploy (GHCR → Coolify)
+name: Deploy
 
 on:
   push:
@@ -104,7 +104,7 @@ jobs:
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
 
   deploy:
-    name: Deploy to Coolify
+    name: Deploy
     needs: build
     runs-on: ubuntu-26.04
     if: github.ref == 'refs/heads/main'
