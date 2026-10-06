@@ -1,4 +1,4 @@
-/** better-auth 핸들러가 마운트되는 경로. 기존 NestJS AuthController(/api/auth/*)와 충돌하지 않게 분리한다. */
+/** better-auth basePath. HTTP 핸들러는 마운트하지 않지만 기존 AuthController(/api/auth/*)와 겹치지 않는 값으로 둔다. */
 export const BETTER_AUTH_BASE_PATH = '/api/better-auth';
 
 /** web 의 access_token 쿠키 수명과 같다 (Cognito access token 기본 1시간을 승계). */

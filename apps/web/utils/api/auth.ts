@@ -3,13 +3,13 @@ import { apiClient } from '../api-client';
 type LoginResponse = {
   success: boolean;
   requiresMfa?: boolean;
-  requiresNewPassword?: boolean;
   challengeName?: string;
+  // 2단계 인증 챌린지의 two_factor 쿠키 쌍 (mfa 요청에 그대로 돌려보낸다)
   session?: string;
   accessToken?: string;
   refreshToken?: string;
   expiresIn?: number;
-  cognitoUsername?: string;
+  userId?: string;
 };
 
 type MfaResponse = {
@@ -17,7 +17,7 @@ type MfaResponse = {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-  cognitoUsername: string;
+  userId: string;
 };
 
 type SignupResponse = {
@@ -83,11 +83,8 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     apiClient<LoginResponse>('/api/auth/login', { method: 'POST', body: data }),
 
-  mfa: (data: { email: string; code: string; session: string }) =>
+  mfa: (data: { code: string; session: string }) =>
     apiClient<MfaResponse>('/api/auth/mfa', { method: 'POST', body: data }),
-
-  newPassword: (data: { email: string; password: string; session: string }) =>
-    apiClient<MfaResponse>('/api/auth/new-password', { method: 'POST', body: data }),
 
   signup: (data: { name: string; email: string; password: string; consents: ConsentPayload }) =>
     apiClient<SignupResponse>('/api/auth/signup', { method: 'POST', body: data }),
@@ -108,8 +105,7 @@ export const authApi = {
   resetPassword: (data: { email: string; code: string; password: string }) =>
     apiClient<ResetPasswordResponse>('/api/auth/reset-password', { method: 'POST', body: data }),
 
-  // username 은 Cognito refresh token 에만 필요 (이전 기간). better-auth 세션 토큰이면 생략
-  refresh: (data: { refreshToken: string; username?: string }) =>
+  refresh: (data: { refreshToken: string }) =>
     apiClient<RefreshTokenResponse>('/api/auth/refresh', { method: 'POST', body: data }),
 
   // 서버 세션 폐기 (refresh_token 쿠키 값). access_token 만료 여부와 무관

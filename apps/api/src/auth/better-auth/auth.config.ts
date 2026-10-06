@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer, emailOTP, jwt, twoFactor } from 'better-auth/plugins';
-import type { createAuthMiddleware } from 'better-auth/api';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
 import { existingUserSignupAttemptMail, resetPasswordMail, verifyEmailMail } from '../../mail/templates/auth-mails';
@@ -24,8 +23,6 @@ export type AuthConfigDeps = {
   mail: MailService;
   /** users 행 생성 직후(가입) — Organization/UserSettings 부트스트랩 */
   onUserCreated: (user: { id: string; email: string; name: string }) => Promise<void>;
-  /** /sign-in/email 전에 실행되는 Cognito lazy migration 훅 (Phase 4). 없으면 등록하지 않음 */
-  beforeHook?: ReturnType<typeof createAuthMiddleware>;
 };
 
 /**
@@ -38,6 +35,8 @@ export function createAuthOptions(deps: AuthConfigDeps) {
   return {
     appName: '스프',
     baseURL,
+    // HTTP 핸들러는 마운트하지 않는다 — web 은 AuthController(/api/auth/*)만 호출하고, 여기서는 auth.api.* 를 직접 쓴다.
+    // basePath 는 쿠키·JWT 발급 등 내부 경로 계산에만 쓰인다
     basePath: BETTER_AUTH_BASE_PATH,
     secret,
     trustedOrigins: [webUrl],
@@ -69,8 +68,6 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       modelName: 'user',
       additionalFields: {
         cognitoMigratedAt: { type: 'date', required: false, input: false, returned: false },
-        cognitoMfaEnabled: { type: 'boolean', required: false, input: false, returned: false, defaultValue: false },
-        requiresTwoFactorSetup: { type: 'boolean', required: false, input: false, defaultValue: false },
       },
     },
     // 기존 수업 모델 Session(prisma.session) 과 충돌 → prisma.authSession
@@ -121,15 +118,13 @@ export function createAuthOptions(deps: AuthConfigDeps) {
         },
       },
     },
-    ...(deps.beforeHook ? { hooks: { before: deps.beforeHook } } : {}),
-
     advanced: {
-      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4. 기존 사용자 행은 lazy migration 이 Cognito sub 로 직접 만든다
+      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4 (기존 사용자 행은 Cognito 이전 당시 sub 로 생성됨)
       database: { generateId: () => randomUUID() },
       // web 서버→api 서버 호출이므로 쿠키 보안 속성은 의미 없음. 실제 쿠키는 web 이 자체 설정한다
       useSecureCookies: process.env.NODE_ENV === 'production',
     },
-    // 레이트리밋은 NestJS Throttler(AuthController)가 담당. auth.api 서버 호출은 어차피 대상이 아니다
+    // 레이트리밋은 NestJS Throttler(AuthController)가 담당 (핸들러 미마운트라 better-auth 자체 제한은 쓰이지 않는다)
     rateLimit: { enabled: false },
   } satisfies BetterAuthOptions;
 }
