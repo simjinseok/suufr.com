@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { APIError } from 'better-auth/api';
 import { betterAuthErrorCode, toHttpException } from './better-auth-error.map';
+import { MailDeliveryError } from '../../mail/mail.service';
 
 function body(e: HttpException) {
   return e.getResponse() as { message: string; error: string };
@@ -47,5 +48,13 @@ describe('toHttpException', () => {
   it('betterAuthErrorCode 는 APIError 의 body.code 만 읽는다', () => {
     expect(betterAuthErrorCode(new APIError('BAD_REQUEST', { code: 'INVALID_OTP', message: 'x' }))).toBe('INVALID_OTP');
     expect(betterAuthErrorCode(new Error('x'))).toBeUndefined();
+  });
+});
+
+describe('toHttpException — 메일 발송 실패', () => {
+  it('MailDeliveryError 는 503 + MAIL_DELIVERY_FAILED 코드로 사용자에게 전달된다', () => {
+    const exception = toHttpException(new MailDeliveryError('메일 발송 실패'));
+    expect(exception.getStatus()).toBe(503);
+    expect(exception.getResponse()).toMatchObject({ error: 'MAIL_DELIVERY_FAILED', message: expect.stringContaining('보내지 못했습니다') });
   });
 });

@@ -3,6 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/nestjs';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
+/** 발송 실패. 사용자에게 보여줄 수 있는 실패라 better-auth 에러 매핑에서 503 으로 변환된다 */
+export class MailDeliveryError extends Error {
+  constructor(message: string, readonly cause?: unknown) {
+    super(message);
+    this.name = 'MailDeliveryError';
+  }
+}
+
 export type MailMessage = {
   to: string;
   subject: string;
@@ -15,7 +23,9 @@ export type MailMessage = {
  * MAIL_TRANSPORT=ses  → SES v2. 발신 자격증명은 Phase 0 에서 확인한 SES 인증 도메인/주소.
  * MAIL_TRANSPORT=log  → 콘솔 출력 (로컬/스테이징). 운영에서 ses 가 아니면 기동 시 경고.
  *
- * 호출자는 타이밍 공격 방지를 위해 발송을 await 하지 않는다(better-auth 권고). 실패는 여기서 로그·Sentry 로만 남긴다.
+ * - sendOrThrow: 사용자가 메일을 기다려야 하는 발송(인증코드·재설정코드). 실패하면 MailDeliveryError 를 던져
+ *   호출자가 사용자에게 "보내지 못했다"고 알릴 수 있게 한다.
+ * - send: 사용자가 기다리지 않는 알림성 발송. 실패는 로그·Sentry 로만 남기고 삼킨다.
  */
 @Injectable()
 export class MailService {
@@ -49,10 +59,20 @@ export class MailService {
   /** 실패를 던지지 않는다. 호출자는 void 로 호출한다. */
   async send(message: MailMessage): Promise<void> {
     try {
-      if (this.transport === 'log' || !this.client) {
-        this.logger.log(`[mail:log] to=${message.to} subject=${message.subject}\n${message.text}`);
-        return;
-      }
+      await this.sendOrThrow(message);
+    }
+    catch {
+      // sendOrThrow 가 이미 로그·Sentry 처리
+    }
+  }
+
+  /** 실패하면 MailDeliveryError. 로그·Sentry 는 여기서 남긴다. */
+  async sendOrThrow(message: MailMessage): Promise<void> {
+    if (this.transport === 'log' || !this.client) {
+      this.logger.log(`[mail:log] to=${message.to} subject=${message.subject}\n${message.text}`);
+      return;
+    }
+    try {
       await this.client.send(new SendEmailCommand({
         FromEmailAddress: this.from,
         Destination: { ToAddresses: [message.to] },
@@ -71,6 +91,7 @@ export class MailService {
     catch (error) {
       this.logger.error(`메일 발송 실패 (to=${message.to}, subject=${message.subject})`, error instanceof Error ? error.stack : String(error));
       Sentry.captureException(error, { extra: { subject: message.subject } });
+      throw new MailDeliveryError(`메일 발송 실패: ${message.subject}`, error);
     }
   }
 }

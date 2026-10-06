@@ -6,9 +6,11 @@ import {
   HttpStatus,
   InternalServerErrorException,
   Logger,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { APIError } from 'better-auth/api';
+import { MailDeliveryError } from '../../mail/mail.service';
 
 const logger = new Logger('BetterAuth');
 
@@ -53,8 +55,15 @@ export function betterAuthErrorCode(error: unknown): string | undefined {
  * APIError → NestJS HttpException. 응답 형식은 기존 HttpExceptionFilter 가 처리한다.
  * 매핑되지 않은 4xx 는 코드와 함께 일반 메시지로, 5xx 는 로그 후 500.
  */
+export const MAIL_DELIVERY_FAILED = 'MAIL_DELIVERY_FAILED';
+
 export function toHttpException(error: unknown): HttpException {
   if (error instanceof HttpException) return error;
+
+  // 인증코드·재설정코드 메일을 못 보냈다. 사용자가 그 메일을 기다리므로 성공처럼 응답하면 안 된다
+  if (error instanceof MailDeliveryError) {
+    return new ServiceUnavailableException({ message: '인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요', error: MAIL_DELIVERY_FAILED });
+  }
 
   if (!isBetterAuthError(error)) {
     logger.error('better-auth 호출 중 알 수 없는 오류', error instanceof Error ? error.stack : String(error));
