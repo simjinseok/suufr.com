@@ -9,21 +9,6 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UserProvisioningService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** users 행 보장. 이미 있으면 건드리지 않는다(이름·이메일은 사용자가 바꿀 수 있음). */
-  async ensureUser(params: { id: string; email: string; name?: string | null; emailVerified: boolean }) {
-    const email = params.email.trim().toLowerCase();
-    await this.prisma.user.upsert({
-      where: { id: params.id },
-      create: {
-        id: params.id,
-        email,
-        name: params.name?.trim() || email.split('@')[0],
-        emailVerified: params.emailVerified,
-      },
-      update: {},
-    });
-  }
-
   /** 첫 진입 시 Organization + UserSettings 생성. */
   async ensureOrganization(userId: string, email: string, name?: string | null) {
     const existing = await this.prisma.organization.findFirst({ where: { userId } });

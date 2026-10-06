@@ -5,7 +5,6 @@ import { AuthController } from './auth.controller';
 import { ConsentsService } from './consents.service';
 import { UserProvisioningService } from './user-provisioning.service';
 import { BetterAuthService } from './better-auth/better-auth.service';
-import { BetterAuthController } from './better-auth/better-auth.controller';
 import { betterAuthProvider } from './better-auth/better-auth.provider';
 import { MailModule } from '../mail/mail.module';
 import { S3Module } from '../s3/s3.module';
@@ -13,7 +12,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [S3Module, SubscriptionsModule, MailModule],
-  controllers: [AuthController, BetterAuthController],
+  controllers: [AuthController],
   providers: [
     JwtAuthGuard,
     AuthService,

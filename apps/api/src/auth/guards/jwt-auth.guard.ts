@@ -14,6 +14,8 @@ export interface AuthenticatedUser {
 
 type JwksGetter = ReturnType<typeof createLocalJWKSet>;
 
+const JWKS_RELOAD_COOLDOWN_MS = 60_000;
+
 /**
  * 전역 가드. Authorization: Bearer <better-auth JWT> 를 jose + JWKS(DB, 프로세스 캐시) 로 로컬 검증해 request.user 를 주입한다.
  * iss/aud 는 BETTER_AUTH_URL. 공개 라우트는 @Public().
@@ -23,6 +25,7 @@ export class JwtAuthGuard implements CanActivate {
   private readonly logger = new Logger(JwtAuthGuard.name);
   private jwks: JwksGetter | null = null;
   private jwksKids = new Set<string>();
+  private jwksLoadedAt = 0;
 
   constructor(
     private reflector: Reflector,
@@ -36,12 +39,18 @@ export class JwtAuthGuard implements CanActivate {
     return issuer;
   }
 
-  /** JWKS 는 거의 바뀌지 않으므로 프로세스에 캐시하고, 모르는 kid 가 오면 1회 다시 읽는다 */
+  /**
+   * JWKS 는 거의 바뀌지 않으므로 프로세스에 캐시한다. 모르는 kid 가 오면(키 로테이션) 다시 읽되,
+   * 위조 kid 로 DB 조회를 유발하지 못하도록 재조회는 JWKS_RELOAD_COOLDOWN_MS 에 1회로 제한한다.
+   */
   private async getJwks(kid: string | undefined): Promise<JwksGetter> {
-    if (!this.jwks || (kid && !this.jwksKids.has(kid))) {
+    const unknownKid = Boolean(kid) && !this.jwksKids.has(kid!);
+    const cooledDown = Date.now() - this.jwksLoadedAt > JWKS_RELOAD_COOLDOWN_MS;
+    if (!this.jwks || (unknownKid && cooledDown)) {
       const jwks = await this.betterAuth.getJwks() as JSONWebKeySet;
       this.jwks = createLocalJWKSet(jwks);
       this.jwksKids = new Set(jwks.keys.map(k => k.kid).filter((k): k is string => typeof k === 'string'));
+      this.jwksLoadedAt = Date.now();
     }
     return this.jwks;
   }

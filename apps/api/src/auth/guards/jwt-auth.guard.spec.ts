@@ -71,16 +71,33 @@ describe('JwtAuthGuard', () => {
     expect(getJwks).toHaveBeenCalledTimes(1);
   });
 
-  it('모르는 kid 가 오면 JWKS 를 다시 읽는다 (키 로테이션)', async () => {
-    const first = await makeKeys();
-    const second = await makeKeys();
-    second.jwks.keys[0]!.kid = 'kid-2';
-    const getJwks = vi.fn().mockResolvedValueOnce(first.jwks).mockResolvedValueOnce({ keys: [...first.jwks.keys, ...second.jwks.keys] });
-    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService);
+  it('모르는 kid 가 오면 JWKS 를 다시 읽되, 재조회는 쿨다운(60초)에 1회로 제한한다', async () => {
+    vi.useFakeTimers();
+    try {
+      const first = await makeKeys();
+      const second = await makeKeys();
+      second.jwks.keys[0]!.kid = 'kid-2';
+      const getJwks = vi.fn()
+        .mockResolvedValueOnce(first.jwks)
+        .mockResolvedValue({ keys: [...first.jwks.keys, ...second.jwks.keys] });
+      const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService);
 
-    await guard.canActivate(makeContext(`Bearer ${await signToken(first.privateKey, {})}`).context);
-    await guard.canActivate(makeContext(`Bearer ${await signToken(second.privateKey, {}, { kid: 'kid-2' })}`).context);
-    expect(getJwks).toHaveBeenCalledTimes(2);
+      await guard.canActivate(makeContext(`Bearer ${await signToken(first.privateKey, {})}`).context);
+      expect(getJwks).toHaveBeenCalledTimes(1);
+
+      // 직후의 모르는 kid: 쿨다운 안이라 재조회하지 않고 거부 (위조 kid 로 DB 조회 유발 불가)
+      const rotated = await signToken(second.privateKey, {}, { kid: 'kid-2' });
+      await expect(guard.canActivate(makeContext(`Bearer ${rotated}`).context)).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(getJwks).toHaveBeenCalledTimes(1);
+
+      // 쿨다운이 지나면 다시 읽어 새 키를 받아들인다
+      vi.advanceTimersByTime(61_000);
+      await expect(guard.canActivate(makeContext(`Bearer ${rotated}`).context)).resolves.toBe(true);
+      expect(getJwks).toHaveBeenCalledTimes(2);
+    }
+    finally {
+      vi.useRealTimers();
+    }
   });
 
   it('aud 가 다르거나 만료된 better-auth JWT 는 401', async () => {

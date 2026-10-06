@@ -35,6 +35,8 @@ export function createAuthOptions(deps: AuthConfigDeps) {
   return {
     appName: '스프',
     baseURL,
+    // HTTP 핸들러는 마운트하지 않는다 — web 은 AuthController(/api/auth/*)만 호출하고, 여기서는 auth.api.* 를 직접 쓴다.
+    // basePath 는 쿠키·JWT 발급 등 내부 경로 계산에만 쓰인다
     basePath: BETTER_AUTH_BASE_PATH,
     secret,
     trustedOrigins: [webUrl],
@@ -122,7 +124,7 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       // web 서버→api 서버 호출이므로 쿠키 보안 속성은 의미 없음. 실제 쿠키는 web 이 자체 설정한다
       useSecureCookies: process.env.NODE_ENV === 'production',
     },
-    // 레이트리밋은 NestJS Throttler(AuthController)가 담당. auth.api 서버 호출은 어차피 대상이 아니다
+    // 레이트리밋은 NestJS Throttler(AuthController)가 담당 (핸들러 미마운트라 better-auth 자체 제한은 쓰이지 않는다)
     rateLimit: { enabled: false },
   } satisfies BetterAuthOptions;
 }

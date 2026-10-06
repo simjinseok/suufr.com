@@ -17,28 +17,24 @@ export default async function UnauthenticatedLayout({
     redirect('/dashboard');
   }
 
-  // 2. access_token이 없지만 refresh_token이 있으면 갱신 시도
+  // 2. access_token이 없지만 refresh_token이 있으면 세션이 살아 있는지 확인한다.
+  //    서버 컴포넌트에서는 쿠키를 쓸 수 없고 redirect()는 throw 로 동작하므로 try 밖에서 호출한다.
+  //    실제 access_token 재발급은 /dashboard 요청을 받은 proxy.ts 가 수행한다.
   const refreshToken = cookieStore.get('refresh_token')?.value;
+  let sessionAlive = false;
 
   if (refreshToken) {
     try {
-      const result = await authApi.refresh({ refreshToken });
-
-      // 토큰 갱신 성공 시 쿠키 설정
-      const isProduction = process.env.NODE_ENV === 'production';
-      cookieStore.set('access_token', result.accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
-        maxAge: result.expiresIn - 60,
-      });
-
-      // 세션이 있으므로 dashboard로 리다이렉트
-      redirect('/dashboard');
+      await authApi.refresh({ refreshToken });
+      sessionAlive = true;
     }
     catch {
-      // 갱신 실패 시 children 렌더링
+      // 세션 만료 — 로그인 화면 렌더링
     }
+  }
+
+  if (sessionAlive) {
+    redirect('/dashboard');
   }
 
   return <>{children}</>;
