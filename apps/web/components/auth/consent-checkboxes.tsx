@@ -22,7 +22,7 @@ const ITEMS: Array<{ key: ConsentKey; label: string; href: string; description?:
     key: 'agreeOverseasTransfer',
     label: '개인정보 국외 이전 동의',
     href: '/privacy#overseas-transfer',
-    description: '결제(Paddle, 영국), 오류 분석(Sentry, 미국), 이용 통계(Google, 미국)에 필요한 최소 정보가 이전됩니다.',
+    description: '데이터베이스(Neon, 싱가포르), 인증 메일 발송(AWS, 일본), 결제(Paddle, 영국), 오류 분석(Sentry, 미국), 이용 통계(Google, 미국)에 필요한 정보가 이전됩니다.',
   },
 ];
 
