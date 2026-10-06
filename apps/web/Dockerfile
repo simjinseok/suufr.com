@@ -54,9 +54,10 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-# curl: Coolify UI 헬스체크가 컨테이너 안에서 curl(또는 wget)로 HTTP 요청을 보낸다. 없으면 항상 unhealthy 로 판정돼 롤백된다.
+# curl, wget: Coolify UI 헬스체크 명령이 `curl … || wget … || exit 1` 꼴이다. 둘 다 있어야 curl 실패 시
+#   "wget: not found" 가 아니라 실제 HTTP 오류가 로그에 남고, 어느 쪽도 없으면 항상 unhealthy 로 판정돼 롤백된다.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl \
+ && apt-get install -y --no-install-recommends curl wget \
  && rm -rf /var/lib/apt/lists/*
 
 # outputFileTracingRoot 가 모노레포 루트이므로 standalone 안에 apps/web/server.js 로 들어간다.
