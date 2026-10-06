@@ -3,9 +3,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** OAuth 콜백(api 도메인) 결과를 web 으로 넘기는 일회용 인계 데이터 */
-export type SocialHandoff
-  = | { kind: 'session'; sessionToken: string; userId: string }
-    | { kind: 'mfa'; cookiePairs: string };
+export type SocialHandoff = { sessionToken: string; userId: string };
 
 const IDENTIFIER_PREFIX = 'social-handoff:';
 const TTL_MS = 3 * 60 * 1000;
