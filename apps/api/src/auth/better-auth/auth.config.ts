@@ -81,12 +81,7 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       autoSignInAfterVerification: false,
     },
 
-    user: {
-      modelName: 'user',
-      additionalFields: {
-        cognitoMigratedAt: { type: 'date', required: false, input: false, returned: false },
-      },
-    },
+    user: { modelName: 'user' },
     // 기존 수업 모델 Session(prisma.session) 과 충돌 → prisma.authSession
     session: {
       modelName: 'authSession',
@@ -107,7 +102,7 @@ export function createAuthOptions(deps: AuthConfigDeps) {
           expirationTime: `${JWT_TTL_SECONDS}s`,
           issuer: baseURL,
           audience: baseURL,
-          // sub 는 기본값(user.id = Cognito sub). 가드가 쓰는 최소 클레임만 싣는다
+          // sub 는 기본값(user.id). 가드가 쓰는 최소 클레임만 싣는다
           definePayload: ({ user }) => ({ email: user.email, name: user.name, emailVerified: user.emailVerified }),
         },
       }),
@@ -145,7 +140,7 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       },
     },
     advanced: {
-      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4 (기존 사용자 행은 Cognito 이전 당시 sub 로 생성됨)
+      // users.id 는 @db.Uuid — 기본 base62 id 대신 uuid v4 (기존 행의 유래는 schema.prisma User 참고)
       database: { generateId: () => randomUUID() },
       // web 서버→api 서버 호출이므로 쿠키 보안 속성은 의미 없음. 실제 쿠키는 web 이 자체 설정한다
       useSecureCookies: process.env.NODE_ENV === 'production',

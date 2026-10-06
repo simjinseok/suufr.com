@@ -304,7 +304,7 @@ enum SessionTypeValue {
 }
 
 model UserSettings {
-  userId                  String   @id @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  userId                  String   @id @map("user_id") @db.Uuid // users.id (FK 없음)
   use24HourFormat         Boolean  @default(false) @map("use_24_hour_format")
   defaultDuration         Int      @default(50) @map("default_duration")
   autoUpdateNextPaymentAt Boolean  @default(true) @map("auto_update_next_payment_at")
@@ -538,7 +538,7 @@ model CurriculumItemMediaFile {
 // 사용자 구독 (행이 없으면 free 플랜)
 // Paddle이 청구 주체이며 webhook으로 동기화되는 캐시. 진실의 원천은 Paddle 구독 엔티티
 model UserSubscription {
-  userId               String                  @id @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  userId               String                  @id @map("user_id") @db.Uuid // users.id (FK 없음)
   plan                 PlanValue               @default(free)
   status               SubscriptionStatusValue @default(active)
   currentPeriodStart   DateTime?               @map("current_period_start") @db.Timestamptz(0)
@@ -574,7 +574,7 @@ enum SubscriptionStatusValue {
 // 인보이스 URL은 발급 후 1시간 만료라 저장하지 않고 온디맨드로 발급
 model SubscriptionOrder {
   id                  Int                          @id @default(autoincrement())
-  userId              String                       @map("user_id") @db.Uuid // Cognito sub 직접 참조
+  userId              String                       @map("user_id") @db.Uuid // users.id (FK 없음)
   paddleTransactionId String                       @unique @map("paddle_transaction_id")
   amount              Int
   status              SubscriptionOrderStatusValue
@@ -604,7 +604,7 @@ model PaddleWebhookEvent {
 }
 
 // 약관·개인정보 동의 이력 (추가 전용, 수정·삭제하지 않음)
-// userId = Cognito sub. 가입 직후 SignUp 응답의 UserSub 로 기록되므로 이메일 미인증 상태에서도 행이 존재한다.
+// userId = users.id. 가입 직후(AuthController.signup) 기록되므로 이메일 미인증 상태에서도 행이 존재한다.
 // 철회는 agreed=false 행을 추가한다. 재동의 필요 여부는 타입별 최신 행의 docVersion 을 common/constants/legal.ts 와 비교해 판단.
 model UserConsent {
   id          Int              @id @default(autoincrement())
@@ -628,7 +628,7 @@ enum ConsentTypeValue {
   @@map("ConsentType")
 }
 
-// better-auth 사용자. id = 기존 Cognito sub(uuid), 신규 가입자는 uuid v4.
+// better-auth 사용자. id 는 uuid v4. 2026-10 better-auth 이전 전에 가입한 사용자의 id 는 당시 Cognito 사용자 풀의 sub(uuid 형식)를 그대로 쓴다.
 // Organization/UserSettings 등 기존 테이블의 user_id 가 이 id 를 가리킨다 (FK 는 추가하지 않음 — 삭제된 사용자 잔존 데이터 허용).
 model User {
   id                     String    @id @db.Uuid
@@ -636,7 +636,6 @@ model User {
   email                  String    @unique // 소문자 정규화 (better-auth 조회 기준)
   emailVerified          Boolean   @default(false) @map("email_verified")
   image                  String?
-  cognitoMigratedAt      DateTime? @map("cognito_migrated_at") @db.Timestamptz(0) // Cognito 에서 비밀번호가 옮겨진 시각 (감사용)
   twoFactorEnabled       Boolean?  @map("two_factor_enabled") // better-auth twoFactor 플러그인
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)

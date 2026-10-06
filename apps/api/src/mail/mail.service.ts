@@ -19,8 +19,8 @@ export type MailMessage = {
 };
 
 /**
- * 인증/재설정 메일 발송 (Cognito 가 보내던 메일을 대체).
- * MAIL_TRANSPORT=ses  → SES v2. 발신 자격증명은 Phase 0 에서 확인한 SES 인증 도메인/주소.
+ * 인증/재설정 메일 발송.
+ * MAIL_TRANSPORT=ses  → SES v2. 발신자는 SES 에서 인증된 도메인/주소여야 한다 (MAIL_FROM_ADDRESS).
  * MAIL_TRANSPORT=log  → 콘솔 출력 (로컬/스테이징). 운영에서 ses 가 아니면 기동 시 경고.
  *
  * - sendOrThrow: 사용자가 메일을 기다려야 하는 발송(인증코드·재설정코드). 실패하면 MailDeliveryError 를 던져
