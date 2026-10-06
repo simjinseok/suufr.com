@@ -73,9 +73,10 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=5001
 
-# Prisma schema engine(migrate) 이 openssl 을 필요로 한다.
+# openssl: Prisma schema engine(migrate) 이 필요로 한다.
+# curl: Coolify UI 헬스체크가 컨테이너 안에서 curl(또는 wget)로 HTTP 요청을 보낸다. 없으면 항상 unhealthy 로 판정돼 롤백된다.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && apt-get install -y --no-install-recommends openssl ca-certificates curl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build --chown=node:node /app/deploy ./
@@ -85,7 +86,10 @@ RUN chmod +x ./docker-entrypoint.sh
 USER node
 EXPOSE 5001
 
-# Coolify 는 이미지의 HEALTHCHECK 를 그대로 사용해 롤아웃을 판정한다(UI 설정으로 덮어쓸 수 없음).
+# Coolify(Docker Image 빌드팩)는 이미지의 HEALTHCHECK 를 읽지 못한다. 롤아웃 판정은 Coolify UI 의 헬스체크 설정이
+# compose 로 주입되어 이뤄지며, UI 헬스체크가 꺼져 있으면 기다리지 않고 컨테이너 기동만으로 성공 처리한다.
+# 아래 HEALTHCHECK 는 로컬 docker run 과 UI 헬스체크를 끈 경우를 위한 것이고, UI 설정은 이 값과 같게 맞춘다
+# (HTTP, host 127.0.0.1, port 5001, path /, interval 30 / timeout 5 / retries 3 / start period 90).
 # - 프로세스 생존만 본다(GET /). /health 는 DB 연결까지 확인하므로 DB 장애 시 배포 실패·재시작 루프를
 #   만들 수 있어 외부 모니터링용으로만 쓴다.
 # - entrypoint 가 마이그레이션을 먼저 돌리므로 start-period 를 넉넉히 둔다.
