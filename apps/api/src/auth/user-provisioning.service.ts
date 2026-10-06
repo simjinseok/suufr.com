@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 /**
  * 사용자 최초 진입 시 필요한 행(organizations, user_settings)을 보장한다.
- * better-auth 가입(databaseHooks.user.create.after) 에서 호출된다. users.id 는 better-auth user.id(Cognito 이전 사용자는 당시 sub)다.
+ * better-auth 가입(databaseHooks.user.create.after) 에서 호출된다. users.id 는 better-auth user.id 다 (유래는 schema.prisma User 참고).
  */
 @Injectable()
 export class UserProvisioningService {

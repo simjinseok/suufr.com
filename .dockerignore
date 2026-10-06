@@ -19,12 +19,6 @@ node_modules
 *.pem
 **/scripts/**/out
 
-# 레거시 배포(CodeBuild/Elastic Beanstalk)
-**/buildspec.yml
-**/Procfile
-**/.ebextensions
-**/.platform
-
 # 기타
 .git
 .github
