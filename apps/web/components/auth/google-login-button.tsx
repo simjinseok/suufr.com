@@ -21,7 +21,7 @@ function GoogleMark() {
 }
 
 /**
- * "Google로 계속하기" — 서버 액션이 Google 인증 페이지로 리다이렉트한다.
+ * "Google로 계속하기" — 서버 액션이 브라우저를 api /auth/google/start 로 보내고, api 가 Google 인증 페이지로 리다이렉트한다.
  *
  * Google 브랜딩 가이드라인(Light 테마)을 따른다:
  * https://developers.google.com/identity/branding-guidelines

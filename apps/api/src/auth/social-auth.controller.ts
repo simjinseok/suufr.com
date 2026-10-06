@@ -6,17 +6,15 @@ import { Public } from '../common/decorators/public.decorator';
 import { BetterAuthService, type IssuedTokens } from './better-auth/better-auth.service';
 import { SocialHandoffService } from './social-handoff.service';
 import { SocialExchangeDto } from './dto';
-
-const SUPPORTED_PROVIDERS = ['google'] as const;
-type SocialProvider = (typeof SUPPORTED_PROVIDERS)[number];
+import { isSupportedSocialProvider } from './social-providers';
 
 /**
- * 소셜 로그인 (현재 Google).
+ * 소셜 로그인 (현재 Google) 의 후반부. 앞부분(시작·Google 콜백)은 SocialLoginController(/auth/*) 가 맡는다.
  *
- *  1. POST start      web 서버 액션 → Google 인증 URL 반환 (state 는 better-auth 가 DB 에 저장)
- *  2. Google → GET /auth/google/callback (GoogleLoginCallbackController) → 세션 또는 2FA 쿠키가 api 도메인에 설정됨
- *  3. GET  complete   브라우저가 api 쿠키와 함께 도착. 결과를 일회용 코드로 저장하고 api 쿠키를 지운 뒤 web 콜백으로 리다이렉트
- *  4. POST exchange   web 서버가 코드를 교환해 JWT·세션 토큰(또는 2FA 챌린지)을 받는다
+ *  1. GET  /auth/google/start     브라우저 → state 쿠키를 받고 Google 로 (SocialLoginController)
+ *  2. GET  /auth/google/callback  Google → better-auth 가 state·쿠키 검증 후 api 도메인에 세션 또는 2FA 쿠키 설정 (SocialLoginController)
+ *  3. GET  complete               브라우저가 api 쿠키와 함께 도착. 결과를 일회용 코드로 저장하고 api 쿠키를 지운 뒤 web 콜백으로 리다이렉트
+ *  4. POST exchange               web 서버가 코드를 교환해 JWT·세션 토큰(또는 2FA 챌린지)을 받는다
  */
 @UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -32,27 +30,6 @@ export class SocialAuthController {
     return this.config.get<string>('WEB_URL') || 'http://localhost:3000';
   }
 
-  private get apiUrl(): string {
-    return this.config.get<string>('BETTER_AUTH_URL') || '';
-  }
-
-  private isSupported(provider: string): provider is SocialProvider {
-    return (SUPPORTED_PROVIDERS as readonly string[]).includes(provider);
-  }
-
-  @Public()
-  @Post(':provider/start')
-  async start(@Req() req: FastifyRequest) {
-    const provider = (req.params as { provider: string }).provider;
-    if (!this.isSupported(provider)) return { success: false, message: '지원하지 않는 로그인 방식입니다' };
-
-    const url = await this.betterAuth.getSocialSignInUrl(provider, {
-      callbackURL: `${this.apiUrl}/api/auth/social/${provider}/complete`,
-      errorCallbackURL: `${this.webUrl}/login?error=social`,
-    });
-    return { success: true, url };
-  }
-
   /** 브라우저 요청. api 도메인 쿠키(세션 또는 two_factor)를 읽어 인계 코드로 바꾸고 web 으로 보낸다 */
   @Public()
   @Get(':provider/complete')
@@ -61,7 +38,7 @@ export class SocialAuthController {
     const webCallback = `${this.webUrl}/auth/${provider}/login`;
     const fail = () => res.redirect(`${this.webUrl}/login?error=social`, 302);
 
-    if (!this.isSupported(provider) || !cookie) return fail();
+    if (!isSupportedSocialProvider(provider) || !cookie) return fail();
 
     const result = await this.betterAuth.readSocialCallbackCookies(cookie);
     if (!result) return fail();

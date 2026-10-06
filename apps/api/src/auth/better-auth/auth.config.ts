@@ -45,7 +45,7 @@ export function createAuthOptions(deps: AuthConfigDeps) {
     trustedOrigins: [webUrl],
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
 
-    // Google 콘솔에 등록하는 리디렉션 URI: <baseURL>/auth/google/callback (GoogleLoginCallbackController 가 받아 넘긴다)
+    // Google 콘솔에 등록하는 리디렉션 URI: <baseURL>/auth/google/callback (SocialLoginController 가 받아 넘긴다)
     ...(google
       ? {
           socialProviders: {

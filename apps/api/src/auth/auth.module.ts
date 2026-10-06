@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { ConsentsService } from './consents.service';
 import { UserProvisioningService } from './user-provisioning.service';
 import { BetterAuthService } from './better-auth/better-auth.service';
-import { GoogleLoginCallbackController } from './google-login-callback.controller';
+import { SocialLoginController } from './social-login.controller';
 import { SocialAuthController } from './social-auth.controller';
 import { SocialHandoffService } from './social-handoff.service';
 import { betterAuthProvider } from './better-auth/better-auth.provider';
@@ -15,7 +15,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [S3Module, SubscriptionsModule, MailModule],
-  controllers: [AuthController, SocialAuthController, GoogleLoginCallbackController],
+  controllers: [AuthController, SocialAuthController, SocialLoginController],
   providers: [
     JwtAuthGuard,
     AuthService,

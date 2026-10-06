@@ -156,13 +156,18 @@ export class BetterAuthService {
 
   // ---- 소셜 로그인 ----
 
-  /** 제공자 인증 페이지 URL. state 는 better-auth 가 verifications 에 저장하므로 브라우저 쿠키가 필요 없다 */
-  async getSocialSignInUrl(provider: 'google', urls: { callbackURL: string; errorCallbackURL: string }): Promise<string> {
-    const result = await this.run(() => this.auth.api.signInSocial({
+  /**
+   * 제공자 인증 페이지 URL 과, better-auth 가 함께 발급하는 서명된 state 쿠키(set-cookie 줄).
+   * state 는 verifications 에도 저장되지만 콜백에서 이 쿠키까지 대조하므로(login CSRF 방어),
+   * 호출자는 쿠키를 브라우저 응답에 그대로 실어야 한다 (SocialLoginController.start).
+   */
+  async getSocialSignInUrl(provider: 'google', urls: { callbackURL: string; errorCallbackURL: string }): Promise<{ url: string; setCookies: string[] }> {
+    const { headers, response } = await this.run(() => this.auth.api.signInSocial({
       body: { provider, callbackURL: urls.callbackURL, errorCallbackURL: urls.errorCallbackURL, disableRedirect: true },
+      returnHeaders: true,
     }));
-    if (!result.url) throw toHttpException(new Error('소셜 로그인 URL 을 만들지 못했습니다'));
-    return result.url;
+    if (!response.url) throw toHttpException(new Error('소셜 로그인 URL 을 만들지 못했습니다'));
+    return { url: response.url, setCookies: headers.getSetCookie() };
   }
 
   /**
