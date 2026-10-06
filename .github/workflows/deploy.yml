@@ -68,8 +68,8 @@ jobs:
   build:
     name: Build ${{ matrix.app }}
     needs: test
-    # PR 에서는 운영과 같은 조건으로 빌드만 하고 GHCR 푸시·캐시 저장은 하지 않는다 (포크 PR 은 쓰기 권한이 없다)
-    if: needs.test.outputs.apps != '[]'
+    # PR 에서는 테스트만 돌리고 도커 빌드는 하지 않는다
+    if: github.event_name != 'pull_request' && needs.test.outputs.apps != '[]'
     # Coolify 서버가 ARM 이라 arm64 네이티브 러너로 빌드한다 (공개 저장소는 무료)
     runs-on: ubuntu-26.04-arm
     permissions:
@@ -104,7 +104,6 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
@@ -125,12 +124,12 @@ jobs:
         with:
           context: .
           file: apps/${{ matrix.app }}/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           platforms: linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.app }}
-          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,scope={0},mode=max', matrix.app) || '' }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
           # web 전용 (api Dockerfile 은 선언하지 않은 ARG 라 무시된다)
           build-args: |
             NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
