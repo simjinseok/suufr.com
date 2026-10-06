@@ -18,6 +18,8 @@ function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
+  // 가입은 됐지만 인증코드 메일 발송에 실패해 넘어온 경우
+  const mailFailed = searchParams.get('mailFailed') === '1';
 
   const [state, formAction, isPending] = React.useActionState(verifyEmail, {
     fields: { email: emailFromQuery, code: '' },
@@ -52,6 +54,12 @@ function VerifyEmailForm() {
         action={formAction}
         validationErrors={state.fieldErrors}
       >
+        {mailFailed && !resendState.timestamp && (
+          <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+            계정은 만들어졌지만 인증코드 메일을 보내지 못했습니다. 아래 &quot;인증코드 다시 받기&quot;를 눌러주세요.
+          </div>
+        )}
+
         {state.message && !state.success && (
           <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
             {state.message}
