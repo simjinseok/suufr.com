@@ -4,7 +4,7 @@
  * 입력: 이메일 목록 파일 (한 줄에 하나, mfa-reenroll-targets.sql 결과)
  * 실행 (apps/api 에서):
  *   node --env-file=.env scripts/mail/send-mfa-reenroll-notice.mts scripts/mail/out/mfa-reenroll-targets.csv [--dry-run]
- * 필요 환경변수: MAIL_FROM_ADDRESS, MAIL_FROM_NAME, WEB_URL, AWS_SES_REGION|AWS_REGION, (선택) AWS_SES_ACCESS_KEY/SECRET_KEY
+ * 필요 환경변수: MAIL_FROM_ADDRESS, MAIL_FROM_NAME, WEB_URL, AWS_SES_REGION|AWS_REGION, (선택) AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
  * 발송 속도는 SES 초당 한도 아래로 두기 위해 건당 200ms 간격.
  */
 import { readFileSync } from 'node:fs';
@@ -26,8 +26,8 @@ if (!from) {
   process.exit(1);
 }
 
-const accessKeyId = process.env.AWS_SES_ACCESS_KEY;
-const secretAccessKey = process.env.AWS_SES_SECRET_KEY;
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 const client = new SESv2Client({
   region: process.env.AWS_SES_REGION || process.env.AWS_REGION || 'ap-northeast-2',
   ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
