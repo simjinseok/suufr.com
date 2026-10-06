@@ -46,11 +46,12 @@ export default function SignupForm() {
   React.useEffect(() => {
     if (!state.timestamp) return;
 
-    if (state.success) {
+    if (state.success || state.mailFailed) {
       const email = state.fields?.email || '';
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      const query = new URLSearchParams({ email, ...(state.mailFailed ? { mailFailed: '1' } : {}) });
+      router.push(`/verify-email?${query.toString()}`);
     }
-  }, [state.timestamp, state.success, state.fields?.email, router]);
+  }, [state.timestamp, state.success, state.mailFailed, state.fields?.email, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">

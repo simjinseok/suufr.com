@@ -14,6 +14,7 @@ import {
   mfaSchema,
 } from '@/schemas/auth';
 import { authApi } from '@/utils/api/auth';
+import { ApiError } from '@/utils/api-client';
 import { setMfaSessionCookie, setTokenCookies } from '@/utils/auth-cookies';
 import { buildConsentPayload } from '@/utils/consent';
 
@@ -165,7 +166,10 @@ type SignupFields = {
   agreePrivacy: boolean;
   agreeOverseasTransfer: boolean;
 };
-type SignupState = ServerActionState<SignupFields>;
+type SignupState = ServerActionState<SignupFields> & {
+  /** 계정은 생성됐지만 인증 메일 발송에 실패 — 인증 화면으로 보내 "다시 받기"를 유도한다 */
+  mailFailed?: boolean;
+};
 
 export async function signup(
   prevState: SignupState,
@@ -210,6 +214,8 @@ export async function signup(
       }
       catch (error: any) {
         state.message = error.message || '회원가입 중 오류가 발생했습니다';
+        // api 가 계정은 만들었지만 인증코드 메일을 못 보낸 경우. 같은 이메일로 다시 가입할 수 없으니 재발송 화면으로 보낸다
+        if (error instanceof ApiError && error.code === 'MAIL_DELIVERY_FAILED') state.mailFailed = true;
       }
 
       return state;

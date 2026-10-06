@@ -122,9 +122,10 @@ export function createAuthOptions(deps: AuthConfigDeps) {
         // 링크 대신 OTP 로 이메일 인증 (기존 6자리 코드 UX 유지). 이때 sendVerificationOnSignUp 은 무시되고 코어 sign-up 이 발송한다
         overrideDefaultEmailVerification: true,
         async sendVerificationOTP({ email, otp, type }) {
-          // 타이밍 공격 방지: 발송을 기다리지 않는다
-          if (type === 'forget-password') void mail.send(resetPasswordMail(email, otp));
-          else void mail.send(verifyEmailMail(email, otp));
+          // 사용자가 이 메일을 기다리므로 발송 결과를 기다리고, 실패는 MailDeliveryError → 503 으로 사용자에게 알린다.
+          // (응답 시간으로 가입 여부를 추정할 여지는 생기지만, 발송 실패를 숨겨 사용자를 기다리게 하는 것보다 낫다)
+          if (type === 'forget-password') await mail.sendOrThrow(resetPasswordMail(email, otp));
+          else await mail.sendOrThrow(verifyEmailMail(email, otp));
         },
       }),
     ],
