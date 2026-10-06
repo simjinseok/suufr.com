@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// 비밀번호 정책 — Cognito 유저풀 정책(8자 이상, 대문자·소문자·숫자·특수문자) 승계. apps/api/src/auth/dto/password-policy.ts 와 동일 규칙
+// 비밀번호 정책 — 8자 이상, 대문자·소문자·숫자·특수문자. apps/api/src/auth/dto/password-policy.ts 와 동일 규칙
 export const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,128}$/;
 export const PASSWORD_POLICY_MESSAGE = '비밀번호는 8자 이상이며 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다';
 
@@ -80,13 +80,3 @@ export const twoFactorPasswordSchema = z.object({
 export const twoFactorCodeSchema = z.object({
   code: z.string().trim().length(6, { error: '인증 앱의 6자리 코드를 입력해주세요' }),
 });
-
-export const newPasswordSchema = z
-  .object({
-    password: newPasswordField,
-    passwordConfirm: z.string(),
-  })
-  .refine(data => data.password === data.passwordConfirm, {
-    error: '비밀번호가 일치하지 않습니다',
-    path: ['passwordConfirm'],
-  });

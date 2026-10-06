@@ -12,7 +12,7 @@ import { APIError } from 'better-auth/api';
 
 const logger = new Logger('BetterAuth');
 
-/** better-auth 에러 코드 → 한국어 메시지 (CognitoService 의 문구를 승계해 web 변경 없음) */
+/** better-auth 에러 코드 → 한국어 메시지 */
 const MESSAGES: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: '이메일 또는 비밀번호가 올바르지 않습니다',
   CREDENTIAL_ACCOUNT_NOT_FOUND: '이메일 또는 비밀번호가 올바르지 않습니다',
@@ -37,8 +37,6 @@ const MESSAGES: Record<string, string> = {
   INVALID_TWO_FACTOR_COOKIE: 'MFA 세션이 만료되었습니다. 다시 로그인해주세요.',
   SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해주세요.',
   FAILED_TO_CREATE_SESSION: '로그인에 실패했습니다',
-  COGNITO_USER_NOT_CONFIRMED: '이메일 인증이 필요합니다',
-  COGNITO_NEW_PASSWORD_REQUIRED: '새 비밀번호 설정이 필요합니다',
 };
 
 export function isBetterAuthError(error: unknown): error is APIError {

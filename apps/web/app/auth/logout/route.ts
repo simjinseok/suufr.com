@@ -19,8 +19,9 @@ export async function GET() {
   // 쿠키 삭제
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
-  cookieStore.delete('cognito_username');
   cookieStore.delete('mfa_session');
+  // Cognito 시절 쿠키 정리 (제거 가능 시점: 2026-12 이후)
+  cookieStore.delete('cognito_username');
   cookieStore.delete('mfa_email');
 
   return redirect('/login');

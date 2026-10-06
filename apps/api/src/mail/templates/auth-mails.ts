@@ -43,18 +43,3 @@ export function existingUserSignupAttemptMail(to: string) {
     ],
   });
 }
-
-/** 기존 Cognito MFA 사용자에게 TOTP 재등록 안내 (Phase 5 배치) */
-export function mfaReenrollMail(to: string, settingsUrl: string) {
-  return renderMail({
-    to,
-    subject: '2단계 인증 재등록이 필요합니다',
-    title: '2단계 인증을 다시 설정해주세요',
-    paragraphs: [
-      '스프의 로그인 시스템이 새로 바뀌어 기존 인증 앱 설정을 이어받을 수 없습니다.',
-      '로그인 후 보안 설정에서 인증 앱을 다시 등록해주세요. 등록 전까지 2단계 인증 없이 로그인됩니다.',
-      `보안 설정: ${settingsUrl}`,
-    ],
-    footer: '문의가 필요하면 이 메일에 회신해주세요.',
-  });
-}

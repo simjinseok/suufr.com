@@ -18,7 +18,7 @@ export default async function Page() {
         2단계 인증과 앱 토큰을 관리하고 외부 앱 연동을 설정합니다.
       </p>
       <div className="mt-6 flex flex-col gap-6">
-        <TwoFactorSection enabled={user?.twoFactorEnabled ?? false} requiresSetup={user?.requiresTwoFactorSetup ?? false} />
+        <TwoFactorSection enabled={user?.twoFactorEnabled ?? false} />
         <AppTokensSection tokens={tokens} userEmail={user?.email} />
       </div>
     </div>

@@ -8,7 +8,6 @@ import { ModalManagerProvider } from '@/contexts/modal-manager';
 import { CloudFrontCookiesInitializer } from '@/components/cloudfront-cookies-initializer';
 import { TimezoneInitializer } from '@/components/timezone-initializer';
 import ReconsentModal from '@/components/consent/reconsent-modal';
-import TwoFactorSetupBanner from '@/components/two-factor-setup-banner';
 import { Sidebar } from './_sidebar';
 
 export default async function AuthenticatedLayout({
@@ -48,8 +47,6 @@ export default async function AuthenticatedLayout({
             <main className="flex-1 overflow-auto pt-14 sm:pt-0">
               <div className="h-full">
                 <div className="max-w-3xl mx-auto py-6 px-4 sm:px-2">
-                  {/* Cognito MFA 사용자: better-auth TOTP 재등록 전까지 안내 */}
-                  {session.user.requiresTwoFactorSetup && !session.user.twoFactorEnabled && <TwoFactorSetupBanner />}
                   {children}
                 </div>
               </div>

@@ -1,23 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { APIError } from 'better-auth/api';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
-import { betterAuthErrorCode, toHttpException } from './better-auth-error.map';
-import { COGNITO_ERROR_CODES } from './cognito-migration.hook';
+import { toHttpException } from './better-auth-error.map';
 
-/** 로그인 성공 응답 — 기존 Cognito 응답과 같은 필드명 (web 변경 최소화). cognitoUsername 에는 user.id 를 넣는다 */
+/** 로그인 성공 응답. accessToken = JWT(1h), refreshToken = 세션 토큰(30일) */
 export type IssuedTokens = {
   success: true;
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-  cognitoUsername: string;
+  userId: string;
 };
 
 export type SignInResult
   = | IssuedTokens
-    | { success: true; requiresMfa: true; challengeName: 'TOTP'; session: string }
-    | { success: true; requiresNewPassword: true; challengeName: 'NEW_PASSWORD_REQUIRED'; session: string };
+    | { success: true; requiresMfa: true; challengeName: 'TOTP'; session: string };
 
 export type RequestMeta = { ip?: string; userAgent?: string };
 
@@ -61,31 +58,21 @@ export class BetterAuthService {
   /** 세션 토큰(= refresh_token 쿠키) → 1시간 JWT(= access_token 쿠키) */
   async issueTokens(sessionToken: string, userId: string): Promise<IssuedTokens> {
     const { token } = await this.run(() => this.auth.api.getToken({ headers: bearerHeaders(sessionToken) }));
-    return { success: true, accessToken: token, refreshToken: sessionToken, expiresIn: JWT_TTL_SECONDS, cognitoUsername: userId };
+    return { success: true, accessToken: token, refreshToken: sessionToken, expiresIn: JWT_TTL_SECONDS, userId };
   }
 
   async signIn(email: string, password: string, meta?: RequestMeta): Promise<SignInResult> {
-    try {
-      const { headers, response } = await this.auth.api.signInEmail({
-        body: { email, password, rememberMe: true },
-        headers: requestHeaders(meta),
-        returnHeaders: true,
-      });
+    const { headers, response } = await this.run(() => this.auth.api.signInEmail({
+      body: { email, password, rememberMe: true },
+      headers: requestHeaders(meta),
+      returnHeaders: true,
+    }));
 
-      // 2FA 사용자: 세션 대신 two_factor 쿠키가 발급된다. 쿠키 쌍을 그대로 web 에 넘기고(mfa_session 쿠키) verifyTotp 에서 되돌려 받는다
-      if ((response as unknown as { twoFactorRedirect?: boolean }).twoFactorRedirect) {
-        return { success: true, requiresMfa: true, challengeName: 'TOTP', session: cookiePairsFromSetCookie(headers) };
-      }
-      return await this.issueTokens(response.token, response.user.id);
+    // 2FA 사용자: 세션 대신 two_factor 쿠키가 발급된다. 쿠키 쌍을 그대로 web 에 넘기고(mfa_session 쿠키) verifySecondFactor 에서 되돌려 받는다
+    if ((response as unknown as { twoFactorRedirect?: boolean }).twoFactorRedirect) {
+      return { success: true, requiresMfa: true, challengeName: 'TOTP', session: cookiePairsFromSetCookie(headers) };
     }
-    catch (error) {
-      // lazy migration 훅이 Cognito 임시 비밀번호 계정을 발견 — 레거시 new-password 경로로 안내
-      if (error instanceof APIError && betterAuthErrorCode(error) === COGNITO_ERROR_CODES.NEW_PASSWORD_REQUIRED) {
-        const session = (error.body as { session?: string } | undefined)?.session;
-        if (session) return { success: true, requiresNewPassword: true, challengeName: 'NEW_PASSWORD_REQUIRED', session };
-      }
-      throw toHttpException(error);
-    }
+    return this.issueTokens(response.token, response.user.id);
   }
 
   /** 로그인 2단계: TOTP 또는 백업코드. cookiePairs 는 signIn 이 돌려준 session 값 */
@@ -98,7 +85,7 @@ export class BetterAuthService {
       ? this.auth.api.verifyBackupCode({ body: { code }, headers })
       : this.auth.api.verifyTOTP({ body: { code }, headers }));
 
-    if (!response.token) throw toHttpException(new APIError('UNAUTHORIZED', { code: 'FAILED_TO_CREATE_SESSION', message: 'session missing' }));
+    if (!response.token) throw toHttpException(new Error('2FA 검증 후 세션이 생성되지 않았습니다'));
     return this.issueTokens(response.token, response.user.id);
   }
 

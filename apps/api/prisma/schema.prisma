@@ -636,9 +636,7 @@ model User {
   email                  String    @unique // 소문자 정규화 (better-auth 조회 기준)
   emailVerified          Boolean   @default(false) @map("email_verified")
   image                  String?
-  cognitoMigratedAt      DateTime? @map("cognito_migrated_at") @db.Timestamptz(0) // lazy migration 으로 비밀번호가 옮겨진 시각
-  cognitoMfaEnabled      Boolean   @default(false) @map("cognito_mfa_enabled") // export 시점 Cognito TOTP 설정 여부
-  requiresTwoFactorSetup Boolean   @default(false) @map("requires_two_factor_setup") // Cognito MFA 사용자 → better-auth TOTP 재등록 안내
+  cognitoMigratedAt      DateTime? @map("cognito_migrated_at") @db.Timestamptz(0) // Cognito 에서 비밀번호가 옮겨진 시각 (감사용)
   twoFactorEnabled       Boolean?  @map("two_factor_enabled") // better-auth twoFactor 플러그인
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(0)
