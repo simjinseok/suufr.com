@@ -33,8 +33,8 @@ export class MailService {
     this.replyTo = this.config.get<string>('MAIL_REPLY_TO') || undefined;
 
     if (this.transport === 'ses') {
-      const accessKeyId = this.config.get<string>('AWS_SES_ACCESS_KEY');
-      const secretAccessKey = this.config.get<string>('AWS_SES_SECRET_KEY');
+      const accessKeyId = this.config.get<string>('AWS_ACCESS_KEY_ID');
+      const secretAccessKey = this.config.get<string>('AWS_SECRET_ACCESS_KEY');
       this.client = new SESv2Client({
         region: this.config.get<string>('AWS_SES_REGION') || this.config.get<string>('AWS_REGION') || 'ap-northeast-2',
         // 전용 키가 없으면 기본 자격증명 체인(IAM 역할 등)
