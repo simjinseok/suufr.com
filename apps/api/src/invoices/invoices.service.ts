@@ -147,6 +147,8 @@ export class InvoicesService {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
 
+    assertPeriod(dto.periodStart ?? null, dto.periodEnd ?? null);
+
     // 귀속할 기존 세션 검증 (같은 학생 소유여야 함)
     let sessionsToAttach: { id: number }[] = [];
     if (dto.sessionUuids && dto.sessionUuids.length > 0) {
@@ -237,6 +239,15 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice with UUID ${uuid} not found`);
     }
 
+    // 기간을 건드리는 요청만 검증한다 — 기간과 무관한 수정(제목·금액)이
+    // 한쪽만 있는 기존 데이터 때문에 막히면 안 된다
+    if (dto.periodStart !== undefined || dto.periodEnd !== undefined) {
+      assertPeriod(
+        dto.periodStart === undefined ? invoice.periodStart : dto.periodStart,
+        dto.periodEnd === undefined ? invoice.periodEnd : dto.periodEnd,
+      );
+    }
+
     // 귀속 추가 대상 검증 (같은 학생 소유여야 함)
     let sessionsToAdd: { id: number }[] = [];
     if (dto.addSessionUuids && dto.addSessionUuids.length > 0) {
@@ -261,8 +272,8 @@ export class InvoicesService {
           ...(dto.title !== undefined && { title: dto.title }),
           ...(dto.price !== undefined && { price: dto.price }),
           ...(dto.totalCount !== undefined && { totalCount: dto.totalCount }),
-          ...(dto.periodStart !== undefined && { periodStart: new Date(dto.periodStart) }),
-          ...(dto.periodEnd !== undefined && { periodEnd: new Date(dto.periodEnd) }),
+          ...(dto.periodStart !== undefined && { periodStart: toDateOrNull(dto.periodStart) }),
+          ...(dto.periodEnd !== undefined && { periodEnd: toDateOrNull(dto.periodEnd) }),
           ...(dto.autoRenew !== undefined && { autoRenew: dto.autoRenew }),
           ...(dto.renewDaysBefore !== undefined && { renewDaysBefore: dto.renewDaysBefore }),
           ...(dto.notes !== undefined && { notes: dto.notes }),
@@ -311,5 +322,23 @@ export class InvoicesService {
     });
 
     return { success: true };
+  }
+}
+
+/** null 은 "기간 삭제" — new Date(null) 이 1970-01-01 이 되는 사고를 막는다 */
+function toDateOrNull(value: string | null): Date | null {
+  return value === null ? null : new Date(value);
+}
+
+/**
+ * 기간은 둘 다 있거나 둘 다 없어야 하고, 있으면 시작일 <= 종료일.
+ * 세션 자동귀속(periodStart <= 날짜 <= periodEnd)이 두 조건을 전제한다.
+ */
+function assertPeriod(start: Date | string | null, end: Date | string | null) {
+  if ((start === null) !== (end === null)) {
+    throw new BadRequestException('수강권 기간은 시작일과 종료일을 함께 지정해야 합니다.');
+  }
+  if (start !== null && end !== null && new Date(start) > new Date(end)) {
+    throw new BadRequestException('수강권 종료일은 시작일보다 앞설 수 없습니다.');
   }
 }

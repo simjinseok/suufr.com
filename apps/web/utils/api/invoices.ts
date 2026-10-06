@@ -98,8 +98,9 @@ type UpdateInvoiceData = {
   title?: string;
   price?: number;
   totalCount?: number;
-  periodStart?: string;
-  periodEnd?: string;
+  // null = 기간 삭제, undefined = 미변경
+  periodStart?: string | null;
+  periodEnd?: string | null;
   autoRenew?: boolean;
   renewDaysBefore?: number;
   notes?: string;

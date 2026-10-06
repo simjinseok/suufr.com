@@ -24,13 +24,14 @@ export class UpdateInvoiceDto {
   @IsOptional()
   totalCount?: number;
 
+  // null 이면 기간 삭제, undefined 면 미변경. 시작·종료는 둘 다 있거나 둘 다 없어야 한다(서비스에서 검증)
   @IsDateString()
   @IsOptional()
-  periodStart?: string;
+  periodStart?: string | null;
 
   @IsDateString()
   @IsOptional()
-  periodEnd?: string;
+  periodEnd?: string | null;
 
   @IsBoolean()
   @IsOptional()

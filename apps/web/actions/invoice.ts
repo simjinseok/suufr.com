@@ -118,6 +118,9 @@ const updateInvoiceSchema = z.object({
   title: z.string(),
   price: z.coerce.number().int().min(0),
   totalCount: z.coerce.number().int().min(0).optional(),
+  // 기간설정 체크를 끄면 hidden input 이 빠져 둘 다 undefined 로 온다
+  periodStart: z.string().optional(),
+  periodEnd: z.string().optional(),
   notes: z.string(),
 });
 export async function updateInvoice(state: UpdateInvoiceState, formData: FormData) {
@@ -157,6 +160,9 @@ export async function updateInvoice(state: UpdateInvoiceState, formData: FormDat
         title: validationResult.data.title,
         price: validationResult.data.price,
         ...(validationResult.data.totalCount !== undefined && { totalCount: validationResult.data.totalCount }),
+        // 둘 다 없으면 null 로 기간 삭제. 한쪽만 오는 건 폼 구조상 없고, 서버가 400 으로 막는다
+        periodStart: validationResult.data.periodStart ?? null,
+        periodEnd: validationResult.data.periodEnd ?? null,
         notes: validationResult.data.notes,
       });
 
