@@ -13,6 +13,45 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # 바뀐 경로로 빌드 대상을 고른다. 공통 파일이 바뀌면 둘 다, 수동 실행이면 둘 다.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-26.04
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared: &shared
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'packages/**'
+              - '.dockerignore'
+              - '.github/workflows/deploy.yml'
+            web:
+              - *shared
+              - 'apps/web/**'
+            api:
+              - *shared
+              - 'apps/api/**'
+      - name: Build list
+        id: apps
+        env:
+          WEB: ${{ steps.filter.outputs.web }}
+          API: ${{ steps.filter.outputs.api }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          apps=()
+          if [ "$MANUAL" = "true" ] || [ "$WEB" = "true" ]; then apps+=('"web"'); fi
+          if [ "$MANUAL" = "true" ] || [ "$API" = "true" ]; then apps+=('"api"'); fi
+          list="[$(IFS=,; echo "${apps[*]}")]"
+          echo "apps=$list" >> "$GITHUB_OUTPUT"
+          echo "build targets: $list"
+
   test:
     name: Test
     runs-on: ubuntu-26.04
@@ -32,7 +71,8 @@ jobs:
 
   build:
     name: Build ${{ matrix.app }}
-    needs: test
+    needs: [changes, test]
+    if: needs.changes.outputs.apps != '[]'
     # Coolify 서버가 ARM 이라 arm64 네이티브 러너로 빌드한다 (공개 저장소는 무료)
     runs-on: ubuntu-26.04-arm
     permissions:
@@ -41,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [web, api]
+        app: ${{ fromJSON(needs.changes.outputs.apps) }}
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
 
@@ -105,7 +145,7 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: build
+    needs: [changes, build]
     runs-on: ubuntu-26.04
     if: github.ref == 'refs/heads/main'
     env:
@@ -121,7 +161,7 @@ jobs:
       - name: Deploy api
         env:
           APP_UUID: ${{ secrets.COOLIFY_APP_UUID_API }}
-        if: env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
+        if: contains(fromJSON(needs.changes.outputs.apps), 'api') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
         run: |
           curl --fail-with-body -sS -X PATCH "$COOLIFY_URL/api/v1/applications/$APP_UUID" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" -H "Content-Type: application/json" \
@@ -132,7 +172,7 @@ jobs:
       - name: Deploy web
         env:
           APP_UUID: ${{ secrets.COOLIFY_APP_UUID_WEB }}
-        if: env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
+        if: contains(fromJSON(needs.changes.outputs.apps), 'web') && env.COOLIFY_URL != '' && env.COOLIFY_TOKEN != '' && env.APP_UUID != ''
         run: |
           curl --fail-with-body -sS -X PATCH "$COOLIFY_URL/api/v1/applications/$APP_UUID" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" -H "Content-Type: application/json" \
