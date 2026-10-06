@@ -9,7 +9,7 @@ import { consentSchema } from '@/schemas/auth';
 import { authApi } from '@/utils/api/auth';
 import { buildConsentPayload } from '@/utils/consent';
 
-type ReconsentFields = { agreeTerms: boolean; agreePrivacy: boolean; agreeOverseasTransfer: boolean };
+type ReconsentFields = { agreeTerms: boolean; agreePrivacy: boolean };
 type ReconsentState = ServerActionState<ReconsentFields>;
 
 /**
@@ -30,7 +30,6 @@ export async function submitReconsent(
         fields: {
           agreeTerms: data.agreeTerms === 'true',
           agreePrivacy: data.agreePrivacy === 'true',
-          agreeOverseasTransfer: data.agreeOverseasTransfer === 'true',
         },
         timestamp: Date.now(),
       };

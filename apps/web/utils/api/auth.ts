@@ -43,7 +43,6 @@ type ResetPasswordResponse = {
 export type ConsentPayload = {
   terms: true;
   privacy: true;
-  overseasTransfer: true;
   termsVersion: string;
   privacyVersion: string;
   ipAddress?: string;
@@ -53,7 +52,6 @@ export type ConsentPayload = {
 export type ConsentStatus = {
   terms: string | null;
   privacy: string | null;
-  overseasTransfer: string | null;
   required: boolean;
 };
 

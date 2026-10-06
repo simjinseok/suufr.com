@@ -42,7 +42,7 @@ const FREE_SUBSCRIPTION: Session['subscription'] = {
 };
 
 // API가 consents를 아직 내려주지 않을 때(배포 시차) 안전 폴백 — 재동의를 강제하지 않는다
-const NO_CONSENT_INFO: ConsentStatus = { terms: null, privacy: null, overseasTransfer: null, required: false };
+const NO_CONSENT_INFO: ConsentStatus = { terms: null, privacy: null, required: false };
 
 const API_URL = process.env.API_URL || 'http://localhost:5001';
 

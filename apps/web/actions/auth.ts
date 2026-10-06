@@ -164,7 +164,6 @@ type SignupFields = {
   // 실패 시 체크 상태 복원용
   agreeTerms: boolean;
   agreePrivacy: boolean;
-  agreeOverseasTransfer: boolean;
 };
 type SignupState = ServerActionState<SignupFields> & {
   /** 계정은 생성됐지만 인증 메일 발송에 실패 — 인증 화면으로 보내 "다시 받기"를 유도한다 */
@@ -189,7 +188,6 @@ export async function signup(
           passwordConfirm: '',
           agreeTerms: data.agreeTerms === 'true',
           agreePrivacy: data.agreePrivacy === 'true',
-          agreeOverseasTransfer: data.agreeOverseasTransfer === 'true',
         },
         timestamp: Date.now(),
       };
