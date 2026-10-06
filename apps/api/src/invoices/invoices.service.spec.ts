@@ -68,6 +68,24 @@ describe('InvoicesService.update 기간', () => {
     const { service } = makeService(withoutPeriod);
     await expect(service.update('uuid', { periodEnd: '2026-11-30' }, 'user')).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('종료일이 시작일보다 앞서면 거부한다', async () => {
+    const { service } = makeService(withoutPeriod);
+    await expect(
+      service.update('uuid', { periodStart: '2026-11-30', periodEnd: '2026-11-01' }, 'user'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('기존 기간 안에서 종료일만 당겨 시작일보다 앞서게 하면 거부한다', async () => {
+    const { service } = makeService(withPeriod);
+    await expect(service.update('uuid', { periodEnd: '2026-09-30' }, 'user')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('한쪽만 있는 레거시 기간이라도 기간을 건드리지 않는 수정은 허용한다', async () => {
+    const { service, update } = makeService({ ...withPeriod, periodEnd: null });
+    await service.update('uuid', { title: '제목만' }, 'user');
+    expect(update).toHaveBeenCalled();
+  });
 });
 
 describe('InvoicesService.create 기간', () => {
@@ -79,5 +97,30 @@ describe('InvoicesService.create 기간', () => {
     await expect(
       service.create({ studentUuid: 's', price: 0, periodStart: '2026-11-01' }, 'user'),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('종료일이 시작일보다 앞서면 거부한다', async () => {
+    const prisma = {
+      student: { findFirst: vi.fn().mockResolvedValue({ id: 10 }) },
+    } as unknown as PrismaService;
+    const service = new InvoicesService(prisma);
+    await expect(
+      service.create({ studentUuid: 's', price: 0, periodStart: '2026-11-30', periodEnd: '2026-11-01' }, 'user'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('같은 날 시작·종료(하루짜리)는 허용한다', async () => {
+    const prisma = {
+      student: { findFirst: vi.fn().mockResolvedValue({ id: 10 }) },
+      $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn({
+        invoice: { create: vi.fn().mockResolvedValue({ id: 1, uuid: 'u' }) },
+        session: { updateMany: vi.fn() },
+      })),
+    } as unknown as PrismaService;
+    const service = new InvoicesService(prisma);
+    vi.spyOn(service, 'findOne').mockResolvedValue({} as never);
+    await expect(
+      service.create({ studentUuid: 's', price: 0, periodStart: '2026-11-01', periodEnd: '2026-11-01' }, 'user'),
+    ).resolves.toBeDefined();
   });
 });
