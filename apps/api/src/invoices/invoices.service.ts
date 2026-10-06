@@ -147,6 +147,8 @@ export class InvoicesService {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
 
+    assertPeriodPair(dto.periodStart ?? null, dto.periodEnd ?? null);
+
     // 귀속할 기존 세션 검증 (같은 학생 소유여야 함)
     let sessionsToAttach: { id: number }[] = [];
     if (dto.sessionUuids && dto.sessionUuids.length > 0) {
@@ -237,6 +239,12 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice with UUID ${uuid} not found`);
     }
 
+    // 변경 후 기간이 한쪽만 남는 상태를 막는다 — 세션 자동귀속은 두 날짜가 모두 있어야 동작한다
+    assertPeriodPair(
+      dto.periodStart === undefined ? invoice.periodStart : dto.periodStart,
+      dto.periodEnd === undefined ? invoice.periodEnd : dto.periodEnd,
+    );
+
     // 귀속 추가 대상 검증 (같은 학생 소유여야 함)
     let sessionsToAdd: { id: number }[] = [];
     if (dto.addSessionUuids && dto.addSessionUuids.length > 0) {
@@ -261,8 +269,8 @@ export class InvoicesService {
           ...(dto.title !== undefined && { title: dto.title }),
           ...(dto.price !== undefined && { price: dto.price }),
           ...(dto.totalCount !== undefined && { totalCount: dto.totalCount }),
-          ...(dto.periodStart !== undefined && { periodStart: new Date(dto.periodStart) }),
-          ...(dto.periodEnd !== undefined && { periodEnd: new Date(dto.periodEnd) }),
+          ...(dto.periodStart !== undefined && { periodStart: toDateOrNull(dto.periodStart) }),
+          ...(dto.periodEnd !== undefined && { periodEnd: toDateOrNull(dto.periodEnd) }),
           ...(dto.autoRenew !== undefined && { autoRenew: dto.autoRenew }),
           ...(dto.renewDaysBefore !== undefined && { renewDaysBefore: dto.renewDaysBefore }),
           ...(dto.notes !== undefined && { notes: dto.notes }),
@@ -311,5 +319,16 @@ export class InvoicesService {
     });
 
     return { success: true };
+  }
+}
+
+/** null 은 "기간 삭제" — new Date(null) 이 1970-01-01 이 되는 사고를 막는다 */
+function toDateOrNull(value: string | null): Date | null {
+  return value === null ? null : new Date(value);
+}
+
+function assertPeriodPair(start: unknown, end: unknown) {
+  if ((start == null) !== (end == null)) {
+    throw new BadRequestException('수강권 기간은 시작일과 종료일을 함께 지정해야 합니다.');
   }
 }

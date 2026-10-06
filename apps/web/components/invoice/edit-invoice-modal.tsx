@@ -18,6 +18,8 @@ import { numberToHangulMixed } from 'es-hangul';
 
 import { updateInvoice } from '@/actions/invoice';
 import { Controller, useForm } from 'react-hook-form';
+import type { DateRange } from '@/components/calendar';
+import { InvoicePeriodField, periodFromInvoice } from './invoice-period-field';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -44,6 +46,11 @@ interface ContentProps {
 }
 function Content({ invoice, close }: ContentProps) {
   const formId = React.useId();
+
+  // 기간은 선택 사항. 체크를 끄고 저장하면 서버 액션이 null 을 보내 기간을 지운다
+  const [period, setPeriod] = React.useState<DateRange | null>(
+    () => periodFromInvoice(invoice.periodStart, invoice.periodEnd),
+  );
 
   const [state, formAction, isPending] = React.useActionState(updateInvoice, {
     fields: {
@@ -123,6 +130,8 @@ function Content({ invoice, close }: ContentProps) {
               </NumberField>
             )}
           />
+          <InvoicePeriodField value={period} onChange={setPeriod} />
+
           <Controller
             control={control}
             name="notes"
