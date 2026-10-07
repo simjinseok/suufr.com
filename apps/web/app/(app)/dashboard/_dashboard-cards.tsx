@@ -134,7 +134,7 @@ function ModalContent({ invoices, close }: ModalContentProps) {
                           {invoice.student.name}
                         </span>
                         <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                          {[invoicePeriodLabel(invoice), invoice.title].filter(Boolean).join(' · ') || '수강권'}
+                          {[invoicePeriodLabel(invoice), invoice.title].filter(Boolean).join(' · ')}
                         </span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">

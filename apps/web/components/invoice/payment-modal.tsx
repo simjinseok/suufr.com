@@ -202,8 +202,7 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
                           <span className="text-xs text-zinc-400">{invoicePeriodLabel(invoice)}</span>
                         )}
                         <span className="truncate">
-                          {invoice.title || '수강권'}
-                          {invoice.price > 0 && ` · ${numberToHangulMixed(invoice.price)}원`}
+                          {[invoice.title, invoice.price > 0 ? `${numberToHangulMixed(invoice.price)}원` : null].filter(Boolean).join(' · ')}
                         </span>
                       </div>
                       {/* 선택된 항목 오른쪽 체크 표시 */}
@@ -233,13 +232,63 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
             </TagGroup.List>
           </TagGroup>
 
-          <Controller
-            control={control}
-            name="paidAt"
-            render={({ field: { name, value, onChange } }) => (
-              <DatePickerField name={name} value={value} onChange={onChange} />
-            )}
-          />
+          {/* 날짜 · 결제수단 한 줄 */}
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+            <Controller
+              control={control}
+              name="paidAt"
+              render={({ field: { name, value, onChange } }) => (
+                <DatePickerField name={name} value={value} onChange={onChange} />
+              )}
+            />
+            <Controller
+              control={control}
+              name="method"
+              render={({ field: { name, value, onChange } }) => (
+                <Select
+                  variant="secondary"
+                  isRequired
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                >
+                  <Label>결제수단</Label>
+                  <Select.Trigger>
+                    <Select.Value className="flex items-center gap-2 whitespace-nowrap" />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item id="card" textValue="카드">
+                        <CreditCardIcon className="size-5" />
+                        <Label>
+                          카드
+                        </Label>
+                      </ListBox.Item>
+                      <ListBox.Item id="transfer" textValue="transfer">
+                        <LandmarkIcon className="size-5" />
+                        <Label>
+                          계좌이체
+                        </Label>
+                      </ListBox.Item>
+                      <ListBox.Item id="cash" textValue="cash">
+                        <BanknoteIcon className="size-5" />
+                        <Label>
+                          현금
+                        </Label>
+                      </ListBox.Item>
+                      <ListBox.Item id="none" textValue="미지정">
+                        <BookDashedIcon className="size-5" />
+                        <Label>
+                          미지정
+                        </Label>
+                      </ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              )}
+            />
+          </div>
 
           <Controller
             control={control}
@@ -248,18 +297,18 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
               <React.Fragment>
                 <NumberField
                   variant="secondary"
+                  isRequired
                   value={value}
                   minValue={0}
                   onInput={(event) => {
                     onChange(Math.abs(Number(event.currentTarget.value.replaceAll(',', '')) || 0));
                   }}
                 >
-                  <Label>{isRefund ? '환불 금액' : '금액'}</Label>
+                  <Label>금액</Label>
                   <NumberField.Group>
                     <NumberField.Input className="col-span-full text-right" />
                   </NumberField.Group>
                   <Description className="text-right">
-                    {isRefund ? '환불 ' : ''}
                     {numberToHangulMixed(value)}
                     원
                   </Description>
@@ -267,54 +316,6 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
               </React.Fragment>
 
             )}
-          />
-
-          <Controller
-            control={control}
-            name="method"
-            render={({ field: { name, value, onChange } }) => (
-              <Select
-                variant="secondary"
-                name={name}
-                value={value}
-                onChange={onChange}
-              >
-                <Label>결제수단</Label>
-                <Select.Trigger>
-                  <Select.Value className="flex items-center gap-3" />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="card" textValue="카드">
-                      <CreditCardIcon />
-                      <Label>
-                        카드
-                      </Label>
-                    </ListBox.Item>
-                    <ListBox.Item id="transfer" textValue="transfer">
-                      <LandmarkIcon />
-                      <Label>
-                        계좌이체
-                      </Label>
-                    </ListBox.Item>
-                    <ListBox.Item id="cash" textValue="cash">
-                      <BanknoteIcon />
-                      <Label>
-                        현금
-                      </Label>
-                    </ListBox.Item>
-                    <ListBox.Item id="none" textValue="미지정">
-                      <BookDashedIcon />
-                      <Label>
-                        미지정
-                      </Label>
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            )}
-
           />
 
           <Controller
@@ -360,7 +361,7 @@ function DatePickerField({ name, value, onChange }: {
   onChange: (value: ReturnType<typeof today> | null) => void;
 }) {
   return (
-    <DatePicker name={name} value={value} onChange={onChange} granularity="day" hideTimeZone>
+    <DatePicker name={name} value={value} onChange={onChange} granularity="day" hideTimeZone isRequired>
       <Label>날짜</Label>
       <DateField.Group variant="secondary">
         <DateField.Input>

@@ -63,7 +63,7 @@ export default async function Page(props: PageProps<'/sessions'>) {
           isDone: item.isDone,
           // 삭제된 수강권 귀속은 표시하지 않는다
           invoiceTitle: item.invoice && !item.invoice.deletedAt
-            ? (item.invoice.title || '수강권')
+            ? (item.invoice.title || null)
             : null,
           student: {
             uuid: item.student.uuid,

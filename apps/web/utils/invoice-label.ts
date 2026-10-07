@@ -25,8 +25,7 @@ export function invoicePeriodLabel(invoice: Pick<InvoiceLike, 'periodStart' | 'p
 
 // 접근성/타이프어헤드용 전체 라벨
 export function invoiceOptionLabel(invoice: InvoiceLike) {
-  const title = invoice.title || '수강권';
   const price = invoice.price > 0 ? `${numberToHangulMixed(invoice.price)}원` : null;
 
-  return [invoicePeriodLabel(invoice), title, price].filter(Boolean).join(' · ');
+  return [invoicePeriodLabel(invoice), invoice.title, price].filter(Boolean).join(' · ');
 }

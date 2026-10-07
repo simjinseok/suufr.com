@@ -15,10 +15,12 @@ import {
   FieldError,
 } from '@heroui/react';
 import { numberToHangulMixed } from 'es-hangul';
+import { today } from '@internationalized/date';
 
 import { updateInvoice } from '@/actions/invoice';
 import { Controller, useForm } from 'react-hook-form';
 import type { DateRange } from '@/components/calendar';
+import { useTimeZone } from '@/contexts/timezone';
 import { InvoicePeriodField, periodFromInvoice } from './invoice-period-field';
 
 interface Props {
@@ -45,12 +47,14 @@ interface ContentProps {
   close: () => void;
 }
 function Content({ invoice, close }: ContentProps) {
+  const timeZone = useTimeZone();
   const formId = React.useId();
 
   // 기간은 선택 사항. 체크를 끄고 저장하면 서버 액션이 null 을 보내 기간을 지운다
   const [period, setPeriod] = React.useState<DateRange | null>(
     () => periodFromInvoice(invoice.periodStart, invoice.periodEnd),
   );
+  const titleMonth = (period?.start ?? today(timeZone)).month;
 
   const [state, formAction, isPending] = React.useActionState(updateInvoice, {
     fields: {
@@ -100,7 +104,7 @@ function Content({ invoice, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>제목</Label>
-                <Input variant="secondary" />
+                <Input variant="secondary" placeholder={`예: ${titleMonth}월분`} />
                 <FieldError />
               </TextField>
             )}
@@ -111,6 +115,7 @@ function Content({ invoice, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <NumberField
                 variant="secondary"
+                isRequired
                 name={name}
                 value={value}
                 minValue={0}
@@ -138,8 +143,8 @@ function Content({ invoice, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>메모</Label>
-                <TextArea variant="secondary" rows={5} className="resize-none" />
-                <Description>수강권 메모는 수강생에게 보여지지 않습니다.</Description>
+                <TextArea variant="secondary" rows={5} className="resize-none" placeholder="수강권 메모" />
+                <Description>수강생에게는 보여지지 않습니다.</Description>
                 <FieldError />
               </TextField>
             )}

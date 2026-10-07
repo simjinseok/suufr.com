@@ -4,6 +4,7 @@ import * as React from 'react';
 import {
   Button,
   Description,
+  FieldError,
   Form,
   Input,
   Label,
@@ -74,7 +75,7 @@ function Content({ close, studentUuid }: ContentProps) {
       </Modal.Header>
 
       <Modal.Body>
-        <Form id={formId} className="mt-4 p-1 flex flex-col gap-4" action={formAction}>
+        <Form id={formId} className="p-1 flex flex-col gap-4" action={formAction} validationErrors={state.fieldErrors}>
           <input type="hidden" name="studentUuid" value={studentUuid} />
           <input type="hidden" name="price" value={price} />
 
@@ -84,10 +85,12 @@ function Content({ close, studentUuid }: ContentProps) {
               variant="secondary"
               placeholder={`예: ${titleMonth}월분`}
             />
+            <FieldError />
           </TextField>
 
           <NumberField
             variant="secondary"
+            isRequired
             value={price}
             minValue={0}
             onInput={(event) => {
@@ -102,14 +105,16 @@ function Content({ close, studentUuid }: ContentProps) {
               {numberToHangulMixed(price)}
               원
             </Description>
+            <FieldError />
           </NumberField>
 
           <InvoicePeriodField value={period} onChange={setPeriod} />
 
           <TextField name="notes">
-            <Label>메모 (선택)</Label>
-            <TextArea variant="secondary" placeholder="수강권 메모" />
-            <Description>수강생에겐 보여지지 않습니다.</Description>
+            <Label>메모</Label>
+            <TextArea variant="secondary" rows={5} className="resize-none" placeholder="수강권 메모" />
+            <Description>수강생에게는 보여지지 않습니다.</Description>
+            <FieldError />
           </TextField>
         </Form>
       </Modal.Body>
