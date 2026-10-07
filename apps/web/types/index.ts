@@ -235,20 +235,32 @@ export type TPlanLimits = {
   storageQuotaBytes: number;
 };
 
+export type TBillingProvider = 'paddle' | 'apple' | 'google' | 'manual';
+
 export type TSubscriptionOrder = {
-  paddleTransactionId: string;
+  provider: TBillingProvider;
+  transactionId: string;
+  // 통화 최소 단위 정수 (KRW 6,900원 = 6900, USD $4.99 = 499)
   amount: number;
-  status: 'done' | 'failed';
+  currency: string;
+  status: 'done' | 'failed' | 'refunded';
   failReason: string | null;
   approvedAt: string | null;
+  refundedAt: string | null;
+  refundedAmount: number | null;
   createdAt: string;
 };
 
 export type TSubscription = {
   plan: TPlan;
   status: 'active' | 'canceled' | 'past_due' | 'expired';
+  // null = 구독 행 없음(free)
+  provider: TBillingProvider | null;
   currentPeriodEnd: string | null;
+  // 결제 실패 유예 만료. 있으면 이때까지 접근 유지
+  gracePeriodExpiresAt: string | null;
   canceledAt: string | null;
+  billingIssueDetectedAt: string | null;
   orders: TSubscriptionOrder[];
   limits: TPlanLimits;
   usage: {

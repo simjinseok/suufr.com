@@ -3,12 +3,13 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaddleClient } from './paddle.client';
 import { PaddleWebhookService } from './paddle-webhook.service';
+import { BillingSyncService } from './billing-sync.service';
 
 // currentPeriodEnd 경과 후 이 시간이 지나도록 webhook이 안 왔으면 유실 의심
 const RECONCILE_LAG_MS = 60 * 60 * 1000; // 1시간
 
 /**
- * webhook 유실 대비 보정 크론
+ * webhook 유실 대비 보정 크론 (Paddle 전용. Apple·Google 보정은 각자 어댑터에서)
  * 청구는 Paddle이 수행하므로 여기서는 상태 동기화만 한다:
  * 기간이 끝났는데 로컬이 여전히 비종결 상태인 구독을 Paddle에서 다시 읽어 반영
  */
@@ -19,22 +20,24 @@ export class SubscriptionsReconciliationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paddleClient: PaddleClient,
-    private readonly webhookService: PaddleWebhookService,
+    private readonly paddleWebhookService: PaddleWebhookService,
+    private readonly sync: BillingSyncService,
   ) {}
 
   // 매일 오전 11시 실행 (KST) - UTC 02:00 = KST 11:00
-  @Cron('0 2 * * *')
+  @Cron('0 2 * * *', { timeZone: 'UTC' })
   async runReconciliationCycle() {
     const cutoff = new Date(Date.now() - RECONCILE_LAG_MS);
 
     const staleSubscriptions = await this.prisma.userSubscription.findMany({
       where: {
+        provider: 'paddle',
         plan: { not: 'free' },
-        paddleSubscriptionId: { not: null },
+        providerSubscriptionId: { not: null },
         status: { in: ['active', 'canceled', 'past_due'] },
         currentPeriodEnd: { lt: cutoff },
       },
-      select: { userId: true, paddleSubscriptionId: true },
+      select: { userId: true, providerSubscriptionId: true },
     });
 
     if (staleSubscriptions.length === 0) {
@@ -44,11 +47,11 @@ export class SubscriptionsReconciliationService {
     this.logger.log(`Reconciling ${staleSubscriptions.length} stale subscription(s) with Paddle`);
 
     for (const subscription of staleSubscriptions) {
-      if (!subscription.paddleSubscriptionId) {
+      if (!subscription.providerSubscriptionId) {
         continue;
       }
       try {
-        await this.reconcileOne(subscription.paddleSubscriptionId);
+        await this.reconcileOne(subscription.providerSubscriptionId);
       }
       catch (error) {
         this.logger.error(`Failed to reconcile subscription for user ${subscription.userId}:`, error);
@@ -57,11 +60,16 @@ export class SubscriptionsReconciliationService {
   }
 
   private async reconcileOne(paddleSubscriptionId: string) {
+    // 조회 전 시각을 기준으로 삼는다 — 조회 중 도착한 웹훅은 이보다 늦어 스킵되지 않고, 조회한 원격 상태는 이전 이벤트보다 우선한다
+    const observedAt = new Date();
     const remote = await this.paddleClient.getSubscription(paddleSubscriptionId);
 
-    // 조회 시점의 원격 상태가 곧 최신 진실 — occurredAt을 현재로 두어 이전 이벤트보다 우선 적용
+    // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그로 남는다
+    const state = this.paddleWebhookService.toSubscriptionState(remote, observedAt);
     await this.prisma.$transaction(async (tx) => {
-      await this.webhookService.syncSubscriptionState(tx, remote, new Date());
+      // 같은 사용자의 웹훅과 동시에 처리되지 않게 잠근다
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${state.userId ?? `paddle:${state.subscriptionId}`}, 0))`;
+      await this.sync.syncSubscription(tx, state);
     });
   }
 }

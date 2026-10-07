@@ -39,7 +39,13 @@ export default function CurrentPlanCard({
   const isPro = subscription.plan === 'pro';
   const isCanceled = subscription.status === 'canceled';
   const isPastDue = subscription.status === 'past_due';
+  // 해지·재개·인보이스는 Paddle 구독만 서버가 다룰 수 있다. 스토어 구독은 스토어 관리 화면 안내만
+  const isPaddle = subscription.provider === 'paddle';
+  const storeName = subscription.provider === 'apple' ? 'App Store' : subscription.provider === 'google' ? 'Google Play' : null;
+  const isStoreManaged = isPro && storeName !== null;
+  const paymentMethodText = isPaddle ? '등록된 카드를' : '스토어에 등록된 결제 수단을';
   const periodEndText = subscription.currentPeriodEnd ? formatDate(subscription.currentPeriodEnd) : null;
+  const graceEndText = subscription.gracePeriodExpiresAt ? formatDate(subscription.gracePeriodExpiresAt) : null;
 
   return (
     <Surface className="p-5 border border-gray-50 rounded-xl shadow-xs">
@@ -69,7 +75,7 @@ export default function CurrentPlanCard({
                 paddle={paddle}
               />
             )}
-            {isPro && isCanceled && periodEndText && <ResumeSubscriptionButton />}
+            {isPro && isCanceled && isPaddle && periodEndText && <ResumeSubscriptionButton />}
           </div>
 
           {!isPro && (
@@ -78,11 +84,19 @@ export default function CurrentPlanCard({
             </p>
           )}
 
-          {isPro && periodEndText && (
+          {isStoreManaged && (
+            <p className="mt-2 text-sm text-gray-500">
+              {`${storeName}에서 구독을 관리할 수 있어요.`}
+            </p>
+          )}
+
+          {isPro && periodEndText && !(isPastDue && graceEndText) && (
             <p className="mt-2 text-sm text-gray-500">
               {isCanceled
                 ? `해지가 예약되어 있어요. ${periodEndText}까지 이용할 수 있고, 이후 무료 플랜으로 전환됩니다.`
-                : `다음 결제일: ${periodEndText}`}
+                : subscription.provider === 'manual'
+                  ? `${periodEndText}까지 이용할 수 있어요.`
+                  : `다음 결제일: ${periodEndText}`}
             </p>
           )}
 
@@ -90,12 +104,14 @@ export default function CurrentPlanCard({
             <div className="mt-3 flex items-center gap-2 text-sm text-danger p-3 rounded-lg bg-danger-soft">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>
-                정기결제에 실패했어요. 등록된 카드를 확인해주세요. 결제가 계속 실패하면 무료 플랜으로 전환됩니다.
+                {graceEndText
+                  ? `정기결제에 실패했어요. ${graceEndText}까지 ${paymentMethodText} 확인해주세요.`
+                  : `정기결제에 실패했어요. ${paymentMethodText} 확인해주세요. 결제가 계속 실패하면 무료 플랜으로 전환됩니다.`}
               </span>
             </div>
           )}
 
-          {isPro && !isCanceled && subscription.currentPeriodEnd && (
+          {isPro && !isCanceled && isPaddle && subscription.currentPeriodEnd && (
             <div className="mt-3 flex justify-end">
               <CancelSubscriptionButton periodEndText={periodEndText ?? ''} />
             </div>
