@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import type { UserSubscription } from '@prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaddleClient, PaddleApiError } from './paddle.client';
 
@@ -16,12 +17,25 @@ export class SubscriptionsBillingService {
   ) {}
 
   /**
+   * 스토어(App Store / Google Play) 구독은 서버가 해지·재개할 수 없다 — 스토어 구독 관리 화면에서만 가능
+   */
+  private assertNotStoreManaged(subscription: UserSubscription | null) {
+    if (subscription && (subscription.provider === 'apple' || subscription.provider === 'google')) {
+      throw new BadRequestException({
+        message: '구독은 결제한 스토어에서 관리할 수 있어요.',
+        error: 'SUBSCRIPTION_MANAGED_BY_STORE',
+      });
+    }
+  }
+
+  /**
    * 해지 예약: 기간 종료까지 유료 플랜 유지, 갱신만 중단
    */
   async cancel(userId: string) {
     const subscription = await this.prisma.userSubscription.findUnique({ where: { userId } });
+    this.assertNotStoreManaged(subscription);
 
-    if (!subscription || subscription.plan === 'free' || !subscription.paddleSubscriptionId
+    if (!subscription || subscription.plan === 'free' || subscription.provider !== 'paddle' || !subscription.providerSubscriptionId
       || (subscription.status !== 'active' && subscription.status !== 'past_due')) {
       throw new BadRequestException({
         message: '해지할 수 있는 구독이 없습니다.',
@@ -30,7 +44,7 @@ export class SubscriptionsBillingService {
     }
 
     try {
-      await this.paddleClient.cancelAtPeriodEnd(subscription.paddleSubscriptionId);
+      await this.paddleClient.cancelAtPeriodEnd(subscription.providerSubscriptionId);
     }
     catch (error) {
       if (error instanceof PaddleApiError) {
@@ -56,9 +70,10 @@ export class SubscriptionsBillingService {
    */
   async resume(userId: string) {
     const subscription = await this.prisma.userSubscription.findUnique({ where: { userId } });
+    this.assertNotStoreManaged(subscription);
 
     const now = new Date();
-    if (!subscription || subscription.status !== 'canceled' || !subscription.paddleSubscriptionId
+    if (!subscription || subscription.status !== 'canceled' || subscription.provider !== 'paddle' || !subscription.providerSubscriptionId
       || !subscription.currentPeriodEnd || subscription.currentPeriodEnd <= now) {
       throw new BadRequestException({
         message: '재개할 수 있는 구독이 없습니다.',
@@ -67,7 +82,7 @@ export class SubscriptionsBillingService {
     }
 
     try {
-      await this.paddleClient.removeScheduledChange(subscription.paddleSubscriptionId);
+      await this.paddleClient.removeScheduledChange(subscription.providerSubscriptionId);
     }
     catch (error) {
       if (error instanceof PaddleApiError) {
@@ -91,9 +106,10 @@ export class SubscriptionsBillingService {
   /**
    * 결제 내역의 인보이스 PDF URL 발급 (URL은 1시간 뒤 만료)
    */
-  async getInvoiceUrl(userId: string, paddleTransactionId: string) {
+  async getInvoiceUrl(userId: string, transactionId: string) {
+    // 인보이스는 Paddle 거래만 발급된다 (스토어 영수증은 스토어가 발급)
     const order = await this.prisma.subscriptionOrder.findUnique({
-      where: { paddleTransactionId },
+      where: { provider_providerTransactionId: { provider: 'paddle', providerTransactionId: transactionId } },
       select: { userId: true, status: true },
     });
 
@@ -106,12 +122,12 @@ export class SubscriptionsBillingService {
     }
 
     try {
-      const url = await this.paddleClient.getInvoiceUrl(paddleTransactionId);
+      const url = await this.paddleClient.getInvoiceUrl(transactionId);
       return { url };
     }
     catch (error) {
       if (error instanceof PaddleApiError) {
-        this.logger.warn(`Paddle invoice fetch failed for ${paddleTransactionId}: ${error.code} ${error.detail}`);
+        this.logger.warn(`Paddle invoice fetch failed for ${transactionId}: ${error.code} ${error.detail}`);
         throw new NotFoundException({
           message: '인보이스를 찾을 수 없습니다.',
           error: 'INVOICE_NOT_FOUND',
