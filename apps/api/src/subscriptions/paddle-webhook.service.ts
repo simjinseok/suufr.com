@@ -53,7 +53,7 @@ export class PaddleWebhookService {
       eventId: event.eventId,
       eventType: event.eventType,
       occurredAt,
-      payload,
+      payload: this.redactPayload(payload),
     };
 
     switch (event.eventType) {
@@ -90,6 +90,28 @@ export class PaddleWebhookService {
       default:
         this.logger.warn(`Unhandled paddle event type: ${event.eventType} (${event.eventId})`);
     }
+  }
+
+  /**
+   * 원문 저장 전 결제수단 정보 제거 — 거래 원문의 data.payments[*].method_details 에는 카드 끝 4자리·만료월·
+   * 카드소유자명이 들어 있다. 개인정보처리방침("결제수단 정보를 직접 수집·저장하지 않습니다")과 충돌하므로 저장하지 않는다.
+   * 원본 객체는 변형하지 않고 얕은 복사본을 돌려준다.
+   */
+  private redactPayload(payload: Prisma.InputJsonValue): Prisma.InputJsonValue {
+    if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+      return payload;
+    }
+    const data = (payload as Record<string, unknown>).data;
+    if (typeof data !== 'object' || data === null || !Array.isArray((data as Record<string, unknown>).payments)) {
+      return payload;
+    }
+    const payments = ((data as Record<string, unknown>).payments as unknown[]).map((payment) => {
+      if (typeof payment !== 'object' || payment === null) {
+        return payment;
+      }
+      return Object.fromEntries(Object.entries(payment).filter(([key]) => key !== 'method_details'));
+    });
+    return { ...payload, data: { ...data, payments } } as Prisma.InputJsonValue;
   }
 
   toSubscriptionState(subscription: PaddleSubscriptionLike, occurredAt: Date): BillingSubscriptionState {

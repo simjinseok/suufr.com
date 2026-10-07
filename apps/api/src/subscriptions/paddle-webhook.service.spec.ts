@@ -1,15 +1,19 @@
 import type { ConfigService } from '@nestjs/config';
-import type { TransactionNotification } from '@paddle/paddle-node-sdk';
+import type { EventEntity, TransactionNotification } from '@paddle/paddle-node-sdk';
 import { PaddleWebhookService, type PaddleSubscriptionLike } from './paddle-webhook.service';
 import type { BillingSyncService } from './billing-sync.service';
 
 const now = new Date('2026-10-07T00:00:00Z');
 const USER_A = '11111111-1111-4111-8111-111111111111';
 
-function makeService(env: string | undefined = 'sandbox') {
-  const sync = { withEventDedup: vi.fn(), syncSubscription: vi.fn(), recordTransaction: vi.fn() } as unknown as BillingSyncService;
+function makeServiceWithSync(env: string | undefined = 'sandbox') {
+  const sync = { withEventDedup: vi.fn(), syncSubscription: vi.fn(), recordTransaction: vi.fn() };
   const config = { get: vi.fn((key: string) => (key === 'PADDLE_ENV' ? env : undefined)) } as unknown as ConfigService;
-  return new PaddleWebhookService(sync, config);
+  return { service: new PaddleWebhookService(sync as unknown as BillingSyncService, config), sync };
+}
+
+function makeService(env: string | undefined = 'sandbox') {
+  return makeServiceWithSync(env).service;
 }
 
 function subscription(overrides: Partial<PaddleSubscriptionLike> = {}): PaddleSubscriptionLike {
@@ -114,5 +118,58 @@ describe('PaddleWebhookService.toTransactionRecord', () => {
 
   it('구독이 없는 일회성 거래는 null', () => {
     expect(makeService().toTransactionRecord(transaction({ subscriptionId: null }), 'done', now)).toBeNull();
+  });
+});
+
+describe('PaddleWebhookService.handleEvent payload', () => {
+  const transactionPayload = () => ({
+    event_id: 'evt_1',
+    event_type: 'transaction.completed',
+    data: {
+      id: 'txn_1',
+      payments: [{
+        status: 'captured',
+        method_details: { type: 'card', card: { cardholder_name: 'HONG', last4: '4242', expiry_month: 1, expiry_year: 2030 } },
+      }],
+    },
+  });
+  const transactionEvent = () => ({
+    eventId: 'evt_1',
+    eventType: 'transaction.completed',
+    occurredAt: '2026-10-07T00:00:00Z',
+    data: {
+      id: 'txn_1',
+      subscriptionId: 'sub_1',
+      customData: { userId: USER_A },
+      currencyCode: 'KRW',
+      billedAt: '2026-10-01T00:00:10Z',
+      billingPeriod: null,
+      details: { totals: { grandTotal: '6900' } },
+      payments: [],
+    },
+  }) as unknown as EventEntity;
+
+  it('거래 원문 저장 전에 payments[*].method_details 를 제거하고 원본은 변형하지 않는다', async () => {
+    const { service, sync } = makeServiceWithSync();
+    const payload = transactionPayload();
+    await service.handleEvent(transactionEvent(), payload as never);
+    const envelope = sync.withEventDedup.mock.calls[0][0];
+    expect(envelope.payload).not.toHaveProperty('data.payments.0.method_details');
+    expect(envelope.payload).toHaveProperty('data.payments.0.status', 'captured');
+    expect(envelope.payload).toHaveProperty('event_id', 'evt_1');
+    expect(payload).toHaveProperty('data.payments.0.method_details');
+  });
+
+  it('payments 가 없는 구독 이벤트 원문은 그대로 저장한다', async () => {
+    const { service, sync } = makeServiceWithSync();
+    const payload = { event_id: 'evt_2', data: { id: 'sub_1', status: 'active' } };
+    const event = {
+      eventId: 'evt_2',
+      eventType: 'subscription.updated',
+      occurredAt: '2026-10-07T00:00:00Z',
+      data: subscription({ customData: { userId: USER_A } }),
+    } as unknown as EventEntity;
+    await service.handleEvent(event, payload as never);
+    expect(sync.withEventDedup.mock.calls[0][0].payload).toEqual(payload);
   });
 });

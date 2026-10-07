@@ -43,6 +43,7 @@ export default function CurrentPlanCard({
   const isPaddle = subscription.provider === 'paddle';
   const storeName = subscription.provider === 'apple' ? 'App Store' : subscription.provider === 'google' ? 'Google Play' : null;
   const isStoreManaged = isPro && storeName !== null;
+  const paymentMethodText = isPaddle ? '등록된 카드를' : '스토어에 등록된 결제 수단을';
   const periodEndText = subscription.currentPeriodEnd ? formatDate(subscription.currentPeriodEnd) : null;
   const graceEndText = subscription.gracePeriodExpiresAt ? formatDate(subscription.gracePeriodExpiresAt) : null;
 
@@ -83,7 +84,7 @@ export default function CurrentPlanCard({
             </p>
           )}
 
-          {isPro && isStoreManaged && (
+          {isStoreManaged && (
             <p className="mt-2 text-sm text-gray-500">
               {`${storeName}에서 구독을 관리할 수 있어요.`}
             </p>
@@ -102,8 +103,8 @@ export default function CurrentPlanCard({
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>
                 {graceEndText
-                  ? `정기결제에 실패했어요. ${graceEndText}까지 ${isPaddle ? '등록된 카드' : '스토어에 등록된 결제 수단'}를 확인해주세요.`
-                  : `정기결제에 실패했어요. ${isPaddle ? '등록된 카드' : '스토어에 등록된 결제 수단'}를 확인해주세요. 결제가 계속 실패하면 무료 플랜으로 전환됩니다.`}
+                  ? `정기결제에 실패했어요. ${graceEndText}까지 ${paymentMethodText} 확인해주세요.`
+                  : `정기결제에 실패했어요. ${paymentMethodText} 확인해주세요. 결제가 계속 실패하면 무료 플랜으로 전환됩니다.`}
               </span>
             </div>
           )}

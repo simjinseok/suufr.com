@@ -18,7 +18,8 @@ function formatDate(iso: string): string {
 
 // amount 는 통화 최소 단위 정수. KRW 는 기존 표기("6,900원") 유지, 그 외 통화는 자릿수만큼 나눠 표시
 function formatAmount(amount: number, currency: string): string {
-  if (currency === 'KRW') {
+  // 배포 전환 중 구 api 응답(currency 없음)과 잘못된 코드로 Intl.NumberFormat 이 던지는 것을 막는다
+  if (!currency || currency === 'KRW') {
     return `${amount.toLocaleString('ko-KR')}원`;
   }
   const formatter = new Intl.NumberFormat('ko-KR', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' });
