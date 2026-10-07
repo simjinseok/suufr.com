@@ -2,13 +2,19 @@ import type { ConfigService } from '@nestjs/config';
 import type { EventEntity, TransactionNotification } from '@paddle/paddle-node-sdk';
 import { PaddleWebhookService, type PaddleSubscriptionLike } from './paddle-webhook.service';
 import type { BillingSyncService } from './billing-sync.service';
+import { buildCheckoutCustomData } from './checkout-custom-data';
 
 const now = new Date('2026-10-07T00:00:00Z');
 const USER_A = '11111111-1111-4111-8111-111111111111';
+const SECRET = 'whsec_test';
+// 서버가 체크아웃 거래에 심는 형태 — 웹훅은 서명이 맞는 userId 만 믿는다
+const SIGNED_A = buildCheckoutCustomData(USER_A, SECRET);
 
 function makeServiceWithSync(env: string | undefined = 'sandbox') {
   const sync = { withEventDedup: vi.fn(), syncSubscription: vi.fn(), recordTransaction: vi.fn() };
-  const config = { get: vi.fn((key: string) => (key === 'PADDLE_ENV' ? env : undefined)) } as unknown as ConfigService;
+  const config = {
+    get: vi.fn((key: string) => (key === 'PADDLE_ENV' ? env : key === 'PADDLE_WEBHOOK_SECRET' ? SECRET : undefined)),
+  } as unknown as ConfigService;
   return { service: new PaddleWebhookService(sync as unknown as BillingSyncService, config), sync };
 }
 
@@ -24,7 +30,7 @@ function subscription(overrides: Partial<PaddleSubscriptionLike> = {}): PaddleSu
     canceledAt: null,
     currentBillingPeriod: { startsAt: '2026-10-01T00:00:00Z', endsAt: '2026-11-01T00:00:00Z' },
     scheduledChange: null,
-    customData: { userId: USER_A },
+    customData: SIGNED_A,
     items: [{ recurring: true, price: { id: 'pri_pro' } }],
     ...overrides,
   };
@@ -67,8 +73,16 @@ describe('PaddleWebhookService.toSubscriptionState', () => {
   });
 
   it('customData.userId 가 uuid 가 아니면 userId null', () => {
-    expect(makeService().toSubscriptionState(subscription({ customData: { userId: 'nope' } }), now).userId).toBeNull();
+    expect(makeService().toSubscriptionState(subscription({ customData: buildCheckoutCustomData('nope', SECRET) }), now).userId).toBeNull();
     expect(makeService().toSubscriptionState(subscription({ customData: null }), now).userId).toBeNull();
+  });
+
+  it('서명 없는 userId(클라이언트가 Paddle.js 로 직접 연 체크아웃)는 userId null — 뒷문 차단', () => {
+    expect(makeService().toSubscriptionState(subscription({ customData: { userId: USER_A } }), now).userId).toBeNull();
+  });
+
+  it('서명이 다른 userId 로 바꿔치기된 customData 는 userId null', () => {
+    expect(makeService().toSubscriptionState(subscription({ customData: { ...SIGNED_A, userId: '33333333-3333-4333-8333-333333333333' } }), now).userId).toBeNull();
   });
 
   it('productId 는 recurring 인 첫 item 의 price.id, 없으면 null', () => {
@@ -82,7 +96,7 @@ describe('PaddleWebhookService.toTransactionRecord', () => {
   const transaction = (overrides: Partial<TransactionNotification> = {}) => ({
     id: 'txn_1',
     subscriptionId: 'sub_1',
-    customData: { userId: USER_A },
+    customData: SIGNED_A,
     currencyCode: 'KRW',
     billedAt: '2026-10-01T00:00:10Z',
     billingPeriod: { startsAt: '2026-10-01T00:00:00Z', endsAt: '2026-11-01T00:00:00Z' },
@@ -144,7 +158,7 @@ describe('PaddleWebhookService.handleEvent payload', () => {
     data: {
       id: 'txn_1',
       subscriptionId: 'sub_1',
-      customData: { userId: USER_A },
+      customData: SIGNED_A,
       currencyCode: 'KRW',
       billedAt: '2026-10-01T00:00:10Z',
       billingPeriod: null,
@@ -172,7 +186,7 @@ describe('PaddleWebhookService.handleEvent payload', () => {
       eventId: 'evt_2',
       eventType: 'subscription.updated',
       occurredAt: '2026-10-07T00:00:00Z',
-      data: subscription({ customData: { userId: USER_A } }),
+      data: subscription({ customData: SIGNED_A }),
     } as unknown as EventEntity;
     await service.handleEvent(event, payload as never);
     expect(sync.withEventDedup.mock.calls[0][0].payload).toEqual(payload);

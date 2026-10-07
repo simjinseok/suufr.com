@@ -10,6 +10,8 @@ import {
   type Subscription,
 } from '@paddle/paddle-node-sdk';
 
+import { buildCheckoutCustomData } from './checkout-custom-data';
+
 export { ApiError as PaddleApiError };
 
 /**
@@ -84,7 +86,8 @@ export class PaddleClient {
 
   /**
    * 프로 플랜 체크아웃용 거래 생성 — 클라이언트는 priceId 대신 이 transactionId 로 Paddle.js 오버레이를 연다.
-   * customData.userId 를 서버가 심어 웹훅 매핑(extractUserId)이 클라이언트 입력에 의존하지 않게 한다.
+   * customData 에 userId 와 서버 서명을 심는다. 웹훅(PaddleWebhookService.extractUserId)은 서명이 맞는 userId 만
+   * 믿으므로, 클라이언트가 Paddle.js 로 체크아웃을 직접 열어 userId 를 적어 넣는 뒷문은 결제돼도 반영되지 않는다.
    * 거래의 custom_data 는 Paddle 이 만드는 구독에 복사된다.
    */
   async createCheckoutTransaction(userId: string): Promise<{ transactionId: string }> {
@@ -92,9 +95,13 @@ export class PaddleClient {
     if (!priceId) {
       throw new Error('PADDLE_PRICE_ID_PRO is not configured');
     }
+    const secret = this.configService.get<string>('PADDLE_WEBHOOK_SECRET');
+    if (!secret) {
+      throw new Error('PADDLE_WEBHOOK_SECRET is not configured');
+    }
     const transaction = await this.getSdk().transactions.create({
       items: [{ priceId, quantity: 1 }],
-      customData: { userId },
+      customData: { ...buildCheckoutCustomData(userId, secret) },
     });
     return { transactionId: transaction.id };
   }
