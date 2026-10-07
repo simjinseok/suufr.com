@@ -30,7 +30,9 @@ export default function InvoiceCard({ invoice, today }: Props) {
         </Avatar>
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 leading-tight truncate">{invoice.student.name}</p>
-          <p className="mt-0.5 text-sm text-gray-600 truncate">{invoice.title || '수강권'}</p>
+          {invoice.title && (
+            <p className="mt-0.5 text-sm text-gray-600 truncate">{invoice.title}</p>
+          )}
         </div>
       </div>
 

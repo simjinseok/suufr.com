@@ -225,7 +225,9 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                     {/* 헤더: 제목 + 수정 버튼 */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-2 min-w-0">
-                        <p className="text-xl font-bold truncate">{invoice.title || '수강권'}</p>
+                        {invoice.title && (
+                          <p className="text-xl font-bold truncate">{invoice.title}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Dropdown>
