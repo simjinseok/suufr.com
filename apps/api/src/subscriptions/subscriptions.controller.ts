@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionsBillingService } from './subscriptions-billing.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -17,6 +18,18 @@ export class SubscriptionsController {
   @Get()
   async getMine(@CurrentUser() user: AuthenticatedUser) {
     const data = await this.subscriptionsService.getSummary(user.userId);
+    return { success: true, data };
+  }
+
+  /**
+   * 프로 체크아웃 시작 — 서버가 만든 Paddle transactionId 를 돌려준다
+   * (이메일 미인증·이미 프로인 계정은 400). 호출마다 Paddle 거래가 생기므로 분당 10회로 제한
+   */
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('checkout')
+  async createCheckout(@CurrentUser() user: AuthenticatedUser) {
+    const data = await this.billingService.createCheckout(user.userId);
     return { success: true, data };
   }
 
