@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import type { TUserSettings } from '@/types/index';
 import { settingsApi } from '@/utils/api/settings';
+import { DEFAULT_PAYMENT_METHOD, normalizePaymentMethod } from '@/constants/payment-method';
 
 // 서버 전용. 렌더 한 번에 레이아웃·페이지가 중복 호출해도 API GET은 1회 (React request cache)
 export const getUserSettings = cache(async (): Promise<TUserSettings> => {
@@ -12,6 +13,7 @@ export const getUserSettings = cache(async (): Promise<TUserSettings> => {
       defaultDuration: response.data.defaultDuration,
       autoUpdateNextPaymentAt: response.data.autoUpdateNextPaymentAt,
       timezone: response.data.timezone,
+      defaultPaymentMethod: normalizePaymentMethod(response.data.defaultPaymentMethod),
     };
   }
   catch {
@@ -21,6 +23,7 @@ export const getUserSettings = cache(async (): Promise<TUserSettings> => {
       defaultDuration: 50,
       autoUpdateNextPaymentAt: true,
       timezone: null,
+      defaultPaymentMethod: DEFAULT_PAYMENT_METHOD,
     };
   }
 });

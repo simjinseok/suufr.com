@@ -1,4 +1,5 @@
 import { apiClient } from '../api-client';
+import type { PaymentMethod } from '@/constants/payment-method';
 
 type Settings = {
   userId: string;
@@ -6,6 +7,7 @@ type Settings = {
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
   timezone: string | null;
+  defaultPaymentMethod: string; // 서버는 string 으로 내려준다 — 소비처에서 정규화
 };
 
 type SettingsResponse = {
@@ -18,6 +20,7 @@ type UpdateSettingsData = {
   defaultDuration?: number;
   autoUpdateNextPaymentAt?: boolean;
   timezone?: string;
+  defaultPaymentMethod?: PaymentMethod;
 };
 
 export const settingsApi = {
