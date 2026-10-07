@@ -3,12 +3,8 @@
 import * as React from 'react';
 import { Avatar, Chip, Surface } from '@heroui/react';
 import { UserIcon } from 'lucide-react';
-import { format } from 'date-fns/format';
-import { ko } from 'date-fns/locale/ko';
-import { tz } from '@date-fns/tz';
 import { numberToHangulMixed } from 'es-hangul';
 
-import { useTimeZone } from '@/contexts/timezone';
 import { formatInvoicePeriod, getCountProgress, getPeriodProgress } from '@/utils/invoice-period';
 import type { InvoiceCardItem } from './_invoices-list';
 
@@ -113,33 +109,21 @@ function ProgressRow({ left, right, ratio, isComplete }: {
   );
 }
 
-// 정산 푸터: 왼쪽 납부 상태(연결 입금 목록 또는 미납 칩), 오른쪽 금액.
-// 연결 존재 = 입금 확인 — 금액 검증은 하지 않는다(잔액모델이 진실 소스, §6-22).
+// 정산 푸터: 왼쪽 납부 상태 칩(납부 완료 / 미납), 오른쪽 금액.
+// 연결된 입금이 1건 이상이면 납부 완료 — 금액 검증은 하지 않는다(잔액모델이 진실 소스, §6-22).
 // 0원 수강권은 납부 상태를 생략하고 금액만 (미납 노이즈 방지).
 function SettlementFooter({ invoice }: { invoice: InvoiceCardItem }) {
-  const timeZone = useTimeZone();
-
   return (
     <div className="mt-0.5 pt-2.5 border-t border-dashed border-gray-200 flex items-center justify-between gap-3">
       {invoice.price > 0 && (
         invoice.payments.length > 0
           ? (
-              <div className="flex flex-col gap-0.5 min-w-0">
-                {invoice.payments.map(payment => (
-                  <p key={payment.uuid} className="text-sm text-gray-600 tabular-nums truncate">
-                    {format(new Date(payment.paidAt), 'M월 d일', { locale: ko, in: tz(timeZone) })}
-                    {' 입금 · '}
-                    {numberToHangulMixed(payment.amount)}
-                    원
-                  </p>
-                ))}
-              </div>
+              <Chip size="sm" color="success" variant="soft" className="shrink-0">납부 완료</Chip>
             )
           : (
               <Chip size="sm" color="warning" variant="soft" className="shrink-0">미납</Chip>
             )
       )}
-      {/* 입금 줄이 길어져도 금액은 줄바꿈하지 않는다 — 입금 줄만 줄임표 */}
       <p className="ml-auto shrink-0 whitespace-nowrap text-base font-bold text-gray-900 tabular-nums">
         {numberToHangulMixed(invoice.price)}
         원
