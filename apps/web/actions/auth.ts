@@ -160,6 +160,8 @@ type SignupFields = {
 type SignupState = ServerActionState<SignupFields> & {
   /** 계정은 생성됐지만 인증 메일 발송에 실패 — 인증 화면으로 보내 "다시 받기"를 유도한다 */
   mailFailed?: boolean;
+  /** 가입과 동시에 로그인됨 — 바로 앱으로 들어간다. 이메일 인증은 앱 상단 배너로 나중에 */
+  loggedIn?: boolean;
 };
 
 export async function signup(
@@ -199,13 +201,14 @@ export async function signup(
           recaptchaToken: validation.data.recaptchaToken,
         });
 
-        // 실제 가입이면 api 가 바로 로그인시킨다 — 인증 화면은 로그인 상태로 보여주고, 인증은 나중에 해도 된다
+        // 실제 가입이면 api 가 바로 로그인시킨다 — 인증 화면을 거치지 않고 앱으로 들어간다 (중복 이메일 합성 응답이면 토큰 없음)
         if (response.accessToken && response.refreshToken) {
           await setTokenCookies({
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
             expiresIn: response.expiresIn,
           });
+          state.loggedIn = true;
         }
 
         state.success = true;
