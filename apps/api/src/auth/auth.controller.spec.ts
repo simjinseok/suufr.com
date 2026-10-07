@@ -73,7 +73,7 @@ describe('AuthController', () => {
     authService.findUserByEmail.mockResolvedValue({ id: 'existing-user' });
     const result = await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
     expect(betterAuth.signIn).not.toHaveBeenCalled();
-    expect(result).toEqual({ success: true, message: '인증 이메일이 발송되었습니다' });
+    expect(result).toEqual({ success: true, message: '이미 가입된 이메일입니다. 로그인해주세요.' });
   });
 
   it('signup: reCAPTCHA 토큰과 동의 페이로드의 IP·UA 를 평가에 넘기고, 평가는 signUp 보다 먼저 호출된다', async () => {

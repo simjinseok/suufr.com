@@ -98,12 +98,12 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
               {state.message}
             </div>
           )}
-          {/* 토큰 없는 200 = 이미 가입된 이메일(열거 방지 합성 응답). 안내만 하고 머문다 */}
+          {/* 토큰 없는 200 = 이미 가입된 이메일. 가입 즉시 로그인(토큰 유무)으로 가입 여부가 드러나는 건 확정된 사항이라 돌려 말하지 않는다 */}
           {state.success && !state.loggedIn && (
-            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+            <div className="p-3 bg-amber-50 text-amber-800 rounded-lg text-sm">
               {state.message}
               {' '}
-              이미 가입된 이메일이라면 로그인해주세요.
+              <Link href="/login" className="font-medium underline underline-offset-2">로그인하기</Link>
             </div>
           )}
 
