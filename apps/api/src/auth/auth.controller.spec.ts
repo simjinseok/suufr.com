@@ -7,6 +7,7 @@ function build() {
     verifySecondFactor: vi.fn().mockResolvedValue({ success: true }),
     signOut: vi.fn().mockResolvedValue(undefined),
     signUp: vi.fn().mockResolvedValue({ userId: 'u1' }),
+    signInWithGoogleIdToken: vi.fn().mockResolvedValue({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' }),
   };
   const authService = { findUserByEmail: vi.fn().mockResolvedValue({ id: 'u1' }) };
   const consents = { recordSafely: vi.fn().mockResolvedValue(undefined) };
@@ -21,6 +22,13 @@ describe('AuthController', () => {
     const { controller, betterAuth } = build();
     await controller.mfa({ code: '123456', session: 'better-auth.two_factor=abc.def' }, '1.1.1.1', 'ua');
     expect(betterAuth.verifySecondFactor).toHaveBeenCalledWith('better-auth.two_factor=abc.def', '123456', { ip: '1.1.1.1', userAgent: 'ua' });
+  });
+
+  it('google/native: ID 토큰과 요청 메타를 위임하고 토큰 응답을 그대로 돌려준다', async () => {
+    const { controller, betterAuth } = build();
+    const result = await controller.googleNativeLogin({ idToken: 'eyJ.id.token' }, '1.1.1.1', 'ios-ua');
+    expect(betterAuth.signInWithGoogleIdToken).toHaveBeenCalledWith('eyJ.id.token', { ip: '1.1.1.1', userAgent: 'ios-ua' });
+    expect(result).toEqual({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' });
   });
 
   it('refresh / logout 은 세션 토큰을 위임한다', async () => {

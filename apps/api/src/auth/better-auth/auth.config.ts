@@ -23,8 +23,11 @@ export type AuthConfigDeps = {
   mail: MailService;
   /** users 행 생성 직후(가입) — Organization/UserSettings 부트스트랩 */
   onUserCreated: (user: { id: string; email: string; name: string }) => Promise<void>;
-  /** Google 로그인. 캘린더 연동과 같은 OAuth 클라이언트를 쓴다. 둘 다 없으면 소셜 로그인 비활성 */
-  google?: { clientId: string; clientSecret: string };
+  /**
+   * Google 로그인. 캘린더 연동과 같은 OAuth 클라이언트를 쓴다. 둘 다 없으면 소셜 로그인 비활성.
+   * idTokenAudiences: iOS 네이티브 로그인의 ID 토큰 audience 로 추가 허용할 클라이언트 ID (예: 로컬 api 가 운영 서버 클라이언트 ID 토큰을 받을 때)
+   */
+  google?: { clientId: string; clientSecret: string; idTokenAudiences?: string[] };
 };
 
 /**
@@ -49,7 +52,8 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       ? {
           socialProviders: {
             google: {
-              clientId: google.clientId,
+              // 배열이면 첫 번째가 OAuth(인증 URL·코드 교환)에 쓰이고, 전체가 ID 토큰 audience 검증에 쓰인다 (better-auth google provider)
+              clientId: google.idTokenAudiences?.length ? [google.clientId, ...google.idTokenAudiences] : google.clientId,
               clientSecret: google.clientSecret,
               redirectURI: `${baseURL}/auth/google/callback`,
               prompt: 'select_account',

@@ -31,6 +31,8 @@ export const betterAuthProvider: Provider = {
   ): Auth => {
     const googleClientId = config.get<string>('GOOGLE_CLIENT_ID');
     const googleClientSecret = config.get<string>('GOOGLE_CLIENT_SECRET');
+    const googleIdTokenAudiences = (config.get<string>('GOOGLE_ID_TOKEN_AUDIENCES') ?? '')
+      .split(',').map(s => s.trim()).filter(Boolean);
     return createAuth({
       prisma,
       baseURL: requireEnv(config, 'BETTER_AUTH_URL'),
@@ -38,7 +40,9 @@ export const betterAuthProvider: Provider = {
       webUrl: config.get<string>('WEB_URL') || 'http://localhost:3000',
       mail,
       onUserCreated: user => provisioning.ensureOrganization(user.id, user.email, user.name),
-      google: googleClientId && googleClientSecret ? { clientId: googleClientId, clientSecret: googleClientSecret } : undefined,
+      google: googleClientId && googleClientSecret
+        ? { clientId: googleClientId, clientSecret: googleClientSecret, idTokenAudiences: googleIdTokenAudiences }
+        : undefined,
     });
   },
 };

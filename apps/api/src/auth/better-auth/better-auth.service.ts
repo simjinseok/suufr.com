@@ -170,6 +170,24 @@ export class BetterAuthService {
   }
 
   /**
+   * Google ID 토큰 로그인 (iOS 네이티브 Google Sign-In SDK).
+   * better-auth 가 Google 공개키로 서명·issuer·audience(GOOGLE_CLIENT_ID + GOOGLE_ID_TOKEN_AUDIENCES)·만료를 검증하고,
+   * 이메일 기준으로 기존 사용자에 연결하거나 새로 만든 뒤 세션을 발급한다. 소셜 로그인은 2단계 인증을 묻지 않는다.
+   * 토큰이 유효하지 않으면 better-auth 가 INVALID_TOKEN(401) 을 던진다.
+   */
+  async signInWithGoogleIdToken(idToken: string, meta?: RequestMeta): Promise<IssuedTokens> {
+    const response = await this.run(() => this.auth.api.signInSocial({
+      body: { provider: 'google', idToken: { token: idToken } },
+      headers: requestHeaders(meta),
+    }));
+    // idToken 분기는 리다이렉트 없이 세션 토큰과 사용자를 돌려준다 (url 만 있는 응답은 브라우저 OAuth 분기)
+    if (!('token' in response) || !response.token || !response.user) {
+      throw toHttpException(new Error('Google 로그인 후 세션이 생성되지 않았습니다'));
+    }
+    return this.issueTokens(response.token, response.user.id);
+  }
+
+  /**
    * OAuth 콜백 뒤 api 도메인에 설정된 better-auth 세션 쿠키를 해석해 세션 토큰을 돌려준다 (web 이 refresh_token 으로 이어받는다).
    * 소셜 로그인은 Google 이 본인 확인을 끝낸 뒤라 2단계 인증을 다시 묻지 않는다.
    * expireCookies 는 api 도메인 쿠키를 지우는 set-cookie 줄이다.

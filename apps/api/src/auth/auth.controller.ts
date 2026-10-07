@@ -21,6 +21,7 @@ import {
   LogoutDto,
   TwoFactorPasswordDto,
   TwoFactorCodeDto,
+  GoogleNativeLoginDto,
 } from './dto';
 
 /** web 이 2FA 관리·로그아웃처럼 세션이 필요한 요청에 refresh_token 쿠키(=세션 토큰)를 담아 보내는 헤더 */
@@ -99,6 +100,16 @@ export class AuthController {
   @Post('mfa')
   async mfa(@Body() dto: MfaDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
     return this.betterAuth.verifySecondFactor(dto.session, dto.code, { ip, userAgent });
+  }
+
+  /**
+   * iOS 네이티브 Google 로그인. Google Sign-In SDK 가 받은 ID 토큰(audience = 서버 클라이언트 ID)을 세션으로 바꾼다.
+   * 응답은 login 성공 응답과 같다(토큰). 소셜 로그인이라 2단계 인증은 묻지 않는다. 브라우저 방식은 /auth/google/start 참고.
+   */
+  @Public()
+  @Post('google/native')
+  async googleNativeLogin(@Body() dto: GoogleNativeLoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
+    return this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent });
   }
 
   /**
