@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/nestjs';
 import type { Prisma, UserSubscription } from '@prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from './subscriptions.service';
-import { resolvePlanByProductId, type PaidPlanValue } from './plan.constants';
+import type { PaidPlanValue } from './plan.constants';
 import {
   BillingSyncRejectedError,
   type BillingSubscriptionState,
@@ -21,20 +20,11 @@ import {
 @Injectable()
 export class BillingSyncService {
   private readonly logger = new Logger(BillingSyncService.name);
-  /** provider 상품 식별자 → 유료 플랜. sandbox/production 가격 id 가 달라 환경변수로 구성 */
-  private readonly productPlans: Record<string, PaidPlanValue>;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly subscriptionsService: SubscriptionsService,
-    configService: ConfigService,
-  ) {
-    const paddlePricePro = configService.get<string>('PADDLE_PRICE_ID_PRO');
-    this.productPlans = paddlePricePro ? { [paddlePricePro]: 'pro' } : {};
-    if (!paddlePricePro) {
-      this.logger.warn('PADDLE_PRICE_ID_PRO is not configured; all Paddle subscriptions map to pro');
-    }
-  }
+  ) {}
 
   /**
    * 이벤트 기록(멱등성)과 상태 반영을 한 트랜잭션으로 처리
@@ -163,10 +153,8 @@ export class BillingSyncService {
     const currentPeriodEnd = state.currentPeriodEnd ?? inherited?.currentPeriodEnd ?? null;
 
     // 12. upsert
-    const { plan, matched } = resolvePlanByProductId(state.productId, this.productPlans);
-    if (!matched) {
-      this.logger.warn(`Unknown ${state.provider} product '${state.productId}' for ${state.subscriptionId}; assuming ${plan}`);
-    }
+    // 유료 플랜이 pro 하나라 상품 식별자와 무관하게 pro. 플랜이 늘면 state.productId → 플랜 매핑을 여기에 둔다 (providerProductId 는 그대로 저장된다)
+    const plan: PaidPlanValue = 'pro';
     if (transferFrom) {
       await tx.userSubscription.delete({ where: { userId: transferFrom.userId } });
       this.logger.warn(`Transferred ${state.provider}/${state.subscriptionId} from user ${transferFrom.userId} to ${userId}`);

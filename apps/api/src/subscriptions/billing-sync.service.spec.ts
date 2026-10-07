@@ -1,4 +1,3 @@
-import type { ConfigService } from '@nestjs/config';
 import type { UserSubscription } from '@prisma/generated/client';
 import { BillingSyncService } from './billing-sync.service';
 import { BillingSyncRejectedError, type BillingSubscriptionState, type BillingTransactionRecord } from './billing.types';
@@ -65,12 +64,11 @@ function makeTx(rows: Row[], orders: Array<{ provider: string; providerTransacti
   return { tx, upsert, del, orderUpsert, createMany };
 }
 
-function makeService(tx: unknown, pricePro: string | undefined = 'pri_pro') {
+function makeService(tx: unknown) {
   const prisma = {
     $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx)),
   } as unknown as PrismaService;
-  const config = { get: vi.fn((key: string) => (key === 'PADDLE_PRICE_ID_PRO' ? pricePro : undefined)) } as unknown as ConfigService;
-  return new BillingSyncService(prisma, new SubscriptionsService(prisma), config);
+  return new BillingSyncService(prisma, new SubscriptionsService(prisma));
 }
 
 function state(overrides: Partial<BillingSubscriptionState> = {}): BillingSubscriptionState {
@@ -251,14 +249,12 @@ describe('BillingSyncService.syncSubscription — 순서·상태 규칙', () => 
     expect(upsert.mock.calls[0][0].update).toMatchObject({ currentPeriodStart: past, currentPeriodEnd: future });
   });
 
-  it('productId 가 매핑에 없거나 PADDLE_PRICE_ID_PRO 가 비어 있어도 pro 로 반영한다', async () => {
-    const a = makeTx([]);
-    await makeService(a.tx).syncSubscription(a.tx as never, state({ productId: 'pri_unknown' }));
-    expect(a.upsert.mock.calls[0][0].create.plan).toBe('pro');
-
-    const b = makeTx([]);
-    await makeService(b.tx, undefined).syncSubscription(b.tx as never, state());
-    expect(b.upsert.mock.calls[0][0].create.plan).toBe('pro');
+  it('productId 와 무관하게 plan 은 pro 이고 providerProductId 는 그대로 저장된다', async () => {
+    const { tx, upsert } = makeTx([]);
+    await makeService(tx).syncSubscription(tx as never, state({ productId: 'pri_unknown' }));
+    const create = upsert.mock.calls[0][0].create;
+    expect(create.plan).toBe('pro');
+    expect(create.providerProductId).toBe('pri_unknown');
   });
 });
 
