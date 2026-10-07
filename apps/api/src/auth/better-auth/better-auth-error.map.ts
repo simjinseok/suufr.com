@@ -74,7 +74,9 @@ export function toHttpException(error: unknown): HttpException {
   const message = (code && MESSAGES[code]) || '요청을 처리할 수 없습니다';
   const payload = { message, error: code ?? 'AUTH_ERROR' };
 
-  if (!code || !MESSAGES[code]) {
+  // 코드 없는 401 은 세션 미들웨어가 만료·폐기된 세션 토큰에 던지는 정상 경로(refresh, signOut 등)라 경고 대상이 아니다
+  const isSessionExpired = error.statusCode === HttpStatus.UNAUTHORIZED && !code;
+  if (!isSessionExpired && (!code || !MESSAGES[code])) {
     logger.warn(`매핑되지 않은 better-auth 에러: ${error.statusCode} ${code ?? error.message}`);
   }
 

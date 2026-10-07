@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { vi } from 'vitest';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { APIError } from 'better-auth/api';
 import { betterAuthErrorCode, toHttpException } from './better-auth-error.map';
 import { MailDeliveryError } from '../../mail/mail.service';
@@ -20,10 +21,20 @@ describe('toHttpException', () => {
     expect(body(e).message).toBe('이메일 인증이 필요합니다');
   });
 
-  it('코드 없는 401 은 세션 만료 메시지', () => {
+  it('코드 없는 401 은 세션 만료 메시지이고, 의도된 처리이므로 미매핑 경고를 남기지 않는다', () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     const e = toHttpException(new APIError('UNAUTHORIZED', { message: 'unauthorized' }));
     expect(e).toBeInstanceOf(UnauthorizedException);
     expect(body(e).message).toBe('세션이 만료되었습니다. 다시 로그인해주세요.');
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('코드가 있지만 매핑되지 않은 401 은 경고를 남긴다', () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    toHttpException(new APIError('UNAUTHORIZED', { code: 'SOMETHING_NEW', message: 'x' }));
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 
   it('422/409 → ConflictException, 429 → 429, 알 수 없는 4xx → BadRequest 일반 메시지', () => {
