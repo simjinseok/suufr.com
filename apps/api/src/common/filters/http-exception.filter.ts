@@ -37,12 +37,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
+        code = this.getCodeFromStatus(status);
       }
       else if (typeof exceptionResponse === 'object') {
         const resp = exceptionResponse as Record<string, unknown>;
         message = (resp.message as string) || exception.message;
-        code = (resp.error as string) || this.getCodeFromStatus(status);
+        // error 가 코드 형태(SESSION_EXPIRED 등)일 때만 쓴다. Nest 기본 예외는 "Bad Request" 같은 문구를 넣는다
+        code = this.isErrorCode(resp.error) ? resp.error : this.getCodeFromStatus(status);
         details = resp.details;
+      }
+
+      // ThrottlerException 은 영어 문자열("ThrottlerException: Too Many Requests")이라 사용자에게 그대로 보일 수 없다
+      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        message = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요';
       }
 
       // 5xx는 예상치 못한 서버 오류이므로 Sentry로 리포트 (4xx는 정상적인 클라이언트 오류라 제외)
@@ -71,6 +78,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     response.status(status).send(errorResponse);
+  }
+
+  private isErrorCode(value: unknown): value is string {
+    return typeof value === 'string' && /^[A-Z0-9_]+$/.test(value);
   }
 
   private getCodeFromStatus(status: number): string {

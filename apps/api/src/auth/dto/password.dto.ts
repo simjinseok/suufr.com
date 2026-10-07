@@ -2,15 +2,15 @@ import { IsEmail, IsString, Matches } from 'class-validator';
 import { PASSWORD_POLICY, PASSWORD_POLICY_MESSAGE } from './password-policy';
 
 export class ForgotPasswordDto {
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 }
 
 export class ResetPasswordDto {
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 
-  @IsString()
+  @IsString({ message: '인증코드를 입력해주세요' })
   code!: string;
 
   @IsString()
