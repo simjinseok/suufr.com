@@ -17,6 +17,8 @@ import { login, respondToMfa } from '@/actions/auth';
 import GoogleLoginButton from '@/components/auth/google-login-button';
 
 const SOCIAL_ERROR_MESSAGE = 'Google 로그인에 실패했습니다. 다시 시도해주세요.';
+// proxy / 앱 레이아웃이 api 에 닿지 못해 보낸 경우 (?error=unavailable). 세션 만료와 구분해 알린다
+const UNAVAILABLE_MESSAGE = '서버에 연결할 수 없어 로그인 화면으로 이동했습니다. 잠시 후 다시 시도해주세요.';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -28,8 +30,9 @@ export default function LoginForm() {
   // InputOTP 는 TextField 와 달리 Form 의 validationErrors 를 모르므로, 제출 에러를 직접 넘기고
   // 다시 입력을 시작하면(해당 제출의 timestamp 를 기억해) 에러 표시를 지운다
   const [otpErrorDismissedAt, setOtpErrorDismissedAt] = React.useState<number | undefined>();
-  // ?error= 는 api(social) 또는 better-auth(state_mismatch 등)가 붙인다. 코드와 무관하게 같은 안내
-  const socialError = searchParams.get('error') ? SOCIAL_ERROR_MESSAGE : null;
+  // ?error=unavailable 은 proxy/앱 레이아웃(api 장애), 그 외 ?error= 는 api(social) 또는 better-auth(state_mismatch 등)가 붙인다
+  const errorParam = searchParams.get('error');
+  const paramError = errorParam === 'unavailable' ? UNAVAILABLE_MESSAGE : errorParam ? SOCIAL_ERROR_MESSAGE : null;
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -224,9 +227,9 @@ export default function LoginForm() {
           action={loginAction}
           validationErrors={loginState.fieldErrors}
         >
-          {(loginState.message || socialError) && (
+          {(loginState.message || paramError) && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-              {loginState.message || socialError}
+              {loginState.message || paramError}
             </div>
           )}
 

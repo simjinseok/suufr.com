@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 
-import { getSession } from '@/utils/auth';
+import { fetchSession } from '@/utils/auth';
 import { authApi } from '@/utils/api/auth';
 
 export default async function UnauthenticatedLayout({
@@ -11,9 +11,9 @@ export default async function UnauthenticatedLayout({
 }) {
   const cookieStore = await cookies();
 
-  // 1. 기존 세션 체크
-  const session = await getSession();
-  if (session) {
+  // 1. 기존 세션 체크. api 장애(ok: false)면 로그인 화면을 그대로 그린다 — 여기서 리다이렉트하면 /login 에서 무한 루프
+  const result = await fetchSession();
+  if (result.ok && result.session) {
     redirect('/dashboard');
   }
 
