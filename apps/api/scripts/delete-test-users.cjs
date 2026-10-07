@@ -8,7 +8,7 @@
  * 안전장치: @example.com(RFC 2606 예약 도메인) 이메일만 받고, NODE_ENV=production 이면 거부하며,
  * 수강생·수업·커리큘럼·파일이 하나라도 있는 계정은 테스트 계정이 아니라고 보고 전체를 중단한다.
  * users 에 FK 가 없는 테이블(organizations, user_settings, user_consents, user_subscriptions 등)은 직접 지우고,
- * auth_sessions·accounts·two_factors 는 users 삭제 시 CASCADE 된다. organization_members 는 Prisma 모델이 없어 SQL 로 지운다.
+ * auth_sessions·accounts·two_factors 는 users 삭제 시 CASCADE 된다.
  */
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('../dist/generated/prisma/client');
@@ -79,7 +79,6 @@ async function main() {
       prisma.appToken.deleteMany({ where: byUser }),
       prisma.externalServiceToken.deleteMany({ where: byUser }),
       prisma.googleSyncToken.deleteMany({ where: byUser }),
-      prisma.$executeRaw`DELETE FROM organization_members WHERE organization_id = ANY(${orgIds}::int[]) OR user_id = ANY(${ids}::uuid[])`,
       prisma.organization.deleteMany({ where: { id: { in: orgIds } } }),
       prisma.verification.deleteMany({ where: otpIdentifiers }),
       // auth_sessions / accounts / two_factors 는 CASCADE
