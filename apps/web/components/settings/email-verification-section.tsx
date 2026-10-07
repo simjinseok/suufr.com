@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { Button, FieldError, Form, Input, Label, Surface, TextField } from '@heroui/react';
+import { Button, FieldError, Form, Input, Label, Surface, TextField, toast } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { MailWarning } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,8 @@ import { resendVerification, verifyEmail } from '@/actions/auth';
 
 /**
  * 설정(회원정보)의 이메일 인증 섹션. 가입 직후 로그인된 미인증 계정만 보인다.
- * 가입 메일의 6자리 코드를 입력하거나 다시 받는다. 성공하면 서버 컴포넌트를 다시 그려(/me emailVerified) 섹션과 상단 배너가 함께 사라진다.
+ * 가입 메일의 6자리 코드를 입력하거나 다시 받는다. 성공하면 서버 컴포넌트를 다시 그려(/me emailVerified) 섹션과 상단 배너가 함께 사라지므로,
+ * 사라지기 전에 토스트로 완료를 알린다 (섹션 안의 성공 메시지는 같이 사라져 보이지 않는다).
  */
 export default function EmailVerificationSection({ email }: { email: string }) {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function EmailVerificationSection({ email }: { email: string }) {
 
   React.useEffect(() => {
     if (!state.timestamp || !state.success) return;
+    toast.success('이메일 인증 완료', { description: '이메일 인증이 완료되었습니다.', timeout: 3000 });
     router.refresh();
   }, [state.timestamp, state.success, router]);
 
@@ -41,9 +43,6 @@ export default function EmailVerificationSection({ email }: { email: string }) {
 
         {state.message && !state.success && (
           <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{state.message}</div>
-        )}
-        {state.success && (
-          <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">{state.message}</div>
         )}
         {resendState.message && (
           <div className={`p-3 rounded-lg text-sm ${resendState.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
