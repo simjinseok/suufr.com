@@ -2,12 +2,15 @@ import { createLoader, parseAsInteger, parseAsString } from 'nuqs/server';
 
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { format } from 'date-fns/format';
+import { tz } from '@date-fns/tz';
 
 import NewInvoice from './_new-invoice';
 import InvoicesList from './_invoices-list';
 import { getSession } from '@/utils/auth';
 import { invoicesApi, studentsApi } from '@/utils/api';
 import { getUserSettings } from '@/utils/user-settings';
+import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -41,6 +44,9 @@ export default async function Page(props: PageProps<'/invoices'>) {
       : Promise.resolve(null),
   ]);
 
+  // 카드의 "N일 남음"·경과 바는 유저 타임존의 오늘을 기준으로 — 서버에서 한 번만 계산
+  const today = format(new Date(), 'yyyy-MM-dd', { in: tz(settings.timezone ?? DEFAULT_TIMEZONE) });
+
   return (
     <div className="mt-3">
       <div className="flex items-end justify-between">
@@ -56,22 +62,20 @@ export default async function Page(props: PageProps<'/invoices'>) {
           totalCount: invoice.totalCount,
           periodStart: invoice.periodStart,
           periodEnd: invoice.periodEnd,
-          // 수업 목록은 수업일 내림차순 (API 기본은 오름차순)
-          sessions: invoice.sessions
-            .map(s => ({
-              uuid: s.uuid,
-              sessionAt: s.sessionAt,
-              duration: s.duration,
-              isDone: s.isDone,
-            }))
-            .sort((a, b) => b.sessionAt.localeCompare(a.sessionAt)),
+          doneCount: invoice.sessions.filter(s => s.isDone).length,
           student: {
             uuid: invoice.student.uuid,
             name: invoice.student.name,
+            profileImageUrl: invoice.student.profileImageUrl,
           },
+          payments: invoice.payments.map(p => ({
+            uuid: p.uuid,
+            amount: p.amount,
+            paidAt: p.paidAt,
+          })),
         }))}
         selectedStudent={selectedStudent}
-        use24HourFormat={settings.use24HourFormat}
+        today={today}
       />
 
       <div className="mt-5 flex justify-between">

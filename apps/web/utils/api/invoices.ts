@@ -26,6 +26,8 @@ type Student = {
   id: number;
   uuid: string;
   name: string;
+  // 완전한 CDN URL 또는 null (students 페이지와 동일)
+  profileImageUrl: string | null;
 };
 
 export type Invoice = {
