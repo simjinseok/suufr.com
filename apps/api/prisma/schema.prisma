@@ -309,6 +309,7 @@ model UserSettings {
   defaultDuration         Int      @default(50) @map("default_duration")
   autoUpdateNextPaymentAt Boolean  @default(true) @map("auto_update_next_payment_at")
   timezone                String? // IANA 타임존. null = 미설정(웹 첫 방문 시 브라우저 값으로 자동 초기화)
+  defaultPaymentMethod    String   @default("transfer") @map("default_payment_method") // 새 입금 폼 초기 선택값. transfer | card | cash (검증은 DTO)
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 

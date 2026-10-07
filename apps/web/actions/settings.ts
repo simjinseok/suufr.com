@@ -8,6 +8,7 @@ import { ServerActionState } from '@/types/index';
 import { settingsApi } from '@/utils/api/settings';
 import { getUserSettings } from '@/utils/user-settings';
 import { isValidTimeZone } from '@/utils/timezone';
+import { PAYMENT_METHODS, type PaymentMethod } from '@/constants/payment-method';
 
 /**
  * 브라우저 타임존으로 설정을 1회 초기화 (설정이 비어 있을 때만 호출됨).
@@ -33,13 +34,19 @@ type UpdateSettingsState = ServerActionState<{
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
   timezone: string;
+  defaultPaymentMethod: PaymentMethod | '';
 }>;
 
+// 스위치(checkbox)는 켜졌을 때만 'on' 으로 실리고 꺼지면 키 자체가 없다.
+// zod v4 의 z.coerce.boolean() 은 undefined 를 거부하므로 "없음 = false" 로 직접 해석한다.
+const formSwitch = z.literal('on').optional().transform(value => value === 'on');
+
 const updateSettingsSchema = z.object({
-  use24HourFormat: z.coerce.boolean(),
+  use24HourFormat: formSwitch,
   defaultDuration: z.coerce.number().min(1, { message: '1분 이상이어야 합니다' }).max(480, { message: '480분 이하여야 합니다' }),
-  autoUpdateNextPaymentAt: z.coerce.boolean(),
+  autoUpdateNextPaymentAt: formSwitch,
   timezone: z.string().refine(isValidTimeZone, { message: '올바른 시간대를 선택해주세요' }),
+  defaultPaymentMethod: z.enum(PAYMENT_METHODS, { message: '결제수단을 선택해주세요' }),
 });
 
 export async function updateSettings(prevState: UpdateSettingsState, formData: FormData) {
@@ -60,6 +67,9 @@ export async function updateSettings(prevState: UpdateSettingsState, formData: F
           defaultDuration: Number(data.defaultDuration),
           autoUpdateNextPaymentAt: data.autoUpdateNextPaymentAt === 'on',
           timezone: String(data.timezone ?? ''),
+          defaultPaymentMethod: (PAYMENT_METHODS as readonly string[]).includes(String(data.defaultPaymentMethod))
+            ? (data.defaultPaymentMethod as PaymentMethod)
+            : '',
         },
         timestamp: Date.now(),
       };
@@ -76,9 +86,11 @@ export async function updateSettings(prevState: UpdateSettingsState, formData: F
           defaultDuration: validationResult.data.defaultDuration,
           autoUpdateNextPaymentAt: validationResult.data.autoUpdateNextPaymentAt,
           timezone: validationResult.data.timezone,
+          defaultPaymentMethod: validationResult.data.defaultPaymentMethod,
         });
 
         revalidatePath('/settings', 'page');
+        revalidatePath('/payments', 'page');
         revalidatePath('/calendar', 'page');
         revalidatePath('/students', 'layout');
         state.success = true;

@@ -1,10 +1,12 @@
 'use client';
 import React from 'react';
-import {Form, Button, Collection, ComboBox, EmptyState, Input, Label, ListBox, NumberField, Surface, Switch, toast} from '@heroui/react';
+import { Form, Button, Collection, ComboBox, EmptyState, Input, Label, ListBox, NumberField, Select, Surface, Switch, toast } from '@heroui/react';
+import { BanknoteIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { updateSettings } from '@/actions/settings';
 import type { TUserSettings } from '@/types/index';
+import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type PaymentMethod } from '@/constants/payment-method';
 
 export default function SettingsForm({ settings }: { settings: TUserSettings }) {
   const formId = React.useId();
@@ -15,6 +17,7 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
       defaultDuration: settings.defaultDuration,
       autoUpdateNextPaymentAt: settings.autoUpdateNextPaymentAt,
       timezone: settings.timezone ?? '',
+      defaultPaymentMethod: settings.defaultPaymentMethod,
     },
   });
 
@@ -24,6 +27,7 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
       defaultDuration: settings.defaultDuration,
       autoUpdateNextPaymentAt: settings.autoUpdateNextPaymentAt,
       timezone: settings.timezone ?? '',
+      defaultPaymentMethod: settings.defaultPaymentMethod,
     },
   });
 
@@ -62,11 +66,14 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
                   onChange={onChange}
                   aria-label="24시간제"
                 >
-                  <Switch.Control>
-                    <Switch.Thumb>
-                      <Switch.Icon />
-                    </Switch.Thumb>
-                  </Switch.Control>
+                  {/* Switch.Content 가 실제 <input> 과 클릭 처리를 렌더한다 — 없으면 토글도 안 되고 폼에도 안 실린다 */}
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb>
+                        <Switch.Icon />
+                      </Switch.Thumb>
+                    </Switch.Control>
+                  </Switch.Content>
                 </Switch>
               )}
             />
@@ -103,6 +110,42 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
 
           <div className="flex justify-between items-center gap-2">
             <div>
+              <h2 className="text-lg font-semibold">기본 결제수단</h2>
+              <p className="mt-1 text-sm text-gray-500">새 입금 기록 시 기본으로 선택되는 결제수단입니다.</p>
+            </div>
+            <Controller
+              control={control}
+              name="defaultPaymentMethod"
+              render={({ field: { name, value, onChange } }) => (
+                <Select
+                  variant="secondary"
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  aria-label="기본 결제수단"
+                  className="w-40 shrink-0"
+                >
+                  <Select.Trigger>
+                    <Select.Value className="flex items-center gap-3" />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {PAYMENT_METHODS.map(method => (
+                        <ListBox.Item key={method} id={method} textValue={PAYMENT_METHOD_LABELS[method]}>
+                          <PaymentMethodIcon method={method} />
+                          <Label>{PAYMENT_METHOD_LABELS[method]}</Label>
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="flex justify-between items-center gap-2">
+            <div>
               <h2 className="text-lg font-semibold">시간대</h2>
               <p className="mt-1 text-sm text-gray-500">날짜·시간 표시와 월별 집계의 기준 시간대입니다.</p>
             </div>
@@ -132,11 +175,13 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
                     onChange={onChange}
                     aria-label="다음 결제 예정일 자동 업데이트"
                   >
-                    <Switch.Control>
-                      <Switch.Thumb>
-                        <Switch.Icon />
-                      </Switch.Thumb>
-                    </Switch.Control>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb>
+                          <Switch.Icon />
+                        </Switch.Thumb>
+                      </Switch.Control>
+                    </Switch.Content>
                   </Switch>
                 </React.Fragment>
               )}
@@ -157,6 +202,12 @@ export default function SettingsForm({ settings }: { settings: TUserSettings }) 
       </Form>
     </Surface>
   );
+}
+
+function PaymentMethodIcon({ method }: { method: PaymentMethod }) {
+  if (method === 'card') return <CreditCardIcon />;
+  if (method === 'cash') return <BanknoteIcon />;
+  return <LandmarkIcon />;
 }
 
 function TimezoneComboBox({

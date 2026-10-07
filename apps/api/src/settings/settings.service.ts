@@ -28,6 +28,7 @@ export class SettingsService {
         ...(dto.defaultDuration !== undefined && { defaultDuration: dto.defaultDuration }),
         ...(dto.autoUpdateNextPaymentAt !== undefined && { autoUpdateNextPaymentAt: dto.autoUpdateNextPaymentAt }),
         ...(dto.timezone !== undefined && { timezone: dto.timezone }),
+        ...(dto.defaultPaymentMethod !== undefined && { defaultPaymentMethod: dto.defaultPaymentMethod }),
       },
       create: {
         userId,
@@ -35,6 +36,7 @@ export class SettingsService {
         ...(dto.defaultDuration !== undefined && { defaultDuration: dto.defaultDuration }),
         ...(dto.autoUpdateNextPaymentAt !== undefined && { autoUpdateNextPaymentAt: dto.autoUpdateNextPaymentAt }),
         ...(dto.timezone !== undefined && { timezone: dto.timezone }),
+        ...(dto.defaultPaymentMethod !== undefined && { defaultPaymentMethod: dto.defaultPaymentMethod }),
       },
     });
 

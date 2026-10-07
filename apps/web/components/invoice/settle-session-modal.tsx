@@ -17,6 +17,7 @@ import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { useTimeZone } from '@/contexts/timezone';
+import { useDefaultPaymentMethod } from '@/contexts/time-format';
 import { BanknoteIcon, CreditCardIcon, LandmarkIcon } from 'lucide-react';
 
 import { settleSession } from '@/actions/invoice';
@@ -53,11 +54,12 @@ export default function SettleSessionModal({ isOpen, onOpenChange, studentUuid, 
 
 function Content({ close, studentUuid, session }: { studentUuid: string; session: Props['session']; close: () => void }) {
   const timeZone = useTimeZone();
+  const defaultPaymentMethod = useDefaultPaymentMethod();
   const formId = React.useId();
   const sessionDate = new Date(session.sessionAt);
 
   const [price, setPrice] = React.useState(0);
-  const [method, setMethod] = React.useState('transfer');
+  const [method, setMethod] = React.useState<string>(defaultPaymentMethod);
 
   const [state, formAction, isPending] = React.useActionState(settleSession, {});
 

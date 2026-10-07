@@ -29,6 +29,7 @@ import { updatePayment, removePayment } from '@/actions/payment';
 import { invoiceOptionLabel, invoicePeriodLabel } from '@/utils/invoice-label';
 import { fromDate, toCalendarDate, today } from '@internationalized/date';
 import { useTimeZone } from '@/contexts/timezone';
+import { useDefaultPaymentMethod } from '@/contexts/time-format';
 
 // 학생 앞으로 입금을 기록/수정하는 모달. 금액의 진실 소스는 학생 단위 잔액(잔액 모델)이고,
 // 수강권과는 선택적 연결만 한다 (§6-22 — 어느 수강권을 커버하는 입금인지 표시용).
@@ -91,6 +92,7 @@ interface ContentProps {
 }
 function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUuid }: ContentProps) {
   const timeZone = useTimeZone();
+  const defaultPaymentMethod = useDefaultPaymentMethod();
   const formId = React.useId();
 
   // 환불 = 음수 입금 (docs/schema-redesign.md §3). UI는 입금/환불 토글 + 양수 금액으로 받는다
@@ -131,7 +133,8 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
     values: {
       paidAt: payment ? toCalendarDate(fromDate(new Date(payment.paidAt), timeZone)) : today(timeZone),
       amount: Math.abs(payment?.amount ?? defaultAmount ?? 0),
-      method: payment?.method || 'transfer',
+      // 수정 시엔 저장된 값, 신규일 때만 설정의 기본 결제수단
+      method: payment?.method || defaultPaymentMethod,
       notes: payment?.notes || '',
     },
   });

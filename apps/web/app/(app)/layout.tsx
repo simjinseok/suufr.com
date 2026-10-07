@@ -25,7 +25,11 @@ export default async function AuthenticatedLayout({
   const settings = await getUserSettings();
 
   return (
-    <TimeFormatProvider use24HourFormat={settings.use24HourFormat} defaultDuration={settings.defaultDuration}>
+    <TimeFormatProvider
+      use24HourFormat={settings.use24HourFormat}
+      defaultDuration={settings.defaultDuration}
+      defaultPaymentMethod={settings.defaultPaymentMethod}
+    >
       <TimeZoneProvider timeZone={settings.timezone ?? DEFAULT_TIMEZONE}>
         {/* modal.show()로 띄우는 모달이 위 두 프로바이더 안에서 렌더되어야 한다.
           루트에 두면 형제로 렌더되어 타임존/시간형식이 기본값(UTC)으로 폴백한다. */}

@@ -1,9 +1,12 @@
+import type { PaymentMethod } from '@/constants/payment-method';
+
 export type TUserSettings = {
   userId: string;
   use24HourFormat: boolean;
   defaultDuration: number;
   autoUpdateNextPaymentAt: boolean;
   timezone: string | null; // IANA. null = 미설정(첫 방문 시 브라우저 값으로 자동 초기화)
+  defaultPaymentMethod: PaymentMethod; // 새 입금 폼 초기 선택값. 서버 값은 normalizePaymentMethod 로 정규화해 넣는다
 };
 
 export type Student = {
