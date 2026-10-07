@@ -21,14 +21,14 @@ export class SubscriptionsController {
   }
 
   /**
-   * 결제 건의 인보이스 PDF URL 발급 (Paddle 인보이스, 1시간 유효)
+   * 결제 건의 인보이스 PDF URL 발급 (Paddle 거래만, 1시간 유효)
    */
-  @Get('orders/:paddleTransactionId/invoice')
+  @Get('orders/:transactionId/invoice')
   async getInvoice(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('paddleTransactionId') paddleTransactionId: string,
+    @Param('transactionId') transactionId: string,
   ) {
-    const data = await this.billingService.getInvoiceUrl(user.userId, paddleTransactionId);
+    const data = await this.billingService.getInvoiceUrl(user.userId, transactionId);
     return { success: true, data };
   }
 

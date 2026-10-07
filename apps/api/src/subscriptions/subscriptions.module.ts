@@ -6,6 +6,7 @@ import { SubscriptionsController } from './subscriptions.controller';
 import { PaddleClient } from './paddle.client';
 import { PaddleWebhookController } from './paddle-webhook.controller';
 import { PaddleWebhookService } from './paddle-webhook.service';
+import { BillingSyncService } from './billing-sync.service';
 
 @Module({
   controllers: [SubscriptionsController, PaddleWebhookController],
@@ -13,6 +14,7 @@ import { PaddleWebhookService } from './paddle-webhook.service';
     SubscriptionsService,
     SubscriptionsBillingService,
     SubscriptionsReconciliationService,
+    BillingSyncService,
     PaddleClient,
     PaddleWebhookService,
   ],
