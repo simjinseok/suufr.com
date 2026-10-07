@@ -1,12 +1,14 @@
-import { Matches, IsDefined, IsEmail, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import { Matches, IsDefined, IsEmail, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { PASSWORD_POLICY, PASSWORD_POLICY_MESSAGE } from './password-policy';
 import { Type } from 'class-transformer';
 import { ConsentsDto } from './consent.dto';
 
 export class SignupDto {
+  // 웹 가입 폼은 받지 않는다. 기존 iOS 앱이 보내는 값만 받아 과외방 이름 초기값에 쓴다 (없으면 이메일 앞부분)
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  name!: string;
+  @MaxLength(100)
+  name?: string;
 
   @IsEmail()
   email!: string;

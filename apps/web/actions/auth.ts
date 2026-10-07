@@ -150,7 +150,6 @@ export async function respondToMfa(
 
 // Signup action
 type SignupFields = {
-  name: string;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -175,7 +174,6 @@ export async function signup(
       const state: SignupState = {
         success: false,
         fields: {
-          name: (data.name as string) || '',
           email: (data.email as string) || '',
           password: '',
           passwordConfirm: '',
@@ -193,7 +191,6 @@ export async function signup(
 
       try {
         const response = await authApi.signup({
-          name: validation.data.name,
           email: validation.data.email,
           password: validation.data.password,
           // 동의 3종은 Zod 에서 true 로 확정됨. 동의 시점의 문서 버전·IP·UA 를 함께 기록

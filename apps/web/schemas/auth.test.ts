@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { consentSchema, signupSchema } from './auth';
 
 const base = {
-  name: '홍길동',
   email: 'test@example.com',
   password: 'Password1!',
   passwordConfirm: 'Password1!',

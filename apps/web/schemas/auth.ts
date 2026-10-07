@@ -31,7 +31,6 @@ export const consentSchema = z.object(consentFields);
 
 export const signupSchema = z
   .object({
-    name: z.string().min(1, { error: '이름을 입력해주세요' }),
     email: z.string().email({ error: '유효한 이메일을 입력해주세요' }),
     password: newPasswordField,
     passwordConfirm: z.string(),
