@@ -32,3 +32,17 @@ export const PLAN_PRICING: Record<PaidPlanValue, PlanPricing> = {
     monthlyPriceKrw: 6900,
   },
 };
+
+/**
+ * provider 상품 식별자 → 유료 플랜 (스펙 §5.2-12)
+ * mapping 은 환경변수로 구성한다 (sandbox/production 가격 id 가 다름).
+ * 매핑에 없거나 productId 가 null 이면 pro 로 둔다 — 현재 유일한 유료 플랜이고,
+ * 매핑 실수로 결제가 멈추면 안 된다. 호출부는 matched=false 를 경고 로그로 남긴다.
+ */
+export function resolvePlanByProductId(
+  productId: string | null,
+  mapping: Record<string, PaidPlanValue>,
+): { plan: PaidPlanValue; matched: boolean } {
+  const plan = productId ? mapping[productId] : undefined;
+  return plan ? { plan, matched: true } : { plan: 'pro', matched: false };
+}
