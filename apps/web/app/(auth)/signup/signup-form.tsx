@@ -14,7 +14,6 @@ import Link from 'next/link';
 
 import { signup } from '@/actions/auth';
 import ConsentCheckboxes, { EMPTY_CONSENTS, isAllConsented, type ConsentValues } from '@/components/auth/consent-checkboxes';
-import GoogleLoginButton from '@/components/auth/google-login-button';
 import { RECAPTCHA_ACTION_SIGNUP, RecaptchaNotice, RecaptchaScript, useRecaptcha } from '@/components/auth/recaptcha';
 
 export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: string | null }) {
@@ -173,15 +172,6 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
           <p className="text-center text-xs text-gray-400">가입하면 만 14세 이상임을 확인하는 것입니다.</p>
           {recaptchaSiteKey && <RecaptchaNotice />}
         </Form>
-
-        <div className="my-5 flex items-center gap-3 text-xs text-gray-400">
-          <div className="h-px grow bg-gray-200" />
-          또는
-          <div className="h-px grow bg-gray-200" />
-        </div>
-
-        {/* 체크박스와 무관하다. 약관·방침 고지는 Google 동의 화면이 보여주고, 동의 이력은 api 가 가입 완료 시 기록한다 */}
-        <GoogleLoginButton />
 
         <div className="mt-6 text-center text-sm text-gray-500">
           이미 계정이 있으신가요?

@@ -21,7 +21,7 @@ function GoogleMark() {
 }
 
 /**
- * "Google로 계속하기" (로그인·가입 페이지 공용) — 서버 액션이 브라우저를 api /auth/google/start 로 보내고, api 가 Google 인증 페이지로
+ * "Google로 계속하기" (로그인 페이지) — 서버 액션이 브라우저를 api /auth/google/start 로 보내고, api 가 Google 인증 페이지로
  * 리다이렉트한다. 기존 계정이면 로그인, 없으면 가입. 약관·방침 고지는 Google 동의 화면의 링크가 맡으므로 체크박스를 요구하지 않는다.
  *
  * Google 브랜딩 가이드라인(Light 테마)을 따른다:

@@ -19,7 +19,7 @@ import { setMfaSessionCookie, setTokenCookies } from '@/utils/auth-cookies';
 import { buildConsentPayload } from '@/utils/consent';
 
 /**
- * Google 로그인·가입 시작 (로그인·가입 페이지 공용). 기존 계정이면 로그인, 없으면 가입이며 약관·방침 고지는 Google 동의 화면이 맡는다.
+ * Google 로그인·가입 시작 (로그인 페이지). 기존 계정이면 로그인, 없으면 가입이며 약관·방침 고지는 Google 동의 화면이 맡는다.
  * 브라우저를 api 의 /auth/google/start 로 보낸다 (서버 간 호출이 아니라 브라우저가 직접 가야 한다 —
  * better-auth 가 거기서 발급하는 state 쿠키를 콜백에서 대조하기 때문).
  * api /auth/google/start → Google → api /auth/google/callback → api social/google/complete → web /auth/google/login 순으로 돌아온다.
