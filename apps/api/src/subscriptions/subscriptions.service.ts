@@ -6,6 +6,9 @@ import { PLAN_LIMITS, PLAN_PRICING, PlanLimits } from './plan.constants';
 /** 유효 플랜 판정에 필요한 최소 필드 (테스트·가드에서 부분 객체를 넘길 수 있게) */
 export type EffectivePlanInput = Pick<UserSubscription, 'plan' | 'status' | 'currentPeriodEnd' | 'gracePeriodExpiresAt'>;
 
+/** 구독을 지금 시작할 수 없는 사유. 비어 있으면 결제 시작 가능 */
+export type SubscribeBlocker = 'email_unverified' | 'already_subscribed';
+
 @Injectable()
 export class SubscriptionsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -47,6 +50,28 @@ export class SubscriptionsService {
     return this.getEffectivePlanOf(subscription);
   }
 
+  /**
+   * 구독 시작 차단 사유 (순수 함수 — 요약 응답과 체크아웃 가드가 같은 판정을 쓴다)
+   * - email_unverified: 이메일 미인증 계정은 결제 불가. 미인증 계정 자동 정리 대상에 결제 계정이 섞이지 않게 하는 장치
+   * - already_subscribed: 유효 플랜이 이미 유료
+   */
+  getSubscribeBlockers(input: { emailVerified: boolean; effectivePlan: PlanValue }): SubscribeBlocker[] {
+    const blockers: SubscribeBlocker[] = [];
+    if (!input.emailVerified) {
+      blockers.push('email_unverified');
+    }
+    if (input.effectivePlan !== 'free') {
+      blockers.push('already_subscribed');
+    }
+    return blockers;
+  }
+
+  /** User.emailVerified (행이 없으면 미인증으로 취급) */
+  async isEmailVerified(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } });
+    return user?.emailVerified ?? false;
+  }
+
   async getEntitlements(userId: string): Promise<{ plan: PlanValue; limits: PlanLimits }> {
     const plan = await this.getEffectivePlan(userId);
     return { plan, limits: PLAN_LIMITS[plan] };
@@ -78,7 +103,7 @@ export class SubscriptionsService {
    * 구독 페이지용 요약 (플랜 + 한도 + 사용량 + 플랜 비교표 + 결제 내역)
    */
   async getSummary(userId: string) {
-    const [subscription, studentCount, quota, orders] = await Promise.all([
+    const [subscription, studentCount, quota, orders, emailVerified] = await Promise.all([
       this.getSubscription(userId),
       this.countBillableStudents(userId),
       this.prisma.userStorageQuota.findUnique({
@@ -102,8 +127,10 @@ export class SubscriptionsService {
           createdAt: true,
         },
       }),
+      this.isEmailVerified(userId),
     ]);
     const plan = this.getEffectivePlanOf(subscription);
+    const subscribeBlockers = this.getSubscribeBlockers({ emailVerified, effectivePlan: plan });
 
     return {
       plan,
@@ -114,6 +141,8 @@ export class SubscriptionsService {
       canceledAt: subscription?.canceledAt ?? null,
       billingIssueDetectedAt: subscription?.billingIssueDetectedAt ?? null,
       orders: orders.map(({ providerTransactionId, ...order }) => ({ ...order, transactionId: providerTransactionId })),
+      canSubscribe: subscribeBlockers.length === 0,
+      subscribeBlockers,
       limits: PLAN_LIMITS[plan],
       usage: {
         studentCount,
