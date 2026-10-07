@@ -160,6 +160,8 @@ type SignupFields = {
 type SignupState = ServerActionState<SignupFields> & {
   /** 계정은 생성됐지만 인증 메일 발송에 실패 — 인증 화면으로 보내 "다시 받기"를 유도한다 */
   mailFailed?: boolean;
+  /** 가입과 동시에 로그인됨 — 바로 앱으로 들어간다. 이메일 인증은 앱 상단 배너로 나중에 */
+  loggedIn?: boolean;
 };
 
 export async function signup(
@@ -199,6 +201,16 @@ export async function signup(
           recaptchaToken: validation.data.recaptchaToken,
         });
 
+        // 실제 가입이면 api 가 바로 로그인시킨다 — 인증 화면을 거치지 않고 앱으로 들어간다 (중복 이메일 합성 응답이면 토큰 없음)
+        if (response.accessToken && response.refreshToken) {
+          await setTokenCookies({
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+          });
+          state.loggedIn = true;
+        }
+
         state.success = true;
         state.message = response.message;
       }
@@ -215,7 +227,10 @@ export async function signup(
 
 // Verify email action
 type VerifyEmailFields = { email: string; code: string };
-type VerifyEmailState = ServerActionState<VerifyEmailFields>;
+type VerifyEmailState = ServerActionState<VerifyEmailFields> & {
+  /** 로그인 상태에서 인증했으면 대시보드로, 아니면 로그인으로 보낸다 */
+  loggedIn?: boolean;
+};
 
 export async function verifyEmail(
   prevState: VerifyEmailState,
@@ -249,6 +264,8 @@ export async function verifyEmail(
 
         state.success = true;
         state.message = response.message;
+        const cookieStore = await cookies();
+        state.loggedIn = Boolean(cookieStore.get('refresh_token')?.value);
       }
       catch (error: any) {
         state.message = error.message || '이메일 인증 중 오류가 발생했습니다';

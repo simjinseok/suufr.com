@@ -8,6 +8,8 @@ export type Session = {
     name?: string;
     // better-auth 2단계 인증(TOTP) 사용 여부
     twoFactorEnabled?: boolean;
+    // 이메일 인증 여부. false 면 앱 레이아웃이 인증 안내 배너를 띄운다 (api 배포 시차로 없으면 인증된 것으로 간주)
+    emailVerified?: boolean;
   };
   organization: {
     id: number;

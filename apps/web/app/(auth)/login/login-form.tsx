@@ -153,6 +153,8 @@ export default function LoginForm() {
                           autoComplete="one-time-code"
                           autoFocus
                           variant="secondary"
+                          // 루트가 w-full 이면 안쪽 그룹이 왼쪽에 붙는다 — 내용 폭으로 줄여 바깥 items-center 로 가운데 정렬
+                          className="w-auto"
                           aria-label="인증 코드"
                           isInvalid={!!otpError}
                           validationErrors={otpError ? [otpError] : undefined}

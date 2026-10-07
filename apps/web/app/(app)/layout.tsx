@@ -8,6 +8,7 @@ import { ModalManagerProvider } from '@/contexts/modal-manager';
 import { CloudFrontCookiesInitializer } from '@/components/cloudfront-cookies-initializer';
 import { TimezoneInitializer } from '@/components/timezone-initializer';
 import ReconsentModal from '@/components/consent/reconsent-modal';
+import EmailVerificationBanner from '@/components/auth/email-verification-banner';
 import { Sidebar } from './_sidebar';
 
 export default async function AuthenticatedLayout({
@@ -47,6 +48,8 @@ export default async function AuthenticatedLayout({
             <main className="flex-1 overflow-auto pt-14 sm:pt-0">
               <div className="h-full">
                 <div className="max-w-3xl mx-auto py-6 px-4 sm:px-2">
+                  {/* 가입 직후 로그인된 미인증 계정 — 인증을 마칠 때까지 안내 (차단하지 않음) */}
+                  {session.user.emailVerified === false && <EmailVerificationBanner email={session.user.email} />}
                   {children}
                 </div>
               </div>
