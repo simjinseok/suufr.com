@@ -9,8 +9,7 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<PlanValue, PlanLimits> = {
   free: {
-    // TODO(billing): 결제 오픈 전 임시 완화 (원래 5명). Paddle 결제 활성화 시 5로 복원할 것
-    maxStudents: 1000,
+    maxStudents: 5,
     storageQuotaBytes: 104857600, // 100MB
   },
   pro: {
