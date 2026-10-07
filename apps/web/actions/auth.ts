@@ -6,6 +6,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import {
+  consentSchema,
   loginSchema,
   signupSchema,
   verifyEmailSchema,
@@ -17,6 +18,7 @@ import { authApi } from '@/utils/api/auth';
 import { ApiError } from '@/utils/api-client';
 import { setMfaSessionCookie, setTokenCookies } from '@/utils/auth-cookies';
 import { buildConsentPayload } from '@/utils/consent';
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '@/constants/legal';
 
 /**
  * Google 로그인 시작. 브라우저를 api 의 /auth/google/start 로 보낸다 (서버 간 호출이 아니라 브라우저가 직접 가야 한다 —
@@ -25,6 +27,24 @@ import { buildConsentPayload } from '@/utils/consent';
  */
 export async function startGoogleLogin() {
   redirect(`${process.env.API_URL}/auth/google/start`);
+}
+
+/**
+ * Google 가입 시작 (가입 폼). 로그인 시작과 같은 경로지만 가입 모드(signup=1)와 동의값·문서 버전을 쿼리로 싣는다.
+ * api 는 그때만 신규 가입을 허용하고, 동의값을 쿠키로 보관했다가 콜백 뒤 동의 이력으로 기록한다.
+ * 버튼은 두 동의가 모두 체크돼야 활성화되지만, 조작된 호출이면 가입 폼으로 되돌린다.
+ */
+export async function startGoogleSignup(consents: { agreeTerms: boolean; agreePrivacy: boolean }) {
+  if (!consentSchema.safeParse(consents).success) redirect('/signup?error=consent');
+
+  const params = new URLSearchParams({
+    signup: '1',
+    terms: 'true',
+    privacy: 'true',
+    termsVersion: TERMS_VERSION,
+    privacyVersion: PRIVACY_POLICY_VERSION,
+  });
+  redirect(`${process.env.API_URL}/auth/google/start?${params.toString()}`);
 }
 
 // Login action

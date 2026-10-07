@@ -57,6 +57,9 @@ export function createAuthOptions(deps: AuthConfigDeps) {
               clientSecret: google.clientSecret,
               redirectURI: `${baseURL}/auth/google/callback`,
               prompt: 'select_account',
+              // 로그인 화면의 Google 버튼으로 계정이 생기지 않게 한다. 신규 가입은 동의를 받은 요청(requestSignUp)만 허용 —
+              // 웹은 SocialLoginController.start 의 가입 모드, iOS 는 /auth/google/native 의 consents
+              disableImplicitSignUp: true,
             },
           },
         }

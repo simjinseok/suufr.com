@@ -7,7 +7,7 @@ import { BetterAuthService } from './better-auth.service';
  * 실제 better-auth 인스턴스(메모리 어댑터)로 ID 토큰 로그인 배선을 검증한다.
  * Google 서명 검증만 provider 옵션(verifyIdToken·getUserInfo)으로 대체한다 — 나머지(사용자 생성·연결·세션·JWT)는 실제 코드다.
  */
-function makeAuth(opts: { verify: boolean; email?: string; emailVerified?: boolean }) {
+function makeAuth(opts: { verify: boolean; email?: string; emailVerified?: boolean; disableImplicitSignUp?: boolean }) {
   const db: Record<string, unknown[]> = { user: [], session: [], account: [], verification: [], jwks: [] };
   const auth = betterAuth({
     baseURL: 'https://api.test',
@@ -19,6 +19,7 @@ function makeAuth(opts: { verify: boolean; email?: string; emailVerified?: boole
       google: {
         clientId: ['primary-client', 'ios-server-client'],
         clientSecret: 'secret',
+        disableImplicitSignUp: opts.disableImplicitSignUp,
         verifyIdToken: async () => opts.verify,
         // 실제 구현은 ID 토큰 클레임을 디코드해 data 로 넘긴다. 계정 키는 data.sub 에서 나오므로 같은 모양으로 준다
         getUserInfo: (async () => {
@@ -57,6 +58,24 @@ describe('BetterAuthService.signInWithGoogleIdToken', () => {
     await service.signInWithGoogleIdToken('id.token.2');
     expect(db.user).toHaveLength(1);
     expect(db.session).toHaveLength(2);
+  });
+
+  it('disableImplicitSignUp: 신규 계정은 requestSignUp 없이는 403(SOCIAL_SIGNUP_REQUIRED), 있으면 가입된다', async () => {
+    const { auth, db } = makeAuth({ verify: true, disableImplicitSignUp: true });
+    const service = new BetterAuthService(auth as never);
+
+    await expect(service.signInWithGoogleIdToken('id.token')).rejects.toMatchObject({
+      status: 403,
+      response: { error: 'SOCIAL_SIGNUP_REQUIRED' },
+    });
+    expect(db.user).toHaveLength(0);
+
+    const result = await service.signInWithGoogleIdToken('id.token', undefined, { requestSignUp: true });
+    expect(result.success).toBe(true);
+    expect(db.user).toHaveLength(1);
+
+    // 가입된 뒤에는 로그인 전용 요청도 통과한다
+    await expect(service.signInWithGoogleIdToken('id.token')).resolves.toMatchObject({ success: true });
   });
 
   it('검증에 실패한 ID 토큰은 401 로 끝난다', async () => {

@@ -7,7 +7,8 @@ type Row = { type: 'terms' | 'privacy' | 'overseas_transfer'; docVersion: string
 function makeService(rows: Row[] = []) {
   const createMany = vi.fn().mockResolvedValue({ count: 2 });
   const findMany = vi.fn().mockResolvedValue(rows);
-  const prisma = { userConsent: { createMany, findMany } } as unknown as PrismaService;
+  const count = vi.fn().mockResolvedValue(rows.length);
+  const prisma = { userConsent: { createMany, findMany, count } } as unknown as PrismaService;
   return { service: new ConsentsService(prisma), createMany, findMany };
 }
 
@@ -45,30 +46,41 @@ describe('ConsentsService.record', () => {
   });
 });
 
-describe('ConsentsService.getStatus', () => {
-  it('이력이 없으면 모두 null 이고 required 다', async () => {
-    const { service } = makeService([]);
-    const status = await service.getStatus('user-1');
-    expect(status).toEqual({ terms: null, privacy: null, required: true });
+describe('ConsentsService.recordIfAbsent', () => {
+  it('이력이 없으면 기록하고 true', async () => {
+    const { service, createMany } = makeService([]);
+    await expect(service.recordIfAbsent('user-1', input)).resolves.toBe(true);
+    expect(createMany).toHaveBeenCalledTimes(1);
   });
 
-  it('현재 버전에 모두 동의했으면 required 가 아니다 (과거 국외 이전 행은 무시)', async () => {
+  it('이력이 하나라도 있으면 기록하지 않고 false (iOS 가 로그인마다 동의값을 보내도 1회만 남긴다)', async () => {
+    const { service, createMany } = makeService([{ type: 'terms', docVersion: '2000-01-01', agreed: true }]);
+    await expect(service.recordIfAbsent('user-1', input)).resolves.toBe(false);
+    expect(createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConsentsService.getStatus', () => {
+  it('이력이 없으면 모두 null', async () => {
+    const { service } = makeService([]);
+    expect(await service.getStatus('user-1')).toEqual({ terms: null, privacy: null });
+  });
+
+  it('타입별 최신 동의 버전을 돌려준다 (과거 국외 이전 행은 무시)', async () => {
     const { service } = makeService([
       { type: 'overseas_transfer', docVersion: '2000-01-01', agreed: true },
       { type: 'privacy', docVersion: PRIVACY_POLICY_VERSION, agreed: true },
       { type: 'terms', docVersion: TERMS_VERSION, agreed: true },
     ]);
-    const status = await service.getStatus('user-1');
-    expect(status.required).toBe(false);
-    expect(status.terms).toBe(TERMS_VERSION);
+    expect(await service.getStatus('user-1')).toEqual({ terms: TERMS_VERSION, privacy: PRIVACY_POLICY_VERSION });
   });
 
-  it('구 버전 동의만 있으면 required 다', async () => {
+  it('구 버전 동의도 그대로 돌려준다 — 개정 시 재동의를 요구하지 않는다', async () => {
     const { service } = makeService([
       { type: 'privacy', docVersion: '2000-01-01', agreed: true },
       { type: 'terms', docVersion: TERMS_VERSION, agreed: true },
     ]);
-    expect((await service.getStatus('user-1')).required).toBe(true);
+    expect((await service.getStatus('user-1')).privacy).toBe('2000-01-01');
   });
 
   it('최신순 행 중 타입별 첫 행만 본다 (철회 행이 최신이면 null)', async () => {
@@ -80,6 +92,6 @@ describe('ConsentsService.getStatus', () => {
     ]);
     const status = await service.getStatus('user-1');
     expect(status.terms).toBeNull();
-    expect(status.required).toBe(true);
+    expect(status.privacy).toBe(PRIVACY_POLICY_VERSION);
   });
 });

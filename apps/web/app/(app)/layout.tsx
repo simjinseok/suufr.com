@@ -7,7 +7,6 @@ import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 import { ModalManagerProvider } from '@/contexts/modal-manager';
 import { CloudFrontCookiesInitializer } from '@/components/cloudfront-cookies-initializer';
 import { TimezoneInitializer } from '@/components/timezone-initializer';
-import ReconsentModal from '@/components/consent/reconsent-modal';
 import EmailVerificationBanner from '@/components/auth/email-verification-banner';
 import { Sidebar } from './_sidebar';
 
@@ -35,9 +34,6 @@ export default async function AuthenticatedLayout({
           <CloudFrontCookiesInitializer />
           {/* 타임존 미설정 시 브라우저 값으로 1회 자동 초기화 */}
           <TimezoneInitializer needsInit={!settings.timezone} />
-          {/* 약관·개인정보 동의 이력이 없거나 문서 버전이 바뀐 경우 — 동의 전까지 앱 사용 차단 */}
-          {session.consents.required && <ReconsentModal />}
-
           <div className="flex min-h-dvh bg-linear-to-br from-gray-50 via-gray-100 to-gray-50 sm:p-4 sm:gap-4">
             <Sidebar
               currentOrg={session.organization}

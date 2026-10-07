@@ -14,7 +14,6 @@ import {
   MfaDto,
   RefreshTokenDto,
   SignupDto,
-  ConsentsDto,
   VerifyEmailDto,
   ResendVerificationDto,
   ForgotPasswordDto,
@@ -77,19 +76,6 @@ export class AuthController {
     };
   }
 
-  /**
-   * 약관·개인정보 재동의 기록 (기존 가입자, 방침 개정 후).
-   * /me 의 consents.required 가 true 인 동안 web 이 재동의 모달을 띄우고 이 엔드포인트로 제출한다.
-   */
-  @Post('consents')
-  async submitConsents(@CurrentUser() user: AuthenticatedUser, @Body() dto: ConsentsDto) {
-    await this.consentsService.record(user.userId, dto, {
-      ipAddress: dto.ipAddress,
-      userAgent: dto.userAgent,
-    });
-    return { success: true, consents: await this.consentsService.getStatus(user.userId) };
-  }
-
   @Public()
   @Post('login')
   async login(@Body() dto: LoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
@@ -107,11 +93,20 @@ export class AuthController {
   /**
    * iOS 네이티브 Google 로그인. Google Sign-In SDK 가 받은 ID 토큰(audience = 서버 클라이언트 ID)을 세션으로 바꾼다.
    * 응답은 login 성공 응답과 같다(토큰). 소셜 로그인이라 2단계 인증은 묻지 않는다. 브라우저 방식은 /auth/google/start 참고.
+   * consents 가 있으면(가입 화면) 신규 가입을 허용하고, 동의 이력이 없는 사용자에게만 기록한다.
+   * 없으면(로그인 화면) 기존 계정만 통과하고 미가입자는 SOCIAL_SIGNUP_REQUIRED(403) 다.
    */
   @Public()
   @Post('google/native')
   async googleNativeLogin(@Body() dto: GoogleNativeLoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
-    return this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent });
+    const tokens = await this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent }, { requestSignUp: !!dto.consents });
+    if (dto.consents) {
+      await this.consentsService.recordIfAbsent(tokens.userId, dto.consents, {
+        ipAddress: dto.consents.ipAddress ?? ip,
+        userAgent: dto.consents.userAgent ?? userAgent,
+      });
+    }
+    return tokens;
   }
 
   /**
