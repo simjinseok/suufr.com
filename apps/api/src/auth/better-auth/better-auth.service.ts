@@ -3,6 +3,13 @@ import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
 import { toHttpException } from './better-auth-error.map';
 
+export type SocialSignInUrls = {
+  callbackURL: string;
+  errorCallbackURL: string;
+  /** 신규 가입자(이번 콜백에서 사용자가 만들어진 경우)만 보낼 주소. 없으면 callbackURL */
+  newUserCallbackURL: string;
+};
+
 /** 로그인 성공 응답. accessToken = JWT(1h), refreshToken = 세션 토큰(30일) */
 export type IssuedTokens = {
   success: true;
@@ -160,9 +167,15 @@ export class BetterAuthService {
    * state 는 verifications 에도 저장되지만 콜백에서 이 쿠키까지 대조하므로(login CSRF 방어),
    * 호출자는 쿠키를 브라우저 응답에 그대로 실어야 한다 (SocialLoginController.start).
    */
-  async getSocialSignInUrl(provider: 'google', urls: { callbackURL: string; errorCallbackURL: string }): Promise<{ url: string; setCookies: string[] }> {
+  async getSocialSignInUrl(provider: 'google', urls: SocialSignInUrls): Promise<{ url: string; setCookies: string[] }> {
     const { headers, response } = await this.run(() => this.auth.api.signInSocial({
-      body: { provider, callbackURL: urls.callbackURL, errorCallbackURL: urls.errorCallbackURL, disableRedirect: true },
+      body: {
+        provider,
+        callbackURL: urls.callbackURL,
+        errorCallbackURL: urls.errorCallbackURL,
+        newUserCallbackURL: urls.newUserCallbackURL,
+        disableRedirect: true,
+      },
       returnHeaders: true,
     }));
     if (!response.url) throw toHttpException(new Error('소셜 로그인 URL 을 만들지 못했습니다'));

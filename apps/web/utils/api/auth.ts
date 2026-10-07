@@ -54,15 +54,10 @@ export type ConsentPayload = {
   userAgent?: string;
 };
 
+// 동의 종류별 최신 동의 문서 버전. null = 이력 없음. 개정 시 재동의를 요구하지 않는다(약관 제3조 공지로 갈음)
 export type ConsentStatus = {
   terms: string | null;
   privacy: string | null;
-  required: boolean;
-};
-
-type SubmitConsentsResponse = {
-  success: boolean;
-  consents: ConsentStatus;
 };
 
 type RefreshTokenResponse = {
@@ -100,10 +95,6 @@ export const authApi = {
 
   signup: (data: { email: string; password: string; consents: ConsentPayload; recaptchaToken?: string }) =>
     apiClient<SignupResponse>('/auth/signup', { method: 'POST', body: data }),
-
-  // 기존 가입자 재동의 (인증 필요)
-  submitConsents: (data: ConsentPayload) =>
-    apiClient<SubmitConsentsResponse>('/auth/consents', { method: 'POST', body: data }),
 
   verifyEmail: (data: { email: string; code: string }) =>
     apiClient<VerifyEmailResponse>('/auth/verify-email', { method: 'POST', body: data }),

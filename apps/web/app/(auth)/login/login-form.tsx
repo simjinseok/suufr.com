@@ -28,7 +28,8 @@ export default function LoginForm() {
   // InputOTP 는 TextField 와 달리 Form 의 validationErrors 를 모르므로, 제출 에러를 직접 넘기고
   // 다시 입력을 시작하면(해당 제출의 timestamp 를 기억해) 에러 표시를 지운다
   const [otpErrorDismissedAt, setOtpErrorDismissedAt] = React.useState<number | undefined>();
-  const socialError = searchParams.get('error') === 'social' ? SOCIAL_ERROR_MESSAGE : null;
+  // ?error= 는 api(social) 또는 better-auth(state_mismatch 등)가 붙인다. 코드와 무관하게 같은 안내
+  const socialError = searchParams.get('error') ? SOCIAL_ERROR_MESSAGE : null;
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,

@@ -15,7 +15,7 @@ export function extractClientIp(requestHeaders: Headers): string | undefined {
   return IPV4.test(candidate) || IPV6.test(candidate) ? candidate : undefined;
 }
 
-// 현재 요청의 IP·UA 를 포함한 동의 페이로드 (가입·재동의 공용). Zod 검증을 통과한 뒤에만 호출한다.
+// 현재 요청의 IP·UA 를 포함한 동의 페이로드 (이메일 가입). Zod 검증을 통과한 뒤에만 호출한다.
 export async function buildConsentPayload(): Promise<ConsentPayload> {
   const requestHeaders = await headers();
   return {

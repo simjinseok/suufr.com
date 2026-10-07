@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as web from './legal';
 import * as api from '../../api/src/common/constants/legal';
 
-// web/api 상수는 미러다. 어긋나면 가입은 막히지 않지만 모든 사용자에게 재동의 모달이 뜬다.
+// web/api 상수는 미러다. 어긋나면 동의 이력에 web 이 보여준 것과 다른 버전이 기록될 수 있다.
 describe('법적 문서 버전 상수 미러', () => {
   it('web 과 api 의 TERMS_VERSION 이 같다', () => {
     expect(web.TERMS_VERSION).toBe(api.TERMS_VERSION);
