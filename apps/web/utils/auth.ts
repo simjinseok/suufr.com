@@ -36,11 +36,10 @@ export type Session = {
   consents: ConsentStatus;
 };
 
-// API가 subscription을 아직 내려주지 않을 때(배포 시차) 안전 폴백
-// TODO(billing): 결제 오픈 전 임시 완화 — api의 plan.constants.ts(free.maxStudents)와 함께 5로 복원할 것
+// API가 subscription을 아직 내려주지 않을 때(배포 시차) 안전 폴백 — api plan.constants.ts 의 free 와 같은 값
 const FREE_SUBSCRIPTION: Session['subscription'] = {
   plan: 'free',
-  limits: { maxStudents: 1000, storageQuotaBytes: 104857600 },
+  limits: { maxStudents: 5, storageQuotaBytes: 104857600 },
 };
 
 // API가 consents를 아직 내려주지 않을 때(배포 시차) 안전 폴백
