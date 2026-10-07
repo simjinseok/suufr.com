@@ -1,4 +1,4 @@
-import { Matches, IsDefined, IsEmail, IsString, MinLength, ValidateNested } from 'class-validator';
+import { Matches, IsDefined, IsEmail, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
 import { PASSWORD_POLICY, PASSWORD_POLICY_MESSAGE } from './password-policy';
 import { Type } from 'class-transformer';
 import { ConsentsDto } from './consent.dto';
@@ -21,6 +21,12 @@ export class SignupDto {
   @ValidateNested()
   @Type(() => ConsentsDto)
   consents!: ConsentsDto;
+
+  // reCAPTCHA Enterprise 토큰(web 가입 폼). 없으면 RECAPTCHA_MODE 가 처리를 정한다 (iOS 는 아직 보내지 않는다)
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  recaptchaToken?: string;
 }
 
 export class VerifyEmailDto {

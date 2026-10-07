@@ -198,6 +198,8 @@ export async function signup(
           password: validation.data.password,
           // 동의 3종은 Zod 에서 true 로 확정됨. 동의 시점의 문서 버전·IP·UA 를 함께 기록
           consents: await buildConsentPayload(),
+          // 가입 폼이 제출 직전에 받은 reCAPTCHA 토큰. 없으면 api 가 RECAPTCHA_MODE 대로 처리
+          recaptchaToken: validation.data.recaptchaToken,
         });
 
         state.success = true;

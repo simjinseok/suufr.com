@@ -71,4 +71,14 @@ describe('SignupDto', () => {
     await expectRejected({ ...validBody, consents: { ...validConsents, marketing: true } });
     await expectRejected({ ...validBody, extra: 1 });
   });
+
+  it('recaptchaToken 은 선택이며 문자열이면 통과한다', async () => {
+    await expect(validate(validBody)).resolves.toBeTruthy();
+    const dto = await validate({ ...validBody, recaptchaToken: 'tok' });
+    expect(dto.recaptchaToken).toBe('tok');
+  });
+
+  it('recaptchaToken 이 4096자를 넘으면 거부된다', async () => {
+    await expectRejected({ ...validBody, recaptchaToken: 'x'.repeat(4097) });
+  });
 });

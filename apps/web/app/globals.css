@@ -35,3 +35,8 @@ body {
 .animate-bounce-check {
   animation: bounce-check 0.4s ease;
 }
+
+/* reCAPTCHA 배지는 숨기고 가입 폼의 고지 문구(RecaptchaNotice)로 대신한다 — Google FAQ 가 허용하는 방식 */
+.grecaptcha-badge {
+  visibility: hidden;
+}

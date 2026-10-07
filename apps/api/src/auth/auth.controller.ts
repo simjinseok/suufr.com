@@ -8,6 +8,7 @@ import { ConsentsService } from './consents.service';
 import { BetterAuthService, type RequestMeta } from './better-auth/better-auth.service';
 import { S3Service } from '../s3/s3.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { RecaptchaService } from '../recaptcha/recaptcha.service';
 import {
   LoginDto,
   MfaDto,
@@ -41,6 +42,7 @@ export class AuthController {
     private readonly consentsService: ConsentsService,
     private readonly s3Service: S3Service,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly recaptcha: RecaptchaService,
   ) {}
 
   private requireSessionToken(headers: Record<string, string | string[] | undefined>): string {
@@ -113,12 +115,19 @@ export class AuthController {
   }
 
   /**
-   * 가입. 동의 이력은 생성된 users.id 로 기록한다.
+   * 가입. reCAPTCHA 평가를 먼저 통과해야 users 행·인증 메일이 만들어진다 (RECAPTCHA_MODE 참고).
+   * 평가에 쓰는 IP·UA 는 web 이 동의 페이로드로 전달한 실제 클라이언트 값이다 (api 가 보는 IP 는 web 서버).
+   * 동의 이력은 생성된 users.id 로 기록한다.
    * 중복 이메일이면 better-auth 가 열거 방지용 합성 사용자(무작위 id)를 돌려주므로, users 에 그 id 가 실제로 있을 때만 기록한다.
    */
   @Public()
   @Post('signup')
   async signup(@Body() dto: SignupDto) {
+    await this.recaptcha.verifySignup(dto.recaptchaToken, {
+      ip: dto.consents.ipAddress,
+      userAgent: dto.consents.userAgent,
+    });
+
     const { userId } = await this.betterAuth.signUp(dto.name, dto.email, dto.password);
 
     const created = await this.authService.findUserByEmail(dto.email);

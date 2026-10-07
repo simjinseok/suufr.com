@@ -93,7 +93,7 @@ export const authApi = {
   mfa: (data: { code: string; session: string }) =>
     apiClient<MfaResponse>('/auth/mfa', { method: 'POST', body: data }),
 
-  signup: (data: { name: string; email: string; password: string; consents: ConsentPayload }) =>
+  signup: (data: { name: string; email: string; password: string; consents: ConsentPayload; recaptchaToken?: string }) =>
     apiClient<SignupResponse>('/auth/signup', { method: 'POST', body: data }),
 
   // 기존 가입자 재동의 (인증 필요)

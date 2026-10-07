@@ -14,9 +14,16 @@ import Link from 'next/link';
 
 import { signup } from '@/actions/auth';
 import ConsentCheckboxes, { EMPTY_CONSENTS, isAllConsented, type ConsentValues } from '@/components/auth/consent-checkboxes';
+import { RECAPTCHA_ACTION_SIGNUP, RecaptchaNotice, RecaptchaScript, useRecaptcha } from '@/components/auth/recaptcha';
 
-export default function SignupForm() {
+export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: string | null }) {
   const router = useRouter();
+  const { getToken, onScriptError } = useRecaptcha(recaptchaSiteKey);
+  // 토큰 발급 동안도 버튼을 pending 으로 보이기 위한 로컬 상태 (useActionState 의 isPending 은 formAction 호출 뒤부터)
+  const [isGettingToken, setIsGettingToken] = React.useState(false);
+  // onSubmit 가로채기라 React 의 폼 액션 중복 관리가 없다 — 토큰 대기 중 Enter·더블클릭으로 서버 액션이 두 번 가는 것을 막는다.
+  // 서버 액션이 돌아오면(state.timestamp 변화) 풀린다
+  const submitting = React.useRef(false);
 
   const [state, formAction, isPending] = React.useActionState(signup, {
     fields: { name: '', email: '', password: '', passwordConfirm: '', ...EMPTY_CONSENTS },
@@ -44,6 +51,7 @@ export default function SignupForm() {
 
   React.useEffect(() => {
     if (!state.timestamp) return;
+    submitting.current = false;
 
     if (state.success || state.mailFailed) {
       const email = state.fields?.email || '';
@@ -52,8 +60,29 @@ export default function SignupForm() {
     }
   }, [state.timestamp, state.success, state.mailFailed, state.fields?.email, router]);
 
+  // HeroUI Form 의 action= 대신 onSubmit 으로 가로채, reCAPTCHA 토큰을 받은 뒤 서버 액션을 transition 안에서 호출한다.
+  // 토큰을 못 받아도 제출은 진행한다 — 막을지는 api 의 RECAPTCHA_MODE 가 정한다
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
+    const formData = new FormData(event.currentTarget);
+    setIsGettingToken(true);
+    try {
+      const token = await getToken(RECAPTCHA_ACTION_SIGNUP);
+      if (token) formData.set('recaptchaToken', token);
+    }
+    finally {
+      setIsGettingToken(false);
+    }
+    React.startTransition(() => {
+      formAction(formData);
+    });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+      {recaptchaSiteKey && <RecaptchaScript siteKey={recaptchaSiteKey} onError={onScriptError} />}
       <div className="w-full max-w-sm mx-auto px-6">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -65,7 +94,7 @@ export default function SignupForm() {
 
         <Form
           className="flex flex-col gap-4"
-          action={formAction}
+          onSubmit={handleSubmit}
           validationErrors={state.fieldErrors}
         >
           {state.message && !state.success && (
@@ -147,13 +176,14 @@ export default function SignupForm() {
           <Button
             type="submit"
             variant="primary"
-            isPending={isPending}
+            isPending={isPending || isGettingToken}
             isDisabled={!isAllConsented(consents)}
             className="w-full mt-2"
           >
             가입하기
           </Button>
           <p className="text-center text-xs text-gray-400">가입하면 만 14세 이상임을 확인하는 것입니다.</p>
+          {recaptchaSiteKey && <RecaptchaNotice />}
         </Form>
 
         <div className="mt-6 text-center text-sm text-gray-500">

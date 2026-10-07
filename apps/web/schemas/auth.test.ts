@@ -57,3 +57,24 @@ describe('consentSchema (재동의)', () => {
     expect(consentSchema.safeParse({ ...agreed, agreePrivacy: 'false' }).success).toBe(false);
   });
 });
+
+describe('signupSchema.recaptchaToken', () => {
+  const valid = { ...base, ...agreed };
+
+  it('토큰이 없어도 통과하고 결과에 키가 없다', () => {
+    const result = signupSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.recaptchaToken).toBeUndefined();
+  });
+
+  it('빈 문자열 토큰(스크립트 로드 실패)은 undefined 로 정규화한다', () => {
+    const result = signupSchema.safeParse({ ...valid, recaptchaToken: '' });
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.recaptchaToken).toBeUndefined();
+  });
+
+  it('토큰 문자열은 그대로 통과한다', () => {
+    const result = signupSchema.safeParse({ ...valid, recaptchaToken: 'tok' });
+    expect(result.success && result.data.recaptchaToken).toBe('tok');
+  });
+});
