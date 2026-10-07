@@ -3,6 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PlanValue, UserSubscription } from '@prisma/generated/client';
 import { PLAN_LIMITS, PLAN_PRICING, PlanLimits } from './plan.constants';
 
+/** 유효 플랜 판정에 필요한 최소 필드 (테스트·가드에서 부분 객체를 넘길 수 있게) */
+export type EffectivePlanInput = Pick<UserSubscription, 'plan' | 'status' | 'currentPeriodEnd' | 'gracePeriodExpiresAt'>;
+
 @Injectable()
 export class SubscriptionsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -15,18 +18,25 @@ export class SubscriptionsService {
   }
 
   /**
-   * 유효 플랜 판정
-   * - 유료 플랜: status가 expired가 아니고 && 기간 내 (currentPeriodEnd null = 무기한)
+   * 유효 플랜 판정 (스펙 §4)
+   * - 유료 플랜: status 가 expired 가 아니고 && 기간 내
+   * - currentPeriodEnd null = 무기한 (grace 무시)
+   * - 기간 끝 = max(currentPeriodEnd, gracePeriodExpiresAt) — 결제 실패 유예 중에는 접근 유지
    * - 그 외 전부 free
    */
-  getEffectivePlanOf(subscription: UserSubscription | null): PlanValue {
+  getEffectivePlanOf(subscription: EffectivePlanInput | null): PlanValue {
     if (!subscription || subscription.plan === 'free') {
       return 'free';
     }
     if (subscription.status === 'expired') {
       return 'free';
     }
-    if (subscription.currentPeriodEnd && subscription.currentPeriodEnd <= new Date()) {
+    if (!subscription.currentPeriodEnd) {
+      return subscription.plan;
+    }
+    const grace = subscription.gracePeriodExpiresAt;
+    const end = grace && grace > subscription.currentPeriodEnd ? grace : subscription.currentPeriodEnd;
+    if (end <= new Date()) {
       return 'free';
     }
     return subscription.plan;
@@ -82,11 +92,15 @@ export class SubscriptionsService {
         orderBy: { createdAt: 'desc' },
         take: 12,
         select: {
-          paddleTransactionId: true,
+          provider: true,
+          providerTransactionId: true,
           amount: true,
+          currency: true,
           status: true,
           failReason: true,
           approvedAt: true,
+          refundedAt: true,
+          refundedAmount: true,
           createdAt: true,
         },
       }),
@@ -95,9 +109,12 @@ export class SubscriptionsService {
     return {
       plan,
       status: subscription?.status ?? 'active',
+      provider: subscription?.provider ?? null,
       currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
+      gracePeriodExpiresAt: subscription?.gracePeriodExpiresAt ?? null,
       canceledAt: subscription?.canceledAt ?? null,
-      orders,
+      billingIssueDetectedAt: subscription?.billingIssueDetectedAt ?? null,
+      orders: orders.map(({ providerTransactionId, ...order }) => ({ ...order, transactionId: providerTransactionId })),
       limits: PLAN_LIMITS[plan],
       usage: {
         studentCount,
