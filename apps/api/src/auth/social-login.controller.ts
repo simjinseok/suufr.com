@@ -13,7 +13,7 @@ import { isSupportedSocialProvider } from './social-providers';
 export const GOOGLE_LOGIN_CALLBACK_PATH = '/auth/google/callback';
 
 /**
- * 소셜 로그인의 브라우저 진입점 (/health, /webhooks 처럼 /api 접두사 없는 외부 경로).
+ * 소셜 로그인의 브라우저 진입점.
  *
  *  GET /auth/:provider/start   web 의 Google 버튼이 브라우저를 여기로 보낸다. better-auth 가 state 를 DB 에 저장하면서
  *                              서명된 state 쿠키도 발급하는데, 콜백에서 그 쿠키를 대조하므로 (login CSRF 방어) 시작 요청은
@@ -48,7 +48,7 @@ export class SocialLoginController {
     if (!isSupportedSocialProvider(provider)) return res.redirect(`${this.webUrl}/login?error=social`, 302);
 
     const { url, setCookies } = await this.betterAuth.getSocialSignInUrl(provider, {
-      callbackURL: `${this.apiUrl}/api/auth/social/${provider}/complete`,
+      callbackURL: `${this.apiUrl}/auth/social/${provider}/complete`,
       errorCallbackURL: `${this.webUrl}/login?error=social`,
     });
     // Fastify 는 set-cookie 를 배열로 받아야 여러 개를 보낼 수 있다

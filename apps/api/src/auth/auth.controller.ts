@@ -32,7 +32,7 @@ const SESSION_TOKEN_HEADER = 'x-session-token';
  */
 @UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 10, ttl: 60000 } })
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
