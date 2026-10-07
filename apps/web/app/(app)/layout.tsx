@@ -49,7 +49,7 @@ export default async function AuthenticatedLayout({
               <div className="h-full">
                 <div className="max-w-3xl mx-auto py-6 px-4 sm:px-2">
                   {/* 가입 직후 로그인된 미인증 계정 — 인증을 마칠 때까지 안내 (차단하지 않음) */}
-                  {session.user.emailVerified === false && <EmailVerificationBanner email={session.user.email} />}
+                  {session.user.emailVerified === false && <EmailVerificationBanner />}
                   {children}
                 </div>
               </div>
