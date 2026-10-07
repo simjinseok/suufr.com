@@ -237,6 +237,9 @@ export type TPlanLimits = {
 
 export type TBillingProvider = 'paddle' | 'apple' | 'google' | 'manual';
 
+// 구독을 지금 시작할 수 없는 사유 (api SubscribeBlocker 미러)
+export type TSubscribeBlocker = 'email_unverified' | 'already_subscribed';
+
 export type TSubscriptionOrder = {
   provider: TBillingProvider;
   transactionId: string;
@@ -261,6 +264,9 @@ export type TSubscription = {
   gracePeriodExpiresAt: string | null;
   canceledAt: string | null;
   billingIssueDetectedAt: string | null;
+  // 지금 결제를 시작할 수 있는가. false 면 subscribeBlockers 에 사유. api 배포 시차로 없으면 가능으로 간주
+  canSubscribe?: boolean;
+  subscribeBlockers?: TSubscribeBlocker[];
   orders: TSubscriptionOrder[];
   limits: TPlanLimits;
   usage: {

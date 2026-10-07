@@ -6,17 +6,15 @@ import { Button, Spinner, toast } from '@heroui/react';
 import { Crown } from 'lucide-react';
 import { initializePaddle, CheckoutEventNames, type Paddle } from '@paddle/paddle-js';
 
-import { getSubscription } from '@/actions/subscription';
+import { createCheckout, getSubscription } from '@/actions/subscription';
 
 /** 서버 컴포넌트가 런타임 env에서 읽어 내려주는 Paddle 체크아웃 설정 */
 export interface PaddleCheckoutConfig {
   clientToken: string;
   environment: 'sandbox' | 'production';
-  priceIdPro: string;
 }
 
 interface UpgradeButtonProps {
-  userId: string;
   customerEmail?: string;
   paddle: PaddleCheckoutConfig | null;
 }
@@ -25,7 +23,7 @@ interface UpgradeButtonProps {
 const CONFIRM_POLL_INTERVAL_MS = 2000;
 const CONFIRM_POLL_MAX_ATTEMPTS = 15;
 
-export default function UpgradeButton({ userId, customerEmail, paddle }: UpgradeButtonProps) {
+export default function UpgradeButton({ customerEmail, paddle }: UpgradeButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isConfirming, setIsConfirming] = React.useState(false);
@@ -85,10 +83,26 @@ export default function UpgradeButton({ userId, customerEmail, paddle }: Upgrade
         throw new Error('결제 모듈을 불러오지 못했습니다.');
       }
 
+      // 거래는 서버가 만든다 — 이메일 미인증·이미 프로인 계정은 여기서 400 으로 막히고, customData.userId 도 서버가 심는다
+      const checkout = await createCheckout();
+      if (!checkout.success || !checkout.transactionId) {
+        toast.danger(
+          checkout.code === 'EMAIL_NOT_VERIFIED' ? '이메일 인증이 필요해요' : '결제창 열기 실패',
+          {
+            description: checkout.message || '결제창을 열지 못했습니다. 잠시 후 다시 시도해주세요.',
+            timeout: 4000,
+          },
+        );
+        if (checkout.code === 'EMAIL_NOT_VERIFIED' || checkout.code === 'SUBSCRIPTION_ALREADY_ACTIVE') {
+          // 요약이 바뀌었을 수 있으니(인증 상태·플랜) 카드를 다시 그린다
+          router.refresh();
+        }
+        return;
+      }
+
       paddleRef.current.Checkout.open({
-        items: [{ priceId: paddle.priceIdPro, quantity: 1 }],
+        transactionId: checkout.transactionId,
         ...(customerEmail && { customer: { email: customerEmail } }),
-        customData: { userId },
         settings: {
           displayMode: 'overlay',
           locale: 'ko',

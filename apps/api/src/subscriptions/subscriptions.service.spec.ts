@@ -32,3 +32,61 @@ describe('SubscriptionsService.getEffectivePlanOf', () => {
     expect(service.getEffectivePlanOf({ plan: 'pro', status: 'active', currentPeriodEnd: past, gracePeriodExpiresAt: null })).toBe('free');
   });
 });
+
+describe('SubscriptionsService.getSubscribeBlockers', () => {
+  it('인증된 free 계정은 차단 사유 없음', () => {
+    expect(service.getSubscribeBlockers({ emailVerified: true, effectivePlan: 'free' })).toEqual([]);
+  });
+
+  it('미인증이면 email_unverified', () => {
+    expect(service.getSubscribeBlockers({ emailVerified: false, effectivePlan: 'free' })).toEqual(['email_unverified']);
+  });
+
+  it('이미 pro 면 already_subscribed (미인증이면 둘 다)', () => {
+    expect(service.getSubscribeBlockers({ emailVerified: true, effectivePlan: 'pro' })).toEqual(['already_subscribed']);
+    expect(service.getSubscribeBlockers({ emailVerified: false, effectivePlan: 'pro' })).toEqual(['email_unverified', 'already_subscribed']);
+  });
+});
+
+describe('SubscriptionsService.getSummary — canSubscribe', () => {
+  function makeService(emailVerified: boolean, subscription: Record<string, unknown> | null) {
+    const userFindUnique = vi.fn().mockResolvedValue({ emailVerified });
+    const prisma = {
+      userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription) },
+      user: { findUnique: userFindUnique },
+      student: { count: vi.fn().mockResolvedValue(0) },
+      userStorageQuota: { findUnique: vi.fn().mockResolvedValue(null) },
+      subscriptionOrder: { findMany: vi.fn().mockResolvedValue([]) },
+    } as unknown as PrismaService;
+    return { service: new SubscriptionsService(prisma), userFindUnique };
+  }
+
+  it('인증된 free 계정은 canSubscribe=true', async () => {
+    const { service, userFindUnique } = makeService(true, null);
+    const summary = await service.getSummary('u1');
+    expect(summary.canSubscribe).toBe(true);
+    expect(summary.subscribeBlockers).toEqual([]);
+    expect(userFindUnique).toHaveBeenCalledWith({ where: { id: 'u1' }, select: { emailVerified: true } });
+  });
+
+  it('미인증 free 계정은 canSubscribe=false, email_unverified', async () => {
+    const { service } = makeService(false, null);
+    const summary = await service.getSummary('u1');
+    expect(summary.canSubscribe).toBe(false);
+    expect(summary.subscribeBlockers).toEqual(['email_unverified']);
+  });
+
+  it('인증된 pro 계정은 canSubscribe=false, already_subscribed', async () => {
+    const { service } = makeService(true, { plan: 'pro', status: 'active', currentPeriodEnd: future, gracePeriodExpiresAt: null, provider: 'paddle' });
+    const summary = await service.getSummary('u1');
+    expect(summary.canSubscribe).toBe(false);
+    expect(summary.subscribeBlockers).toEqual(['already_subscribed']);
+  });
+
+  it('User 행을 못 찾으면 미인증으로 취급', async () => {
+    const { service, userFindUnique } = makeService(true, null);
+    userFindUnique.mockResolvedValue(null);
+    const summary = await service.getSummary('u1');
+    expect(summary.subscribeBlockers).toEqual(['email_unverified']);
+  });
+});

@@ -35,6 +35,34 @@ export async function getSubscription(): Promise<TSubscription | null> {
   );
 }
 
+/**
+ * 프로 체크아웃 시작 — api 가 만든 Paddle transactionId 를 받아 클라이언트가 오버레이를 연다.
+ * code 는 api 에러 코드(EMAIL_NOT_VERIFIED 등). 클라이언트가 안내 분기에 쓴다.
+ */
+export async function createCheckout(): Promise<BillingActionResult & { code?: string; transactionId?: string }> {
+  return await Sentry.withServerActionInstrumentation(
+    'createCheckout',
+    { headers: await headers(), recordResponse: true },
+    async () => {
+      const session = await getSession();
+      if (!session) {
+        return { success: false, message: '로그인이 필요합니다.' };
+      }
+
+      try {
+        const result = await subscriptionsApi.checkout();
+        return { success: true, transactionId: result.data.transactionId };
+      }
+      catch (error) {
+        if (error instanceof ApiError) {
+          return { success: false, message: error.message, code: error.code };
+        }
+        throw error;
+      }
+    },
+  );
+}
+
 export async function getInvoiceUrl(transactionId: string): Promise<BillingActionResult & { url?: string }> {
   return await Sentry.withServerActionInstrumentation(
     'getInvoiceUrl',

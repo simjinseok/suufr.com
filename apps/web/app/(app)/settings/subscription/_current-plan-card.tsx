@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { Surface } from '@heroui/react';
-import { AlertTriangle, Crown, Sparkles } from 'lucide-react';
+import { AlertTriangle, Crown, MailWarning, Sparkles } from 'lucide-react';
 
 import type { TSubscription } from '@/types/index';
 
@@ -10,7 +11,6 @@ import { CancelSubscriptionButton, ResumeSubscriptionButton } from './_manage-su
 
 interface CurrentPlanCardProps {
   subscription: TSubscription | null;
-  userId: string;
   customerEmail?: string;
   paddle: PaddleCheckoutConfig | null;
 }
@@ -22,7 +22,6 @@ function formatDate(iso: string): string {
 
 export default function CurrentPlanCard({
   subscription,
-  userId,
   customerEmail,
   paddle,
 }: CurrentPlanCardProps) {
@@ -37,6 +36,9 @@ export default function CurrentPlanCard({
   }
 
   const isPro = subscription.plan === 'pro';
+  // api 배포 시차로 필드가 없으면 결제 가능으로 간주(기존 동작 유지)
+  const needsEmailVerification = subscription.subscribeBlockers?.includes('email_unverified') ?? false;
+  const canUpgrade = !isPro && (subscription.canSubscribe ?? true);
   const isCanceled = subscription.status === 'canceled';
   const isPastDue = subscription.status === 'past_due';
   // 해지·재개·인보이스는 Paddle 구독만 서버가 다룰 수 있다. 스토어 구독은 스토어 관리 화면 안내만
@@ -68,9 +70,8 @@ export default function CurrentPlanCard({
                 {isPro ? '프로' : '무료'}
               </span>
             </div>
-            {!isPro && (
+            {canUpgrade && (
               <UpgradeButton
-                userId={userId}
                 customerEmail={customerEmail}
                 paddle={paddle}
               />
@@ -82,6 +83,16 @@ export default function CurrentPlanCard({
             <p className="mt-2 text-sm text-gray-500">
               프로 플랜으로 업그레이드하면 수강생을 제한 없이 등록하고 더 넉넉한 저장 공간을 사용할 수 있어요.
             </p>
+          )}
+
+          {!isPro && needsEmailVerification && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-amber-900 p-3 rounded-lg border border-amber-200 bg-amber-50">
+              <MailWarning className="w-4 h-4 shrink-0 text-amber-600" aria-hidden />
+              <span className="grow">이메일 인증을 마치면 프로 플랜을 구독할 수 있어요.</span>
+              <Link href="/settings" className="shrink-0 font-medium underline underline-offset-2 hover:text-amber-950">
+                설정에서 인증하기
+              </Link>
+            </div>
           )}
 
           {isStoreManaged && (

@@ -16,11 +16,10 @@ export default async function Page() {
 
   // 빌드 타임 인라인(NEXT_PUBLIC_*) 대신 요청 시점에 서버 env를 읽어 내려준다
   // — 배포 파이프라인 재빌드 없이 런타임 env로 관리 가능
-  const paddle = process.env.PADDLE_CLIENT_TOKEN && process.env.PADDLE_PRICE_ID_PRO
+  const paddle = process.env.PADDLE_CLIENT_TOKEN
     ? {
         clientToken: process.env.PADDLE_CLIENT_TOKEN,
         environment: process.env.PADDLE_ENV === 'production' ? 'production' as const : 'sandbox' as const,
-        priceIdPro: process.env.PADDLE_PRICE_ID_PRO,
       }
     : null;
 
@@ -30,7 +29,6 @@ export default async function Page() {
       <div className="mt-6 flex flex-col gap-6">
         <CurrentPlanCard
           subscription={subscription}
-          userId={session?.user.id ?? ''}
           customerEmail={session?.user.email}
           paddle={paddle}
         />

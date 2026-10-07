@@ -9,8 +9,7 @@ import {
 import type { BillingEnvironmentValue, Prisma, SubscriptionStatusValue } from '@prisma/generated/client';
 import { BillingSyncService } from './billing-sync.service';
 import type { BillingSubscriptionState, BillingTransactionRecord, BillingWebhookEnvelope } from './billing.types';
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { verifyCheckoutCustomData } from './checkout-custom-data';
 
 /**
  * webhook(SubscriptionNotification)과 API(Subscription 엔티티) 양쪽이 만족하는 Paddle 구독의 구조적 최소 형태
@@ -34,6 +33,7 @@ export interface PaddleSubscriptionLike {
 export class PaddleWebhookService {
   private readonly logger = new Logger(PaddleWebhookService.name);
   private readonly environment: BillingEnvironmentValue;
+  private readonly customDataSecret: string | undefined;
 
   constructor(
     private readonly sync: BillingSyncService,
@@ -41,6 +41,8 @@ export class PaddleWebhookService {
   ) {
     // PaddleClient 와 같은 판정
     this.environment = configService.get<string>('PADDLE_ENV') === 'production' ? 'production' : 'sandbox';
+    // custom_data.userId 서명 검증 키 — PaddleClient.createCheckoutTransaction 이 같은 키로 서명한다
+    this.customDataSecret = configService.get<string>('PADDLE_WEBHOOK_SECRET');
   }
 
   /**
@@ -195,8 +197,16 @@ export class PaddleWebhookService {
     }
   }
 
+  /**
+   * custom_data 에서 서명이 맞는 userId 만 꺼낸다. 서명 없는 userId(클라이언트가 Paddle.js 로 직접 연 체크아웃)는
+   * 경고만 남기고 null — 미인증 계정이 서버 체크아웃 가드를 우회해 결제하는 뒷문을 막는다.
+   */
   private extractUserId(customData: unknown): string | null {
-    const userId = (customData as { userId?: unknown } | null)?.userId;
-    return typeof userId === 'string' && UUID_PATTERN.test(userId) ? userId : null;
+    const userId = verifyCheckoutCustomData(customData, this.customDataSecret);
+    const claimed = (customData as { userId?: unknown } | null)?.userId;
+    if (!userId && typeof claimed === 'string') {
+      this.logger.warn(`Ignoring unsigned or tampered custom_data.userId ${claimed}`);
+    }
+    return userId;
   }
 }

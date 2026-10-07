@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import type { UserSubscription } from '@prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaddleClient, PaddleApiError } from './paddle.client';
+import { SubscriptionsService } from './subscriptions.service';
 
 /**
  * 구독 해지/재개/인보이스 — Paddle API 호출 후 로컬 상태를 낙관 갱신
@@ -14,7 +15,51 @@ export class SubscriptionsBillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paddleClient: PaddleClient,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
+
+  /**
+   * 프로 체크아웃 시작 — 서버가 Paddle 거래를 만들어 transactionId 를 돌려준다.
+   * 미인증 계정은 결제할 수 없다(미인증 계정 자동 정리와 결제 계정이 섞이지 않게). 이미 유료면 이중 구독 방지.
+   * 판정은 SubscriptionsService.getSubscribeBlockers 와 동일(요약 응답의 canSubscribe 와 어긋나지 않게).
+   */
+  async createCheckout(userId: string): Promise<{ transactionId: string }> {
+    const [emailVerified, subscription] = await Promise.all([
+      this.subscriptionsService.isEmailVerified(userId),
+      this.prisma.userSubscription.findUnique({ where: { userId } }),
+    ]);
+    const blockers = this.subscriptionsService.getSubscribeBlockers({
+      emailVerified,
+      effectivePlan: this.subscriptionsService.getEffectivePlanOf(subscription),
+    });
+
+    if (blockers.includes('email_unverified')) {
+      throw new BadRequestException({
+        message: '이메일 인증을 마친 뒤 구독할 수 있어요. 설정에서 인증코드를 입력해주세요.',
+        error: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+    if (blockers.includes('already_subscribed')) {
+      throw new BadRequestException({
+        message: '이미 프로 플랜을 이용 중이에요.',
+        error: 'SUBSCRIPTION_ALREADY_ACTIVE',
+      });
+    }
+
+    try {
+      return await this.paddleClient.createCheckoutTransaction(userId);
+    }
+    catch (error) {
+      if (error instanceof PaddleApiError) {
+        this.logger.warn(`Paddle checkout transaction failed for user ${userId}: ${error.code} ${error.detail}`);
+        throw new BadRequestException({
+          message: '결제창을 준비하지 못했어요. 잠시 후 다시 시도해주세요.',
+          error: 'CHECKOUT_CREATE_FAILED',
+        });
+      }
+      throw error;
+    }
+  }
 
   /**
    * 스토어(App Store / Google Play) 구독은 서버가 해지·재개할 수 없다 — 스토어 구독 관리 화면에서만 가능
