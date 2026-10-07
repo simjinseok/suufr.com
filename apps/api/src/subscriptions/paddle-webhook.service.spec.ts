@@ -116,6 +116,10 @@ describe('PaddleWebhookService.toTransactionRecord', () => {
     expect(s.toTransactionRecord(transaction({ billedAt: null }), 'done', now)?.approvedAt).toEqual(now);
   });
 
+  it('금액이 정수가 아니면 null (재시도 무한 반복 방지)', () => {
+    expect(makeService().toTransactionRecord(transaction({ details: { totals: { grandTotal: 'abc' } } } as never), 'done', now)).toBeNull();
+  });
+
   it('구독이 없는 일회성 거래는 null', () => {
     expect(makeService().toTransactionRecord(transaction({ subscriptionId: null }), 'done', now)).toBeNull();
   });
@@ -154,6 +158,7 @@ describe('PaddleWebhookService.handleEvent payload', () => {
     const payload = transactionPayload();
     await service.handleEvent(transactionEvent(), payload as never);
     const envelope = sync.withEventDedup.mock.calls[0][0];
+    expect(envelope.lockKey).toBe(USER_A);
     expect(envelope.payload).not.toHaveProperty('data.payments.0.method_details');
     expect(envelope.payload).toHaveProperty('data.payments.0.status', 'captured');
     expect(envelope.payload).toHaveProperty('event_id', 'evt_1');

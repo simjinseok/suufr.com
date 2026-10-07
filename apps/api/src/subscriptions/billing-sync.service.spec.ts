@@ -49,19 +49,21 @@ function makeTx(rows: Row[], orders: Array<{ provider: string; providerTransacti
     return rows.find(r => r.provider === key.provider && r.providerSubscriptionId === key.providerSubscriptionId) ?? null;
   });
   const upsert = vi.fn().mockResolvedValue({});
-  const del = vi.fn().mockResolvedValue({});
+  const deleteMany = vi.fn().mockResolvedValue({ count: 1 });
   const orderFindUnique = vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
     const key = where.provider_providerTransactionId as { provider: string; providerTransactionId: string };
     return orders.find(o => o.provider === key.provider && o.providerTransactionId === key.providerTransactionId) ?? null;
   });
   const orderUpsert = vi.fn().mockResolvedValue({});
   const createMany = vi.fn().mockResolvedValue({ count: 1 });
+  const executeRaw = vi.fn().mockResolvedValue(1);
   const tx = {
-    userSubscription: { findUnique, upsert, delete: del },
+    $executeRaw: executeRaw,
+    userSubscription: { findUnique, upsert, deleteMany },
     subscriptionOrder: { findUnique: orderFindUnique, upsert: orderUpsert },
     billingWebhookEvent: { createMany },
   };
-  return { tx, upsert, del, orderUpsert, createMany };
+  return { tx, upsert, del: deleteMany, orderUpsert, createMany, executeRaw };
 }
 
 function makeService(tx: unknown) {
@@ -93,6 +95,13 @@ function state(overrides: Partial<BillingSubscriptionState> = {}): BillingSubscr
 }
 
 describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
+  it('manual 행에 만료된(expired) 이벤트가 오면 덮어쓰지 않는다', async () => {
+    const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'manual', providerSubscriptionId: null, providerEnvironment: null, status: 'active', currentPeriodEnd: future })]);
+    const ok = await makeService(tx).syncSubscription(tx as never, state({ status: 'expired', currentPeriodEnd: past }));
+    expect(ok).toBe(true);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it('행이 없고 userId 가 있으면 생성한다', async () => {
     const { tx, upsert } = makeTx([]);
     const ok = await makeService(tx).syncSubscription(tx as never, state());
@@ -120,7 +129,7 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
 
   it('환경 가드: 기존 행이 production 인데 sandbox 이벤트면 거부한다 (TestFlight)', async () => {
     const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'apple', providerEnvironment: 'production', providerSubscriptionId: 'O1' })]);
-    await expect(makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O2', environment: 'sandbox' })))
+    await expect(makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O1', environment: 'sandbox' })))
       .rejects.toBeInstanceOf(BillingSyncRejectedError);
     expect(upsert).not.toHaveBeenCalled();
   });
@@ -142,7 +151,7 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
     const { tx, upsert, del } = makeTx([row({ userId: USER_A, provider: 'apple', providerSubscriptionId: 'O1', status: 'expired', currentPeriodEnd: past })]);
     const ok = await makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O1', userId: USER_B }));
     expect(ok).toBe(true);
-    expect(del).toHaveBeenCalledWith({ where: { userId: USER_A } });
+    expect(del).toHaveBeenCalledWith({ where: { userId: USER_A, provider: 'apple', providerSubscriptionId: 'O1' } });
     expect(upsert.mock.calls[0][0].where).toEqual({ userId: USER_B });
     expect(upsert.mock.calls[0][0].create.canceledAt).toBeNull(); // 옛 행의 값 미승계
     // 삭제가 upsert 보다 먼저 (유니크 충돌 방지)
@@ -298,12 +307,13 @@ describe('BillingSyncService.recordTransaction', () => {
 });
 
 describe('BillingSyncService.withEventDedup', () => {
-  const envelope = { provider: 'paddle' as const, eventId: 'evt_1', eventType: 'subscription.created', occurredAt: now, payload: { event_id: 'evt_1' } };
+  const envelope = { provider: 'paddle' as const, eventId: 'evt_1', eventType: 'subscription.created', occurredAt: now, lockKey: USER_A, payload: { event_id: 'evt_1' } };
 
   it('처음 보는 이벤트는 기록하고 apply 를 실행한다', async () => {
-    const { tx, createMany } = makeTx([]);
+    const { tx, createMany, executeRaw } = makeTx([]);
     const apply = vi.fn();
     expect(await makeService(tx).withEventDedup(envelope, apply)).toBe('applied');
+    expect(executeRaw.mock.invocationCallOrder[0]).toBeLessThan(createMany.mock.invocationCallOrder[0]);
     expect(createMany.mock.calls[0][0]).toMatchObject({ skipDuplicates: true, data: [{ provider: 'paddle', eventId: 'evt_1', payload: { event_id: 'evt_1' } }] });
     expect(apply).toHaveBeenCalledTimes(1);
   });

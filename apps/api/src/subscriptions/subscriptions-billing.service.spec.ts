@@ -8,9 +8,9 @@ const USER_A = '11111111-1111-4111-8111-111111111111';
 const future = new Date(Date.now() + 86_400_000);
 
 function makeService(subscription: Partial<UserSubscription> | null, order: { userId: string; status: string } | null = null) {
-  const update = vi.fn().mockResolvedValue({});
+  const updateMany = vi.fn().mockResolvedValue({});
   const prisma = {
-    userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription), update },
+    userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription), updateMany },
     subscriptionOrder: { findUnique: vi.fn().mockResolvedValue(order) },
   } as unknown as PrismaService;
   const paddle = {
@@ -18,7 +18,7 @@ function makeService(subscription: Partial<UserSubscription> | null, order: { us
     removeScheduledChange: vi.fn().mockResolvedValue({}),
     getInvoiceUrl: vi.fn().mockResolvedValue('https://invoice'),
   } as unknown as PaddleClient;
-  return { service: new SubscriptionsBillingService(prisma, paddle), prisma, paddle, update };
+  return { service: new SubscriptionsBillingService(prisma, paddle), prisma, paddle, updateMany };
 }
 
 const paddleActive: Partial<UserSubscription> = { userId: USER_A, plan: 'pro', status: 'active', provider: 'paddle', providerSubscriptionId: 'sub_1', currentPeriodEnd: future };
@@ -36,10 +36,10 @@ async function errorCodeOf(promise: Promise<unknown>): Promise<string | undefine
 
 describe('SubscriptionsBillingService.cancel / resume — provider 분기', () => {
   it('paddle 활성 구독은 Paddle 에 해지 예약하고 로컬을 canceled 로', async () => {
-    const { service, paddle, update } = makeService(paddleActive);
+    const { service, paddle, updateMany } = makeService(paddleActive);
     await service.cancel(USER_A);
     expect(paddle.cancelAtPeriodEnd).toHaveBeenCalledWith('sub_1');
-    expect(update.mock.calls[0][0].data.status).toBe('canceled');
+    expect(updateMany.mock.calls[0][0].data.status).toBe('canceled');
   });
 
   it('apple/google 구독은 SUBSCRIPTION_MANAGED_BY_STORE', async () => {
@@ -60,10 +60,10 @@ describe('SubscriptionsBillingService.cancel / resume — provider 분기', () =
   });
 
   it('paddle canceled 구독은 재개할 수 있다', async () => {
-    const { service, paddle, update } = makeService({ ...paddleActive, status: 'canceled', canceledAt: new Date() });
+    const { service, paddle, updateMany } = makeService({ ...paddleActive, status: 'canceled', canceledAt: new Date() });
     await service.resume(USER_A);
     expect(paddle.removeScheduledChange).toHaveBeenCalledWith('sub_1');
-    expect(update.mock.calls[0][0].data).toMatchObject({ status: 'active', canceledAt: null });
+    expect(updateMany.mock.calls[0][0].data).toMatchObject({ status: 'active', canceledAt: null });
   });
 });
 

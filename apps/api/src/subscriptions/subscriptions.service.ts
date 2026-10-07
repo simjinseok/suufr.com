@@ -78,10 +78,8 @@ export class SubscriptionsService {
    * 구독 페이지용 요약 (플랜 + 한도 + 사용량 + 플랜 비교표 + 결제 내역)
    */
   async getSummary(userId: string) {
-    const subscription = await this.getSubscription(userId);
-    const plan = this.getEffectivePlanOf(subscription);
-
-    const [studentCount, quota, orders] = await Promise.all([
+    const [subscription, studentCount, quota, orders] = await Promise.all([
+      this.getSubscription(userId),
       this.countBillableStudents(userId),
       this.prisma.userStorageQuota.findUnique({
         where: { userId },
@@ -105,6 +103,7 @@ export class SubscriptionsService {
         },
       }),
     ]);
+    const plan = this.getEffectivePlanOf(subscription);
 
     return {
       plan,

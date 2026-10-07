@@ -39,6 +39,8 @@ export class BillingSyncService {
   ): Promise<BillingSyncOutcome> {
     try {
       return await this.prisma.$transaction(async (tx): Promise<BillingSyncOutcome> => {
+        // 같은 키의 이벤트는 이 트랜잭션이 끝날 때까지 기다린다 (가드가 읽는 값이 중간에 바뀌지 않게)
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${envelope.lockKey}, 0))`;
         const { count } = await tx.billingWebhookEvent.createMany({
           data: [{
             provider: envelope.provider,
@@ -55,7 +57,8 @@ export class BillingSyncService {
         }
         await apply(tx);
         return 'applied';
-      });
+      // Neon 이 잠들었다 깨어날 때 연결에 2초 넘게 걸릴 수 있다
+      }, { maxWait: 5000, timeout: 10000 });
     }
     catch (error) {
       if (error instanceof BillingSyncRejectedError) {
@@ -116,12 +119,23 @@ export class BillingSyncService {
       && (current.providerSubscriptionId === state.subscriptionId
         || (state.replacesSubscriptionId !== null && current.providerSubscriptionId === state.replacesSubscriptionId));
 
-    // 5. 다른 구독 충돌 가드 (manual 은 유료 provider 에 밀려난다)
+    // 5. 다른 구독 충돌 가드 (manual 은 유효한 유료 이벤트에만 밀려난다)
     if (current && !sameSubscription && this.subscriptionsService.getEffectivePlanOf(current) !== 'free') {
       if (current.provider !== 'manual') {
         throw new BillingSyncRejectedError(
           `user ${userId} already has an effective subscription ${current.provider}/${current.providerSubscriptionId}; ignoring ${state.provider}/${state.subscriptionId}`,
         );
+      }
+      // 만료된 이벤트는 수동 부여를 덮어쓰지 않는다
+      const incomingPlan = this.subscriptionsService.getEffectivePlanOf({
+        plan: 'pro',
+        status: state.status ?? 'expired',
+        currentPeriodEnd: state.currentPeriodEnd,
+        gracePeriodExpiresAt: state.gracePeriodExpiresAt,
+      });
+      if (incomingPlan === 'free') {
+        this.logger.warn(`Ignoring expired ${state.provider}/${state.subscriptionId} event; manual grant of user ${userId} kept`);
+        return true;
       }
       this.logger.warn(`Replacing manual grant of user ${userId} with ${state.provider}/${state.subscriptionId}`);
     }
@@ -156,7 +170,10 @@ export class BillingSyncService {
     // 유료 플랜이 pro 하나라 상품 식별자와 무관하게 pro. 플랜이 늘면 state.productId → 플랜 매핑을 여기에 둔다 (providerProductId 는 그대로 저장된다)
     const plan: PaidPlanValue = 'pro';
     if (transferFrom) {
-      await tx.userSubscription.delete({ where: { userId: transferFrom.userId } });
+      // 그 사이 옛 사용자가 다른 구독을 시작했을 수 있어 구독 id 까지 맞춰 지운다
+      await tx.userSubscription.deleteMany({
+        where: { userId: transferFrom.userId, provider: transferFrom.provider, providerSubscriptionId: transferFrom.providerSubscriptionId },
+      });
       this.logger.warn(`Transferred ${state.provider}/${state.subscriptionId} from user ${transferFrom.userId} to ${userId}`);
     }
 

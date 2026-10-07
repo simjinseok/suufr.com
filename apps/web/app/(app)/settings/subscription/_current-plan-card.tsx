@@ -94,7 +94,9 @@ export default function CurrentPlanCard({
             <p className="mt-2 text-sm text-gray-500">
               {isCanceled
                 ? `해지가 예약되어 있어요. ${periodEndText}까지 이용할 수 있고, 이후 무료 플랜으로 전환됩니다.`
-                : `다음 결제일: ${periodEndText}`}
+                : subscription.provider === 'manual'
+                  ? `${periodEndText}까지 이용할 수 있어요.`
+                  : `다음 결제일: ${periodEndText}`}
             </p>
           )}
 

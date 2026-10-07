@@ -61,6 +61,8 @@ export interface BillingWebhookEnvelope {
   eventId: string;
   eventType: string;
   occurredAt: Date;
+  // 같은 사용자(모르면 같은 구독)의 이벤트가 동시에 처리되지 않게 잠그는 키
+  lockKey: string;
   /** raw body 를 JSON.parse 한 값 (SDK 클래스 인스턴스가 아님) */
   payload: Prisma.InputJsonValue;
 }

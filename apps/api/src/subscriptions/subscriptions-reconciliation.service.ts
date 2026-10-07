@@ -25,7 +25,7 @@ export class SubscriptionsReconciliationService {
   ) {}
 
   // 매일 오전 11시 실행 (KST) - UTC 02:00 = KST 11:00
-  @Cron('0 2 * * *')
+  @Cron('0 2 * * *', { timeZone: 'UTC' })
   async runReconciliationCycle() {
     const cutoff = new Date(Date.now() - RECONCILE_LAG_MS);
 
@@ -60,12 +60,16 @@ export class SubscriptionsReconciliationService {
   }
 
   private async reconcileOne(paddleSubscriptionId: string) {
+    // 조회 중에 도착한 웹훅이 이 시각보다 늦으므로 스킵되지 않는다
+    const observedAt = new Date();
     const remote = await this.paddleClient.getSubscription(paddleSubscriptionId);
 
-    // 조회 시점의 원격 상태가 곧 최신 진실 — occurredAt을 현재로 두어 이전 이벤트보다 우선 적용
+    // 조회 시점의 원격 상태가 곧 최신 진실 — occurredAt을 조회 전 시각으로 두어 이전 이벤트보다 우선 적용
     // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그로 남는다
-    const state = this.paddleWebhookService.toSubscriptionState(remote, new Date());
+    const state = this.paddleWebhookService.toSubscriptionState(remote, observedAt);
     await this.prisma.$transaction(async (tx) => {
+      // 같은 사용자의 웹훅과 동시에 처리되지 않게 잠근다
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${state.userId ?? `paddle:${state.subscriptionId}`}, 0))`;
       await this.sync.syncSubscription(tx, state);
     });
   }

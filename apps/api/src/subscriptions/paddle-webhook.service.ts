@@ -53,6 +53,7 @@ export class PaddleWebhookService {
       eventId: event.eventId,
       eventType: event.eventType,
       occurredAt,
+      lockKey: '',
       payload: this.redactPayload(payload),
     };
 
@@ -64,6 +65,7 @@ export class PaddleWebhookService {
       case EventName.SubscriptionPastDue:
       case EventName.SubscriptionResumed: {
         const state = this.toSubscriptionState(event.data as SubscriptionNotification, occurredAt);
+        envelope.lockKey = state.userId ?? `paddle:${state.subscriptionId}`;
         await this.sync.withEventDedup(envelope, async (tx) => {
           const applied = await this.sync.syncSubscription(tx, state);
           if (!applied) {
@@ -79,6 +81,7 @@ export class PaddleWebhookService {
         if (!record) {
           return; // 구독 청구가 아닌 거래(일회성 등)는 다루지 않음
         }
+        envelope.lockKey = record.userId ?? `paddle:${record.subscriptionId}`;
         await this.sync.withEventDedup(envelope, async (tx) => {
           const applied = await this.sync.recordTransaction(tx, record);
           if (!applied) {
@@ -144,6 +147,12 @@ export class PaddleWebhookService {
     if (!transaction.subscriptionId) {
       return null;
     }
+    // Paddle 금액은 이미 최소 단위 문자열 (KRW "6900")
+    const amount = Number.parseInt(transaction.details?.totals?.grandTotal ?? '0', 10);
+    if (!Number.isSafeInteger(amount)) {
+      this.logger.error(`Invalid amount for paddle transaction ${transaction.id}: ${transaction.details?.totals?.grandTotal}`);
+      return null;
+    }
     const period = transaction.billingPeriod;
     return {
       provider: 'paddle',
@@ -151,8 +160,7 @@ export class PaddleWebhookService {
       transactionId: transaction.id,
       subscriptionId: transaction.subscriptionId,
       userId: this.extractUserId(transaction.customData),
-      // Paddle 금액은 이미 최소 단위 문자열 (KRW "6900")
-      amount: Number.parseInt(transaction.details?.totals?.grandTotal ?? '0', 10),
+      amount,
       currency: transaction.currencyCode,
       periodType: 'normal', // 거래 페이로드만으로는 트라이얼 여부를 알 수 없고, 트라이얼을 쓰지 않는다
       periodStart: period ? new Date(period.startsAt) : null,

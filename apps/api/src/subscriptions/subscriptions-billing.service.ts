@@ -57,8 +57,8 @@ export class SubscriptionsBillingService {
       throw error;
     }
 
-    await this.prisma.userSubscription.update({
-      where: { userId },
+    await this.prisma.userSubscription.updateMany({
+      where: { userId, provider: 'paddle', providerSubscriptionId: subscription.providerSubscriptionId },
       data: { status: 'canceled', canceledAt: new Date() },
     });
 
@@ -95,8 +95,8 @@ export class SubscriptionsBillingService {
       throw error;
     }
 
-    await this.prisma.userSubscription.update({
-      where: { userId },
+    await this.prisma.userSubscription.updateMany({
+      where: { userId, provider: 'paddle', providerSubscriptionId: subscription.providerSubscriptionId },
       data: { status: 'active', canceledAt: null },
     });
 
