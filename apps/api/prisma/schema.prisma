@@ -582,7 +582,7 @@ model UserSubscription {
   providerSubscriptionId String?                  @map("provider_subscription_id")
   providerProductId      String?                  @map("provider_product_id") // Paddle price id, Apple productId, Google productId:basePlanId
   providerNextProductId  String?                  @map("provider_next_product_id") // 다음 기간부터 적용될 상품 (다운그레이드 예약)
-  providerLastEventAt    DateTime?                @map("provider_last_event_at") @db.Timestamptz(0) // 마지막으로 반영한 이벤트 시각 (순서 역전 가드)
+  providerLastEventAt    DateTime?                @map("provider_last_event_at") @db.Timestamptz(3) // 마지막으로 반영한 이벤트 시각 (순서 역전 가드). 밀리초 보존 — (0) 이면 반올림으로 같은 초의 늦은 이벤트가 스킵된다
   createdAt              DateTime                 @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt              DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(0)
 
@@ -648,7 +648,7 @@ model BillingWebhookEvent {
   provider   BillingProviderValue
   eventId    String               @map("event_id")
   eventType  String               @map("event_type")
-  occurredAt DateTime             @map("occurred_at") @db.Timestamptz(0)
+  occurredAt DateTime             @map("occurred_at") @db.Timestamptz(3)
   payload    Json?
   createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
 
