@@ -60,11 +60,10 @@ export class SubscriptionsReconciliationService {
   }
 
   private async reconcileOne(paddleSubscriptionId: string) {
-    // 조회 중에 도착한 웹훅이 이 시각보다 늦으므로 스킵되지 않는다
+    // 조회 전 시각을 기준으로 삼는다 — 조회 중 도착한 웹훅은 이보다 늦어 스킵되지 않고, 조회한 원격 상태는 이전 이벤트보다 우선한다
     const observedAt = new Date();
     const remote = await this.paddleClient.getSubscription(paddleSubscriptionId);
 
-    // 조회 시점의 원격 상태가 곧 최신 진실 — occurredAt을 조회 전 시각으로 두어 이전 이벤트보다 우선 적용
     // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그로 남는다
     const state = this.paddleWebhookService.toSubscriptionState(remote, observedAt);
     await this.prisma.$transaction(async (tx) => {

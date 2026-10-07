@@ -158,7 +158,7 @@ describe('PaddleWebhookService.handleEvent payload', () => {
     const payload = transactionPayload();
     await service.handleEvent(transactionEvent(), payload as never);
     const envelope = sync.withEventDedup.mock.calls[0][0];
-    expect(envelope.lockKey).toBe(USER_A);
+    expect(sync.withEventDedup.mock.calls[0][1]).toBe(USER_A);
     expect(envelope.payload).not.toHaveProperty('data.payments.0.method_details');
     expect(envelope.payload).toHaveProperty('data.payments.0.status', 'captured');
     expect(envelope.payload).toHaveProperty('event_id', 'evt_1');
@@ -176,5 +176,6 @@ describe('PaddleWebhookService.handleEvent payload', () => {
     } as unknown as EventEntity;
     await service.handleEvent(event, payload as never);
     expect(sync.withEventDedup.mock.calls[0][0].payload).toEqual(payload);
+    expect(sync.withEventDedup.mock.calls[0][1]).toBe(USER_A);
   });
 });

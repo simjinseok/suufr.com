@@ -32,15 +32,17 @@ export class BillingSyncService {
    *   (Prisma 7 + adapter-pg 의 P2002 meta 에는 target 이 없어 예외로는 어느 유니크인지 알 수 없다)
    * - 거부(BillingSyncRejectedError)는 롤백 → 멱등 행이 남지 않아 provider 대시보드 재전송으로 복구 가능. Sentry 기록 후 정상 반환
    * - 그 외 예외는 전파 → 5xx → provider 재시도
+   * @param lockKey 같은 사용자(모르면 같은 구독)의 이벤트가 동시에 처리되지 않게 잠그는 키
    */
   async withEventDedup(
     envelope: BillingWebhookEnvelope,
+    lockKey: string,
     apply: (tx: Prisma.TransactionClient) => Promise<void>,
   ): Promise<BillingSyncOutcome> {
     try {
       return await this.prisma.$transaction(async (tx): Promise<BillingSyncOutcome> => {
-        // 같은 키의 이벤트는 이 트랜잭션이 끝날 때까지 기다린다 (가드가 읽는 값이 중간에 바뀌지 않게)
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${envelope.lockKey}, 0))`;
+        // 같은 키의 이벤트는 이 트랜잭션이 끝날 때까지 기다린다 (확인한 구독 상태가 처리 도중 다른 이벤트로 바뀌지 않게)
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
         const { count } = await tx.billingWebhookEvent.createMany({
           data: [{
             provider: envelope.provider,
@@ -57,8 +59,11 @@ export class BillingSyncService {
         }
         await apply(tx);
         return 'applied';
-      // Neon 이 잠들었다 깨어날 때 연결에 2초 넘게 걸릴 수 있다
-      }, { maxWait: 5000, timeout: 10000 });
+      }, {
+        // Neon 이 잠들었다 깨어날 때 연결에 2초 넘게 걸릴 수 있다. timeout 은 잠금 대기까지 포함
+        maxWait: 5000,
+        timeout: 10000,
+      });
     }
     catch (error) {
       if (error instanceof BillingSyncRejectedError) {

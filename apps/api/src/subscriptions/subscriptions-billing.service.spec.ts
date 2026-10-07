@@ -40,6 +40,7 @@ describe('SubscriptionsBillingService.cancel / resume — provider 분기', () =
     await service.cancel(USER_A);
     expect(paddle.cancelAtPeriodEnd).toHaveBeenCalledWith('sub_1');
     expect(updateMany.mock.calls[0][0].data.status).toBe('canceled');
+    expect(updateMany.mock.calls[0][0].where).toEqual({ userId: USER_A, provider: 'paddle', providerSubscriptionId: 'sub_1' });
   });
 
   it('apple/google 구독은 SUBSCRIPTION_MANAGED_BY_STORE', async () => {
@@ -64,6 +65,7 @@ describe('SubscriptionsBillingService.cancel / resume — provider 분기', () =
     await service.resume(USER_A);
     expect(paddle.removeScheduledChange).toHaveBeenCalledWith('sub_1');
     expect(updateMany.mock.calls[0][0].data).toMatchObject({ status: 'active', canceledAt: null });
+    expect(updateMany.mock.calls[0][0].where).toEqual({ userId: USER_A, provider: 'paddle', providerSubscriptionId: 'sub_1' });
   });
 });
 

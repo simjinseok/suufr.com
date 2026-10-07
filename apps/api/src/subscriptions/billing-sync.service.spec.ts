@@ -307,12 +307,12 @@ describe('BillingSyncService.recordTransaction', () => {
 });
 
 describe('BillingSyncService.withEventDedup', () => {
-  const envelope = { provider: 'paddle' as const, eventId: 'evt_1', eventType: 'subscription.created', occurredAt: now, lockKey: USER_A, payload: { event_id: 'evt_1' } };
+  const envelope = { provider: 'paddle' as const, eventId: 'evt_1', eventType: 'subscription.created', occurredAt: now, payload: { event_id: 'evt_1' } };
 
   it('처음 보는 이벤트는 기록하고 apply 를 실행한다', async () => {
     const { tx, createMany, executeRaw } = makeTx([]);
     const apply = vi.fn();
-    expect(await makeService(tx).withEventDedup(envelope, apply)).toBe('applied');
+    expect(await makeService(tx).withEventDedup(envelope, USER_A, apply)).toBe('applied');
     expect(executeRaw.mock.invocationCallOrder[0]).toBeLessThan(createMany.mock.invocationCallOrder[0]);
     expect(createMany.mock.calls[0][0]).toMatchObject({ skipDuplicates: true, data: [{ provider: 'paddle', eventId: 'evt_1', payload: { event_id: 'evt_1' } }] });
     expect(apply).toHaveBeenCalledTimes(1);
@@ -322,19 +322,19 @@ describe('BillingSyncService.withEventDedup', () => {
     const { tx, createMany } = makeTx([]);
     createMany.mockResolvedValue({ count: 0 });
     const apply = vi.fn();
-    expect(await makeService(tx).withEventDedup(envelope, apply)).toBe('duplicate');
+    expect(await makeService(tx).withEventDedup(envelope, USER_A, apply)).toBe('duplicate');
     expect(apply).not.toHaveBeenCalled();
   });
 
   it('apply 가 BillingSyncRejectedError 를 던지면 rejected 를 반환하고 예외를 전파하지 않는다', async () => {
     const { tx } = makeTx([]);
     const apply = vi.fn().mockRejectedValue(new BillingSyncRejectedError('conflict'));
-    expect(await makeService(tx).withEventDedup(envelope, apply)).toBe('rejected');
+    expect(await makeService(tx).withEventDedup(envelope, USER_A, apply)).toBe('rejected');
   });
 
   it('그 외 예외는 그대로 전파한다 (5xx → provider 재시도)', async () => {
     const { tx } = makeTx([]);
     const apply = vi.fn().mockRejectedValue(new Error('db down'));
-    await expect(makeService(tx).withEventDedup(envelope, apply)).rejects.toThrow('db down');
+    await expect(makeService(tx).withEventDedup(envelope, USER_A, apply)).rejects.toThrow('db down');
   });
 });

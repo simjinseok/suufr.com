@@ -53,7 +53,6 @@ export class PaddleWebhookService {
       eventId: event.eventId,
       eventType: event.eventType,
       occurredAt,
-      lockKey: '',
       payload: this.redactPayload(payload),
     };
 
@@ -65,8 +64,8 @@ export class PaddleWebhookService {
       case EventName.SubscriptionPastDue:
       case EventName.SubscriptionResumed: {
         const state = this.toSubscriptionState(event.data as SubscriptionNotification, occurredAt);
-        envelope.lockKey = state.userId ?? `paddle:${state.subscriptionId}`;
-        await this.sync.withEventDedup(envelope, async (tx) => {
+        const lockKey = state.userId ?? `paddle:${state.subscriptionId}`;
+        await this.sync.withEventDedup(envelope, lockKey, async (tx) => {
           const applied = await this.sync.syncSubscription(tx, state);
           if (!applied) {
             this.logger.error(`Cannot resolve user for paddle subscription ${state.subscriptionId} (event ${event.eventId}, type ${event.eventType})`);
@@ -81,8 +80,8 @@ export class PaddleWebhookService {
         if (!record) {
           return; // 구독 청구가 아닌 거래(일회성 등)는 다루지 않음
         }
-        envelope.lockKey = record.userId ?? `paddle:${record.subscriptionId}`;
-        await this.sync.withEventDedup(envelope, async (tx) => {
+        const lockKey = record.userId ?? `paddle:${record.subscriptionId}`;
+        await this.sync.withEventDedup(envelope, lockKey, async (tx) => {
           const applied = await this.sync.recordTransaction(tx, record);
           if (!applied) {
             this.logger.error(`Cannot resolve user for paddle transaction ${record.transactionId} (event ${event.eventId}, type ${event.eventType})`);
