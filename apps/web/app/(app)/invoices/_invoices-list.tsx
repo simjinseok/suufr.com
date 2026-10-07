@@ -1,67 +1,41 @@
 'use client';
 
 import * as React from 'react';
-import { Checkbox, Chip, Label, Modal, Surface } from '@heroui/react';
-import { format } from 'date-fns/format';
-import { ko } from 'date-fns/locale/ko';
-import { tz } from '@date-fns/tz';
-import { numberToHangulMixed } from 'es-hangul';
 
 import { StudentFilter } from '@/components/student/student-filter';
-import { useTimeZone } from '@/contexts/timezone';
+import InvoiceCard from './_invoice-card';
 
-type SessionItem = {
-  uuid: string;
-  sessionAt: string;
-  duration: number;
-  isDone: boolean;
-};
-
-type InvoiceItem = {
+export type InvoiceCardItem = {
   uuid: string;
   title: string | null;
   price: number;
   totalCount: number | null;
   periodStart: string | null;
   periodEnd: string | null;
-  sessions: SessionItem[];
+  // 완료(isDone) 세션 수 — 잔여 차감은 완료 기준이라 예정은 세지 않는다 (docs/schema-redesign.md §3)
+  doneCount: number;
   student: {
     uuid: string;
     name: string;
+    profileImageUrl: string | null;
   };
+  // 연결된 미삭제 입금 (§6-22 순수 연결) — 1건 이상이면 입금 확인, 없으면 미납
+  payments: Array<{ uuid: string; amount: number; paidAt: string }>;
 };
 
 type Props = {
-  invoices: InvoiceItem[];
+  invoices: InvoiceCardItem[];
   selectedStudent: { uuid: string; name: string } | null;
-  use24HourFormat: boolean;
+  // 유저 타임존 기준 오늘 "YYYY-MM-DD" — 서버에서 한 번 계산해 hydration 이 항상 일치한다
+  today: string;
 };
 
-// 달력 날짜(@db.Date) — 타임존 변환 없이 UTC 고정으로 표기
-function formatCalendarDate(value: string) {
-  return format(new Date(value), 'yyyy년 M월 d일', { locale: ko, in: tz('UTC') });
-}
-
-export default function InvoicesList({ invoices, selectedStudent, use24HourFormat }: Props) {
-  const [sessionsInvoice, setSessionsInvoice] = React.useState<InvoiceItem | null>(null);
-  const [isExpanded, setIsExpanded] = React.useState(false);
-
+// 수강권 1개 = 카드 1장 그리드. 카드 클릭·수업 펼치기 없음 (2026-10-07 확정 시안)
+export default function InvoicesList({ invoices, selectedStudent, today }: Props) {
   return (
     <React.Fragment>
       <div className="mt-5 flex items-center justify-between gap-3">
         <StudentFilter selected={selectedStudent} />
-        <Checkbox
-          isSelected={isExpanded}
-          onChange={setIsExpanded}
-          variant="secondary"
-        >
-          <Checkbox.Content>
-            <Checkbox.Control className="size-5">
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-            <Label>수업 펼치기</Label>
-          </Checkbox.Content>
-        </Checkbox>
       </div>
 
       {invoices.length === 0
@@ -69,165 +43,14 @@ export default function InvoicesList({ invoices, selectedStudent, use24HourForma
             <p className="mt-8 text-center text-gray-500">수강권이 없습니다.</p>
           )
         : (
-            <Surface className="mt-5 rounded-xl shadow-xs overflow-hidden">
-              <ul>
-                {invoices.map((invoice, index) => (
-                  <li
-                    key={invoice.uuid}
-                    className={`px-5 py-3 ${index > 0 ? 'border-t border-gray-50' : ''}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          {invoice.periodStart && (
-                            <p className="font-semibold text-gray-900">
-                              {formatCalendarDate(invoice.periodStart)}
-                              {invoice.periodEnd && ` ~ ${formatCalendarDate(invoice.periodEnd)}`}
-                            </p>
-                          )}
-                          {invoice.totalCount != null && invoice.totalCount > 0 && (
-                            <span className="text-sm text-gray-500">
-                              {invoice.totalCount}
-                              회권
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-sm text-gray-600 truncate">
-                          {invoice.student.name}
-                          {' '}
-                          ·
-                          {' '}
-                          {invoice.title || '수강권'}
-                        </p>
-                      </div>
-                      <div className="shrink-0 flex items-center gap-3">
-                        <Chip
-                          size="sm"
-                          variant="soft"
-                          color="accent"
-                          onClick={() => setSessionsInvoice(invoice)}
-                        >
-                          세션
-                          {' '}
-                          {invoice.sessions.length}
-                        </Chip>
-                        <p className="text-base font-bold text-gray-900 tabular-nums">
-                          {numberToHangulMixed(invoice.price)}
-                          원
-                        </p>
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="mt-2 pl-3 border-l-2 border-gray-100">
-                        <SessionRows sessions={invoice.sessions} use24HourFormat={use24HourFormat} />
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </Surface>
+            <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {invoices.map(invoice => (
+                <li key={invoice.uuid} className="min-w-0">
+                  <InvoiceCard invoice={invoice} today={today} />
+                </li>
+              ))}
+            </ul>
           )}
-
-      {sessionsInvoice && (
-        <InvoiceSessionsModal
-          invoice={sessionsInvoice}
-          use24HourFormat={use24HourFormat}
-          onClose={() => setSessionsInvoice(null)}
-        />
-      )}
     </React.Fragment>
-  );
-}
-
-function SessionRows({ sessions, use24HourFormat }: {
-  sessions: SessionItem[];
-  use24HourFormat: boolean;
-}) {
-  const timeZone = useTimeZone();
-
-  if (sessions.length === 0) {
-    return <p className="py-2 text-sm text-gray-400">수업이 없습니다.</p>;
-  }
-
-  return (
-    <ul>
-      {sessions.map((session, index) => {
-        const sessionAt = new Date(session.sessionAt);
-
-        return (
-          <li
-            key={session.uuid}
-            className={`flex items-center justify-between gap-3 py-2 ${index > 0 ? 'border-t border-gray-50' : ''}`}
-          >
-            <div className="flex items-baseline gap-2 flex-wrap min-w-0">
-              <p className="font-semibold text-gray-900">
-                {format(sessionAt, 'M월 d일', { locale: ko, in: tz(timeZone) })}
-              </p>
-              <span className="text-sm text-gray-500">
-                (
-                {format(sessionAt, 'E', { locale: ko, in: tz(timeZone) })}
-                )
-              </span>
-              <span className="text-sm text-gray-600">
-                {format(sessionAt, use24HourFormat ? 'HH:mm' : 'a h:mm', { locale: ko, in: tz(timeZone) })}
-              </span>
-              <span className="text-xs text-gray-400">
-                ·
-                {session.duration}
-                분
-              </span>
-            </div>
-            <div className="shrink-0">
-              {session.isDone
-                ? (
-                    <Chip size="sm" color="success" variant="soft">완료</Chip>
-                  )
-                : (
-                    <Chip size="sm" color="warning" variant="soft">예정</Chip>
-                  )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function InvoiceSessionsModal({ invoice, use24HourFormat, onClose }: {
-  invoice: InvoiceItem;
-  use24HourFormat: boolean;
-  onClose: () => void;
-}) {
-  return (
-    <Modal.Backdrop
-      isOpen
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <Modal.Container>
-        <Modal.Dialog>
-          {() => (
-            <React.Fragment>
-              <Modal.Header>
-                <Modal.Heading>
-                  {invoice.student.name}
-                  {' '}
-                  ·
-                  {' '}
-                  {invoice.title || '수강권'}
-                </Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <div className="p-1">
-                  <SessionRows sessions={invoice.sessions} use24HourFormat={use24HourFormat} />
-                </div>
-              </Modal.Body>
-            </React.Fragment>
-          )}
-        </Modal.Dialog>
-      </Modal.Container>
-    </Modal.Backdrop>
   );
 }
