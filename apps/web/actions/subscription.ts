@@ -35,7 +35,7 @@ export async function getSubscription(): Promise<TSubscription | null> {
   );
 }
 
-export async function getInvoiceUrl(paddleTransactionId: string): Promise<BillingActionResult & { url?: string }> {
+export async function getInvoiceUrl(transactionId: string): Promise<BillingActionResult & { url?: string }> {
   return await Sentry.withServerActionInstrumentation(
     'getInvoiceUrl',
     { headers: await headers(), recordResponse: true },
@@ -46,7 +46,7 @@ export async function getInvoiceUrl(paddleTransactionId: string): Promise<Billin
       }
 
       try {
-        const result = await subscriptionsApi.invoice(paddleTransactionId);
+        const result = await subscriptionsApi.invoice(transactionId);
         return { success: true, url: result.data.url };
       }
       catch (error) {

@@ -13,8 +13,8 @@ type InvoiceResponse = {
 
 export const subscriptionsApi = {
   get: () => apiClient<SubscriptionResponse>('/api/subscription'),
-  invoice: (paddleTransactionId: string) =>
-    apiClient<InvoiceResponse>(`/api/subscription/orders/${encodeURIComponent(paddleTransactionId)}/invoice`),
+  invoice: (transactionId: string) =>
+    apiClient<InvoiceResponse>(`/api/subscription/orders/${encodeURIComponent(transactionId)}/invoice`),
   cancel: () =>
     apiClient<{ success: boolean }>('/api/subscription/cancel', {
       method: 'POST',
