@@ -27,7 +27,7 @@ type Props = {
 };
 
 /**
- * 가입 동의 체크박스 (전체 동의 + 필수 2개). 이메일 가입 버튼과 Google 가입 버튼이 같은 값을 본다.
+ * 이메일 가입 동의 체크박스 (전체 동의 + 필수 2개). Google 가입은 체크박스 없이 서버가 기록한다.
  * 각 항목은 hidden input 으로 'true' | 'false' 를 FormData 에 싣는다 (name 은 schemas/auth consentFields 와 동일).
  * "보기" 링크는 Checkbox.Content(클릭 영역) 바깥에 두어 링크 클릭이 체크를 토글하지 않게 한다.
  */

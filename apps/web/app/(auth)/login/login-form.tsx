@@ -17,13 +17,6 @@ import { login, respondToMfa } from '@/actions/auth';
 import GoogleLoginButton from '@/components/auth/google-login-button';
 
 const SOCIAL_ERROR_MESSAGE = 'Google 로그인에 실패했습니다. 다시 시도해주세요.';
-// 로그인 화면의 Google 버튼은 기존 계정만 통과한다. 미가입자는 better-auth 가 ?error=signup_disabled 로 돌려보낸다
-const SOCIAL_SIGNUP_REQUIRED_MESSAGE = '가입되지 않은 Google 계정입니다. 회원가입에서 약관에 동의한 뒤 Google로 가입해주세요.';
-
-function socialErrorMessage(code: string | null): string | null {
-  if (!code) return null;
-  return code === 'signup_disabled' ? SOCIAL_SIGNUP_REQUIRED_MESSAGE : SOCIAL_ERROR_MESSAGE;
-}
 
 export default function LoginForm() {
   const router = useRouter();
@@ -35,8 +28,8 @@ export default function LoginForm() {
   // InputOTP 는 TextField 와 달리 Form 의 validationErrors 를 모르므로, 제출 에러를 직접 넘기고
   // 다시 입력을 시작하면(해당 제출의 timestamp 를 기억해) 에러 표시를 지운다
   const [otpErrorDismissedAt, setOtpErrorDismissedAt] = React.useState<number | undefined>();
-  // ?error= 는 api(social) 또는 better-auth(signup_disabled, state_mismatch 등)가 붙인다
-  const socialError = socialErrorMessage(searchParams.get('error'));
+  // ?error= 는 api(social) 또는 better-auth(state_mismatch 등)가 붙인다. 코드와 무관하게 같은 안내
+  const socialError = searchParams.get('error') ? SOCIAL_ERROR_MESSAGE : null;
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,

@@ -9,21 +9,16 @@ import {
   FieldError,
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { signup, startGoogleSignup } from '@/actions/auth';
+import { signup } from '@/actions/auth';
 import ConsentCheckboxes, { EMPTY_CONSENTS, isAllConsented, type ConsentValues } from '@/components/auth/consent-checkboxes';
 import GoogleLoginButton from '@/components/auth/google-login-button';
 import { RECAPTCHA_ACTION_SIGNUP, RecaptchaNotice, RecaptchaScript, useRecaptcha } from '@/components/auth/recaptcha';
 
-// api 가 가입 모드 요청에서 동의값이 빠졌을 때 ?error=consent 로 돌려보낸다 (버튼은 동의 전 비활성이라 정상 흐름에선 없다)
-const CONSENT_ERROR_MESSAGE = '이용약관과 개인정보 수집·이용에 동의한 뒤 Google로 가입해주세요.';
-
 export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: string | null }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const consentError = searchParams.get('error') === 'consent' ? CONSENT_ERROR_MESSAGE : null;
   const { getToken, onScriptError } = useRecaptcha(recaptchaSiteKey);
   // 토큰 발급 동안도 버튼을 pending 으로 보이기 위한 로컬 상태 (useActionState 의 isPending 은 formAction 호출 뒤부터)
   const [isGettingToken, setIsGettingToken] = React.useState(false);
@@ -102,11 +97,6 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
           {state.message && !state.success && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
               {state.message}
-            </div>
-          )}
-          {consentError && !state.timestamp && (
-            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-              {consentError}
             </div>
           )}
           {/* 토큰 없는 200 = 이미 가입된 이메일(열거 방지 합성 응답). 안내만 하고 머문다 */}
@@ -190,11 +180,8 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
           <div className="h-px grow bg-gray-200" />
         </div>
 
-        {/* 이메일 가입과 같은 동의가 전제다. 동의값은 api 가 OAuth 왕복 동안 보관했다가 가입 완료 시 이력으로 기록한다 */}
-        <GoogleLoginButton
-          onStart={() => startGoogleSignup(consents)}
-          isDisabled={!isAllConsented(consents)}
-        />
+        {/* 체크박스와 무관하다. 약관·방침 고지는 Google 동의 화면이 보여주고, 동의 이력은 api 가 가입 완료 시 기록한다 */}
+        <GoogleLoginButton />
 
         <div className="mt-6 text-center text-sm text-gray-500">
           이미 계정이 있으신가요?

@@ -1,19 +1,13 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
-import { isBetterAuthError, toHttpException } from './better-auth-error.map';
-
-/** 가입되지 않은 Google 계정으로 로그인 전용 요청이 왔을 때(disableImplicitSignUp). 클라이언트는 가입 화면으로 안내한다 */
-export const SOCIAL_SIGNUP_REQUIRED = 'SOCIAL_SIGNUP_REQUIRED';
-export const SOCIAL_SIGNUP_REQUIRED_MESSAGE = '가입되지 않은 Google 계정입니다. 가입 화면에서 Google로 가입해주세요.';
+import { toHttpException } from './better-auth-error.map';
 
 export type SocialSignInUrls = {
   callbackURL: string;
   errorCallbackURL: string;
-  /** 신규 가입자만 보낼 주소. 없으면 callbackURL */
-  newUserCallbackURL?: string;
-  /** true 면 신규 가입 허용(동의를 받은 가입 모드). 없으면 기존 계정 로그인만 (disableImplicitSignUp) */
-  requestSignUp?: boolean;
+  /** 신규 가입자(이번 콜백에서 사용자가 만들어진 경우)만 보낼 주소. 없으면 callbackURL */
+  newUserCallbackURL: string;
 };
 
 /** 로그인 성공 응답. accessToken = JWT(1h), refreshToken = 세션 토큰(30일) */
@@ -180,7 +174,6 @@ export class BetterAuthService {
         callbackURL: urls.callbackURL,
         errorCallbackURL: urls.errorCallbackURL,
         newUserCallbackURL: urls.newUserCallbackURL,
-        requestSignUp: urls.requestSignUp,
         disableRedirect: true,
       },
       returnHeaders: true,
@@ -195,22 +188,11 @@ export class BetterAuthService {
    * 이메일 기준으로 기존 사용자에 연결하거나 새로 만든 뒤 세션을 발급한다. 소셜 로그인은 2단계 인증을 묻지 않는다.
    * 토큰이 유효하지 않으면 better-auth 가 INVALID_TOKEN(401) 을 던진다.
    */
-  async signInWithGoogleIdToken(idToken: string, meta?: RequestMeta, opts: { requestSignUp?: boolean } = {}): Promise<IssuedTokens> {
-    const response = await this.run(async () => {
-      try {
-        return await this.auth.api.signInSocial({
-          body: { provider: 'google', idToken: { token: idToken }, requestSignUp: opts.requestSignUp },
-          headers: requestHeaders(meta),
-        });
-      }
-      catch (error) {
-        // disableImplicitSignUp 에 걸린 신규 계정. better-auth 는 OAUTH_LINK_ERROR 로 뭉뚱그리므로 메시지로 구분한다
-        if (isBetterAuthError(error) && error.body?.message === 'signup disabled') {
-          throw new ForbiddenException({ message: SOCIAL_SIGNUP_REQUIRED_MESSAGE, error: SOCIAL_SIGNUP_REQUIRED });
-        }
-        throw error;
-      }
-    });
+  async signInWithGoogleIdToken(idToken: string, meta?: RequestMeta): Promise<IssuedTokens> {
+    const response = await this.run(() => this.auth.api.signInSocial({
+      body: { provider: 'google', idToken: { token: idToken } },
+      headers: requestHeaders(meta),
+    }));
     // idToken 분기는 리다이렉트 없이 세션 토큰과 사용자를 돌려준다 (url 만 있는 응답은 브라우저 OAuth 분기)
     if (!('token' in response) || !response.token || !response.user) {
       throw toHttpException(new Error('Google 로그인 후 세션이 생성되지 않았습니다'));

@@ -65,7 +65,7 @@ export class ConsentsService {
   }
 
   /**
-   * 동의 이력이 전혀 없을 때만 기록한다. iOS 네이티브 Google 로그인이 매번 동의값을 보내도 신규 가입 1회만 남기기 위함.
+   * 동의 이력이 전혀 없을 때만 기록한다 (iOS 네이티브 Google 로그인 — 신규 가입인지 구분할 수 없어 매 로그인마다 호출된다).
    * 기록 여부를 돌려준다.
    */
   async recordIfAbsent(userId: string, input: ConsentInput, meta: ConsentMeta = {}): Promise<boolean> {

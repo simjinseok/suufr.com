@@ -9,6 +9,7 @@ import { BetterAuthService, type RequestMeta } from './better-auth/better-auth.s
 import { S3Service } from '../s3/s3.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { RecaptchaService } from '../recaptcha/recaptcha.service';
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../common/constants/legal';
 import {
   LoginDto,
   MfaDto,
@@ -93,19 +94,18 @@ export class AuthController {
   /**
    * iOS 네이티브 Google 로그인. Google Sign-In SDK 가 받은 ID 토큰(audience = 서버 클라이언트 ID)을 세션으로 바꾼다.
    * 응답은 login 성공 응답과 같다(토큰). 소셜 로그인이라 2단계 인증은 묻지 않는다. 브라우저 방식은 /auth/google/start 참고.
-   * consents 가 있으면(가입 화면) 신규 가입을 허용하고, 동의 이력이 없는 사용자에게만 기록한다.
-   * 없으면(로그인 화면) 기존 계정만 통과하고 미가입자는 SOCIAL_SIGNUP_REQUIRED(403) 다.
+   * 기존 계정이면 로그인, 없으면 가입이다. 약관·방침 고지는 Google 동의 화면이 맡고, 동의 이력이 없는 사용자(신규 가입자)에게
+   * 현재 문서 버전으로 이력을 남긴다. 이 요청은 iOS 가 직접 보내므로 IP·UA 가 실제 클라이언트 값이다.
    */
   @Public()
   @Post('google/native')
   async googleNativeLogin(@Body() dto: GoogleNativeLoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
-    const tokens = await this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent }, { requestSignUp: !!dto.consents });
-    if (dto.consents) {
-      await this.consentsService.recordIfAbsent(tokens.userId, dto.consents, {
-        ipAddress: dto.consents.ipAddress ?? ip,
-        userAgent: dto.consents.userAgent ?? userAgent,
-      });
-    }
+    const tokens = await this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent });
+    await this.consentsService.recordIfAbsent(
+      tokens.userId,
+      { terms: true, privacy: true, termsVersion: TERMS_VERSION, privacyVersion: PRIVACY_POLICY_VERSION },
+      { ipAddress: ip, userAgent },
+    );
     return tokens;
   }
 

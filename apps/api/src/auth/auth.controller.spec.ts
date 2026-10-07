@@ -1,5 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
+import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../common/constants/legal';
 
 /** 서비스는 모두 mock. 컨트롤러의 위임·응답 형태만 검증한다. */
 function build() {
@@ -27,19 +28,16 @@ describe('AuthController', () => {
     expect(betterAuth.verifySecondFactor).toHaveBeenCalledWith('better-auth.two_factor=abc.def', '123456', { ip: '1.1.1.1', userAgent: 'ua' });
   });
 
-  it('google/native: 동의 없이 오면 로그인 전용으로 위임하고 토큰 응답을 그대로 돌려준다', async () => {
+  it('google/native: ID 토큰과 요청 메타를 위임하고, 이력이 없는 사용자에게 현재 문서 버전으로 동의를 기록한 뒤 토큰을 돌려준다', async () => {
     const { controller, betterAuth, consents } = build();
     const result = await controller.googleNativeLogin({ idToken: 'eyJ.id.token' }, '1.1.1.1', 'ios-ua');
-    expect(betterAuth.signInWithGoogleIdToken).toHaveBeenCalledWith('eyJ.id.token', { ip: '1.1.1.1', userAgent: 'ios-ua' }, { requestSignUp: false });
-    expect(consents.recordIfAbsent).not.toHaveBeenCalled();
+    expect(betterAuth.signInWithGoogleIdToken).toHaveBeenCalledWith('eyJ.id.token', { ip: '1.1.1.1', userAgent: 'ios-ua' });
+    expect(consents.recordIfAbsent).toHaveBeenCalledWith(
+      'u1',
+      { terms: true, privacy: true, termsVersion: TERMS_VERSION, privacyVersion: PRIVACY_POLICY_VERSION },
+      { ipAddress: '1.1.1.1', userAgent: 'ios-ua' },
+    );
     expect(result).toEqual({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' });
-  });
-
-  it('google/native: 동의가 있으면 신규 가입을 허용하고 이력이 없는 사용자에게만 기록한다', async () => {
-    const { controller, betterAuth, consents } = build();
-    await controller.googleNativeLogin({ idToken: 'eyJ.id.token', consents: { ...consentsDto, userAgent: 'Suufr iOS' } }, '1.1.1.1', 'ios-ua');
-    expect(betterAuth.signInWithGoogleIdToken).toHaveBeenCalledWith('eyJ.id.token', { ip: '1.1.1.1', userAgent: 'ios-ua' }, { requestSignUp: true });
-    expect(consents.recordIfAbsent).toHaveBeenCalledWith('u1', { ...consentsDto, userAgent: 'Suufr iOS' }, { ipAddress: '1.1.1.1', userAgent: 'Suufr iOS' });
   });
 
   it('refresh / logout 은 세션 토큰을 위임한다', async () => {

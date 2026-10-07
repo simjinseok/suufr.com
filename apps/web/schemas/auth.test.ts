@@ -50,7 +50,7 @@ describe('signupSchema 동의 필드', () => {
   });
 });
 
-describe('consentSchema (재동의)', () => {
+describe('consentSchema', () => {
   it('두 동의가 모두 있어야 통과한다', () => {
     expect(consentSchema.safeParse(agreed).success).toBe(true);
     expect(consentSchema.safeParse({ ...agreed, agreePrivacy: 'false' }).success).toBe(false);

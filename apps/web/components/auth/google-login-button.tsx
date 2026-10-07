@@ -20,16 +20,9 @@ function GoogleMark() {
   );
 }
 
-type Props = {
-  /** 기본은 로그인 시작(startGoogleLogin). 가입 폼은 동의값을 싣는 startGoogleSignup 을 넘긴다 */
-  onStart?: () => Promise<void>;
-  /** 가입 폼: 두 동의가 모두 체크되기 전까지 비활성 */
-  isDisabled?: boolean;
-};
-
 /**
- * "Google로 계속하기" — 서버 액션이 브라우저를 api /auth/google/start 로 보내고, api 가 Google 인증 페이지로 리다이렉트한다.
- * 로그인 폼에서는 기존 계정만 통과하고(미가입자는 가입 안내), 가입 폼에서는 동의값과 함께 신규 가입을 요청한다.
+ * "Google로 계속하기" (로그인·가입 페이지 공용) — 서버 액션이 브라우저를 api /auth/google/start 로 보내고, api 가 Google 인증 페이지로
+ * 리다이렉트한다. 기존 계정이면 로그인, 없으면 가입. 약관·방침 고지는 Google 동의 화면의 링크가 맡으므로 체크박스를 요구하지 않는다.
  *
  * Google 브랜딩 가이드라인(Light 테마)을 따른다:
  * https://developers.google.com/identity/branding-guidelines
@@ -37,15 +30,15 @@ type Props = {
  * - 로고 20px, 좌측 12px, 로고–텍스트 10px, 우측 12px
  * HeroUI Button은 배경·글자색·아이콘 크기를 강제하므로 쓰지 않는다.
  */
-export default function GoogleLoginButton({ onStart = startGoogleLogin, isDisabled = false }: Props) {
+export default function GoogleLoginButton() {
   const [isPending, startTransition] = React.useTransition();
   return (
     <button
       type="button"
-      disabled={isPending || isDisabled}
+      disabled={isPending}
       aria-busy={isPending}
       onClick={() => startTransition(async () => {
-        await onStart();
+        await startGoogleLogin();
       })}
       className="flex h-10 w-full items-center rounded-full border border-[#747775] bg-white pr-3 pl-3 text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F8F9FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4285F4] disabled:cursor-not-allowed disabled:opacity-60"
     >
