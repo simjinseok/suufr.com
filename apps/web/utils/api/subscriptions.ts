@@ -11,8 +11,17 @@ type InvoiceResponse = {
   data: { url: string };
 };
 
+type CheckoutResponse = {
+  success: boolean;
+  data: { transactionId: string };
+};
+
 export const subscriptionsApi = {
   get: () => apiClient<SubscriptionResponse>('/api/subscription'),
+  checkout: () =>
+    apiClient<CheckoutResponse>('/api/subscription/checkout', {
+      method: 'POST',
+    }),
   invoice: (transactionId: string) =>
     apiClient<InvoiceResponse>(`/api/subscription/orders/${encodeURIComponent(transactionId)}/invoice`),
   cancel: () =>
