@@ -1,24 +1,33 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { UserSubscription } from '@prisma/generated/client';
 import { SubscriptionsBillingService } from './subscriptions-billing.service';
-import type { PaddleClient } from './paddle.client';
+import { PaddleApiError, type PaddleClient } from './paddle.client';
+import { SubscriptionsService } from './subscriptions.service';
 import type { PrismaService } from '../prisma/prisma.service';
 
 const USER_A = '11111111-1111-4111-8111-111111111111';
 const future = new Date(Date.now() + 86_400_000);
 
-function makeService(subscription: Partial<UserSubscription> | null, order: { userId: string; status: string } | null = null) {
+function makeService(
+  subscription: Partial<UserSubscription> | null,
+  order: { userId: string; status: string } | null = null,
+  options: { emailVerified?: boolean } = {},
+) {
   const updateMany = vi.fn().mockResolvedValue({});
   const prisma = {
     userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription), updateMany },
     subscriptionOrder: { findUnique: vi.fn().mockResolvedValue(order) },
+    user: { findUnique: vi.fn().mockResolvedValue({ emailVerified: options.emailVerified ?? true }) },
   } as unknown as PrismaService;
+  const createCheckoutTransaction = vi.fn().mockResolvedValue({ transactionId: 'txn_1' });
   const paddle = {
     cancelAtPeriodEnd: vi.fn().mockResolvedValue({}),
     removeScheduledChange: vi.fn().mockResolvedValue({}),
     getInvoiceUrl: vi.fn().mockResolvedValue('https://invoice'),
+    createCheckoutTransaction,
   } as unknown as PaddleClient;
-  return { service: new SubscriptionsBillingService(prisma, paddle), prisma, paddle, updateMany };
+  const subscriptions = new SubscriptionsService(prisma);
+  return { service: new SubscriptionsBillingService(prisma, paddle, subscriptions), prisma, paddle, updateMany, createCheckoutTransaction };
 }
 
 const paddleActive: Partial<UserSubscription> = { userId: USER_A, plan: 'pro', status: 'active', provider: 'paddle', providerSubscriptionId: 'sub_1', currentPeriodEnd: future };
@@ -83,5 +92,61 @@ describe('SubscriptionsBillingService.getInvoiceUrl', () => {
     await expect(makeService(null, null).service.getInvoiceUrl(USER_A, 'txn_x')).rejects.toBeInstanceOf(NotFoundException);
     await expect(makeService(null, { userId: 'other', status: 'done' }).service.getInvoiceUrl(USER_A, 'txn_1')).rejects.toBeInstanceOf(NotFoundException);
     await expect(makeService(null, { userId: USER_A, status: 'refunded' }).service.getInvoiceUrl(USER_A, 'txn_1')).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('SubscriptionsBillingService.createCheckout — 결제 시작 가드', () => {
+  it('인증된 free 계정은 Paddle 거래를 만들고 transactionId 를 돌려준다', async () => {
+    const { service, createCheckoutTransaction } = makeService(null);
+    await expect(service.createCheckout(USER_A)).resolves.toEqual({ transactionId: 'txn_1' });
+    expect(createCheckoutTransaction).toHaveBeenCalledWith(USER_A);
+  });
+
+  it('이메일 미인증이면 EMAIL_NOT_VERIFIED, Paddle 호출 없음 (UI 우회 방어)', async () => {
+    const { service, createCheckoutTransaction } = makeService(null, null, { emailVerified: false });
+    expect(await errorCodeOf(service.createCheckout(USER_A))).toBe('EMAIL_NOT_VERIFIED');
+    expect(createCheckoutTransaction).not.toHaveBeenCalled();
+  });
+
+  it('이미 유효한 pro(활성·해지예약·연체 유예·스토어·수동) 면 SUBSCRIPTION_ALREADY_ACTIVE', async () => {
+    for (const row of [
+      paddleActive,
+      { ...paddleActive, status: 'canceled' as const },
+      { ...paddleActive, status: 'past_due' as const, currentPeriodEnd: new Date(Date.now() - 1000), gracePeriodExpiresAt: future },
+      { ...paddleActive, provider: 'apple' as const, providerSubscriptionId: 'O1' },
+      { ...paddleActive, provider: 'manual' as const, providerSubscriptionId: null, currentPeriodEnd: null },
+    ]) {
+      const { service, createCheckoutTransaction } = makeService(row);
+      expect(await errorCodeOf(service.createCheckout(USER_A))).toBe('SUBSCRIPTION_ALREADY_ACTIVE');
+      expect(createCheckoutTransaction).not.toHaveBeenCalled();
+    }
+  });
+
+  it('만료된 pro 행(expired 또는 기간·유예 모두 지남)은 다시 구독할 수 있다', async () => {
+    const past = new Date(Date.now() - 86_400_000);
+    for (const row of [
+      { ...paddleActive, status: 'expired' as const },
+      { ...paddleActive, status: 'past_due' as const, currentPeriodEnd: past, gracePeriodExpiresAt: past },
+    ]) {
+      const { service } = makeService(row);
+      await expect(service.createCheckout(USER_A)).resolves.toEqual({ transactionId: 'txn_1' });
+    }
+  });
+
+  it('미인증이면서 pro 여도 먼저 EMAIL_NOT_VERIFIED 를 돌려준다', async () => {
+    const { service } = makeService(paddleActive, null, { emailVerified: false });
+    expect(await errorCodeOf(service.createCheckout(USER_A))).toBe('EMAIL_NOT_VERIFIED');
+  });
+
+  it('Paddle API 오류는 CHECKOUT_CREATE_FAILED 로, 그 외 예외는 그대로 던진다', async () => {
+    const failing = makeService(null);
+    failing.createCheckoutTransaction.mockRejectedValue(
+      new PaddleApiError({ type: 'request_error', code: 'bad_request', detail: 'x', documentation_url: '' }, null),
+    );
+    expect(await errorCodeOf(failing.service.createCheckout(USER_A))).toBe('CHECKOUT_CREATE_FAILED');
+
+    const misconfigured = makeService(null);
+    misconfigured.createCheckoutTransaction.mockRejectedValue(new Error('PADDLE_PRICE_ID_PRO is not configured'));
+    await expect(misconfigured.service.createCheckout(USER_A)).rejects.toThrow('PADDLE_PRICE_ID_PRO is not configured');
   });
 });
