@@ -64,8 +64,10 @@ export function createAuthOptions(deps: AuthConfigDeps) {
 
     emailAndPassword: {
       enabled: true,
-      // 가입 후 OTP 인증 전까지 로그인 불가. 중복 이메일 가입은 열거 방지를 위해 200(합성 사용자)으로 응답된다.
-      requireEmailVerification: true,
+      // 이메일 인증은 나중에 해도 된다 — 미인증 계정도 로그인되고, 인증 전까지 web 이 배너로 안내한다.
+      // autoSignIn 은 끈다: better-auth 는 requireEmailVerification 이나 autoSignIn:false 일 때만 중복 이메일을
+      // 열거 방지용 200(합성 사용자)으로 응답한다. 가입 직후 로그인은 AuthController.signup 이 signIn 으로 처리한다
+      requireEmailVerification: false,
       autoSignIn: false,
       minPasswordLength: 8,
       maxPasswordLength: 128,
@@ -81,6 +83,8 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       }),
     },
     emailVerification: {
+      // requireEmailVerification 이 꺼져도 가입 시 인증코드(OTP) 메일은 보낸다
+      sendOnSignUp: true,
       autoSignInAfterVerification: false,
     },
 

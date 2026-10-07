@@ -42,12 +42,12 @@ export class AuthService {
   }
 
   /** /me 의 user 에 실리는 2FA 상태 */
-  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean }> {
+  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean; emailVerified: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { twoFactorEnabled: true },
+      select: { twoFactorEnabled: true, emailVerified: true },
     });
-    return { twoFactorEnabled: user?.twoFactorEnabled ?? false };
+    return { twoFactorEnabled: user?.twoFactorEnabled ?? false, emailVerified: user?.emailVerified ?? false };
   }
 
   async findUserByEmail(email: string) {

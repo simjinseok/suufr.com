@@ -14,7 +14,8 @@ import Link from 'next/link';
 
 import { verifyEmail, resendVerification } from '@/actions/auth';
 
-function VerifyEmailForm() {
+/** loggedIn: 가입 직후처럼 이미 로그인된 상태 — 인증을 마치면 대시보드로 가고, "나중에 하기"로 건너뛸 수 있다 */
+export default function VerifyEmailForm({ loggedIn }: { loggedIn: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get('email') || '';
@@ -43,9 +44,9 @@ function VerifyEmailForm() {
     if (!state.timestamp) return;
 
     if (state.success) {
-      router.push('/login');
+      router.push(state.loggedIn ? '/dashboard' : '/login');
     }
-  }, [state.timestamp, state.success, router]);
+  }, [state.timestamp, state.success, state.loggedIn, router]);
 
   return (
     <React.Fragment>
@@ -148,34 +149,18 @@ function VerifyEmailForm() {
       </div>
 
       <div className="mt-6 text-center text-sm">
-        <Link href="/login" className="text-gray-500 hover:text-gray-700">
-          로그인으로 돌아가기
-        </Link>
+        {loggedIn
+          ? (
+              <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
+                나중에 하기
+              </Link>
+            )
+          : (
+              <Link href="/login" className="text-gray-500 hover:text-gray-700">
+                로그인으로 돌아가기
+              </Link>
+            )}
       </div>
     </React.Fragment>
-  );
-}
-
-export default function VerifyEmailPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
-      <div className="w-full max-w-sm mx-auto px-6">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <span className="text-2xl font-bold text-white">스</span>
-          </div>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            이메일 인증
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            이메일로 발송된 6자리 코드를 입력하세요
-          </p>
-        </div>
-
-        <React.Suspense fallback={<div className="text-center">로딩 중...</div>}>
-          <VerifyEmailForm />
-        </React.Suspense>
-      </div>
-    </div>
   );
 }
