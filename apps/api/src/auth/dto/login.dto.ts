@@ -1,16 +1,16 @@
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: '비밀번호를 입력해주세요' })
+  @MinLength(8, { message: '비밀번호는 8자 이상이어야 합니다' })
   password!: string;
 }
 
 export class MfaDto {
-  @IsString()
+  @IsString({ message: '인증 코드를 입력해주세요' })
   code!: string;
 
   // 로그인 응답의 session (two_factor 쿠키 쌍)

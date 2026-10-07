@@ -13,6 +13,7 @@ import {
   SESSION_TTL_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
 } from './auth.constants';
+import { recordOtpMailFailure } from './otp-mail-failure';
 
 export type AuthConfigDeps = {
   prisma: PrismaClient;
@@ -129,8 +130,15 @@ export function createAuthOptions(deps: AuthConfigDeps) {
         async sendVerificationOTP({ email, otp, type }) {
           // 사용자가 이 메일을 기다리므로 발송 결과를 기다리고, 실패는 MailDeliveryError → 503 으로 사용자에게 알린다.
           // (응답 시간으로 가입 여부를 추정할 여지는 생기지만, 발송 실패를 숨겨 사용자를 기다리게 하는 것보다 낫다)
-          if (type === 'forget-password') await mail.sendOrThrow(resetPasswordMail(email, otp));
-          else await mail.sendOrThrow(verifyEmailMail(email, otp));
+          // better-auth 는 여기서 던진 에러를 잡아 성공으로 응답하므로, 기록해 두고 BetterAuthService.run 이 다시 던진다
+          try {
+            if (type === 'forget-password') await mail.sendOrThrow(resetPasswordMail(email, otp));
+            else await mail.sendOrThrow(verifyEmailMail(email, otp));
+          }
+          catch (error) {
+            recordOtpMailFailure(error);
+            throw error;
+          }
         },
       }),
     ],

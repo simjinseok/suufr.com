@@ -74,14 +74,18 @@ export async function login(
           return state;
         }
 
-        if (response.accessToken) {
+        if (response.accessToken && response.refreshToken) {
           await setTokenCookies({
             accessToken: response.accessToken,
-            refreshToken: response.refreshToken!,
+            refreshToken: response.refreshToken,
             expiresIn: response.expiresIn,
           });
 
           state.success = true;
+        }
+        else {
+          // 토큰도 2FA 챌린지도 아닌 응답 — 조용히 끝나면 버튼만 풀리고 아무 안내가 없다
+          state.message = '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
         }
       }
       catch (error: any) {

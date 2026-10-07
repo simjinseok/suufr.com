@@ -10,7 +10,7 @@ export class SignupDto {
   @MaxLength(100)
   name?: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 
   @IsString()
@@ -32,14 +32,14 @@ export class SignupDto {
 }
 
 export class VerifyEmailDto {
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 
-  @IsString()
+  @IsString({ message: '인증코드를 입력해주세요' })
   code!: string;
 }
 
 export class ResendVerificationDto {
-  @IsEmail()
+  @IsEmail({}, { message: '유효한 이메일을 입력해주세요' })
   email!: string;
 }

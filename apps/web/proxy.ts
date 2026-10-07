@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { authApi } from '@/utils/api/auth';
+import { ApiError } from '@/utils/api-client';
 
 export async function proxy(request: NextRequest) {
   const cookieStore = await cookies();
@@ -30,12 +31,20 @@ export async function proxy(request: NextRequest) {
         });
         return response;
       }
-      catch {
-        // Refresh failed, redirect to login
+      catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          // 세션 만료·폐기. 죽은 refresh_token 을 남기면 매 요청마다 refresh 를 반복하므로 지운다
+          const response = NextResponse.redirect(`${request.nextUrl.origin}/login`);
+          response.cookies.delete('refresh_token');
+          response.cookies.delete('access_token');
+          return response;
+        }
+        // api 장애(연결 실패·5xx). 세션은 살아 있을 수 있으니 쿠키는 두고 사유를 알린다
+        return NextResponse.redirect(`${request.nextUrl.origin}/login?error=unavailable`);
       }
     }
 
-    // refresh_token이 없거나 갱신 실패 시 로그인으로 리다이렉트
+    // refresh_token 이 없으면 로그인으로
     return NextResponse.redirect(`${request.nextUrl.origin}/login`);
   }
   return NextResponse.next();
@@ -50,6 +59,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!api|webhook|.well-known|auth|health|login|signup|verify-email|forgot-password|reset-password|pricing|terms|privacy|refunds|robots.txt|sitemap.xml|auth/logout|sl/*|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).+)',
+    '/((?!api|webhook|.well-known|auth|health|login|signup|forgot-password|reset-password|pricing|terms|privacy|refunds|robots.txt|sitemap.xml|auth/logout|sl/*|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).+)',
   ],
 };

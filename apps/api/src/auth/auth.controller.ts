@@ -134,7 +134,8 @@ export class AuthController {
 
     const message = '인증 이메일이 발송되었습니다';
     const created = await this.authService.findUserByEmail(dto.email);
-    if (!created || created.id !== userId) return { success: true, message };
+    // 중복 이메일(합성 사용자). 가입 즉시 로그인이라 토큰 유무로 가입 여부가 드러나므로(2026-10-07 확정) 안내도 사실대로 한다
+    if (!created || created.id !== userId) return { success: true, message: '이미 가입된 이메일입니다. 로그인해주세요.' };
 
     await this.consentsService.recordSafely(userId, dto.consents, {
       ipAddress: dto.consents.ipAddress,

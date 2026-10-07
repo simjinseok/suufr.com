@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
             비밀번호 재설정
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            새로운 비밀번호를 설정해주세요
+            이메일로 받은 인증코드와 새 비밀번호를 입력해주세요
           </p>
         </div>
 
