@@ -10,7 +10,6 @@ import { CancelSubscriptionButton, ResumeSubscriptionButton } from './_manage-su
 
 interface CurrentPlanCardProps {
   subscription: TSubscription | null;
-  userId: string;
   customerEmail?: string;
   paddle: PaddleCheckoutConfig | null;
 }
@@ -22,7 +21,6 @@ function formatDate(iso: string): string {
 
 export default function CurrentPlanCard({
   subscription,
-  userId,
   customerEmail,
   paddle,
 }: CurrentPlanCardProps) {
@@ -70,7 +68,6 @@ export default function CurrentPlanCard({
             </div>
             {!isPro && (
               <UpgradeButton
-                userId={userId}
                 customerEmail={customerEmail}
                 paddle={paddle}
               />
