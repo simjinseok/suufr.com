@@ -18,7 +18,7 @@ import { isSupportedSocialProvider } from './social-providers';
  */
 @UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 10, ttl: 60000 } })
-@Controller('api/auth/social')
+@Controller('auth/social')
 export class SocialAuthController {
   constructor(
     private readonly betterAuth: BetterAuthService,

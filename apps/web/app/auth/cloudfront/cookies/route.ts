@@ -16,7 +16,7 @@ export async function POST() {
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/auth/cloudfront/cookies`, {
+    const response = await fetch(`${API_URL}/auth/cloudfront/cookies`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

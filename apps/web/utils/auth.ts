@@ -55,7 +55,7 @@ export async function getSession(): Promise<Session | null> {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+    const res = await fetch(`${API_URL}/auth/me`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

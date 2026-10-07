@@ -20,7 +20,7 @@ describe('SocialLoginController.start', () => {
     await controller.start({ params: { provider: 'google' } } as never, res as never);
 
     expect(betterAuth.getSocialSignInUrl).toHaveBeenCalledWith('google', {
-      callbackURL: 'https://api.test/api/auth/social/google/complete',
+      callbackURL: 'https://api.test/auth/social/google/complete',
       errorCallbackURL: 'https://web.test/login?error=social',
     });
     expect(res.header).toHaveBeenCalledWith('set-cookie', [expect.stringContaining('better-auth.state=signed')]);
