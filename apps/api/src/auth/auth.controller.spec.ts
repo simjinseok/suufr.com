@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 
 /** 서비스는 모두 mock. 컨트롤러의 위임·응답 형태만 검증한다. */
@@ -11,8 +12,9 @@ function build() {
   };
   const authService = { findUserByEmail: vi.fn().mockResolvedValue({ id: 'u1' }) };
   const consents = { recordSafely: vi.fn().mockResolvedValue(undefined) };
-  const controller = new AuthController(authService as never, betterAuth as never, consents as never, {} as never, {} as never);
-  return { controller, betterAuth, authService, consents };
+  const recaptcha = { verifySignup: vi.fn().mockResolvedValue(undefined) };
+  const controller = new AuthController(authService as never, betterAuth as never, consents as never, {} as never, {} as never, recaptcha as never);
+  return { controller, betterAuth, authService, consents, recaptcha };
 }
 
 const consentsDto = { terms: true, privacy: true, termsVersion: '2026-07-08', privacyVersion: '2026-07-08' } as const;
@@ -47,5 +49,31 @@ describe('AuthController', () => {
     authService.findUserByEmail.mockResolvedValue({ id: 'existing-user' });
     await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
     expect(consents.recordSafely).toHaveBeenCalledTimes(1);
+  });
+
+  it('signup: reCAPTCHA 토큰과 동의 페이로드의 IP·UA 를 평가에 넘기고, 평가는 signUp 보다 먼저 호출된다', async () => {
+    const { controller, betterAuth, recaptcha } = build();
+    await controller.signup({
+      name: 'n', email: 'a@b.c', password: 'Passw0rd!x',
+      consents: { ...consentsDto, ipAddress: '203.0.113.5', userAgent: 'ua' },
+      recaptchaToken: 'tok',
+    });
+    expect(recaptcha.verifySignup).toHaveBeenCalledWith('tok', { ip: '203.0.113.5', userAgent: 'ua' });
+    expect(recaptcha.verifySignup.mock.invocationCallOrder[0]).toBeLessThan(betterAuth.signUp.mock.invocationCallOrder[0]);
+  });
+
+  it('signup: 토큰이 없으면 undefined 를 그대로 넘긴다 (모드 판단은 서비스 책임)', async () => {
+    const { controller, recaptcha } = build();
+    await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
+    expect(recaptcha.verifySignup).toHaveBeenCalledWith(undefined, { ip: undefined, userAgent: undefined });
+  });
+
+  it('signup: 평가가 거부하면 signUp·동의 기록을 하지 않고 예외를 그대로 전달한다', async () => {
+    const { controller, betterAuth, consents, recaptcha } = build();
+    recaptcha.verifySignup.mockRejectedValue(new ForbiddenException({ error: 'CAPTCHA_FAILED' }));
+    await expect(controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } }))
+      .rejects.toBeInstanceOf(ForbiddenException);
+    expect(betterAuth.signUp).not.toHaveBeenCalled();
+    expect(consents.recordSafely).not.toHaveBeenCalled();
   });
 });

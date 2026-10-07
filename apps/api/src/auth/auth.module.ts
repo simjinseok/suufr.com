@@ -12,9 +12,10 @@ import { betterAuthProvider } from './better-auth/better-auth.provider';
 import { MailModule } from '../mail/mail.module';
 import { S3Module } from '../s3/s3.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { RecaptchaModule } from '../recaptcha/recaptcha.module';
 
 @Module({
-  imports: [S3Module, SubscriptionsModule, MailModule],
+  imports: [S3Module, SubscriptionsModule, MailModule, RecaptchaModule],
   controllers: [AuthController, SocialAuthController, SocialLoginController],
   providers: [
     JwtAuthGuard,

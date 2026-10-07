@@ -36,6 +36,8 @@ export const signupSchema = z
     password: newPasswordField,
     passwordConfirm: z.string(),
     ...consentFields,
+    // reCAPTCHA 토큰. 스크립트가 못 떴으면 빈 문자열이 올 수 있다 → undefined (처리는 api RECAPTCHA_MODE 가 정한다)
+    recaptchaToken: z.preprocess(value => (value === '' ? undefined : value), z.string().max(4096).optional()),
   })
   .refine(data => data.password === data.passwordConfirm, {
     error: '비밀번호가 일치하지 않습니다',
