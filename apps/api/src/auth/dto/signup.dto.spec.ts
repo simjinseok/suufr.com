@@ -17,7 +17,6 @@ const validConsents = {
 };
 
 const validBody = {
-  name: '홍길동',
   email: 'test@example.com',
   password: 'Password1!',
   consents: validConsents,
@@ -43,8 +42,13 @@ describe('SignupDto', () => {
     expect(dto.consents.privacy).toBe(true);
   });
 
+  it('name 은 선택이다 (보내면 그대로 받는다)', async () => {
+    const dto = await validate({ ...validBody, name: '홍길동' });
+    expect(dto.name).toBe('홍길동');
+  });
+
   it('consents 가 없으면 거부된다', async () => {
-    await expectRejected({ name: validBody.name, email: validBody.email, password: validBody.password });
+    await expectRejected({ email: validBody.email, password: validBody.password });
   });
 
   it.each([

@@ -16,12 +16,7 @@ export function isAllConsented(values: ConsentValues): boolean {
 
 const ITEMS: Array<{ key: ConsentKey; label: string; href: string; description?: string }> = [
   { key: 'agreeTerms', label: '이용약관 동의', href: '/terms' },
-  {
-    key: 'agreePrivacy',
-    label: '개인정보 수집·이용 동의',
-    href: '/privacy',
-    description: '서버·데이터베이스·이메일 발송은 AWS 일본(도쿄) 리전에서 처리되며, 결제(Paddle, 영국)·오류 분석(Sentry, 미국)·이용 통계(Google, 미국) 위탁을 포함합니다.',
-  },
+  { key: 'agreePrivacy', label: '개인정보 수집·이용 동의', href: '/privacy' },
 ];
 
 type Props = {

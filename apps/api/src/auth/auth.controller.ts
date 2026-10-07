@@ -128,7 +128,7 @@ export class AuthController {
       userAgent: dto.consents.userAgent,
     });
 
-    const { userId } = await this.betterAuth.signUp(dto.name, dto.email, dto.password);
+    const { userId } = await this.betterAuth.signUp(dto.name?.trim() ?? '', dto.email, dto.password);
 
     const created = await this.authService.findUserByEmail(dto.email);
     if (created && created.id === userId) {

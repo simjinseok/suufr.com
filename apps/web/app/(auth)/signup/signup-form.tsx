@@ -26,7 +26,7 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
   const submitting = React.useRef(false);
 
   const [state, formAction, isPending] = React.useActionState(signup, {
-    fields: { name: '', email: '', password: '', passwordConfirm: '', ...EMPTY_CONSENTS },
+    fields: { email: '', password: '', passwordConfirm: '', ...EMPTY_CONSENTS },
   });
 
   const [consents, setConsents] = React.useState<ConsentValues>(EMPTY_CONSENTS);
@@ -42,7 +42,6 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
 
   const { control } = useForm({
     values: {
-      name: state.fields?.name || '',
       email: state.fields?.email || '',
       password: '',
       passwordConfirm: '',
@@ -102,23 +101,6 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
               {state.message}
             </div>
           )}
-
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { name, value, onChange } }) => (
-              <TextField
-                name={name}
-                value={value}
-                onChange={onChange}
-                isRequired
-              >
-                <Label>이름</Label>
-                <Input variant="secondary" type="text" placeholder="홍길동" />
-                <FieldError />
-              </TextField>
-            )}
-          />
 
           <Controller
             control={control}
