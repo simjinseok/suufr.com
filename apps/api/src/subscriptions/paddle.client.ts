@@ -81,4 +81,21 @@ export class PaddleClient {
     const invoice = await this.getSdk().transactions.getInvoicePDF(paddleTransactionId);
     return invoice.url;
   }
+
+  /**
+   * 프로 플랜 체크아웃용 거래 생성 — 클라이언트는 priceId 대신 이 transactionId 로 Paddle.js 오버레이를 연다.
+   * customData.userId 를 서버가 심어 웹훅 매핑(extractUserId)이 클라이언트 입력에 의존하지 않게 한다.
+   * 거래의 custom_data 는 Paddle 이 만드는 구독에 복사된다.
+   */
+  async createCheckoutTransaction(userId: string): Promise<{ transactionId: string }> {
+    const priceId = this.configService.get<string>('PADDLE_PRICE_ID_PRO');
+    if (!priceId) {
+      throw new Error('PADDLE_PRICE_ID_PRO is not configured');
+    }
+    const transaction = await this.getSdk().transactions.create({
+      items: [{ priceId, quantity: 1 }],
+      customData: { userId },
+    });
+    return { transactionId: transaction.id };
+  }
 }
