@@ -103,7 +103,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
   const [sessionCreatingInvoice, setSessionCreatingInvoice] = React.useState<TInvoice | null>(null);
   // 수강권 시작일 기준 요일·시간·횟수로 수업 일괄 생성
   const [generateInvoice, setGenerateInvoice] = React.useState<TInvoice | null>(null);
-  const [isSessionCreateOpen, setIsSessionCreateOpen] = React.useState(false);
   const [feedbackSession, setFeedbackSession] = React.useState<TSession | null>(null);
   const [filesSession, setFilesSession] = React.useState<TSession | null>(null);
   const [editInvoice, setEditInvoice] = React.useState<TInvoice | null>(null);
@@ -152,11 +151,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
         >
           {shares.length ? <GlobeIcon className="size-4" /> : <GlobeOffIcon className="size-4" />}
           {shares.length ? '공유중' : '공유'}
-        </Button>
-        {/* 단독 수업 추가 — 청구 없이 생성 (회당 정산·보강 등), monthly/period 기간이 커버하면 서버가 자동 귀속 */}
-        <Button variant="secondary" size="sm" onPress={() => setIsSessionCreateOpen(true)}>
-          <PlusIcon className="size-4" />
-          수업 추가
         </Button>
         <Modal>
           <Button variant="secondary" size="sm">
@@ -477,14 +471,6 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
           onOpenChange={() => setSessionCreatingInvoice(null)}
           studentUuid={studentUuid}
           invoiceUuid={sessionCreatingInvoice.uuid}
-        />
-      )}
-
-      {isSessionCreateOpen && (
-        <CreateSessionModal
-          isOpen={isSessionCreateOpen}
-          onOpenChange={() => setIsSessionCreateOpen(false)}
-          studentUuid={studentUuid}
         />
       )}
 
