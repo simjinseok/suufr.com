@@ -158,9 +158,7 @@ type SignupFields = {
   agreePrivacy: boolean;
 };
 type SignupState = ServerActionState<SignupFields> & {
-  /** 계정은 생성됐지만 인증 메일 발송에 실패 — 인증 화면으로 보내 "다시 받기"를 유도한다 */
-  mailFailed?: boolean;
-  /** 가입과 동시에 로그인됨 — 바로 앱으로 들어간다. 이메일 인증은 앱 상단 배너로 나중에 */
+  /** 가입과 동시에 로그인됨 — 바로 앱으로 들어간다. 이메일 인증은 설정(회원정보)에서 나중에 */
   loggedIn?: boolean;
 };
 
@@ -216,8 +214,10 @@ export async function signup(
       }
       catch (error: any) {
         state.message = error.message || '회원가입 중 오류가 발생했습니다';
-        // api 가 계정은 만들었지만 인증코드 메일을 못 보낸 경우. 같은 이메일로 다시 가입할 수 없으니 재발송 화면으로 보낸다
-        if (error instanceof ApiError && error.code === 'MAIL_DELIVERY_FAILED') state.mailFailed = true;
+        // 계정은 만들어졌지만 인증코드 메일을 못 보낸 경우(MAIL_DELIVERY_FAILED) — 로그인 뒤 설정에서 다시 받을 수 있다
+        if (error instanceof ApiError && error.code === 'MAIL_DELIVERY_FAILED') {
+          state.message = '계정은 만들어졌지만 인증코드 메일을 보내지 못했습니다. 로그인한 뒤 설정에서 다시 받아주세요.';
+        }
       }
 
       return state;
@@ -227,10 +227,7 @@ export async function signup(
 
 // Verify email action
 type VerifyEmailFields = { email: string; code: string };
-type VerifyEmailState = ServerActionState<VerifyEmailFields> & {
-  /** 로그인 상태에서 인증했으면 대시보드로, 아니면 로그인으로 보낸다 */
-  loggedIn?: boolean;
-};
+type VerifyEmailState = ServerActionState<VerifyEmailFields>;
 
 export async function verifyEmail(
   prevState: VerifyEmailState,
@@ -264,8 +261,6 @@ export async function verifyEmail(
 
         state.success = true;
         state.message = response.message;
-        const cookieStore = await cookies();
-        state.loggedIn = Boolean(cookieStore.get('refresh_token')?.value);
       }
       catch (error: any) {
         state.message = error.message || '이메일 인증 중 오류가 발생했습니다';
