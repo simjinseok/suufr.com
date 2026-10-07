@@ -535,21 +535,58 @@ model CurriculumItemMediaFile {
   @@map("curriculum_item_media_files")
 }
 
-// 사용자 구독 (행이 없으면 free 플랜)
-// Paddle이 청구 주체이며 webhook으로 동기화되는 캐시. 진실의 원천은 Paddle 구독 엔티티
-model UserSubscription {
-  userId               String                  @id @map("user_id") @db.Uuid // users.id (FK 없음)
-  plan                 PlanValue               @default(free)
-  status               SubscriptionStatusValue @default(active)
-  currentPeriodStart   DateTime?               @map("current_period_start") @db.Timestamptz(0)
-  currentPeriodEnd     DateTime?               @map("current_period_end") @db.Timestamptz(0) // null = 무기한 (수동 부여)
-  canceledAt           DateTime?               @map("canceled_at") @db.Timestamptz(0)
-  paddleCustomerId     String?                 @map("paddle_customer_id")
-  paddleSubscriptionId String?                 @unique @map("paddle_subscription_id")
-  paddleLastEventAt    DateTime?               @map("paddle_last_event_at") @db.Timestamptz(0) // 마지막으로 반영한 webhook의 occurred_at (순서 역전 가드)
-  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz(0)
-  updatedAt            DateTime                @updatedAt @map("updated_at") @db.Timestamptz(0)
+// 결제 provider 열거형. 설계: docs/superpowers/specs/2026-10-06-billing-provider-neutral-schema-design.md
+enum BillingProviderValue {
+  paddle
+  apple
+  google
+  manual // 수동 부여 (currentPeriodEnd null = 무기한)
 
+  @@map("BillingProvider")
+}
+
+enum BillingEnvironmentValue {
+  production
+  sandbox
+
+  @@map("BillingEnvironment")
+}
+
+// 현재 기간(구독 행) 또는 해당 거래(주문 행)의 종류
+// Apple offerType / Google offerPhase / Paddle trialing 이 여기로 매핑된다
+enum BillingPeriodTypeValue {
+  normal
+  trial
+  intro
+  promotional
+
+  @@map("BillingPeriodType")
+}
+
+// 사용자 구독 (행이 없으면 free 플랜). 계정당 1행, 한 시점에 한 provider
+// 결제 provider(Paddle / App Store / Google Play)가 청구 주체이며 webhook 으로 동기화되는 캐시. 진실의 원천은 provider 의 구독 엔티티
+// providerSubscriptionId: Paddle sub_…, Apple originalTransactionId, Google purchaseToken, manual 은 null
+model UserSubscription {
+  userId                 String                   @id @map("user_id") @db.Uuid // users.id (FK 없음)
+  plan                   PlanValue                @default(free)
+  status                 SubscriptionStatusValue  @default(active)
+  currentPeriodStart     DateTime?                @map("current_period_start") @db.Timestamptz(0)
+  currentPeriodEnd       DateTime?                @map("current_period_end") @db.Timestamptz(0) // null = 무기한 (manual)
+  gracePeriodExpiresAt   DateTime?                @map("grace_period_expires_at") @db.Timestamptz(0) // 결제 실패 후 접근이 유지되는 유예 만료. 유효 플랜 판정이 currentPeriodEnd 와 max 로 본다
+  canceledAt             DateTime?                @map("canceled_at") @db.Timestamptz(0)
+  billingIssueDetectedAt DateTime?                @map("billing_issue_detected_at") @db.Timestamptz(0) // past_due 진입 시각. past_due 가 아니면 null
+  periodType             BillingPeriodTypeValue   @default(normal) @map("period_type")
+  provider               BillingProviderValue
+  providerEnvironment    BillingEnvironmentValue? @map("provider_environment") // 리네임 이전 행은 null
+  providerCustomerId     String?                  @map("provider_customer_id") // Paddle ctm_…. Apple·Google 은 null
+  providerSubscriptionId String?                  @map("provider_subscription_id")
+  providerProductId      String?                  @map("provider_product_id") // Paddle price id, Apple productId, Google productId:basePlanId
+  providerNextProductId  String?                  @map("provider_next_product_id") // 다음 기간부터 적용될 상품 (다운그레이드 예약)
+  providerLastEventAt    DateTime?                @map("provider_last_event_at") @db.Timestamptz(0) // 마지막으로 반영한 이벤트 시각 (순서 역전 가드)
+  createdAt              DateTime                 @default(now()) @map("created_at") @db.Timestamptz(0)
+  updatedAt              DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(0)
+
+  @@unique([provider, providerSubscriptionId])
   @@map("user_subscriptions")
 }
 
@@ -570,18 +607,28 @@ enum SubscriptionStatusValue {
 }
 
 // 구독 결제 시도 기록 (결제 내역/감사용)
-// 같은 Paddle transaction이 실패 후 성공할 수 있으므로 paddleTransactionId 기준 upsert
-// 인보이스 URL은 발급 후 1시간 만료라 저장하지 않고 온디맨드로 발급
+// 같은 거래가 실패 후 성공할 수 있으므로 (provider, providerTransactionId) 기준 upsert
+// amount·refundedAmount 는 통화 최소 단위 정수 (KRW 6,900원 = 6900)
+// 인보이스 URL 은 발급 후 1시간 만료라 저장하지 않고 온디맨드로 발급 (paddle 만)
 model SubscriptionOrder {
-  id                  Int                          @id @default(autoincrement())
-  userId              String                       @map("user_id") @db.Uuid // users.id (FK 없음)
-  paddleTransactionId String                       @unique @map("paddle_transaction_id")
-  amount              Int
-  status              SubscriptionOrderStatusValue
-  failReason          String?                      @map("fail_reason")
-  approvedAt          DateTime?                    @map("approved_at") @db.Timestamptz(0)
-  createdAt           DateTime                     @default(now()) @map("created_at") @db.Timestamptz(0)
+  id                    Int                          @id @default(autoincrement())
+  userId                String                       @map("user_id") @db.Uuid // users.id (FK 없음)
+  provider              BillingProviderValue
+  providerTransactionId String                       @map("provider_transaction_id") // Paddle txn_…, Apple transactionId, Google orderId
+  providerEnvironment   BillingEnvironmentValue?     @map("provider_environment")
+  amount                Int
+  currency              String                       @db.VarChar(3) // ISO 4217
+  periodType            BillingPeriodTypeValue       @default(normal) @map("period_type")
+  periodStart           DateTime?                    @map("period_start") @db.Timestamptz(0)
+  periodEnd             DateTime?                    @map("period_end") @db.Timestamptz(0)
+  status                SubscriptionOrderStatusValue
+  failReason            String?                      @map("fail_reason")
+  approvedAt            DateTime?                    @map("approved_at") @db.Timestamptz(0)
+  refundedAt            DateTime?                    @map("refunded_at") @db.Timestamptz(0)
+  refundedAmount        Int?                         @map("refunded_amount") // 부분 환불 가능 (환불정책 2조). 전액이면 amount 와 같다
+  createdAt             DateTime                     @default(now()) @map("created_at") @db.Timestamptz(0)
 
+  @@unique([provider, providerTransactionId])
   @@index([userId, createdAt])
   @@map("subscription_orders")
 }
@@ -589,18 +636,24 @@ model SubscriptionOrder {
 enum SubscriptionOrderStatusValue {
   done
   failed
+  refunded // 마지막 값 유지 — ALTER TYPE ADD VALUE 는 끝에 붙는다
 
   @@map("SubscriptionOrderStatus")
 }
 
-// 처리한 Paddle webhook 이벤트 (event_id 기반 멱등성 보장용)
-model PaddleWebhookEvent {
-  eventId    String   @id @map("event_id")
-  eventType  String   @map("event_type")
-  occurredAt DateTime @map("occurred_at") @db.Timestamptz(0)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(0)
+// 처리한 결제 webhook 이벤트 ((provider, eventId) 기반 멱등성 보장용)
+// eventId: Paddle event_id, Apple notificationUUID, Google Pub/Sub messageId
+// payload: 장애 분석·재처리용 원문 (raw body 를 파싱한 JSON). 리네임 이전 행은 null
+model BillingWebhookEvent {
+  provider   BillingProviderValue
+  eventId    String               @map("event_id")
+  eventType  String               @map("event_type")
+  occurredAt DateTime             @map("occurred_at") @db.Timestamptz(0)
+  payload    Json?
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(0)
 
-  @@map("paddle_webhook_events")
+  @@id([provider, eventId])
+  @@map("billing_webhook_events")
 }
 
 // 약관·개인정보 동의 이력 (추가 전용, 수정·삭제하지 않음)
