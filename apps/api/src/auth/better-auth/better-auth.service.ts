@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
 import { toHttpException } from './better-auth-error.map';
+import { rethrowOtpMailFailure } from './otp-mail-failure';
 
 export type SocialSignInUrls = {
   callbackURL: string;
@@ -53,9 +54,10 @@ function cookiePairsFromSetCookie(headers: Headers): string {
 export class BetterAuthService {
   constructor(@Inject(BETTER_AUTH) private readonly auth: Auth) {}
 
+  /** auth.api 호출. APIError 는 한국어 HttpException 으로, better-auth 가 삼킨 OTP 메일 실패는 503 으로 바꾼다 */
   private async run<T>(fn: () => Promise<T>): Promise<T> {
     try {
-      return await fn();
+      return await rethrowOtpMailFailure(fn);
     }
     catch (error) {
       throw toHttpException(error);
