@@ -33,6 +33,8 @@ export default function LoginForm() {
   // ?error=unavailable 은 proxy/앱 레이아웃(api 장애), 그 외 ?error= 는 api(social) 또는 better-auth(state_mismatch 등)가 붙인다
   const errorParam = searchParams.get('error');
   const paramError = errorParam === 'unavailable' ? UNAVAILABLE_MESSAGE : errorParam ? SOCIAL_ERROR_MESSAGE : null;
+  // 비밀번호 재설정 완료 후 (?reset=1)
+  const resetDone = searchParams.get('reset') === '1';
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -227,6 +229,12 @@ export default function LoginForm() {
           action={loginAction}
           validationErrors={loginState.fieldErrors}
         >
+          {resetDone && !loginState.timestamp && (
+            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+              비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요.
+            </div>
+          )}
+
           {(loginState.message || paramError) && (
             <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
               {loginState.message || paramError}
