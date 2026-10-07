@@ -69,6 +69,9 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       // 열거 방지용 200(합성 사용자)으로 응답한다. 가입 직후 로그인은 AuthController.signup 이 signIn 으로 처리한다
       requireEmailVerification: false,
       autoSignIn: false,
+      // 미인증 상태로 가입하면 소유권 증명 없이 세션이 발급된다. 진짜 소유자가 비밀번호 재설정으로 계정을 되찾을 때
+      // 그 세션(가입자가 쥔 refreshToken 포함)이 살아남지 않도록 재설정 시 모든 세션을 폐기한다
+      revokeSessionsOnPasswordReset: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
       onExistingUserSignUp: async ({ user }) => {

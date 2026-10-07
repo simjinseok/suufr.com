@@ -45,9 +45,14 @@ export class AuthController {
     private readonly recaptcha: RecaptchaService,
   ) {}
 
-  private requireSessionToken(headers: Record<string, string | string[] | undefined>): string {
+  private optionalSessionToken(headers: Record<string, string | string[] | undefined>): string | undefined {
     const raw = headers[SESSION_TOKEN_HEADER];
     const token = Array.isArray(raw) ? raw[0] : raw;
+    return token || undefined;
+  }
+
+  private requireSessionToken(headers: Record<string, string | string[] | undefined>): string {
+    const token = this.optionalSessionToken(headers);
     if (!token) throw new UnauthorizedException('세션 토큰이 필요합니다');
     return token;
   }
@@ -145,10 +150,11 @@ export class AuthController {
     return { ...signedIn, message };
   }
 
+  /** 인증 시 소유권 증명 전 세션을 폐기한다. 로그인 상태의 호출자는 X-Session-Token 을 보내야 자기 세션이 유지된다 */
   @Public()
   @Post('verify-email')
-  async verifyEmail(@Body() dto: VerifyEmailDto) {
-    await this.betterAuth.verifyEmail(dto.email, dto.code);
+  async verifyEmail(@Body() dto: VerifyEmailDto, @Headers() headers: Record<string, string | string[] | undefined>) {
+    await this.betterAuth.verifyEmail(dto.email, dto.code, this.optionalSessionToken(headers));
     return { success: true, message: '이메일 인증이 완료되었습니다' };
   }
 

@@ -8,6 +8,7 @@ function build() {
     refresh: vi.fn().mockResolvedValue({ success: true, accessToken: 'ba', expiresIn: 3600 }),
     verifySecondFactor: vi.fn().mockResolvedValue({ success: true }),
     signOut: vi.fn().mockResolvedValue(undefined),
+    verifyEmail: vi.fn().mockResolvedValue(undefined),
     signUp: vi.fn().mockResolvedValue({ userId: 'u1' }),
     signIn: vi.fn().mockResolvedValue({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' }),
     signInWithGoogleIdToken: vi.fn().mockResolvedValue({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' }),
@@ -100,5 +101,13 @@ describe('AuthController', () => {
       .rejects.toBeInstanceOf(ForbiddenException);
     expect(betterAuth.signUp).not.toHaveBeenCalled();
     expect(consents.recordSafely).not.toHaveBeenCalled();
+  });
+
+  it('verify-email 은 X-Session-Token 이 있으면 그 세션을 유지 대상으로 넘기고, 없으면 undefined 를 넘긴다', async () => {
+    const { controller, betterAuth } = build();
+    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, { 'x-session-token': 'sess' });
+    expect(betterAuth.verifyEmail).toHaveBeenCalledWith('a@b.c', '123456', 'sess');
+    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, {});
+    expect(betterAuth.verifyEmail).toHaveBeenLastCalledWith('a@b.c', '123456', undefined);
   });
 });

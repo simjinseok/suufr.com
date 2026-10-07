@@ -117,8 +117,26 @@ export class BetterAuthService {
     return { userId: user.id };
   }
 
-  async verifyEmail(email: string, otp: string): Promise<void> {
-    await this.run(() => this.auth.api.verifyEmailOTP({ body: { email, otp } }));
+  /**
+   * 이메일 인증(OTP). 가입 즉시 로그인 정책상 소유권 증명 전에 발급된 세션이 있으므로, 증명이 끝나는 이 시점에
+   * 인증을 요청한 세션(callerSessionToken, 그 사용자의 것일 때만)만 남기고 나머지를 전부 폐기한다.
+   * 토큰이 없거나 다른 사용자·만료된 토큰이면 그 사용자의 세션을 모두 폐기한다.
+   */
+  async verifyEmail(email: string, otp: string, callerSessionToken?: string): Promise<void> {
+    const { user } = await this.run(() => this.auth.api.verifyEmailOTP({ body: { email, otp } }));
+    await this.revokeUnprovenSessions(user.id, callerSessionToken);
+  }
+
+  private async revokeUnprovenSessions(userId: string, keepSessionToken?: string): Promise<void> {
+    if (keepSessionToken) {
+      const current = await this.auth.api.getSession({ headers: bearerHeaders(keepSessionToken) }).catch(() => null);
+      if (current?.user.id === userId) {
+        await this.run(() => this.auth.api.revokeOtherSessions({ headers: bearerHeaders(keepSessionToken) }));
+        return;
+      }
+    }
+    const { internalAdapter } = await this.auth.$context;
+    await internalAdapter.deleteUserSessions(userId);
   }
 
   async resendVerification(email: string): Promise<void> {
