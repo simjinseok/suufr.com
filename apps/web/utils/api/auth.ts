@@ -96,8 +96,9 @@ export const authApi = {
   signup: (data: { email: string; password: string; consents: ConsentPayload; recaptchaToken?: string }) =>
     apiClient<SignupResponse>('/auth/signup', { method: 'POST', body: data }),
 
+  // 인증 시 서버가 소유권 증명 전 세션을 폐기하므로, 로그인 상태면 세션 토큰을 보내 현재 세션은 유지한다
   verifyEmail: (data: { email: string; code: string }) =>
-    apiClient<VerifyEmailResponse>('/auth/verify-email', { method: 'POST', body: data }),
+    apiClient<VerifyEmailResponse>('/auth/verify-email', { method: 'POST', body: data, withSessionToken: true }),
 
   resendVerification: (data: { email: string }) =>
     apiClient<SignupResponse>('/auth/resend-verification', { method: 'POST', body: data }),
