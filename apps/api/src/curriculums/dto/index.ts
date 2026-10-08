@@ -3,3 +3,6 @@ export * from './update-curriculum.dto';
 export * from './create-curriculum-item.dto';
 export * from './update-curriculum-item.dto';
 export * from './list-curriculums-query.dto';
+export * from './create-curriculum-section.dto';
+export * from './update-curriculum-section.dto';
+export * from './move.dto';

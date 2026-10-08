@@ -1,0 +1,26 @@
+/* 인쇄 페이지 전용. (print) 라우트 그룹 레이아웃에서만 import 한다. */
+@page {
+  size: A4 portrait;
+  margin: 16mm;
+}
+
+@media print {
+  .print-root {
+    background: #fff !important;
+    min-height: auto;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  /* 섹션 제목이 페이지 끝에 홀로 남지 않게 */
+  .print-section-title {
+    break-after: avoid;
+  }
+  /* 항목 하나가 페이지에 걸쳐 쪼개지지 않게 */
+  .print-item {
+    break-inside: avoid;
+  }
+}

@@ -5,7 +5,11 @@ import {
   UpdateCurriculumDto,
   CreateCurriculumItemDto,
   UpdateCurriculumItemDto,
+  CreateCurriculumSectionDto,
+  UpdateCurriculumSectionDto,
 } from './dto';
+import { CURRICULUM_INCLUDE, ITEM_INCLUDE, serializeCurriculum, serializeItem } from './curriculum-serializer';
+import { nextSortOrder, renumber, swapWithNeighbor, type MoveDirection } from './curriculum-order';
 
 const MAX_MEDIA_FILES_PER_ITEM = 5;
 
@@ -31,22 +35,11 @@ export class CurriculumsService {
           title: { contains: search, mode: 'insensitive' },
         }),
       },
-      include: {
-        items: {
-          where: { deletedAt: null },
-          orderBy: { title: 'asc' },
-          include: {
-            mediaFiles: {
-              orderBy: { createdAt: 'asc' },
-              include: { mediaFile: true },
-            },
-          },
-        },
-      },
+      include: CURRICULUM_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
 
-    return { success: true, data: curriculums };
+    return { success: true, data: curriculums.map(serializeCurriculum) };
   }
 
   async findOne(uuid: string, userId: string) {
@@ -56,25 +49,14 @@ export class CurriculumsService {
         deletedAt: null,
         organization: { userId, deletedAt: null },
       },
-      include: {
-        items: {
-          where: { deletedAt: null },
-          orderBy: { title: 'asc' },
-          include: {
-            mediaFiles: {
-              orderBy: { createdAt: 'asc' },
-              include: { mediaFile: true },
-            },
-          },
-        },
-      },
+      include: CURRICULUM_INCLUDE,
     });
 
     if (!curriculum) {
       throw new NotFoundException(`Curriculum with UUID ${uuid} not found`);
     }
 
-    return { success: true, data: curriculum };
+    return { success: true, data: serializeCurriculum(curriculum) };
   }
 
   async create(dto: CreateCurriculumDto, userId: string) {
@@ -142,11 +124,147 @@ export class CurriculumsService {
         where: { curriculumId: curriculum.id, deletedAt: null },
         data: { deletedAt: new Date() },
       }),
+      this.prisma.curriculumSection.updateMany({
+        where: { curriculumId: curriculum.id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      }),
       this.prisma.curriculum.update({
         where: { uuid },
         data: { deletedAt: new Date() },
       }),
     ]);
+
+    return { success: true };
+  }
+
+  // Curriculum Sections
+
+  /** 내 조직의 커리큘럼인지 확인하고 돌려준다 */
+  private async findOwnedCurriculum(uuid: string, userId: string) {
+    const curriculum = await this.prisma.curriculum.findFirst({
+      where: { uuid, deletedAt: null, organization: { userId, deletedAt: null } },
+      select: { id: true, uuid: true },
+    });
+    if (!curriculum) {
+      throw new NotFoundException(`Curriculum with UUID ${uuid} not found`);
+    }
+    return curriculum;
+  }
+
+  private async findOwnedSection(uuid: string, userId: string) {
+    const section = await this.prisma.curriculumSection.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        curriculum: { deletedAt: null, organization: { userId, deletedAt: null } },
+      },
+      include: { curriculum: { select: { id: true, uuid: true } } },
+    });
+    if (!section) {
+      throw new NotFoundException(`CurriculumSection with UUID ${uuid} not found`);
+    }
+    return section;
+  }
+
+  /** 커리큘럼의 살아 있는 섹션 목록(순서 계산용) */
+  private listSectionsForOrder(curriculumId: number) {
+    return this.prisma.curriculumSection.findMany({
+      where: { curriculumId, deletedAt: null },
+      select: { id: true, sortOrder: true },
+    });
+  }
+
+  /** 한 묶음(섹션 또는 섹션 없음)의 살아 있는 항목 목록(순서 계산용) */
+  private listItemsForOrder(curriculumId: number, sectionId: number | null) {
+    return this.prisma.curriculumItem.findMany({
+      where: { curriculumId, sectionId, deletedAt: null },
+      select: { id: true, sortOrder: true },
+    });
+  }
+
+  /** sectionUuid → sectionId. 같은 커리큘럼의 살아 있는 섹션만 허용. 다른 커리큘럼이면 400, 삭제된 섹션이면 404. */
+  private async resolveSectionId(curriculumId: number, sectionUuid: string): Promise<number> {
+    const section = await this.prisma.curriculumSection.findFirst({
+      where: { uuid: sectionUuid, curriculumId },
+      select: { id: true, curriculumId: true, deletedAt: true },
+    });
+    if (!section) {
+      throw new BadRequestException('이 커리큘럼의 섹션이 아닙니다.');
+    }
+    if (section.deletedAt) {
+      throw new NotFoundException(`CurriculumSection with UUID ${sectionUuid} not found`);
+    }
+    return section.id;
+  }
+
+  async createSection(dto: CreateCurriculumSectionDto, userId: string) {
+    const curriculum = await this.findOwnedCurriculum(dto.curriculumUuid, userId);
+    const siblings = await this.listSectionsForOrder(curriculum.id);
+
+    await this.prisma.curriculumSection.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        curriculumId: curriculum.id,
+        sortOrder: nextSortOrder(siblings),
+      },
+    });
+
+    return this.findOne(curriculum.uuid, userId);
+  }
+
+  async updateSection(uuid: string, dto: UpdateCurriculumSectionDto, userId: string) {
+    const section = await this.findOwnedSection(uuid, userId);
+
+    await this.prisma.curriculumSection.update({
+      where: { id: section.id },
+      data: {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.description !== undefined && { description: dto.description }),
+      },
+    });
+
+    return this.findOne(section.curriculum.uuid, userId);
+  }
+
+  async moveSection(uuid: string, direction: MoveDirection, userId: string) {
+    const section = await this.findOwnedSection(uuid, userId);
+    const siblings = await this.listSectionsForOrder(section.curriculumId);
+    const updates = swapWithNeighbor(siblings, section.id, direction);
+
+    if (updates && updates.length > 0) {
+      await this.prisma.$transaction(
+        updates.map(u => this.prisma.curriculumSection.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } })),
+      );
+    }
+
+    return this.findOne(section.curriculum.uuid, userId);
+  }
+
+  /** 섹션만 지운다. 안의 항목은 섹션 없음 묶음 맨 뒤로 옮긴다(R7). */
+  async removeSection(uuid: string, userId: string) {
+    const section = await this.findOwnedSection(uuid, userId);
+    const unsectioned = await this.listItemsForOrder(section.curriculumId, null);
+    const orphans = await this.listItemsForOrder(section.curriculumId, section.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      let next = nextSortOrder(unsectioned);
+      const ordered = [...orphans].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+      for (const item of ordered) {
+        await tx.curriculumItem.update({ where: { id: item.id }, data: { sectionId: null, sortOrder: next } });
+        next += 1;
+      }
+
+      await tx.curriculumSection.update({ where: { id: section.id }, data: { deletedAt: new Date() } });
+
+      const remaining = await tx.curriculumSection.findMany({
+        where: { curriculumId: section.curriculumId, deletedAt: null, id: { not: section.id } },
+        select: { id: true, sortOrder: true },
+      });
+      for (const u of renumber(remaining)) {
+        await tx.curriculumSection.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } });
+      }
+    });
 
     return { success: true };
   }
@@ -165,6 +283,10 @@ export class CurriculumsService {
     if (!curriculum) {
       throw new NotFoundException(`Curriculum with UUID ${dto.curriculumUuid} not found`);
     }
+
+    const sectionId = dto.sectionUuid ? await this.resolveSectionId(curriculum.id, dto.sectionUuid) : null;
+    const siblings = await this.listItemsForOrder(curriculum.id, sectionId);
+    const sortOrder = nextSortOrder(siblings);
 
     // 미디어 파일 개수 제한 체크
     const totalMediaFiles = dto.mediaFileUuids?.length ?? 0;
@@ -198,6 +320,8 @@ export class CurriculumsService {
           title: dto.title,
           description: dto.description,
           curriculumId: curriculum.id,
+          sectionId,
+          sortOrder,
         },
       });
 
@@ -227,19 +351,14 @@ export class CurriculumsService {
           organization: { userId, deletedAt: null },
         },
       },
-      include: {
-        mediaFiles: {
-          orderBy: { createdAt: 'asc' },
-          include: { mediaFile: true },
-        },
-      },
+      include: ITEM_INCLUDE,
     });
 
     if (!item) {
       throw new NotFoundException(`CurriculumItem with UUID ${uuid} not found`);
     }
 
-    return { success: true, data: item };
+    return { success: true, data: serializeItem(item) };
   }
 
   async updateItem(uuid: string, dto: UpdateCurriculumItemDto, userId: string) {
@@ -261,6 +380,20 @@ export class CurriculumsService {
 
     if (!item) {
       throw new NotFoundException(`CurriculumItem with UUID ${uuid} not found`);
+    }
+
+    // 섹션 이동: undefined = 유지, null = 섹션 없음으로, string = 그 섹션으로
+    let placement: { sectionId: number | null; sortOrder: number } | null = null;
+    let previousGroup: { sectionId: number | null } | null = null;
+    if (dto.sectionUuid !== undefined) {
+      const targetSectionId = dto.sectionUuid === null
+        ? null
+        : await this.resolveSectionId(item.curriculumId, dto.sectionUuid);
+      if (targetSectionId !== item.sectionId) {
+        const targetSiblings = await this.listItemsForOrder(item.curriculumId, targetSectionId);
+        placement = { sectionId: targetSectionId, sortOrder: nextSortOrder(targetSiblings) };
+        previousGroup = { sectionId: item.sectionId };
+      }
     }
 
     // 현재 파일 수 계산
@@ -307,6 +440,7 @@ export class CurriculumsService {
         data: {
           ...(dto.title !== undefined && { title: dto.title }),
           ...(dto.description !== undefined && { description: dto.description }),
+          ...(placement && placement),
         },
       });
 
@@ -335,7 +469,42 @@ export class CurriculumsService {
           });
         }
       }
+
+      // 떠난 묶음 재번호
+      if (previousGroup) {
+        const remaining = await tx.curriculumItem.findMany({
+          where: { curriculumId: item.curriculumId, sectionId: previousGroup.sectionId, deletedAt: null, id: { not: item.id } },
+          select: { id: true, sortOrder: true },
+        });
+        for (const u of renumber(remaining)) {
+          await tx.curriculumItem.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } });
+        }
+      }
     });
+
+    return this.findItem(uuid, userId);
+  }
+
+  async moveItem(uuid: string, direction: MoveDirection, userId: string) {
+    const item = await this.prisma.curriculumItem.findFirst({
+      where: {
+        uuid,
+        deletedAt: null,
+        curriculum: { deletedAt: null, organization: { userId, deletedAt: null } },
+      },
+      select: { id: true, curriculumId: true, sectionId: true, sortOrder: true },
+    });
+    if (!item) {
+      throw new NotFoundException(`CurriculumItem with UUID ${uuid} not found`);
+    }
+
+    const siblings = await this.listItemsForOrder(item.curriculumId, item.sectionId);
+    const updates = swapWithNeighbor(siblings, item.id, direction);
+    if (updates && updates.length > 0) {
+      await this.prisma.$transaction(
+        updates.map(u => this.prisma.curriculumItem.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } })),
+      );
+    }
 
     return this.findItem(uuid, userId);
   }
@@ -356,9 +525,15 @@ export class CurriculumsService {
       throw new NotFoundException(`CurriculumItem with UUID ${uuid} not found`);
     }
 
-    await this.prisma.curriculumItem.update({
-      where: { uuid },
-      data: { deletedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.curriculumItem.update({ where: { uuid }, data: { deletedAt: new Date() } });
+      const remaining = await tx.curriculumItem.findMany({
+        where: { curriculumId: item.curriculumId, sectionId: item.sectionId, deletedAt: null, id: { not: item.id } },
+        select: { id: true, sortOrder: true },
+      });
+      for (const u of renumber(remaining)) {
+        await tx.curriculumItem.update({ where: { id: u.id }, data: { sortOrder: u.sortOrder } });
+      }
     });
 
     return { success: true };

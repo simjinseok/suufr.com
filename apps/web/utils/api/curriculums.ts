@@ -35,6 +35,7 @@ type CreateCurriculumItemData = {
   title: string;
   description?: string;
   mediaFileUuids?: string[];
+  sectionUuid?: string;
 };
 
 type UpdateCurriculumItemData = {
@@ -42,7 +43,21 @@ type UpdateCurriculumItemData = {
   description?: string;
   addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
+  sectionUuid?: string | null; // null = 섹션 없음으로, undefined = 유지
 };
+
+type CreateCurriculumSectionData = {
+  curriculumUuid: string;
+  title: string;
+  description?: string;
+};
+
+type UpdateCurriculumSectionData = {
+  title?: string;
+  description?: string;
+};
+
+type MoveData = { direction: 'up' | 'down' };
 
 export const curriculumsApi = {
   list: (params?: ListCurriculumsParams) =>
@@ -72,4 +87,20 @@ export const curriculumsApi = {
 
   removeItem: (uuid: string) =>
     apiClient<{ success: boolean }>(`/api/curriculums/items/${uuid}`, { method: 'DELETE' }),
+
+  moveItem: (uuid: string, data: MoveData) =>
+    apiClient<CurriculumItemResponse>(`/api/curriculums/items/${uuid}/move`, { method: 'POST', body: data }),
+
+  // Sections
+  createSection: (data: CreateCurriculumSectionData) =>
+    apiClient<CurriculumResponse>('/api/curriculums/sections', { method: 'POST', body: data }),
+
+  updateSection: (uuid: string, data: UpdateCurriculumSectionData) =>
+    apiClient<CurriculumResponse>(`/api/curriculums/sections/${uuid}`, { method: 'PATCH', body: data }),
+
+  removeSection: (uuid: string) =>
+    apiClient<{ success: boolean }>(`/api/curriculums/sections/${uuid}`, { method: 'DELETE' }),
+
+  moveSection: (uuid: string, data: MoveData) =>
+    apiClient<CurriculumResponse>(`/api/curriculums/sections/${uuid}/move`, { method: 'POST', body: data }),
 };

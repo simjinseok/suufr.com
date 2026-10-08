@@ -9,26 +9,31 @@ import {
   TextField,
   Label,
   FieldError,
-  Popover,
+  type ModalProps,
 } from '@heroui/react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { updateCurriculumItem, removeCurriculumItem } from '@/actions/curriculum';
+import { updateCurriculumItem } from '@/actions/curriculum';
 import MediaFilePicker, { type MediaFilePickerState } from '@/components/media/media-file-picker';
-import type { TCurriculumItem, TLessonMediaFile } from '@/types/index';
+import SectionSelect from '@/components/curriculum/section-select';
+import type { TCurriculumItem, TCurriculumSection, TLessonMediaFile } from '@/types/index';
 
 interface Props {
+  // modal.show 로 띄울 때 제어형. 트리거형(<Modal> 자식)으로 쓰면 둘 다 생략.
+  isOpen?: ModalProps['isOpen'];
+  onOpenChange?: ModalProps['onOpenChange'];
   item: TCurriculumItem;
   curriculumUuid: string;
+  sections: Pick<TCurriculumSection, 'uuid' | 'title'>[];
 }
 
-export default function EditItemModal({ item, curriculumUuid }: Props) {
+export default function EditItemModal({ isOpen, onOpenChange, item, curriculumUuid, sections }: Props) {
   return (
-    <Modal.Backdrop>
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
-            <Content item={item} curriculumUuid={curriculumUuid} close={close} />
+            <Content item={item} curriculumUuid={curriculumUuid} sections={sections} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -39,10 +44,11 @@ export default function EditItemModal({ item, curriculumUuid }: Props) {
 interface ContentProps {
   item: TCurriculumItem;
   curriculumUuid: string;
+  sections: Pick<TCurriculumSection, 'uuid' | 'title'>[];
   close: () => void;
 }
 
-function Content({ item, curriculumUuid, close }: ContentProps) {
+function Content({ item, curriculumUuid, sections, close }: ContentProps) {
   const formId = React.useId();
 
   // Convert curriculum item media files to lesson media file format for the picker
@@ -134,6 +140,10 @@ function Content({ item, curriculumUuid, close }: ContentProps) {
             )}
           />
 
+          {sections.length > 0 && (
+            <SectionSelect sections={sections} defaultValue={item.sectionUuid ?? ''} isDisabled={isPending} />
+          )}
+
           <MediaFilePicker
             value={mediaState}
             onChange={setMediaState}
@@ -143,8 +153,6 @@ function Content({ item, curriculumUuid, close }: ContentProps) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <RemoveButton itemUuid={item.uuid} curriculumUuid={curriculumUuid} onSuccess={close} />
-        <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onClick={close}>
           닫기
         </Button>
@@ -158,42 +166,5 @@ function Content({ item, curriculumUuid, close }: ContentProps) {
         </Button>
       </Modal.Footer>
     </React.Fragment>
-  );
-}
-
-interface RemoveButtonProps {
-  itemUuid: string;
-  curriculumUuid: string;
-  onSuccess: () => void;
-}
-
-function RemoveButton({ itemUuid, curriculumUuid, onSuccess }: RemoveButtonProps) {
-  const [state, formAction, isPending] = React.useActionState(removeCurriculumItem, {});
-
-  React.useEffect(() => {
-    if (!state.timestamp) return;
-
-    if (state.success) {
-      alert(state.message);
-      if (typeof onSuccess === 'function') onSuccess();
-    }
-  }, [state.success, state.timestamp, state.message, onSuccess]);
-
-  return (
-    <Popover>
-      <Button variant="danger-soft">삭제</Button>
-      <Popover.Content placement="top left">
-        <Popover.Arrow />
-        <Popover.Dialog>
-          <Popover.Heading>삭제 확인</Popover.Heading>
-          <p className="mt-1 mb-3">해당 항목을 삭제합니다.</p>
-          <Form action={formAction}>
-            <input type="hidden" name="itemUuid" value={itemUuid} />
-            <input type="hidden" name="curriculumUuid" value={curriculumUuid} />
-            <Button type="submit" variant="danger" isPending={isPending}>삭제</Button>
-          </Form>
-        </Popover.Dialog>
-      </Popover.Content>
-    </Popover>
   );
 }

@@ -6,6 +6,9 @@ import {
   CreateCurriculumItemDto,
   UpdateCurriculumItemDto,
   ListCurriculumsQueryDto,
+  CreateCurriculumSectionDto,
+  UpdateCurriculumSectionDto,
+  MoveDto,
 } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
@@ -55,6 +58,42 @@ export class CurriculumsController {
     return this.curriculumsService.remove(uuid, user.userId);
   }
 
+  // Curriculum Sections
+
+  @Post('sections')
+  createSection(
+    @Body() dto: CreateCurriculumSectionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumsService.createSection(dto, user.userId);
+  }
+
+  @Patch('sections/:uuid')
+  updateSection(
+    @Param('uuid') uuid: string,
+    @Body() dto: UpdateCurriculumSectionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumsService.updateSection(uuid, dto, user.userId);
+  }
+
+  @Delete('sections/:uuid')
+  removeSection(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumsService.removeSection(uuid, user.userId);
+  }
+
+  @Post('sections/:uuid/move')
+  moveSection(
+    @Param('uuid') uuid: string,
+    @Body() dto: MoveDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumsService.moveSection(uuid, dto.direction, user.userId);
+  }
+
   // Curriculum Items
 
   @Post('items')
@@ -80,6 +119,15 @@ export class CurriculumsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.curriculumsService.updateItem(uuid, updateCurriculumItemDto, user.userId);
+  }
+
+  @Post('items/:uuid/move')
+  moveItem(
+    @Param('uuid') uuid: string,
+    @Body() dto: MoveDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.curriculumsService.moveItem(uuid, dto.direction, user.userId);
   }
 
   @Delete('items/:uuid')
