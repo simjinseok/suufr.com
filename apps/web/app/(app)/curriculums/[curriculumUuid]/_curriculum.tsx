@@ -124,7 +124,7 @@ function SectionBlock({ section, sectionOptions, curriculumUuid, isFirst, isLast
             <Modal>
               <Button
                 variant="ghost"
-                className="ml-4 w-[calc(100%-1rem)] h-11 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 text-sm text-zinc-500"
+                className="w-full h-11 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 text-sm text-zinc-500"
               >
                 + 이 섹션에 항목 추가
               </Button>
@@ -133,7 +133,7 @@ function SectionBlock({ section, sectionOptions, curriculumUuid, isFirst, isLast
           )
         : (
             section.items.map((item, index) => (
-              <div key={item.uuid} className="ml-4">
+              <div key={item.uuid}>
                 <ItemCard
                   item={item}
                   sections={sectionOptions}

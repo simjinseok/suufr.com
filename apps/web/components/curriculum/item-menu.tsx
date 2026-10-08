@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import { Button, Dropdown } from '@heroui/react';
-import { EllipsisVerticalIcon } from 'lucide-react';
+import { Button, Dropdown, Separator } from '@heroui/react';
+import { EllipsisVerticalIcon, Trash2Icon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { modal } from '@/contexts/modal-manager';
 import { moveCurriculumItem, removeCurriculumItem } from '@/actions/curriculum';
@@ -63,17 +63,16 @@ export default function ItemMenu({ item, sections, curriculumUuid, isFirst, isLa
             }
           }}
         >
-          <Dropdown.Section>
-            <Dropdown.Item id="edit">수정</Dropdown.Item>
-          </Dropdown.Section>
-          <Dropdown.Section>
-            <Dropdown.Item id="move-up">위로 이동</Dropdown.Item>
-            <Dropdown.Item id="move-down">아래로 이동</Dropdown.Item>
-            {sections.length > 0 && <Dropdown.Item id="move-section">다른 섹션으로 이동</Dropdown.Item>}
-          </Dropdown.Section>
-          <Dropdown.Section>
-            <Dropdown.Item id="delete" variant="danger">삭제</Dropdown.Item>
-          </Dropdown.Section>
+          <Dropdown.Item id="edit">수정</Dropdown.Item>
+          <Separator />
+          <Dropdown.Item id="move-up">위로 이동</Dropdown.Item>
+          <Dropdown.Item id="move-down">아래로 이동</Dropdown.Item>
+          {sections.length > 0 && <Dropdown.Item id="move-section">다른 섹션으로 이동</Dropdown.Item>}
+          <Separator />
+          <Dropdown.Item id="delete" variant="danger" className="text-danger" textValue="삭제">
+            <Trash2Icon className="size-4" />
+            삭제
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>
