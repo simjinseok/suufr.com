@@ -220,7 +220,19 @@ export type TCurriculumItem = {
   uuid: string;
   title: string;
   description: string | null;
+  sortOrder: number;
+  sectionUuid: string | null;
   mediaFiles?: TCurriculumItemMediaFile[];
+};
+
+// 섹션(예: "1개월차"). items 는 섹션 안 항목을 sortOrder 순으로.
+export type TCurriculumSection = {
+  id: number;
+  uuid: string;
+  title: string;
+  description: string | null;
+  sortOrder: number;
+  items: TCurriculumItem[];
 };
 
 export type TCurriculum = {
@@ -228,7 +240,10 @@ export type TCurriculum = {
   uuid: string;
   title: string;
   description: string | null;
-  items: TCurriculumItem[];
+  items: TCurriculumItem[]; // 섹션 없는 항목만. 첫 섹션 위에 나열
+  sections: TCurriculumSection[];
+  // 소유 조직(프린트 헤더용). 세션의 선택 조직과 다를 수 있다
+  organization: { uuid: string; name: string; phone: string | null; address: string | null };
 };
 
 export type TPlan = 'free' | 'pro';

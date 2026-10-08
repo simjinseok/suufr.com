@@ -28,7 +28,6 @@ export default function Curriculums({ curriculums }: { curriculums: TCurriculum[
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold truncate">{curriculum.title}</span>
-              <span className="text-sm text-zinc-400">{curriculum.items.length}개 항목</span>
             </div>
             {curriculum.description && (
               <div className="text-sm text-zinc-500 truncate">

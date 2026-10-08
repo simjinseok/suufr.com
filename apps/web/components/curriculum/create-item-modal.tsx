@@ -14,18 +14,22 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { createCurriculumItem } from '@/actions/curriculum';
 import MediaFilePicker, { type MediaFilePickerState } from '@/components/media/media-file-picker';
+import SectionSelect from '@/components/curriculum/section-select';
+import type { TCurriculumSection } from '@/types/index';
 
 interface Props {
   curriculumUuid: string;
+  sections: Pick<TCurriculumSection, 'uuid' | 'title'>[];
+  defaultSectionUuid?: string; // 섹션의 "+ 이 섹션에 항목 추가"로 열었을 때 기본 선택
 }
 
-export default function CreateItemModal({ curriculumUuid }: Props) {
+export default function CreateItemModal({ curriculumUuid, sections, defaultSectionUuid }: Props) {
   return (
     <Modal.Backdrop>
       <Modal.Container>
         <Modal.Dialog>
           {({ close }) => (
-            <Content curriculumUuid={curriculumUuid} close={close} />
+            <Content curriculumUuid={curriculumUuid} sections={sections} defaultSectionUuid={defaultSectionUuid} close={close} />
           )}
         </Modal.Dialog>
       </Modal.Container>
@@ -33,12 +37,11 @@ export default function CreateItemModal({ curriculumUuid }: Props) {
   );
 }
 
-interface ContentProps {
-  curriculumUuid: string;
+interface ContentProps extends Props {
   close: () => void;
 }
 
-function Content({ curriculumUuid, close }: ContentProps) {
+function Content({ curriculumUuid, sections, defaultSectionUuid, close }: ContentProps) {
   const formId = React.useId();
 
   const [mediaState, setMediaState] = React.useState<MediaFilePickerState>({
@@ -114,6 +117,10 @@ function Content({ curriculumUuid, close }: ContentProps) {
               </TextField>
             )}
           />
+
+          {sections.length > 0 && (
+            <SectionSelect sections={sections} defaultValue={defaultSectionUuid ?? ''} isDisabled={isPending} />
+          )}
 
           <MediaFilePicker
             value={mediaState}
