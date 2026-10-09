@@ -54,9 +54,10 @@ describe('RecaptchaService', () => {
     });
 
     it('점수가 낮아도 평가만 하고 통과한다', async () => {
-      stubFetch(okAssessment(0.1));
+      const fetchMock = stubFetch(okAssessment(0.1));
       const service = build({ ...FULL, RECAPTCHA_MODE: 'monitor' });
       await expect(service.verifySignup('tok', { ip: '1.1.1.1', userAgent: 'ua' })).resolves.toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -100,11 +101,17 @@ describe('RecaptchaService', () => {
       await expect(build({ ...env, RECAPTCHA_MIN_SCORE: '0.7' }).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it('RECAPTCHA_MIN_SCORE 가 빈 문자열이거나 범위 밖이면 기본 0.5 를 쓴다 (Number("") === 0 함정)', async () => {
+    it('RECAPTCHA_MIN_SCORE 가 빈 문자열이면 기본 0.5 를 쓴다 (Number("") === 0 함정)', async () => {
       stubFetch(okAssessment(0.3));
       await expect(build({ ...env, RECAPTCHA_MIN_SCORE: '' }).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('RECAPTCHA_MIN_SCORE 가 0~1 범위 밖이면 기본 0.5 를 쓴다', async () => {
+      // 1.5 가 그대로 쓰이면 0.6 도 막히고, -0.5 가 그대로 쓰이면 0.3 도 통과한다
+      stubFetch(okAssessment(0.6));
+      await expect(build({ ...env, RECAPTCHA_MIN_SCORE: '1.5' }).verifySignup('tok', {})).resolves.toBeUndefined();
       stubFetch(okAssessment(0.3));
-      await expect(build({ ...env, RECAPTCHA_MIN_SCORE: '1.5' }).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(build({ ...env, RECAPTCHA_MIN_SCORE: '-0.5' }).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('RECAPTCHA_MODE 가 빈 문자열이면 off 로 동작한다', async () => {
@@ -120,6 +127,11 @@ describe('RecaptchaService', () => {
 
     it('valid=false 응답은 riskAnalysis 가 없어도 터지지 않고 거부한다', async () => {
       stubFetch({ tokenProperties: { valid: false, invalidReason: 'EXPIRED' } });
+      await expect(build(env).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('유효한 signup 토큰이어도 점수가 없으면 거부한다', async () => {
+      stubFetch({ tokenProperties: { valid: true, action: 'signup', hostname: 'suufr.com' }, riskAnalysis: { reasons: [] } });
       await expect(build(env).verifySignup('tok', {})).rejects.toBeInstanceOf(ForbiddenException);
     });
 

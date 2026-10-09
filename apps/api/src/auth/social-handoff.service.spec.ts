@@ -39,10 +39,30 @@ describe('SocialHandoffService', () => {
     expect(rows.size).toBe(0);
   });
 
-  it('위조·빈 코드는 null', async () => {
-    const { service } = makeService();
+  it('코드는 발급 후 3분 동안만 교환할 수 있다', async () => {
+    vi.useFakeTimers({ now: new Date('2026-10-08T00:00:00Z') });
+    try {
+      const { service } = makeService();
+      const inTime = await service.create({ sessionToken: 'tok3', userId: 'u3' });
+      const late = await service.create({ sessionToken: 'tok4', userId: 'u4' });
+
+      vi.setSystemTime(new Date('2026-10-08T00:02:59Z'));
+      await expect(service.consume(inTime)).resolves.toEqual({ sessionToken: 'tok3', userId: 'u3' });
+      vi.setSystemTime(new Date('2026-10-08T00:03:01Z'));
+      await expect(service.consume(late)).resolves.toBeNull();
+    }
+    finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('빈 코드와 128자를 넘는 코드는 DB 를 조회하지 않고 null, 발급하지 않은 코드도 null', async () => {
+    const { service, prisma } = makeService();
     await expect(service.consume('')).resolves.toBeNull();
+    await expect(service.consume('x'.repeat(129))).resolves.toBeNull();
+    expect(prisma.verification.findFirst).not.toHaveBeenCalled();
+
     await expect(service.consume('nope')).resolves.toBeNull();
-    await expect(service.consume('x'.repeat(200))).resolves.toBeNull();
+    expect(prisma.verification.findFirst).toHaveBeenCalledTimes(1);
   });
 });

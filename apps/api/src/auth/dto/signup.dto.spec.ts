@@ -1,5 +1,6 @@
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SignupDto } from './signup.dto';
+import { PASSWORD_POLICY_MESSAGE } from './password-policy';
 
 // main.ts 의 전역 ValidationPipe 와 동일한 옵션으로 검증한다
 const pipe = new ValidationPipe({
@@ -45,6 +46,28 @@ describe('SignupDto', () => {
   it('name 은 선택이다 (보내면 그대로 받는다)', async () => {
     const dto = await validate({ ...validBody, name: '홍길동' });
     expect(dto.name).toBe('홍길동');
+  });
+
+  it('이메일 형식이 아니면 거부된다', async () => {
+    await expectRejected({ ...validBody, email: 'not-an-email' }, '유효한 이메일을 입력해주세요');
+  });
+
+  // better-auth 는 길이만 검사하므로 복잡도는 이 DTO 가 유일한 방어선이다 (iOS 는 web zod 를 거치지 않는다)
+  it.each([
+    ['대문자 없음', 'password1!'],
+    ['소문자 없음', 'PASSWORD1!'],
+    ['숫자 없음', 'Password!!'],
+    ['특수문자 없음', 'Password12'],
+    ['공백은 특수문자로 치지 않음', 'Password1 '],
+    ['7자', 'Pass1!a'],
+    ['129자', 'Aa1!' + 'x'.repeat(125)],
+  ])('비밀번호 정책 위반(%s)이면 정책 메시지로 거부된다', async (_label, password) => {
+    await expectRejected({ ...validBody, password }, PASSWORD_POLICY_MESSAGE);
+  });
+
+  it('비밀번호 길이 경계 8자·128자는 통과한다', async () => {
+    await expect(validate({ ...validBody, password: 'Pass1!ab' })).resolves.toBeTruthy();
+    await expect(validate({ ...validBody, password: 'Aa1!' + 'x'.repeat(124) })).resolves.toBeTruthy();
   });
 
   it('consents 가 없으면 거부된다', async () => {
