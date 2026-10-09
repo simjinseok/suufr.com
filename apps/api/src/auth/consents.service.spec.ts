@@ -9,7 +9,7 @@ function makeService(rows: Row[] = []) {
   const findMany = vi.fn().mockResolvedValue(rows);
   const count = vi.fn().mockResolvedValue(rows.length);
   const prisma = { userConsent: { createMany, findMany, count } } as unknown as PrismaService;
-  return { service: new ConsentsService(prisma), createMany, findMany };
+  return { service: new ConsentsService(prisma), createMany, findMany, count };
 }
 
 const input = {
@@ -22,13 +22,23 @@ const input = {
 describe('ConsentsService.record', () => {
   it('동의 2종(약관·방침)을 한 번에 기록하고 국외 이전 행은 만들지 않는다', async () => {
     const { service, createMany } = makeService();
-    await service.record('user-1', input, { ipAddress: '1.2.3.4', userAgent: 'UA' });
+    // 두 문서 버전이 갈라져도 행마다 제 버전이 남는지 보려고 서로 다른 값을 쓴다
+    await service.record('user-1', { ...input, termsVersion: '2026-07-08', privacyVersion: '2026-09-01' }, { ipAddress: '1.2.3.4', userAgent: 'UA' });
 
     const { data } = createMany.mock.calls[0][0];
     expect(data).toHaveLength(2);
-    expect(data.map((d: { type: string }) => d.type)).toEqual(['terms', 'privacy']);
-    expect(data[1].docVersion).toBe(PRIVACY_POLICY_VERSION);
-    expect(data[0]).toMatchObject({ userId: 'user-1', ipAddress: '1.2.3.4', userAgent: 'UA' });
+    expect(data[0]).toMatchObject({ userId: 'user-1', type: 'terms', docVersion: '2026-07-08', ipAddress: '1.2.3.4', userAgent: 'UA' });
+    expect(data[1]).toMatchObject({ userId: 'user-1', type: 'privacy', docVersion: '2026-09-01', ipAddress: '1.2.3.4', userAgent: 'UA' });
+  });
+
+  it.each([
+    [false, true],
+    [true, false],
+  ])('동의 여부는 입력값 그대로 남긴다 (terms=%s, privacy=%s)', async (terms, privacy) => {
+    const { service, createMany } = makeService();
+    await service.record('user-1', { ...input, terms, privacy });
+    const { data } = createMany.mock.calls[0][0];
+    expect(data.map((d: { agreed: boolean }) => d.agreed)).toEqual([terms, privacy]);
   });
 
   it('UA 는 512자, IP 는 45자로 절단한다', async () => {
@@ -47,13 +57,15 @@ describe('ConsentsService.record', () => {
 });
 
 describe('ConsentsService.recordIfAbsent', () => {
-  it('이력이 없으면 기록하고 true', async () => {
-    const { service, createMany } = makeService([]);
+  it('이 사용자의 이력이 없으면 기록하고 true', async () => {
+    const { service, createMany, count } = makeService([]);
     await expect(service.recordIfAbsent('user-1', input)).resolves.toBe(true);
+    // 다른 사용자의 이력까지 세면 신규 가입자의 동의가 남지 않는다
+    expect(count).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(createMany).toHaveBeenCalledTimes(1);
   });
 
-  it('이력이 하나라도 있으면 기록하지 않고 false (iOS 가 로그인마다 동의값을 보내도 1회만 남긴다)', async () => {
+  it('이력이 하나라도 있으면 기록하지 않고 false (iOS 네이티브 Google 로그인마다 호출돼도 1회만 남긴다)', async () => {
     const { service, createMany } = makeService([{ type: 'terms', docVersion: '2000-01-01', agreed: true }]);
     await expect(service.recordIfAbsent('user-1', input)).resolves.toBe(false);
     expect(createMany).not.toHaveBeenCalled();
@@ -83,8 +95,8 @@ describe('ConsentsService.getStatus', () => {
     expect((await service.getStatus('user-1')).privacy).toBe('2000-01-01');
   });
 
-  it('최신순 행 중 타입별 첫 행만 본다 (철회 행이 최신이면 null)', async () => {
-    const { service } = makeService([
+  it('이 사용자의 이력을 최신순으로 읽어 타입별 첫 행만 본다 (철회 행이 최신이면 null)', async () => {
+    const { service, findMany } = makeService([
       { type: 'terms', docVersion: TERMS_VERSION, agreed: false }, // 최신: 철회
       { type: 'terms', docVersion: TERMS_VERSION, agreed: true },
       { type: 'privacy', docVersion: PRIVACY_POLICY_VERSION, agreed: true },
@@ -93,5 +105,9 @@ describe('ConsentsService.getStatus', () => {
     const status = await service.getStatus('user-1');
     expect(status.terms).toBeNull();
     expect(status.privacy).toBe(PRIVACY_POLICY_VERSION);
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: 'user-1' },
+      orderBy: [{ consentedAt: 'desc' }, { id: 'desc' }],
+    }));
   });
 });

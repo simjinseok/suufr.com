@@ -28,6 +28,10 @@ describe('CURRICULUM_INCLUDE 정렬 키', () => {
   it('소유 조직의 상호·연락처·주소를 함께 내려준다 (프린트 헤더는 세션 조직이 아니라 소유 조직)', () => {
     expect(CURRICULUM_INCLUDE.organization).toEqual({ select: { uuid: true, name: true, phone: true, address: true } });
   });
+  it('삭제된 섹션과 섹션 안의 삭제된 항목은 내려주지 않는다', () => {
+    expect(CURRICULUM_INCLUDE.sections.where).toEqual({ deletedAt: null });
+    expect(CURRICULUM_INCLUDE.sections.include.items.where).toEqual({ deletedAt: null });
+  });
 });
 
 describe('serializeCurriculum', () => {

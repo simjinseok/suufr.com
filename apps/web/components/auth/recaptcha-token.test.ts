@@ -43,6 +43,13 @@ describe('acquireRecaptchaToken', () => {
     await expect(promise).resolves.toBeUndefined();
   });
 
+  it('execute 가 늦게 응답해도 예산 안이면 토큰을 받는다', async () => {
+    const g = fakeGrecaptcha(() => new Promise<string>(resolve => setTimeout(() => resolve('slow-tok'), 3000)));
+    const promise = acquireRecaptchaToken({ ...base, getGrecaptcha: () => g, scriptFailed: () => false });
+    await vi.advanceTimersByTimeAsync(3000);
+    await expect(promise).resolves.toBe('slow-tok');
+  });
+
   it('execute 가 reject 되면 undefined', async () => {
     const g = fakeGrecaptcha(() => Promise.reject(new Error('boom')));
     const promise = acquireRecaptchaToken({ ...base, getGrecaptcha: () => g, scriptFailed: () => false });
@@ -51,9 +58,16 @@ describe('acquireRecaptchaToken', () => {
   });
 
   it('execute 가 끝내 응답하지 않으면 남은 예산이 지난 뒤 undefined', async () => {
-    const g = fakeGrecaptcha(() => new Promise<string>(() => {}));
+    let g: GrecaptchaEnterprise | undefined;
     const promise = acquireRecaptchaToken({ ...base, getGrecaptcha: () => g, scriptFailed: () => false });
-    await vi.advanceTimersByTimeAsync(8100);
-    await expect(promise).resolves.toBeUndefined();
+    const onSettled = vi.fn();
+    promise.then(onSettled);
+    await vi.advanceTimersByTimeAsync(2000);
+    g = fakeGrecaptcha(() => new Promise<string>(() => {}));
+    // 스크립트 대기(약 2초)와 execute 대기를 합쳐 8초 예산 — 직전엔 아직 기다리고, 예산이 끝나면 포기한다
+    await vi.advanceTimersByTimeAsync(5900);
+    expect(onSettled).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(onSettled).toHaveBeenCalledWith(undefined);
   });
 });

@@ -7,7 +7,7 @@ const API_URL = process.env.API_URL!;
 export const NETWORK_ERROR = 'NETWORK_ERROR';
 export const NETWORK_ERROR_MESSAGE = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요';
 // 응답은 왔지만 본문이 에러 형식이 아닐 때(프록시 5xx 등)
-const UNEXPECTED_RESPONSE_MESSAGE = '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요';
+export const UNEXPECTED_RESPONSE_MESSAGE = '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요';
 
 export class ApiError extends Error {
   readonly code?: string;

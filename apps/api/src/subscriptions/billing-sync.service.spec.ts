@@ -1,8 +1,11 @@
+import * as Sentry from '@sentry/nestjs';
 import type { UserSubscription } from '@prisma/generated/client';
 import { BillingSyncService } from './billing-sync.service';
 import { BillingSyncRejectedError, type BillingSubscriptionState, type BillingTransactionRecord } from './billing.types';
 import { SubscriptionsService } from './subscriptions.service';
 import type { PrismaService } from '../prisma/prisma.service';
+
+vi.mock('@sentry/nestjs', () => ({ captureException: vi.fn() }));
 
 const DAY = 86_400_000;
 const now = new Date('2026-10-07T00:00:00Z');
@@ -66,10 +69,9 @@ function makeTx(rows: Row[], orders: Array<{ provider: string; providerTransacti
   return { tx, upsert, del: deleteMany, orderUpsert, createMany, executeRaw };
 }
 
-function makeService(tx: unknown) {
-  const prisma = {
-    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx)),
-  } as unknown as PrismaService;
+/** $transaction 은 콜백을 그대로 실행한다. 콜백의 reject(=롤백) 여부를 보려면 mock 을 넘겨 results 를 확인한다 */
+function makeService(tx: unknown, $transaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx))) {
+  const prisma = { $transaction } as unknown as PrismaService;
   return new BillingSyncService(prisma, new SubscriptionsService(prisma));
 }
 
@@ -134,6 +136,14 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 
+  it('환경 가드: 새 구독 id 의 sandbox 이벤트도 사용자의 만료된 production 행을 덮지 않는다', async () => {
+    // 유효한 행이면 5단계 충돌 가드가 대신 거부하므로, 환경 가드만 막을 수 있는 만료 행으로 확인한다
+    const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'apple', providerEnvironment: 'production', providerSubscriptionId: 'O1', status: 'expired', currentPeriodEnd: past })]);
+    await expect(makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O2', environment: 'sandbox' })))
+      .rejects.toBeInstanceOf(BillingSyncRejectedError);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it('환경 가드: 기존 행의 environment 가 null(리네임 이전 데이터)이면 통과한다', async () => {
     const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'paddle', providerEnvironment: null })]);
     await makeService(tx).syncSubscription(tx as never, state({ environment: 'production' }));
@@ -153,9 +163,26 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
     expect(ok).toBe(true);
     expect(del).toHaveBeenCalledWith({ where: { userId: USER_A, provider: 'apple', providerSubscriptionId: 'O1' } });
     expect(upsert.mock.calls[0][0].where).toEqual({ userId: USER_B });
-    expect(upsert.mock.calls[0][0].create.canceledAt).toBeNull(); // 옛 행의 값 미승계
     // 삭제가 upsert 보다 먼저 (유니크 충돌 방지)
     expect(del.mock.invocationCallOrder[0]).toBeLessThan(upsert.mock.invocationCallOrder[0]);
+  });
+
+  it('소유자 가드: 이전받는 계정에는 옛 행의 canceledAt 을 물려주지 않는다', async () => {
+    // canceled 는 같은 구독이면 기존 canceledAt 을 유지하므로, 옛 행 값이 새어 들어가면 past 가 된다
+    const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'apple', providerSubscriptionId: 'O1', status: 'expired', currentPeriodEnd: past, canceledAt: past })]);
+    await makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O1', userId: USER_B, status: 'canceled' }));
+    expect(upsert.mock.calls[0][0].create).toMatchObject({ userId: USER_B, canceledAt: now });
+  });
+
+  it('소유자 가드: 이전받을 사용자에게 유효한 다른 구독이 있으면 거부하고 옛 행도 지우지 않는다', async () => {
+    const { tx, upsert, del } = makeTx([
+      row({ userId: USER_A, provider: 'apple', providerSubscriptionId: 'O1', status: 'expired', currentPeriodEnd: past }),
+      row({ userId: USER_B, provider: 'paddle', providerSubscriptionId: 'sub_9' }),
+    ]);
+    await expect(makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O1', userId: USER_B })))
+      .rejects.toBeInstanceOf(BillingSyncRejectedError);
+    expect(upsert).not.toHaveBeenCalled();
+    expect(del).not.toHaveBeenCalled();
   });
 
   it('다른 구독 충돌 가드: 사용자에게 유효한 다른 provider 구독이 있으면 거부한다', async () => {
@@ -172,12 +199,17 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it('다른 구독 충돌 가드: 기존 구독이 만료됐으면 덮어쓰고 이전 provider 값을 남기지 않는다', async () => {
+  it('다른 구독 충돌 가드: 기존 구독이 만료됐으면 덮어쓰고 이전 구독의 값을 물려받지 않는다', async () => {
     // 환경은 같다 (다르면 3단계 환경 가드가 먼저 거부한다 — 한 DB 는 한 환경)
-    const { tx, upsert } = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'expired', currentPeriodEnd: past, canceledAt: past, providerCustomerId: 'ctm_1' })]);
-    await makeService(tx).syncSubscription(tx as never, state({ provider: 'apple', subscriptionId: 'O1', customerId: null }));
-    const { update } = upsert.mock.calls[0][0];
-    expect(update).toMatchObject({ provider: 'apple', providerSubscriptionId: 'O1', providerCustomerId: null, canceledAt: null, billingIssueDetectedAt: null });
+    // 승계가 일어나면 값이 달라지는 이벤트를 쓴다: canceled 는 기존 canceledAt 유지, 기간 null 은 기존 기간 보존
+    const a = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'expired', currentPeriodEnd: past, canceledAt: past, providerCustomerId: 'ctm_1' })]);
+    await makeService(a.tx).syncSubscription(a.tx as never, state({ provider: 'apple', subscriptionId: 'O1', customerId: null, status: 'canceled' }));
+    expect(a.upsert.mock.calls[0][0].update).toMatchObject({ provider: 'apple', providerSubscriptionId: 'O1', providerCustomerId: null, canceledAt: now, billingIssueDetectedAt: null });
+
+    // 같은 provider 의 새 구독이 종결 이벤트(기간 null)로 먼저 도착한 경우
+    const b = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'expired', currentPeriodStart: past, currentPeriodEnd: past, canceledAt: past })]);
+    await makeService(b.tx).syncSubscription(b.tx as never, state({ subscriptionId: 'sub_2', status: 'expired', currentPeriodStart: null, currentPeriodEnd: null }));
+    expect(b.upsert.mock.calls[0][0].update).toMatchObject({ providerSubscriptionId: 'sub_2', currentPeriodStart: null, currentPeriodEnd: null, canceledAt: now });
   });
 
   it('다른 구독 충돌 가드: manual(수동 부여) 행은 유료 provider 가 덮어쓴다', async () => {
@@ -237,15 +269,29 @@ describe('BillingSyncService.syncSubscription — 순서·상태 규칙', () => 
     expect(upsert.mock.calls[0][0].update).toMatchObject({ billingIssueDetectedAt: null, gracePeriodExpiresAt: null });
   });
 
-  it('canceledAt: canceled 는 기존 값 ?? occurredAt, expired 는 state.canceledAt 우선, 그 외 null', async () => {
-    const a = makeTx([row({ userId: USER_A, provider: 'paddle' })]);
-    await makeService(a.tx).syncSubscription(a.tx as never, state({ status: 'canceled' }));
-    expect(a.upsert.mock.calls[0][0].update.canceledAt).toEqual(now);
+  it('canceledAt: canceled 는 기존 값을 유지하고 없으면 occurredAt (해지 예약 상태의 updated 반복)', async () => {
+    const first = makeTx([row({ userId: USER_A, provider: 'paddle' })]);
+    await makeService(first.tx).syncSubscription(first.tx as never, state({ status: 'canceled' }));
+    expect(first.upsert.mock.calls[0][0].update.canceledAt).toEqual(now);
 
+    const again = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'canceled', canceledAt: past })]);
+    await makeService(again.tx).syncSubscription(again.tx as never, state({ status: 'canceled' }));
+    expect(again.upsert.mock.calls[0][0].update.canceledAt).toEqual(past);
+  });
+
+  it('canceledAt: expired 는 state.canceledAt → 기존 값 → occurredAt 순, 그 외 상태는 null', async () => {
     const b = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'canceled', canceledAt: past })]);
     const ended = new Date(now.getTime() - DAY);
     await makeService(b.tx).syncSubscription(b.tx as never, state({ status: 'expired', canceledAt: ended }));
     expect(b.upsert.mock.calls[0][0].update.canceledAt).toEqual(ended);
+
+    const kept = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'canceled', canceledAt: past })]);
+    await makeService(kept.tx).syncSubscription(kept.tx as never, state({ status: 'expired', canceledAt: null }));
+    expect(kept.upsert.mock.calls[0][0].update.canceledAt).toEqual(past);
+
+    const fallback = makeTx([row({ userId: USER_A, provider: 'paddle' })]);
+    await makeService(fallback.tx).syncSubscription(fallback.tx as never, state({ status: 'expired', canceledAt: null }));
+    expect(fallback.upsert.mock.calls[0][0].update.canceledAt).toEqual(now);
 
     const c = makeTx([row({ userId: USER_A, provider: 'paddle', status: 'canceled', canceledAt: past })]);
     await makeService(c.tx).syncSubscription(c.tx as never, state({ status: 'active' }));
@@ -309,10 +355,13 @@ describe('BillingSyncService.recordTransaction', () => {
 describe('BillingSyncService.withEventDedup', () => {
   const envelope = { provider: 'paddle' as const, eventId: 'evt_1', eventType: 'subscription.created', occurredAt: now, payload: { event_id: 'evt_1' } };
 
-  it('처음 보는 이벤트는 기록하고 apply 를 실행한다', async () => {
+  it('처음 보는 이벤트는 lockKey 로 잠근 뒤 기록하고 apply 를 실행한다', async () => {
     const { tx, createMany, executeRaw } = makeTx([]);
     const apply = vi.fn();
     expect(await makeService(tx).withEventDedup(envelope, USER_A, apply)).toBe('applied');
+    // 태그드 템플릿 호출이라 [0] 은 SQL 조각, 나머지가 바인딩 값 — 잠금 키는 이벤트가 아니라 사용자 단위
+    expect(executeRaw.mock.calls[0].slice(1)).toContain(USER_A);
+    expect(executeRaw.mock.calls[0].slice(1)).not.toContain('evt_1');
     expect(executeRaw.mock.invocationCallOrder[0]).toBeLessThan(createMany.mock.invocationCallOrder[0]);
     expect(createMany.mock.calls[0][0]).toMatchObject({ skipDuplicates: true, data: [{ provider: 'paddle', eventId: 'evt_1', payload: { event_id: 'evt_1' } }] });
     expect(apply).toHaveBeenCalledTimes(1);
@@ -326,10 +375,15 @@ describe('BillingSyncService.withEventDedup', () => {
     expect(apply).not.toHaveBeenCalled();
   });
 
-  it('apply 가 BillingSyncRejectedError 를 던지면 rejected 를 반환하고 예외를 전파하지 않는다', async () => {
+  it('apply 가 BillingSyncRejectedError 를 던지면 트랜잭션은 롤백하고 Sentry 기록 후 rejected 를 반환한다 (예외 미전파)', async () => {
     const { tx } = makeTx([]);
-    const apply = vi.fn().mockRejectedValue(new BillingSyncRejectedError('conflict'));
-    expect(await makeService(tx).withEventDedup(envelope, USER_A, apply)).toBe('rejected');
+    const $transaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn(tx));
+    const error = new BillingSyncRejectedError('conflict');
+    const apply = vi.fn().mockRejectedValue(error);
+    expect(await makeService(tx, $transaction).withEventDedup(envelope, USER_A, apply)).toBe('rejected');
+    // 콜백이 reject 돼야 멱등 행이 롤백된다 (남으면 provider 재전송이 duplicate 로 스킵돼 복구 불가)
+    await expect($transaction.mock.results[0].value).rejects.toBe(error);
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({ extra: expect.objectContaining({ eventId: 'evt_1' }) }));
   });
 
   it('그 외 예외는 그대로 전파한다 (5xx → provider 재시도)', async () => {

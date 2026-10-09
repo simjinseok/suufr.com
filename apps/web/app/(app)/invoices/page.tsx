@@ -11,6 +11,7 @@ import { getSession } from '@/utils/auth';
 import { invoicesApi, studentsApi } from '@/utils/api';
 import { getUserSettings } from '@/utils/user-settings';
 import { DEFAULT_TIMEZONE } from '@/utils/timezone';
+import { countDoneSessions } from '@/utils/invoice-status';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 20;
@@ -62,7 +63,7 @@ export default async function Page(props: PageProps<'/invoices'>) {
           totalCount: invoice.totalCount,
           periodStart: invoice.periodStart,
           periodEnd: invoice.periodEnd,
-          doneCount: invoice.sessions.filter(s => s.isDone).length,
+          doneCount: countDoneSessions(invoice.sessions),
           student: {
             uuid: invoice.student.uuid,
             name: invoice.student.name,

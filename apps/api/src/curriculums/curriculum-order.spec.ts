@@ -49,4 +49,8 @@ describe('swapWithNeighbor', () => {
     const gappy = [{ id: 1, sortOrder: 0 }, { id: 2, sortOrder: 5 }, { id: 3, sortOrder: 9 }];
     expect(swapWithNeighbor(gappy, 2, 'down')).toEqual([{ id: 2, sortOrder: 2 }, { id: 3, sortOrder: 1 }]);
   });
+  it('정렬 안 된 입력이어도 sortOrder 순의 이웃과 교환 (순서 계산 조회에 orderBy 가 없다)', () => {
+    const shuffled = [{ id: 30, sortOrder: 2 }, { id: 10, sortOrder: 0 }, { id: 20, sortOrder: 1 }];
+    expect(swapWithNeighbor(shuffled, 10, 'down')).toEqual([{ id: 10, sortOrder: 1 }, { id: 20, sortOrder: 0 }]);
+  });
 });

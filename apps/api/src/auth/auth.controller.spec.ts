@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { PRIVACY_POLICY_VERSION, TERMS_VERSION } from '../common/constants/legal';
 
@@ -49,10 +49,22 @@ describe('AuthController', () => {
     expect(betterAuth.signOut).toHaveBeenCalledWith('sessiontoken');
   });
 
-  it('signup: 생성된 users.id 가 응답 id 와 같을 때만 동의 이력을 기록한다 (열거 방지 합성 응답 제외)', async () => {
+  it('signup: 이름(선택)은 앞뒤 공백을 지우고 없으면 빈 문자열로, 이메일·비밀번호와 함께 signUp 에 넘긴다', async () => {
+    const { controller, betterAuth } = build();
+    await controller.signup({ name: '  홍길동 ', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
+    expect(betterAuth.signUp).toHaveBeenCalledWith('홍길동', 'a@b.c', 'Passw0rd!x');
+
+    // 웹 가입 폼은 이름을 보내지 않는다
+    await controller.signup({ email: 'd@e.f', password: 'Passw0rd!y', consents: { ...consentsDto } });
+    expect(betterAuth.signUp).toHaveBeenLastCalledWith('', 'd@e.f', 'Passw0rd!y');
+  });
+
+  it('signup: 생성된 users.id 가 응답 id 와 같을 때만 그 id 로 동의 값과 클라이언트 IP·UA 를 기록한다 (열거 방지 합성 응답 제외)', async () => {
     const { controller, consents, authService } = build();
-    await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
+    const dtoConsents = { ...consentsDto, ipAddress: '203.0.113.5', userAgent: 'ua' };
+    await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: dtoConsents });
     expect(consents.recordSafely).toHaveBeenCalledTimes(1);
+    expect(consents.recordSafely).toHaveBeenCalledWith('u1', expect.objectContaining(consentsDto), { ipAddress: '203.0.113.5', userAgent: 'ua' });
 
     authService.findUserByEmail.mockResolvedValue({ id: 'existing-user' });
     await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
@@ -101,6 +113,15 @@ describe('AuthController', () => {
       .rejects.toBeInstanceOf(ForbiddenException);
     expect(betterAuth.signUp).not.toHaveBeenCalled();
     expect(consents.recordSafely).not.toHaveBeenCalled();
+  });
+
+  it('signup: 인증 메일 발송 실패(503 MAIL_DELIVERY_FAILED)는 로그인하지 않고 그대로 전달한다 (계정은 만들어졌고 web 이 로그인 후 재발송을 안내)', async () => {
+    const { controller, betterAuth } = build();
+    const mailFailure = new ServiceUnavailableException({ message: '인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요', error: 'MAIL_DELIVERY_FAILED' });
+    betterAuth.signUp.mockRejectedValue(mailFailure);
+    await expect(controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } }))
+      .rejects.toBe(mailFailure);
+    expect(betterAuth.signIn).not.toHaveBeenCalled();
   });
 
   it('verify-email 은 X-Session-Token 이 있으면 그 세션을 유지 대상으로 넘기고, 없으면 undefined 를 넘긴다', async () => {

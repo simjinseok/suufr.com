@@ -27,6 +27,32 @@ describe('MailService', () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it('sendOrThrow: 수신자·발신자(이름 포함)·회신 주소·제목·본문을 SES 요청에 싣는다', async () => {
+    const { service, send } = build({ ...sesEnv, MAIL_FROM_NAME: '스프', MAIL_REPLY_TO: 'help@suufr.com' });
+    send.mockResolvedValue({});
+    await service.sendOrThrow(message);
+    expect(send.mock.calls[0][0].input).toMatchObject({
+      FromEmailAddress: '스프 <no-reply@suufr.com>',
+      Destination: { ToAddresses: ['a@b.c'] },
+      ReplyToAddresses: ['help@suufr.com'],
+      Content: {
+        Simple: {
+          Subject: { Data: 's', Charset: 'UTF-8' },
+          Body: { Html: { Data: '<p>h</p>', Charset: 'UTF-8' }, Text: { Data: 't', Charset: 'UTF-8' } },
+        },
+      },
+    });
+  });
+
+  it('sendOrThrow: MAIL_FROM_NAME·MAIL_REPLY_TO 가 없으면 주소만 발신자로 쓰고 회신 주소를 넣지 않는다', async () => {
+    const { service, send } = build(sesEnv);
+    send.mockResolvedValue({});
+    await service.sendOrThrow(message);
+    const { input } = send.mock.calls[0][0];
+    expect(input.FromEmailAddress).toBe('no-reply@suufr.com');
+    expect(input).not.toHaveProperty('ReplyToAddresses');
+  });
+
   it('send: 실패를 삼킨다 (알림성 메일용)', async () => {
     const { service, send } = build(sesEnv);
     send.mockRejectedValue(new Error('boom'));

@@ -27,8 +27,6 @@ export const consentFields = {
   agreePrivacy: consentField('개인정보 수집·이용에 동의해주세요'),
 };
 
-export const consentSchema = z.object(consentFields);
-
 export const signupSchema = z
   .object({
     email: z.string().email({ error: '유효한 이메일을 입력해주세요' }),
