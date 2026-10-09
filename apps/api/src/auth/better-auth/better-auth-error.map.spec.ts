@@ -37,8 +37,22 @@ describe('toHttpException', () => {
     warn.mockRestore();
   });
 
+  it.each([
+    ['INVALID_TOKEN', 'Invalid token'],
+    ['OAUTH_LINK_ERROR', 'unable to link account'],
+  ])('Google ID 토큰 로그인 실패 코드(401 %s)는 세션 만료가 아니라 Google 로그인 실패로 안내하고 경고를 남기지 않는다', (code, message) => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const e = toHttpException(new APIError('UNAUTHORIZED', { code, message }));
+    expect(e).toBeInstanceOf(UnauthorizedException);
+    expect(body(e)).toEqual({ message: 'Google 로그인에 실패했습니다. 다시 시도해주세요.', error: code });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('422/409 → ConflictException, 429 → 429, 알 수 없는 4xx → BadRequest 일반 메시지', () => {
     expect(toHttpException(new APIError('UNPROCESSABLE_ENTITY', { code: 'USER_ALREADY_EXISTS', message: 'x' }))).toBeInstanceOf(ConflictException);
+    // 409 는 백업코드 동시 사용 경합(twoFactor verifyBackupCode)처럼 코드 없이 온다
+    expect(toHttpException(new APIError('CONFLICT', { message: 'Failed to verify backup code. Please try again.' }))).toBeInstanceOf(ConflictException);
     const locked = toHttpException(new APIError('TOO_MANY_REQUESTS', { code: 'ACCOUNT_TEMPORARILY_LOCKED', message: 'x' }));
     expect(locked.getStatus()).toBe(429);
     const unknown = toHttpException(new APIError('BAD_REQUEST', { code: 'SOMETHING_NEW', message: 'x' }));

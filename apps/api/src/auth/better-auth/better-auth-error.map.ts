@@ -39,6 +39,11 @@ const MESSAGES: Record<string, string> = {
   INVALID_TWO_FACTOR_COOKIE: 'MFA 세션이 만료되었습니다. 다시 로그인해주세요.',
   SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해주세요.',
   FAILED_TO_CREATE_SESSION: '로그인에 실패했습니다',
+  // Google ID 토큰 로그인(iOS). 웹 Google 로그인 실패 안내와 같은 문구.
+  // INVALID_TOKEN: ID 토큰 서명·audience·만료 검증 실패 (재설정·인증은 OTP 라 이 앱에서 다른 경로로는 나오지 않는다)
+  // OAUTH_LINK_ERROR: 계정 연결·사용자 생성·세션 생성 실패 (동시 요청 경합, 신규 사용자 준비 실패 등)
+  INVALID_TOKEN: 'Google 로그인에 실패했습니다. 다시 시도해주세요.',
+  OAUTH_LINK_ERROR: 'Google 로그인에 실패했습니다. 다시 시도해주세요.',
 };
 
 export function isBetterAuthError(error: unknown): error is APIError {

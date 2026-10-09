@@ -102,8 +102,13 @@ export function createAuthOptions(deps: AuthConfigDeps) {
     account: {
       modelName: 'account',
       // 같은 이메일의 기존 사용자(비밀번호 계정)에 Google 계정을 자동 연결 — users.id 가 유지된다.
-      // better-auth 는 기존 사용자의 emailVerified 가 true 일 때만 연결한다
-      accountLinking: { enabled: true, trustedProviders: ['google'] },
+      // 가입 즉시 로그인(#53)이라 이메일 미인증 계정이 흔하므로, 기존 사용자의 인증 여부와 관계없이 연결한다
+      // (기본값 requireLocalEmailVerified: true 면 미인증 사용자 연결을 거부한다 — iOS ID 토큰은 401 OAUTH_LINK_ERROR,
+      // 웹 콜백은 web /login?error=account_not_linked 리다이렉트).
+      // google 이 trustedProviders 라서 Google 쪽 email_verified 와도 무관하게 연결되고, 그 값이 true 일 때만 better-auth 가
+      // emailVerified 를 true 로 바꾼다. 연결해도 비밀번호 로그인·기존 세션은 그대로 둔다.
+      // requireLocalEmailVerified 는 better-auth 1.7.7 기준 deprecated(다음 마이너에서 제거 예정) — 업그레이드 시 google-native.spec 이 연결 실패를 잡는다
+      accountLinking: { enabled: true, trustedProviders: ['google'], requireLocalEmailVerified: false },
     },
     verification: { modelName: 'verification' },
 
