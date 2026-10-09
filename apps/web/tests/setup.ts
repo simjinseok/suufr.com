@@ -27,9 +27,3 @@ vi.mock('@sentry/nextjs', () => ({
     (_name: string, _options: unknown, fn: () => unknown) => fn(),
   ),
 }));
-
-// Mock auth
-vi.mock('@/utils/auth', async () => {
-  const { mockGetSession } = await import('./mocks/auth');
-  return { getSession: mockGetSession };
-});

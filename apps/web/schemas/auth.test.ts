@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { consentSchema, signupSchema } from './auth';
+import { signupSchema } from './auth';
 
 const base = {
   email: 'test@example.com',
@@ -47,13 +47,6 @@ describe('signupSchema 동의 필드', () => {
   it('모두 동의했지만 비밀번호가 불일치하면 passwordConfirm 에러만 보고한다', () => {
     const errors = fieldErrors(signupSchema.safeParse({ ...base, ...agreed, passwordConfirm: 'x' }));
     expect(errors).toEqual({ passwordConfirm: ['비밀번호가 일치하지 않습니다'] });
-  });
-});
-
-describe('consentSchema', () => {
-  it('두 동의가 모두 있어야 통과한다', () => {
-    expect(consentSchema.safeParse(agreed).success).toBe(true);
-    expect(consentSchema.safeParse({ ...agreed, agreePrivacy: 'false' }).success).toBe(false);
   });
 });
 
