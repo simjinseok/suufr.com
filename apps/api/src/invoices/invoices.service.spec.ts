@@ -53,10 +53,22 @@ describe('InvoicesService.update 기간', () => {
     expect(data).not.toHaveProperty('periodEnd');
   });
 
-  it('기존 기간이 있을 때 시작일만 바꾸는 부분 수정은 허용한다 (iOS 패턴)', async () => {
+  it('기존 기간이 있을 때 시작일만 바꾸는 부분 수정은 허용하고 종료일은 건드리지 않는다 (iOS 패턴)', async () => {
     const { service, update } = makeService(withPeriod);
     await service.update('uuid', { periodStart: '2026-10-05' }, 'user');
-    expect(update).toHaveBeenCalled();
+
+    const { data } = update.mock.calls[0][0];
+    expect(data.periodStart).toEqual(new Date('2026-10-05'));
+    expect(data).not.toHaveProperty('periodEnd');
+  });
+
+  it('기존 기간이 있을 때 종료일만 바꾸는 부분 수정은 허용하고 시작일은 건드리지 않는다 (iOS 패턴)', async () => {
+    const { service, update } = makeService(withPeriod);
+    await service.update('uuid', { periodEnd: '2026-10-20' }, 'user');
+
+    const { data } = update.mock.calls[0][0];
+    expect(data.periodEnd).toEqual(new Date('2026-10-20'));
+    expect(data).not.toHaveProperty('periodStart');
   });
 
   it('결과적으로 시작일만 남으면 거부한다', async () => {

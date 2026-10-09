@@ -1,9 +1,11 @@
 import { SettingsService } from './settings.service';
 import type { PrismaService } from '../prisma/prisma.service';
 
-function makeService() {
+// stored: u1 의 user_settings 행 (null = 행 없음)
+function makeService(stored: { timezone: string | null } | null = null) {
   const upsert = vi.fn().mockResolvedValue({ userId: 'u1', defaultPaymentMethod: 'card' });
-  const prisma = { userSettings: { upsert } } as unknown as PrismaService;
+  const findUnique = vi.fn(async ({ where }: { where: { userId: string } }) => (where.userId === 'u1' ? stored : null));
+  const prisma = { userSettings: { upsert, findUnique } } as unknown as PrismaService;
   return { service: new SettingsService(prisma), upsert };
 }
 
@@ -25,5 +27,27 @@ describe('SettingsService.update defaultPaymentMethod', () => {
     const { update, create } = upsert.mock.calls[0][0];
     expect('defaultPaymentMethod' in update).toBe(false);
     expect('defaultPaymentMethod' in create).toBe(false);
+  });
+});
+
+describe('SettingsService.resolveTimezone', () => {
+  it('명시 타임존이 있으면 유저 설정보다 우선한다', async () => {
+    const { service } = makeService({ timezone: 'Asia/Seoul' });
+    await expect(service.resolveTimezone('u1', 'America/New_York')).resolves.toBe('America/New_York');
+  });
+
+  it('명시 타임존이 없으면 그 유저의 설정 타임존을 쓴다', async () => {
+    const { service } = makeService({ timezone: 'Asia/Seoul' });
+    await expect(service.resolveTimezone('u1')).resolves.toBe('Asia/Seoul');
+  });
+
+  it('설정에 타임존이 비어 있으면 UTC 를 쓴다', async () => {
+    const { service } = makeService({ timezone: null });
+    await expect(service.resolveTimezone('u1')).resolves.toBe('UTC');
+  });
+
+  it('설정 행이 없어도 UTC 를 쓴다', async () => {
+    const { service } = makeService(null);
+    await expect(service.resolveTimezone('u1')).resolves.toBe('UTC');
   });
 });
