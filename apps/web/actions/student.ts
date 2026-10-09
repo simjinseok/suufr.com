@@ -239,29 +239,36 @@ export async function updateStudentNextPaymentAt(prevState: UpdateStudentNextPay
   );
 }
 
-export default async function removeStudent(formData: FormData) {
+type RemoveStudentResult = {
+  success: boolean;
+  message?: string;
+};
+export async function removeStudent(studentUuid: string): Promise<RemoveStudentResult> {
   return await Sentry.withServerActionInstrumentation(
     'removeStudent',
     {
-      formData,
       headers: await headers(),
       recordResponse: true,
     },
     async () => {
-      const studentUuid = formData.get('studentUuid') as string;
-
       const session = await getSession();
-
       if (!session?.organization) {
-        return { success: false };
+        return { success: false, message: '인증이 필요합니다.' };
       }
 
-      await studentsApi.remove(studentUuid);
+      try {
+        await studentsApi.remove(studentUuid);
+      }
+      catch (error) {
+        return {
+          success: false,
+          message: error instanceof ApiError ? error.message : '수강생 삭제에 실패했습니다',
+        };
+      }
 
-      revalidatePath('/students', 'page');
-      return {
-        success: true,
-      };
+      // 삭제된 수강생의 수업·수강권·결제가 캘린더·매출·대시보드 집계에서도 빠지므로 전체를 갱신한다
+      revalidatePath('/', 'layout');
+      return { success: true, message: '수강생을 삭제하였습니다.' };
     },
   );
 }

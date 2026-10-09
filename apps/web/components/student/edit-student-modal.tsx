@@ -16,6 +16,7 @@ import {
 } from '@heroui/react';
 
 import { updateStudent } from '@/actions/student';
+import DeleteStudentModal from '@/components/student/delete-student-modal';
 import { useForm, Controller } from 'react-hook-form';
 import { Student } from '@/types/index';
 
@@ -62,6 +63,7 @@ function Content({ student, close }: ContentProps) {
   });
 
   const [state, formAction, isPending] = React.useActionState(updateStudent, {});
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!state.timestamp) {
@@ -157,6 +159,10 @@ function Content({ student, close }: ContentProps) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
+        <Button variant="danger-soft" isDisabled={isPending} onPress={() => setIsDeleteOpen(true)}>
+          삭제
+        </Button>
+        <div className="grow" />
         <Button variant="ghost" isDisabled={isPending} onPress={close}>
           닫기
         </Button>
@@ -174,6 +180,11 @@ function Content({ student, close }: ContentProps) {
           )}
         </Button>
       </Modal.Footer>
+      <DeleteStudentModal
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        student={student}
+      />
     </React.Fragment>
   );
 }
