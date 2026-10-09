@@ -44,11 +44,11 @@ async function errorCodeOf(promise: Promise<unknown>): Promise<string | undefine
 }
 
 describe('SubscriptionsBillingService.cancel / resume — provider 분기', () => {
-  it('paddle 활성 구독은 Paddle 에 해지 예약하고 로컬을 canceled 로', async () => {
+  it('paddle 활성 구독은 Paddle 에 해지 예약하고 로컬을 canceled 로, 해지 시각을 기록', async () => {
     const { service, paddle, updateMany } = makeService(paddleActive);
     await service.cancel(USER_A);
     expect(paddle.cancelAtPeriodEnd).toHaveBeenCalledWith('sub_1');
-    expect(updateMany.mock.calls[0][0].data.status).toBe('canceled');
+    expect(updateMany.mock.calls[0][0].data).toMatchObject({ status: 'canceled', canceledAt: expect.any(Date) });
     expect(updateMany.mock.calls[0][0].where).toEqual({ userId: USER_A, provider: 'paddle', providerSubscriptionId: 'sub_1' });
   });
 
@@ -67,6 +67,16 @@ describe('SubscriptionsBillingService.cancel / resume — provider 분기', () =
     expect(await errorCodeOf(manual.service.resume(USER_A))).toBe('SUBSCRIPTION_NOT_RESUMABLE');
     const none = makeService(null);
     expect(await errorCodeOf(none.service.cancel(USER_A))).toBe('SUBSCRIPTION_NOT_CANCELABLE');
+    expect(await errorCodeOf(none.service.resume(USER_A))).toBe('SUBSCRIPTION_NOT_RESUMABLE');
+  });
+
+  it('paddle 이 아닌 구독은 구독 id 가 있어도 Paddle 을 호출하지 않는다', async () => {
+    const active = makeService({ ...paddleActive, provider: 'manual', providerSubscriptionId: 'legacy_1' });
+    expect(await errorCodeOf(active.service.cancel(USER_A))).toBe('SUBSCRIPTION_NOT_CANCELABLE');
+    expect(active.paddle.cancelAtPeriodEnd).not.toHaveBeenCalled();
+    const canceled = makeService({ ...paddleActive, provider: 'manual', providerSubscriptionId: 'legacy_1', status: 'canceled' });
+    expect(await errorCodeOf(canceled.service.resume(USER_A))).toBe('SUBSCRIPTION_NOT_RESUMABLE');
+    expect(canceled.paddle.removeScheduledChange).not.toHaveBeenCalled();
   });
 
   it('paddle canceled 구독은 재개할 수 있다', async () => {
@@ -75,6 +85,44 @@ describe('SubscriptionsBillingService.cancel / resume — provider 분기', () =
     expect(paddle.removeScheduledChange).toHaveBeenCalledWith('sub_1');
     expect(updateMany.mock.calls[0][0].data).toMatchObject({ status: 'active', canceledAt: null });
     expect(updateMany.mock.calls[0][0].where).toEqual({ userId: USER_A, provider: 'paddle', providerSubscriptionId: 'sub_1' });
+  });
+});
+
+describe('SubscriptionsBillingService.cancel / resume — 상태·기간 가드와 Paddle 오류', () => {
+  it('이미 해지 예약(canceled)·만료(expired)된 paddle 구독은 NOT_CANCELABLE, Paddle 호출 없음', async () => {
+    for (const status of ['canceled', 'expired'] as const) {
+      const { service, paddle, updateMany } = makeService({ ...paddleActive, status });
+      expect(await errorCodeOf(service.cancel(USER_A))).toBe('SUBSCRIPTION_NOT_CANCELABLE');
+      expect(paddle.cancelAtPeriodEnd).not.toHaveBeenCalled();
+      expect(updateMany).not.toHaveBeenCalled();
+    }
+  });
+
+  it('해지 예약 상태가 아니거나 기간이 끝난(또는 기간이 없는) paddle 구독은 NOT_RESUMABLE, Paddle 호출 없음', async () => {
+    for (const row of [
+      paddleActive,
+      { ...paddleActive, status: 'canceled' as const, currentPeriodEnd: new Date(Date.now() - 1000) },
+      { ...paddleActive, status: 'canceled' as const, currentPeriodEnd: null },
+    ]) {
+      const { service, paddle, updateMany } = makeService(row);
+      expect(await errorCodeOf(service.resume(USER_A))).toBe('SUBSCRIPTION_NOT_RESUMABLE');
+      expect(paddle.removeScheduledChange).not.toHaveBeenCalled();
+      expect(updateMany).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Paddle API 오류는 SUBSCRIPTION_CANCEL_FAILED / RESUME_FAILED 로 바꾸고 로컬 상태는 그대로 둔다', async () => {
+    const apiError = new PaddleApiError({ type: 'request_error', code: 'bad_request', detail: 'x', documentation_url: '' }, null);
+
+    const canceling = makeService(paddleActive);
+    (canceling.paddle.cancelAtPeriodEnd as ReturnType<typeof vi.fn>).mockRejectedValue(apiError);
+    expect(await errorCodeOf(canceling.service.cancel(USER_A))).toBe('SUBSCRIPTION_CANCEL_FAILED');
+    expect(canceling.updateMany).not.toHaveBeenCalled();
+
+    const resuming = makeService({ ...paddleActive, status: 'canceled', canceledAt: new Date() });
+    (resuming.paddle.removeScheduledChange as ReturnType<typeof vi.fn>).mockRejectedValue(apiError);
+    expect(await errorCodeOf(resuming.service.resume(USER_A))).toBe('SUBSCRIPTION_RESUME_FAILED');
+    expect(resuming.updateMany).not.toHaveBeenCalled();
   });
 });
 
@@ -92,6 +140,14 @@ describe('SubscriptionsBillingService.getInvoiceUrl', () => {
     await expect(makeService(null, null).service.getInvoiceUrl(USER_A, 'txn_x')).rejects.toBeInstanceOf(NotFoundException);
     await expect(makeService(null, { userId: 'other', status: 'done' }).service.getInvoiceUrl(USER_A, 'txn_1')).rejects.toBeInstanceOf(NotFoundException);
     await expect(makeService(null, { userId: USER_A, status: 'refunded' }).service.getInvoiceUrl(USER_A, 'txn_1')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('Paddle 인보이스 발급이 API 오류면 500 대신 404', async () => {
+    const { service, paddle } = makeService(null, { userId: USER_A, status: 'done' });
+    (paddle.getInvoiceUrl as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new PaddleApiError({ type: 'request_error', code: 'not_found', detail: 'x', documentation_url: '' }, null),
+    );
+    await expect(service.getInvoiceUrl(USER_A, 'txn_1')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

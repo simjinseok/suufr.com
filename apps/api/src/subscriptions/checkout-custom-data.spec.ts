@@ -36,8 +36,14 @@ describe('checkout custom data 서명', () => {
   });
 
   it('비밀키가 비어 있으면 검증은 항상 null (서명 없는 신뢰로 되돌아가지 않는다)', () => {
-    const data = buildCheckoutCustomData(USER_A, SECRET);
-    expect(verifyCheckoutCustomData(data, '')).toBeNull();
-    expect(verifyCheckoutCustomData(data, undefined)).toBeNull();
+    // 빈 키 HMAC 은 누구나 만들 수 있다 — 같은 빈 키로 서명한 위조값도 통과시키지 않는다
+    expect(verifyCheckoutCustomData(buildCheckoutCustomData(USER_A, ''), '')).toBeNull();
+    expect(verifyCheckoutCustomData(buildCheckoutCustomData(USER_A, SECRET), undefined)).toBeNull();
+  });
+
+  it('서명 형식(HMAC-SHA256, 입력 checkout-user:<userId>, hex)은 고정 — 배포 전에 열린 체크아웃도 계속 검증된다', () => {
+    const stored = { userId: USER_A, sig: 'bf438a525664869f28f49c99e103631e29e886e79792b2f27569d7f8376bfce9' };
+    expect(buildCheckoutCustomData(USER_A, SECRET)).toEqual(stored);
+    expect(verifyCheckoutCustomData(stored, SECRET)).toBe(USER_A);
   });
 });

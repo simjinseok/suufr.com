@@ -23,6 +23,10 @@ describe('SubscriptionsService.getEffectivePlanOf', () => {
     expect(service.getEffectivePlanOf({ plan: 'pro', status: 'past_due', currentPeriodEnd: past, gracePeriodExpiresAt: future })).toBe('pro');
   });
 
+  it('기간이 남아 있으면 지난 grace 가 남아 있어도 pro (기간 끝은 둘 중 늦은 쪽)', () => {
+    expect(service.getEffectivePlanOf({ plan: 'pro', status: 'active', currentPeriodEnd: future, gracePeriodExpiresAt: past })).toBe('pro');
+  });
+
   it('기간도 grace 도 지났으면 free', () => {
     expect(service.getEffectivePlanOf({ plan: 'pro', status: 'past_due', currentPeriodEnd: past, gracePeriodExpiresAt: past })).toBe('free');
   });
@@ -48,19 +52,20 @@ describe('SubscriptionsService.getSubscribeBlockers', () => {
   });
 });
 
-describe('SubscriptionsService.getSummary — canSubscribe', () => {
-  function makeService(emailVerified: boolean, subscription: Record<string, unknown> | null) {
-    const userFindUnique = vi.fn().mockResolvedValue({ emailVerified });
-    const prisma = {
-      userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription) },
-      user: { findUnique: userFindUnique },
-      student: { count: vi.fn().mockResolvedValue(0) },
-      userStorageQuota: { findUnique: vi.fn().mockResolvedValue(null) },
-      subscriptionOrder: { findMany: vi.fn().mockResolvedValue([]) },
-    } as unknown as PrismaService;
-    return { service: new SubscriptionsService(prisma), userFindUnique };
-  }
+function makeService(emailVerified: boolean, subscription: Record<string, unknown> | null, orders: Record<string, unknown>[] = []) {
+  const userFindUnique = vi.fn().mockResolvedValue({ emailVerified });
+  const orderFindMany = vi.fn().mockResolvedValue(orders);
+  const prisma = {
+    userSubscription: { findUnique: vi.fn().mockResolvedValue(subscription) },
+    user: { findUnique: userFindUnique },
+    student: { count: vi.fn().mockResolvedValue(0) },
+    userStorageQuota: { findUnique: vi.fn().mockResolvedValue(null) },
+    subscriptionOrder: { findMany: orderFindMany },
+  } as unknown as PrismaService;
+  return { service: new SubscriptionsService(prisma), userFindUnique, orderFindMany };
+}
 
+describe('SubscriptionsService.getSummary — canSubscribe', () => {
   it('인증된 free 계정은 canSubscribe=true', async () => {
     const { service, userFindUnique } = makeService(true, null);
     const summary = await service.getSummary('u1');
@@ -88,5 +93,16 @@ describe('SubscriptionsService.getSummary — canSubscribe', () => {
     userFindUnique.mockResolvedValue(null);
     const summary = await service.getSummary('u1');
     expect(summary.subscribeBlockers).toEqual(['email_unverified']);
+  });
+});
+
+describe('SubscriptionsService.getSummary — 결제 내역', () => {
+  it('본인 주문만 조회하고 providerTransactionId 를 transactionId 로 바꿔 돌려준다', async () => {
+    const createdAt = new Date('2026-10-01T00:00:00Z');
+    const order = { provider: 'paddle', amount: 6900, currency: 'KRW', status: 'done', failReason: null, approvedAt: createdAt, refundedAt: null, refundedAmount: null, createdAt };
+    const { service, orderFindMany } = makeService(true, null, [{ ...order, providerTransactionId: 'txn_1' }]);
+    const summary = await service.getSummary('u1');
+    expect(summary.orders).toEqual([{ ...order, transactionId: 'txn_1' }]);
+    expect(orderFindMany.mock.calls[0][0].where).toEqual({ userId: 'u1' });
   });
 });

@@ -1,7 +1,9 @@
+import { Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { EventEntity, TransactionNotification } from '@paddle/paddle-node-sdk';
 import { PaddleWebhookService, type PaddleSubscriptionLike } from './paddle-webhook.service';
 import type { BillingSyncService } from './billing-sync.service';
+import type { BillingWebhookEnvelope } from './billing.types';
 import { buildCheckoutCustomData } from './checkout-custom-data';
 
 const now = new Date('2026-10-07T00:00:00Z');
@@ -10,15 +12,26 @@ const SECRET = 'whsec_test';
 // 서버가 체크아웃 거래에 심는 형태 — 웹훅은 서명이 맞는 userId 만 믿는다
 const SIGNED_A = buildCheckoutCustomData(USER_A, SECRET);
 
-function makeServiceWithSync(env: string | undefined = 'sandbox') {
-  const sync = { withEventDedup: vi.fn(), syncSubscription: vi.fn(), recordTransaction: vi.fn() };
+const TX = { tx: 'paddle-webhook-spec' };
+
+// env 를 생략하면 PADDLE_ENV 미설정
+function makeServiceWithSync(env?: string) {
+  // withEventDedup 은 실제처럼 apply 콜백을 실행한다 — 이벤트가 어느 sync 메서드로 가는지까지 보이게
+  const sync = {
+    withEventDedup: vi.fn(async (_envelope: BillingWebhookEnvelope, _lockKey: string, apply: (tx: unknown) => Promise<void>) => {
+      await apply(TX);
+      return 'applied';
+    }),
+    syncSubscription: vi.fn().mockResolvedValue(true),
+    recordTransaction: vi.fn().mockResolvedValue(true),
+  };
   const config = {
     get: vi.fn((key: string) => (key === 'PADDLE_ENV' ? env : key === 'PADDLE_WEBHOOK_SECRET' ? SECRET : undefined)),
   } as unknown as ConfigService;
   return { service: new PaddleWebhookService(sync as unknown as BillingSyncService, config), sync };
 }
 
-function makeService(env: string | undefined = 'sandbox') {
+function makeService(env?: string) {
   return makeServiceWithSync(env).service;
 }
 
@@ -48,8 +61,9 @@ describe('PaddleWebhookService.toSubscriptionState', () => {
     expect(state.currentPeriodEnd).toEqual(new Date('2026-11-01T00:00:00Z'));
   });
 
-  it('PADDLE_ENV 가 production 이 아니면 sandbox', () => {
-    expect(makeService(undefined).toSubscriptionState(subscription(), now).environment).toBe('sandbox');
+  it('PADDLE_ENV 가 없거나 production 이 아니면 sandbox', () => {
+    expect(makeService().toSubscriptionState(subscription(), now).environment).toBe('sandbox');
+    expect(makeService('staging').toSubscriptionState(subscription(), now).environment).toBe('sandbox');
   });
 
   it('상태 매핑: 해지 예약 → canceled, trialing → active/trial, past_due, canceled·paused → expired, 그 외 null', () => {
@@ -85,9 +99,10 @@ describe('PaddleWebhookService.toSubscriptionState', () => {
     expect(makeService().toSubscriptionState(subscription({ customData: { ...SIGNED_A, userId: '33333333-3333-4333-8333-333333333333' } }), now).userId).toBeNull();
   });
 
-  it('productId 는 recurring 인 첫 item 의 price.id, 없으면 null', () => {
+  it('productId 는 recurring 인 첫 item 의 price.id, recurring 이 없으면 첫 item, item 이 없으면 null', () => {
     const s = makeService();
     expect(s.toSubscriptionState(subscription({ items: [{ recurring: false, price: { id: 'pri_once' } }, { recurring: true, price: { id: 'pri_pro' } }] }), now).productId).toBe('pri_pro');
+    expect(s.toSubscriptionState(subscription({ items: [{ recurring: false, price: { id: 'pri_once' } }] }), now).productId).toBe('pri_once');
     expect(s.toSubscriptionState(subscription({ items: [] }), now).productId).toBeNull();
   });
 });
@@ -117,11 +132,11 @@ describe('PaddleWebhookService.toTransactionRecord', () => {
 
   it('실패 거래는 마지막 errorCode 를 failReason 으로, approvedAt 은 null', () => {
     const record = makeService().toTransactionRecord(
-      transaction({ payments: [{ errorCode: 'declined' }, { errorCode: null }, { errorCode: 'insufficient_funds' }] as never }),
+      transaction({ payments: [{ errorCode: 'declined' }, { errorCode: null }, { errorCode: 'not_enough_balance' }] as never }),
       'failed',
       now,
     );
-    expect(record).toMatchObject({ status: 'failed', failReason: 'insufficient_funds', approvedAt: null });
+    expect(record).toMatchObject({ status: 'failed', failReason: 'not_enough_balance', approvedAt: null });
   });
 
   it('errorCode 가 하나도 없는 실패는 unknown, billedAt 이 없는 완료는 occurredAt', () => {
@@ -130,7 +145,7 @@ describe('PaddleWebhookService.toTransactionRecord', () => {
     expect(s.toTransactionRecord(transaction({ billedAt: null }), 'done', now)?.approvedAt).toEqual(now);
   });
 
-  it('금액이 정수가 아니면 null (재시도 무한 반복 방지)', () => {
+  it('금액을 숫자로 읽을 수 없으면 null (재시도 무한 반복 방지)', () => {
     expect(makeService().toTransactionRecord(transaction({ details: { totals: { grandTotal: 'abc' } } } as never), 'done', now)).toBeNull();
   });
 
@@ -191,5 +206,90 @@ describe('PaddleWebhookService.handleEvent payload', () => {
     await service.handleEvent(event, payload as never);
     expect(sync.withEventDedup.mock.calls[0][0].payload).toEqual(payload);
     expect(sync.withEventDedup.mock.calls[0][1]).toBe(USER_A);
+  });
+});
+
+describe('PaddleWebhookService.handleEvent 라우팅', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const occurredAt = '2026-10-07T00:00:00Z';
+  const event = (eventType: string, data: unknown) => ({ eventId: 'evt_1', eventType, occurredAt, data }) as unknown as EventEntity;
+  const transactionData = (overrides: Record<string, unknown> = {}) => ({
+    id: 'txn_1',
+    subscriptionId: 'sub_1',
+    customData: SIGNED_A,
+    currencyCode: 'KRW',
+    billedAt: '2026-10-01T00:00:10Z',
+    billingPeriod: null,
+    details: { totals: { grandTotal: '6900' } },
+    payments: [],
+    ...overrides,
+  });
+
+  it.each([
+    'subscription.created',
+    'subscription.activated',
+    'subscription.updated',
+    'subscription.canceled',
+    'subscription.past_due',
+    'subscription.resumed',
+  ])('%s 는 사용자 잠금 안에서 구독 상태로 동기화한다', async (eventType) => {
+    const { service, sync } = makeServiceWithSync();
+    await service.handleEvent(event(eventType, subscription()), {} as never);
+    expect(sync.withEventDedup).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'paddle', eventId: 'evt_1', eventType, occurredAt: new Date(occurredAt) }),
+      USER_A,
+      expect.any(Function),
+    );
+    expect(sync.syncSubscription).toHaveBeenCalledWith(TX, expect.objectContaining({ subscriptionId: 'sub_1', userId: USER_A, occurredAt: new Date(occurredAt) }));
+    expect(sync.recordTransaction).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['transaction.completed', 'done'],
+    ['transaction.payment_failed', 'failed'],
+  ])('%s 는 사용자 잠금 안에서 거래를 %s 로 기록한다', async (eventType, status) => {
+    const { service, sync } = makeServiceWithSync();
+    await service.handleEvent(event(eventType, transactionData()), {} as never);
+    expect(sync.withEventDedup).toHaveBeenCalledWith(expect.objectContaining({ eventType }), USER_A, expect.any(Function));
+    expect(sync.recordTransaction).toHaveBeenCalledWith(TX, expect.objectContaining({ transactionId: 'txn_1', subscriptionId: 'sub_1', userId: USER_A, status }));
+    expect(sync.syncSubscription).not.toHaveBeenCalled();
+  });
+
+  it('다루지 않는 이벤트는 멱등 기록 없이 경고만 남긴다', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { service, sync } = makeServiceWithSync();
+    await service.handleEvent(event('customer.created', { id: 'ctm_1' }), {} as never);
+    expect(sync.withEventDedup).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('구독이 없는 일회성 거래는 멱등 기록 없이 건너뛴다', async () => {
+    const { service, sync } = makeServiceWithSync();
+    await expect(service.handleEvent(event('transaction.completed', transactionData({ subscriptionId: null })), {} as never)).resolves.toBeUndefined();
+    expect(sync.withEventDedup).not.toHaveBeenCalled();
+  });
+
+  it('서명 없는 이벤트는 사용자 대신 구독 id 로 잠근다', async () => {
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { service, sync } = makeServiceWithSync();
+    const unsigned = { userId: USER_A };
+    await service.handleEvent(event('subscription.updated', subscription({ customData: unsigned })), {} as never);
+    await service.handleEvent(event('transaction.completed', transactionData({ customData: unsigned })), {} as never);
+    expect(sync.withEventDedup.mock.calls.map(call => call[1])).toEqual(['paddle:sub_1', 'paddle:sub_1']);
+    expect(sync.syncSubscription).toHaveBeenCalledWith(TX, expect.objectContaining({ userId: null }));
+    expect(sync.recordTransaction).toHaveBeenCalledWith(TX, expect.objectContaining({ userId: null }));
+  });
+
+  it('사용자를 찾지 못해 반영하지 못하면 구독·거래 id 로 오류 로그를 남긴다', async () => {
+    const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const { service, sync } = makeServiceWithSync();
+    sync.syncSubscription.mockResolvedValue(false);
+    sync.recordTransaction.mockResolvedValue(false);
+    await service.handleEvent(event('subscription.updated', subscription()), {} as never);
+    await service.handleEvent(event('transaction.completed', transactionData()), {} as never);
+    expect(error).toHaveBeenCalledTimes(2);
+    expect(error.mock.calls[0][0]).toContain('sub_1');
+    expect(error.mock.calls[1][0]).toContain('txn_1');
   });
 });
