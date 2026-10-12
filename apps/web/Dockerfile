@@ -3,7 +3,7 @@
 # 빌드 컨텍스트는 모노레포 루트: docker build -f apps/web/Dockerfile .
 
 ARG NODE_VERSION=26
-ARG PNPM_VERSION=11.17.0
+ARG PNPM_VERSION=12.11.2
 
 # ---------- base ----------
 FROM node:${NODE_VERSION}-bookworm-slim AS base
