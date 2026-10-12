@@ -46,7 +46,8 @@ export default function InvoiceCard({ invoice, today }: Props) {
   );
 }
 
-// 진행 블록: 회차권 → 완료/전체, 기간권 → 남은 일수, 종료일 없는 정액 → "진행 중" + 빈 바
+// 진행 블록: 회차 있음 → 완료/전체, 종료일 있음 → 경과 바만, 둘 다 없음 → "진행 중" + 빈 바
+// 종류 라벨("기간권")·"N일 남음"은 쓰지 않는다 — 기간 줄이 이미 날짜를 보여주고, 분류 어휘는 노출하지 않는다 (§19)
 function UsageBlock({ invoice, today }: Props) {
   if (invoice.totalCount != null) {
     const { remaining, ratio } = getCountProgress(invoice.totalCount, invoice.doneCount);
@@ -69,14 +70,11 @@ function UsageBlock({ invoice, today }: Props) {
 
   const progress = getPeriodProgress(invoice.periodStart, invoice.periodEnd, today);
   if (progress) {
-    const left = progress.daysLeft > 0
-      ? `${progress.daysLeft}일 남음`
-      : progress.daysLeft === 0 ? '오늘까지' : null;
-    return <ProgressRow left={left} right="기간권" ratio={progress.ratio} isComplete={false} />;
+    return <ProgressRow left={null} right={null} ratio={progress.ratio} isComplete={false} />;
   }
 
   // 무기한 — 남은 일수를 셀 수 없어 바는 비워 둔다
-  return <ProgressRow left="진행 중" right="기간권" ratio={0} isComplete={false} />;
+  return <ProgressRow left="진행 중" right={null} ratio={0} isComplete={false} />;
 }
 
 function ProgressRow({ left, right, ratio, isComplete }: {
@@ -87,11 +85,14 @@ function ProgressRow({ left, right, ratio, isComplete }: {
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2 text-sm text-gray-600 tabular-nums">
-        {/* 왼쪽 글자가 없어도 오른쪽은 제자리 (ml-auto) */}
-        {left && <span>{left}</span>}
-        {right != null && <span className="ml-auto">{right}</span>}
-      </div>
+      {/* 글자가 하나도 없으면 줄 자체를 빼서 바가 기간 줄 바로 아래 붙는다 */}
+      {(left || right != null) && (
+        <div className="flex items-baseline justify-between gap-2 text-sm text-gray-600 tabular-nums">
+          {/* 왼쪽 글자가 없어도 오른쪽은 제자리 (ml-auto) */}
+          {left && <span>{left}</span>}
+          {right != null && <span className="ml-auto">{right}</span>}
+        </div>
+      )}
       <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
         <div
           className={`h-full rounded-full ${isComplete ? 'bg-success' : 'bg-accent'}`}
