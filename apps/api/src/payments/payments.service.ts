@@ -124,7 +124,7 @@ export class PaymentsService {
     });
 
     if (invoices.length !== uuids.length) {
-      throw new BadRequestException('일부 수강권을 찾을 수 없거나 이 학생의 수강권이 아닙니다.');
+      throw new BadRequestException('일부 등록을 찾을 수 없거나 이 학생의 등록이 아닙니다.');
     }
 
     return invoices.map(i => i.id);
