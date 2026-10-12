@@ -15,13 +15,10 @@ import {
   FieldError,
 } from '@heroui/react';
 import { numberToHangulMixed } from 'es-hangul';
-import { today } from '@internationalized/date';
 
 import { updateInvoice } from '@/actions/invoice';
 import { Controller, useForm } from 'react-hook-form';
-import type { DateRange } from '@/components/calendar';
-import { useTimeZone } from '@/contexts/timezone';
-import { InvoicePeriodField, periodFromInvoice } from './invoice-period-field';
+import { InvoicePeriodFields, periodFromInvoice, type InvoicePeriod } from './invoice-period-fields';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -47,14 +44,13 @@ interface ContentProps {
   close: () => void;
 }
 function Content({ invoice, close }: ContentProps) {
-  const timeZone = useTimeZone();
   const formId = React.useId();
 
-  // 기간은 선택 사항. 체크를 끄고 저장하면 서버 액션이 null 을 보내 기간을 지운다
-  const [period, setPeriod] = React.useState<DateRange | null>(
+  // 종료일을 비우고 저장하면 서버 액션이 null 을 보내 무기한으로 만든다
+  const [period, setPeriod] = React.useState<InvoicePeriod>(
     () => periodFromInvoice(invoice.periodStart, invoice.periodEnd),
   );
-  const titleMonth = (period?.start ?? today(timeZone)).month;
+  const titleMonth = period.start.month;
 
   const [state, formAction, isPending] = React.useActionState(updateInvoice, {
     fields: {
@@ -135,7 +131,7 @@ function Content({ invoice, close }: ContentProps) {
               </NumberField>
             )}
           />
-          <InvoicePeriodField value={period} onChange={setPeriod} />
+          <InvoicePeriodFields value={period} onChange={setPeriod} />
 
           <Controller
             control={control}

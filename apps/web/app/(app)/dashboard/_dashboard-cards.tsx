@@ -11,7 +11,7 @@ type UnpaidInvoice = {
   uuid: string;
   title: string | null;
   price: number;
-  periodStart: string | null;
+  periodStart: string;
   periodEnd: string | null;
   student: { uuid: string; name: string };
 };

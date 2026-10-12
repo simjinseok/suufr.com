@@ -76,9 +76,9 @@ export class DashboardService {
           periodEnd: true,
           student: { select: { uuid: true, name: true } },
         },
-        // 오래 밀린 것부터 위로. 기간 없는 건 뒤로 보내고 생성순으로 안정 정렬
+        // 오래 밀린 것부터 위로. 같은 시작일이면 생성순으로 안정 정렬
         orderBy: [
-          { periodStart: { sort: 'asc', nulls: 'last' } },
+          { periodStart: 'asc' },
           { createdAt: 'asc' },
         ],
       }),

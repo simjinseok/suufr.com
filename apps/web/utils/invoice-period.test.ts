@@ -10,9 +10,8 @@ describe('formatInvoicePeriod', () => {
     expect(formatInvoicePeriod('2026-12-15T00:00:00.000Z', '2027-01-14T00:00:00.000Z')).toBe('2026.12.15 ~ 2027.1.14');
   });
 
-  it('한쪽이라도 없으면 null (서버가 둘 다 또는 둘 다 없음만 허용)', () => {
-    expect(formatInvoicePeriod(null, null)).toBeNull();
-    expect(formatInvoicePeriod('2026-10-01T00:00:00.000Z', null)).toBeNull();
+  it('종료일이 없으면(무기한) 시작일 뒤에 물결만 붙인다', () => {
+    expect(formatInvoicePeriod('2026-10-01T00:00:00.000Z', null)).toBe('2026.10.1 ~');
   });
 });
 
@@ -41,8 +40,7 @@ describe('getPeriodProgress', () => {
     expect(getPeriodProgress(start, start, '2026-10-01')).toEqual({ daysLeft: 0, ratio: 1 });
   });
 
-  it('기간이 없으면 null', () => {
-    expect(getPeriodProgress(null, null, '2026-10-10')).toBeNull();
+  it('종료일이 없으면(무기한) 남은 일수를 셀 수 없어 null', () => {
     expect(getPeriodProgress(start, null, '2026-10-10')).toBeNull();
   });
 });

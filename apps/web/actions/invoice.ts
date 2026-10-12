@@ -31,11 +31,12 @@ export async function createInvoice(prevState: CreateInvoiceState, formData: For
       }
 
       const price = parseInt(formData.get('price') as string, 10) || 0;
-      const periodStart = (formData.get('periodStart') as string) || undefined;
+      // 시작일은 폼이 항상 싣고, 종료일은 비우면 hidden input 이 빠진다(무기한)
+      const periodStart = formData.get('periodStart') as string;
       const periodEnd = (formData.get('periodEnd') as string) || undefined;
 
-      // 수강권은 기간·금액만 정한다. 수업은 캘린더에서 따로 만들고,
-      // 기간이 겹치면 서버가 알아서 이 수강권에 귀속시킨다.
+      // 수강권은 시작일·금액만 정한다. 수업은 캘린더에서 따로 만들고,
+      // 날짜가 기간에 들면 서버가 알아서 이 수강권에 귀속시킨다.
       // 입금도 여기서 다루지 않는다 — 수강권 카드의 입금 기록에서 별도로.
       await invoicesApi.create({
         studentUuid: studentUuid as string,
@@ -118,8 +119,8 @@ const updateInvoiceSchema = z.object({
   title: z.string(),
   price: z.coerce.number().int().min(0),
   totalCount: z.coerce.number().int().min(0).optional(),
-  // 기간설정 체크를 끄면 hidden input 이 빠져 둘 다 undefined 로 온다
-  periodStart: z.string().optional(),
+  // 시작일은 항상 오고, 종료일은 비우면 hidden input 이 빠져 undefined 로 온다
+  periodStart: z.string().min(1),
   periodEnd: z.string().optional(),
   notes: z.string(),
 });
@@ -160,8 +161,8 @@ export async function updateInvoice(state: UpdateInvoiceState, formData: FormDat
         title: validationResult.data.title,
         price: validationResult.data.price,
         ...(validationResult.data.totalCount !== undefined && { totalCount: validationResult.data.totalCount }),
-        // 둘 다 없으면 null 로 기간 삭제. 한쪽만 오는 건 폼 구조상 없고, 서버가 400 으로 막는다
-        periodStart: validationResult.data.periodStart ?? null,
+        // 종료일을 비우면 null 로 지워 무기한으로 만든다
+        periodStart: validationResult.data.periodStart,
         periodEnd: validationResult.data.periodEnd ?? null,
         notes: validationResult.data.notes,
       });
