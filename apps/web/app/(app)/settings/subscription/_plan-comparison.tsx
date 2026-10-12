@@ -29,7 +29,7 @@ export default function PlanComparison({ subscription }: PlanComparisonProps) {
       pro: `${catalog.pro.priceKrw.toLocaleString('ko-KR')}원`,
     },
     {
-      label: '수강생 등록',
+      label: '수강생 수',
       free: `${catalog.free.maxStudents}명`,
       pro: '무제한',
     },
