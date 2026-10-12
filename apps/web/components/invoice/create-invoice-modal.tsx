@@ -20,8 +20,7 @@ import { today } from '@internationalized/date';
 
 import { createInvoice } from '@/actions/invoice';
 import { useTimeZone } from '@/contexts/timezone';
-import type { DateRange } from '@/components/calendar';
-import { InvoicePeriodField } from './invoice-period-field';
+import { InvoicePeriodFields, type InvoicePeriod } from './invoice-period-fields';
 
 interface Props {
   isOpen?: ModalProps['isOpen'];
@@ -51,9 +50,9 @@ function Content({ close, studentUuid }: ContentProps) {
   const formId = React.useId();
 
   const [price, setPrice] = React.useState(0);
-  // 기간은 선택 사항. 체크박스를 켜면 기본 1개월이 채워진다
-  const [period, setPeriod] = React.useState<DateRange | null>(null);
-  const titleMonth = (period?.start ?? today(timeZone)).month;
+  // 시작일은 오늘, 종료일은 비움(무기한)으로 시작한다
+  const [period, setPeriod] = React.useState<InvoicePeriod>(() => ({ start: today(timeZone), end: null }));
+  const titleMonth = period.start.month;
 
   const [state, formAction, isPending] = React.useActionState(createInvoice, {});
 
@@ -108,7 +107,7 @@ function Content({ close, studentUuid }: ContentProps) {
             <FieldError />
           </NumberField>
 
-          <InvoicePeriodField value={period} onChange={setPeriod} />
+          <InvoicePeriodFields value={period} onChange={setPeriod} />
 
           <TextField name="notes">
             <Label>메모</Label>

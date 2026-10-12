@@ -1,5 +1,6 @@
 // 수강권 카드의 기간·회차 파생 계산 (docs/schema-redesign.md §3)
 // periodStart/periodEnd 는 @db.Date → "YYYY-MM-DDT00:00:00.000Z". 타임존 변환 없이 앞 10자만 쓴다.
+// 시작일은 항상 있고 종료일은 없을 수 있다(무기한).
 // "오늘"(today)은 서버가 유저 타임존으로 만든 "YYYY-MM-DD" 문자열 — 클라이언트에서 new Date() 를 쓰지 않는다.
 
 const MS_PER_DAY = 86_400_000;
@@ -19,22 +20,23 @@ function clamp01(value: number): number {
   return Math.min(Math.max(value, 0), 1);
 }
 
-// "2026.10.1 ~ 10.31" — 종료 연도가 같으면 생략. 한쪽이라도 없으면 null (서버가 둘 다/둘 다 없음만 허용)
-export function formatInvoicePeriod(start: string | null, end: string | null): string | null {
-  if (!start || !end) return null;
+// "2026.10.1 ~ 10.31" — 종료 연도가 같으면 생략. 종료일이 없으면 "2026.10.1 ~" (무기한)
+export function formatInvoicePeriod(start: string, end: string | null): string {
   const [sy, sm, sd] = parseYmd(start);
+  if (!end) return `${sy}.${sm}.${sd} ~`;
   const [ey, em, ed] = parseYmd(end);
   const endText = sy === ey ? `${em}.${ed}` : `${ey}.${em}.${ed}`;
   return `${sy}.${sm}.${sd} ~ ${endText}`;
 }
 
 // 기간권 진행: daysLeft = 종료일 − 오늘 (음수면 이미 종료), ratio = 경과 일수 / 전체 일수 (0..1)
+// 종료일이 없으면(무기한) 남은 일수를 셀 수 없어 null
 export function getPeriodProgress(
-  start: string | null,
+  start: string,
   end: string | null,
   today: string,
 ): { daysLeft: number; ratio: number } | null {
-  if (!start || !end) return null;
+  if (!end) return null;
   const startDay = toDayNumber(start);
   const endDay = toDayNumber(end);
   const todayDay = toDayNumber(today);

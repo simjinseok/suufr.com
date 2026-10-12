@@ -53,6 +53,7 @@ export class SessionsService {
   /**
    * 기간 정액(totalCount 없는) 청구의 날짜 기반 자동 귀속 (docs/schema-redesign.md §3).
    * 사용자 타임존 기준 세션 날짜를 기간이 커버하는 살아있는 청구를 찾는다.
+   * 종료일 없는 청구는 무기한으로 커버하고, 여러 청구가 겹치면 가장 늦게 시작한 쪽이 우선.
    * 회차 수강권(totalCount 있음)은 명시 귀속만 — 잔여 회차 초과 방지.
    */
   private async findCoveringInvoiceId(studentId: number, sessionAt: Date, timeZone: string): Promise<number | null> {
@@ -66,7 +67,7 @@ export class SessionsService {
         deletedAt: null,
         totalCount: null,
         periodStart: { lte: sessionDate },
-        periodEnd: { gte: sessionDate },
+        OR: [{ periodEnd: null }, { periodEnd: { gte: sessionDate } }],
       },
       orderBy: { periodStart: 'desc' },
       select: { id: true },

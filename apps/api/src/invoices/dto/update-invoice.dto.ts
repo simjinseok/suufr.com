@@ -7,6 +7,7 @@ import {
   Min,
   IsBoolean,
   IsArray,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateInvoiceDto {
@@ -24,11 +25,12 @@ export class UpdateInvoiceDto {
   @IsOptional()
   totalCount?: number;
 
-  // null 이면 기간 삭제, undefined 면 미변경. 시작·종료는 둘 다 있거나 둘 다 없어야 한다(서비스에서 검증)
+  // 시작일은 지울 수 없다 — undefined 면 미변경, null 은 거부(IsOptional 은 null 도 통과시키므로 ValidateIf 로 막는다)
+  @ValidateIf(o => o.periodStart !== undefined)
   @IsDateString()
-  @IsOptional()
-  periodStart?: string | null;
+  periodStart?: string;
 
+  // null 이면 종료일 삭제(무기한), undefined 면 미변경. 시작일 <= 종료일은 서비스에서 검증
   @IsDateString()
   @IsOptional()
   periodEnd?: string | null;

@@ -37,7 +37,8 @@ export type Invoice = {
   price: number;
   // 있으면 회차 수강권(잔여 관리), 없으면 기간 정액
   totalCount: number | null;
-  periodStart: string | null;
+  // 수강 시작일(항상) · 종료일(없으면 무기한). @db.Date 라 "YYYY-MM-DDT00:00:00.000Z"
+  periodStart: string;
   periodEnd: string | null;
   autoRenew: boolean;
   renewDaysBefore: number;
@@ -82,7 +83,7 @@ type CreateInvoiceData = {
   title?: string;
   price: number;
   totalCount?: number;
-  periodStart?: string;
+  periodStart: string;
   periodEnd?: string;
   autoRenew?: boolean;
   renewDaysBefore?: number;
@@ -100,8 +101,8 @@ type UpdateInvoiceData = {
   title?: string;
   price?: number;
   totalCount?: number;
-  // null = 기간 삭제, undefined = 미변경
-  periodStart?: string | null;
+  // undefined = 미변경. 시작일은 지울 수 없고, 종료일은 null 로 지운다(무기한)
+  periodStart?: string;
   periodEnd?: string | null;
   autoRenew?: boolean;
   renewDaysBefore?: number;

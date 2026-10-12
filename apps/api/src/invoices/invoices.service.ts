@@ -93,10 +93,9 @@ export class InvoicesService {
       this.prisma.invoice.findMany({
         where,
         include: INVOICE_INCLUDE,
-        // 시작일 내림차순. periodStart는 nullable이라 값이 없는 건 뒤로 보내고,
-        // 같은 시작일(또는 둘 다 null)이면 최근 생성 순으로 안정 정렬한다.
+        // 시작일 내림차순, 같은 시작일이면 최근 생성 순으로 안정 정렬한다.
         orderBy: [
-          { periodStart: { sort: 'desc', nulls: 'last' } },
+          { periodStart: 'desc' },
           { createdAt: 'desc' },
         ],
         skip,
@@ -147,7 +146,7 @@ export class InvoicesService {
       throw new NotFoundException(`Student with UUID ${dto.studentUuid} not found`);
     }
 
-    assertPeriod(dto.periodStart ?? null, dto.periodEnd ?? null);
+    assertPeriod(dto.periodStart, dto.periodEnd ?? null);
 
     // 귀속할 기존 세션 검증 (같은 학생 소유여야 함)
     let sessionsToAttach: { id: number }[] = [];
@@ -178,8 +177,8 @@ export class InvoicesService {
           title: dto.title,
           price: dto.price,
           totalCount: dto.totalCount,
-          periodStart: dto.periodStart ? new Date(dto.periodStart) : undefined,
-          periodEnd: dto.periodEnd ? new Date(dto.periodEnd) : undefined,
+          periodStart: new Date(dto.periodStart),
+          periodEnd: dto.periodEnd ? new Date(dto.periodEnd) : null,
           autoRenew: dto.autoRenew ?? false,
           renewDaysBefore: dto.renewDaysBefore ?? 0,
           notes: dto.notes,
@@ -239,11 +238,10 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice with UUID ${uuid} not found`);
     }
 
-    // 기간을 건드리는 요청만 검증한다 — 기간과 무관한 수정(제목·금액)이
-    // 한쪽만 있는 기존 데이터 때문에 막히면 안 된다
+    // 한쪽만 바꾸는 부분 수정(iOS 패턴)도 수정 후 상태로 검증한다
     if (dto.periodStart !== undefined || dto.periodEnd !== undefined) {
       assertPeriod(
-        dto.periodStart === undefined ? invoice.periodStart : dto.periodStart,
+        dto.periodStart ?? invoice.periodStart,
         dto.periodEnd === undefined ? invoice.periodEnd : dto.periodEnd,
       );
     }
@@ -272,7 +270,7 @@ export class InvoicesService {
           ...(dto.title !== undefined && { title: dto.title }),
           ...(dto.price !== undefined && { price: dto.price }),
           ...(dto.totalCount !== undefined && { totalCount: dto.totalCount }),
-          ...(dto.periodStart !== undefined && { periodStart: toDateOrNull(dto.periodStart) }),
+          ...(dto.periodStart !== undefined && { periodStart: new Date(dto.periodStart) }),
           ...(dto.periodEnd !== undefined && { periodEnd: toDateOrNull(dto.periodEnd) }),
           ...(dto.autoRenew !== undefined && { autoRenew: dto.autoRenew }),
           ...(dto.renewDaysBefore !== undefined && { renewDaysBefore: dto.renewDaysBefore }),
@@ -325,20 +323,17 @@ export class InvoicesService {
   }
 }
 
-/** null 은 "기간 삭제" — new Date(null) 이 1970-01-01 이 되는 사고를 막는다 */
+/** null 은 "종료일 삭제(무기한)" — new Date(null) 이 1970-01-01 이 되는 사고를 막는다 */
 function toDateOrNull(value: string | null): Date | null {
   return value === null ? null : new Date(value);
 }
 
 /**
- * 기간은 둘 다 있거나 둘 다 없어야 하고, 있으면 시작일 <= 종료일.
- * 세션 자동귀속(periodStart <= 날짜 <= periodEnd)이 두 조건을 전제한다.
+ * 시작일은 항상 있고, 종료일은 선택(없음 = 무기한). 있으면 시작일 <= 종료일.
+ * 세션 자동귀속(periodStart <= 날짜, 종료일이 있으면 날짜 <= periodEnd)이 이를 전제한다.
  */
-function assertPeriod(start: Date | string | null, end: Date | string | null) {
-  if ((start === null) !== (end === null)) {
-    throw new BadRequestException('수강권 기간은 시작일과 종료일을 함께 지정해야 합니다.');
-  }
-  if (start !== null && end !== null && new Date(start) > new Date(end)) {
+function assertPeriod(start: Date | string, end: Date | string | null) {
+  if (end !== null && new Date(start) > new Date(end)) {
     throw new BadRequestException('수강권 종료일은 시작일보다 앞설 수 없습니다.');
   }
 }

@@ -16,8 +16,6 @@ type Props = {
 
 // 수강권 1개 = 카드 1장. 클릭 동작 없음 (2026-10-07 확정 시안).
 export default function InvoiceCard({ invoice, today }: Props) {
-  const period = formatInvoicePeriod(invoice.periodStart, invoice.periodEnd);
-
   return (
     <Surface className="rounded-xl shadow-xs p-4 flex flex-col gap-2.5 min-w-0">
       {/* 상단: 프로필 · 이름 · 제목 */}
@@ -36,9 +34,9 @@ export default function InvoiceCard({ invoice, today }: Props) {
         </div>
       </div>
 
-      {/* 기간 줄 */}
+      {/* 기간 줄 — 종료일이 없으면 "2026.10.1 ~" (무기한) */}
       <p className="text-sm text-gray-500 tabular-nums">
-        {period ?? <span className="text-gray-400">기간 없음</span>}
+        {formatInvoicePeriod(invoice.periodStart, invoice.periodEnd)}
       </p>
 
       <UsageBlock invoice={invoice} today={today} />
@@ -48,7 +46,7 @@ export default function InvoiceCard({ invoice, today }: Props) {
   );
 }
 
-// 진행 블록: 회차권 → 완료/전체, 기간권 → 남은 일수, 둘 다 없으면 "횟수 제한 없음" + 빈 바
+// 진행 블록: 회차권 → 완료/전체, 기간권 → 남은 일수, 종료일 없는 정액 → "진행 중" + 빈 바
 function UsageBlock({ invoice, today }: Props) {
   if (invoice.totalCount != null) {
     const { remaining, ratio } = getCountProgress(invoice.totalCount, invoice.doneCount);
@@ -77,15 +75,8 @@ function UsageBlock({ invoice, today }: Props) {
     return <ProgressRow left={left} right="기간권" ratio={progress.ratio} isComplete={false} />;
   }
 
-  // 사양: 흐린 글씨 (기간 줄의 "기간 없음"과 같은 농도)
-  return (
-    <ProgressRow
-      left={<span className="text-gray-400">횟수 제한 없음</span>}
-      right={null}
-      ratio={0}
-      isComplete={false}
-    />
-  );
+  // 무기한 — 남은 일수를 셀 수 없어 바는 비워 둔다
+  return <ProgressRow left="진행 중" right="기간권" ratio={0} isComplete={false} />;
 }
 
 function ProgressRow({ left, right, ratio, isComplete }: {

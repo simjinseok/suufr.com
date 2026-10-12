@@ -56,10 +56,11 @@ export class CreateInvoiceDto {
   @IsOptional()
   totalCount?: number;
 
+  // 수강 시작일 — 필수. 목록 정렬·세션 자동 귀속의 기준
   @IsDateString()
-  @IsOptional()
-  periodStart?: string;
+  periodStart!: string;
 
+  // 종료일 — 선택. 없으면 무기한(다음 수강권이 시작하면 자동 귀속은 그쪽이 우선)
   @IsDateString()
   @IsOptional()
   periodEnd?: string;

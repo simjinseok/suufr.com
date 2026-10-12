@@ -38,7 +38,8 @@ export type TInvoice = {
   price: number;
   // 있으면 회차 수강권(잔여 관리), 없으면 기간 정액
   totalCount: number | null;
-  periodStart: string | null;
+  // 수강 시작일(항상) · 종료일(없으면 무기한)
+  periodStart: string;
   periodEnd: string | null;
   autoRenew: boolean;
   renewDaysBefore: number;

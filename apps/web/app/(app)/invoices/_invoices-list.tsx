@@ -10,7 +10,8 @@ export type InvoiceCardItem = {
   title: string | null;
   price: number;
   totalCount: number | null;
-  periodStart: string | null;
+  // 수강 시작일(항상) · 종료일(없으면 무기한)
+  periodStart: string;
   periodEnd: string | null;
   // 완료(isDone) 세션 수 — 잔여 차감은 완료 기준이라 예정은 세지 않는다 (docs/schema-redesign.md §3)
   doneCount: number;

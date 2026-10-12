@@ -19,7 +19,7 @@ import {
   TimeField,
   toast,
 } from '@heroui/react';
-import { parseDate, parseTime, toCalendarDateTime, today } from '@internationalized/date';
+import { parseDate, parseTime, toCalendarDateTime } from '@internationalized/date';
 import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
@@ -84,9 +84,9 @@ function Content({ close, studentUuid, invoice, use24HourFormat }: ContentProps)
   const hourCycle = useHourCycle();
   const defaultDuration = useDefaultDuration();
 
-  // 기준날짜 기본값: 수강권 기간의 시작 (없으면 오늘). @db.Date라 UTC 자정으로 직렬화되므로 날짜 부분만 쓴다.
+  // 기준날짜 기본값: 수강 시작일. @db.Date라 UTC 자정으로 직렬화되므로 날짜 부분만 쓴다.
   const [startDate, setStartDate] = React.useState<CalendarDate>(
-    () => (invoice.periodStart ? parseDate(invoice.periodStart.slice(0, 10)) : today(timeZone)),
+    () => parseDate(invoice.periodStart.slice(0, 10)),
   );
 
   const [days, setDays] = React.useState<Set<string>>(() => new Set());

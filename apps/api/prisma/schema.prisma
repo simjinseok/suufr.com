@@ -93,8 +93,8 @@ model Invoice {
   title           String? // 라벨 ("3월 8회권") — 구 lesson.title 승계
   price           Int // 청구액 (원). 0원도 그대로 0원 (구 "금액 미입력" 파생 상태는 §6-21에서 폐기)
   totalCount      Int?             @map("total_count") // 있으면 회차 동작(잔여 관리·명시 귀속), 없으면 기간 정액(날짜 자동 귀속)
-  periodStart     DateTime?        @map("period_start") @db.Date
-  periodEnd       DateTime?        @map("period_end") @db.Date
+  periodStart     DateTime         @map("period_start") @db.Date // 수강 시작일. 목록 정렬·자동 귀속 기준
+  periodEnd       DateTime?        @map("period_end") @db.Date // 없으면 무기한 (겹치면 늦게 시작한 수강권 우선)
   autoRenew       Boolean          @default(false) @map("auto_renew") // cron 도입 시 사용
   renewDaysBefore Int              @default(0) @map("renew_days_before") // 마감 X일 전 사전 생성
   notes           String?
