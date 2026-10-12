@@ -50,7 +50,7 @@ export async function createInvoice(prevState: CreateInvoiceState, formData: For
       revalidatePath('/students', 'layout');
       revalidatePath('/invoices', 'page');
       state.success = true;
-      state.message = '수강권을 추가하였습니다';
+      state.message = '수강 등록했습니다';
       return state;
     });
 }
@@ -203,7 +203,7 @@ export async function removeInvoice(prevState: any, formData: FormData) {
       revalidatePath('/invoices', 'page');
       revalidatePath('/sessions', 'page');
       state.success = true;
-      state.message = '수강권을 삭제하였습니다';
+      state.message = '등록을 삭제했습니다';
       return state;
     });
 }

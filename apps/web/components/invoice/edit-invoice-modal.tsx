@@ -72,7 +72,7 @@ function Content({ invoice, close }: ContentProps) {
     if (!state.timestamp) return;
 
     if (state.success) {
-      toast.success('수강권 수정', {
+      toast.success('등록 수정', {
         description: state.message,
         timeout: 3000,
       });
@@ -83,7 +83,7 @@ function Content({ invoice, close }: ContentProps) {
   return (
     <React.Fragment>
       <Modal.Header>
-        <Modal.Heading>수강권 수정</Modal.Heading>
+        <Modal.Heading>등록 수정</Modal.Heading>
       </Modal.Header>
       <Modal.Body>
         <Form
@@ -139,7 +139,7 @@ function Content({ invoice, close }: ContentProps) {
             render={({ field: { name, value, onChange } }) => (
               <TextField name={name} value={value} onChange={onChange}>
                 <Label>메모</Label>
-                <TextArea variant="secondary" rows={5} className="resize-none" placeholder="수강권 메모" />
+                <TextArea variant="secondary" rows={5} className="resize-none" placeholder="메모" />
                 <Description>수강생에게는 보여지지 않습니다.</Description>
                 <FieldError />
               </TextField>

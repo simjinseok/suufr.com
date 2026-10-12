@@ -183,7 +183,7 @@ function Content({ close, studentUuid, payment, defaultAmount, defaultInvoiceUui
               selectedKey={linkedInvoiceUuid}
               onSelectionChange={key => setLinkedInvoiceUuid((key as string) ?? '')}
             >
-              <Label>연결된 수강권</Label>
+              <Label>연결된 등록</Label>
               <Select.Trigger>
                 <Select.Value />
                 <Select.Indicator />

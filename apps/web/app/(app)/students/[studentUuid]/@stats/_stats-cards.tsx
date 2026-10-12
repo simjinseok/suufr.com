@@ -27,10 +27,10 @@ export default function StatsCards({ stats }: Props) {
       </Card>
       <Card className="p-3 sm:p-4 border border-transparent dark:border-default-100">
         <div className="flex flex-col gap-y-1 sm:gap-y-2">
-          <dt className="text-xs sm:text-small font-medium text-default-500">완료한 수강권</dt>
+          <dt className="text-xs sm:text-small font-medium text-default-500">완료한 등록</dt>
           <dd className="text-lg sm:text-2xl font-semibold text-success-600">
             {stats.completedInvoiceCount}
-            회
+            건
           </dd>
         </div>
       </Card>

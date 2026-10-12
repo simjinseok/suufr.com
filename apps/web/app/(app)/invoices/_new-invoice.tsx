@@ -15,12 +15,12 @@ export default function NewInvoice() {
     <React.Fragment>
       <Button variant="primary" size="sm" onPress={() => setIsPickerOpen(true)}>
         <PlusIcon className="size-4" />
-        수강권 추가
+        수강 등록
       </Button>
       <StudentPickerModal
         isOpen={isPickerOpen}
         onOpenChange={setIsPickerOpen}
-        heading="수강권 추가"
+        heading="수강 등록"
         onPick={(student) => {
           setIsPickerOpen(false);
           setStudentUuid(student.uuid);

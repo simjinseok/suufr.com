@@ -66,7 +66,7 @@ export async function createStudent(prevState: any, formData: FormData) {
 
       await studentStatusesApi.create(student.uuid, {
         status: validationResult.data.status,
-        notes: '신규 수강생 등록',
+        notes: '신규 수강생 추가',
       });
 
       revalidatePath('/students', 'page');

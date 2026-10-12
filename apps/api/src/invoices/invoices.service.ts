@@ -334,6 +334,6 @@ function toDateOrNull(value: string | null): Date | null {
  */
 function assertPeriod(start: Date | string, end: Date | string | null) {
   if (end !== null && new Date(start) > new Date(end)) {
-    throw new BadRequestException('수강권 종료일은 시작일보다 앞설 수 없습니다.');
+    throw new BadRequestException('종료일은 시작일보다 앞설 수 없습니다.');
   }
 }

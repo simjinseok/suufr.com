@@ -155,7 +155,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
         <Modal>
           <Button variant="secondary" size="sm">
             <PlusIcon className="size-4" />
-            수강권 추가
+            수강 등록
           </Button>
           <CreateInvoiceModal studentUuid={studentUuid} />
         </Modal>
@@ -167,7 +167,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
           <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
             <AlertTriangleIcon className="size-4 text-amber-600" />
             <span className="text-sm font-semibold text-amber-700">
-              수강권 없는 수업
+              미등록 수업
               {' '}
               {unattachedSessions.length}
               개
@@ -240,7 +240,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                                 key="edit-invoice"
                                 onClick={() => setEditInvoice(invoice)}
                               >
-                                수강권 수정
+                                등록 수정
                               </Dropdown.Item>
                               {/* 횟수가 다 찬 수강권은 수업 추가 숨김 (잔여 초과 방지, 회당 정산 1회권 포함) */}
                               {!(invoice.totalCount != null && invoice.totalCount > 0 && invoice.sessions.length >= invoice.totalCount) && (

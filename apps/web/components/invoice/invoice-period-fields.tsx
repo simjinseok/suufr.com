@@ -88,7 +88,7 @@ export function InvoicePeriodFields({ value, onChange }: Props) {
             </DatePicker.Trigger>
           </DateField.Suffix>
         </DateField.Group>
-        <Description>비워 두면 다음 수강권이 시작할 때까지 계속 적용됩니다.</Description>
+        <Description>비워 두면 다음 등록이 시작할 때까지 계속 적용됩니다.</Description>
         <DatePicker.Popover placement="bottom left" className="min-w-fit">
           {/* 래퍼 Calendar 가 minValue 를 명시 prop 으로 넘겨 DatePicker 컨텍스트 값을 덮어쓴다 — 직접 전달 */}
           <Calendar minValue={value.start} />

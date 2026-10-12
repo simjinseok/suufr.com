@@ -8,7 +8,7 @@ export default function NewStudentModal() {
   return (
     <Modal>
       <Button variant="primary">
-        수강생 등록
+        수강생 추가
       </Button>
       <CreateStudentModal />
     </Modal>

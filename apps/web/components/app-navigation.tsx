@@ -25,7 +25,7 @@ export const mainMenuItems: MenuItem[] = [
   { href: '/dashboard', label: '메인', icon: HomeIcon },
   { href: '/students', label: '수강생', icon: BookUserIcon },
   { href: '/calendar', label: '수업', icon: CalendarIcon },
-  { href: '/invoices', label: '수강권', icon: TicketIcon },
+  { href: '/invoices', label: '수강 등록', icon: TicketIcon },
   { href: '/payments', label: '결제', icon: CreditCardIcon },
 ];
 
