@@ -41,7 +41,7 @@ export default function InvoicesList({ invoices, selectedStudent, today }: Props
 
       {invoices.length === 0
         ? (
-            <p className="mt-8 text-center text-gray-500">수강권이 없습니다.</p>
+            <p className="mt-8 text-center text-gray-500">등록 내역이 없습니다.</p>
           )
         : (
             <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

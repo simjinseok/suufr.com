@@ -93,7 +93,7 @@ function Content({ student, close }: ContentProps) {
   const recordParts = records
     ? [
         records.sessionCount > 0 && `수업 ${records.sessionCount}개`,
-        records.invoiceCount > 0 && `수강권 ${records.invoiceCount}개`,
+        records.invoiceCount > 0 && `등록 ${records.invoiceCount}건`,
         records.paymentCount > 0 && `결제 ${records.paymentCount}건`,
       ].filter(Boolean)
     : [];
@@ -129,7 +129,7 @@ function Content({ student, close }: ContentProps) {
                   <p className="mt-1">
                     {hasRecords
                       ? `${recordParts.join(', ')}도 함께 사라지고 매출에서도 빠집니다.`
-                      : '이 수강생의 수업·수강권·결제도 함께 사라지고 매출에서도 빠집니다.'}
+                      : '이 수강생의 수업·등록·결제도 함께 사라지고 매출에서도 빠집니다.'}
                     {' '}
                     수업을 그만둔 수강생이라면 삭제 대신 상태를 &apos;그만둠&apos;으로 바꿔 기록을 남겨주세요.
                   </p>

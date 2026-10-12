@@ -51,7 +51,7 @@ export default async function Page(props: PageProps<'/invoices'>) {
   return (
     <div className="mt-3">
       <div className="flex items-end justify-between">
-        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">수강권</h1>
+        <h1 className="text-xl font-bold text-default-900 lg:text-3xl">수강 등록</h1>
         <NewInvoice />
       </div>
 

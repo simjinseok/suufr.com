@@ -19,7 +19,7 @@ export default function DeleteInvoiceModal({ invoice, isOpen, onOpenChange }: Pr
     if (!state.timestamp) return;
 
     if (state.message) {
-      toast.success('수강권 삭제', {
+      toast.success('등록 삭제', {
         description: state.message,
         timeout: 3000,
       });
@@ -43,7 +43,7 @@ export default function DeleteInvoiceModal({ invoice, isOpen, onOpenChange }: Pr
             <AlertDialog.Body>
               <Form id={formId} action={formAction}>
                 <input type="hidden" name="invoiceUuid" value={invoice.uuid} />
-                수강권을 삭제합니다. 입금 내역도 함께 목록에서 사라집니다.
+                등록을 삭제합니다. 입금 내역도 함께 목록에서 사라집니다.
               </Form>
             </AlertDialog.Body>
             <AlertDialog.Footer>

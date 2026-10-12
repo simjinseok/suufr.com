@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   }
   catch {
     return NextResponse.json(
-      { message: '수강권 목록을 불러오지 못했습니다.' },
+      { message: '등록 목록을 불러오지 못했습니다.' },
       { status: 500 },
     );
   }

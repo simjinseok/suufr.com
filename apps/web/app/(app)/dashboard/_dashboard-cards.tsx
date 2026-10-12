@@ -111,7 +111,7 @@ function ModalContent({ invoices, close }: ModalContentProps) {
   return (
     <React.Fragment>
       <Modal.Header>
-        <Modal.Heading>입금 확인이 필요한 수강권</Modal.Heading>
+        <Modal.Heading>입금 확인이 필요한 등록</Modal.Heading>
       </Modal.Header>
       <Modal.Body className="overflow-y-auto flex-1">
         {invoices.length === 0

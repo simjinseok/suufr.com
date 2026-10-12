@@ -60,7 +60,7 @@ function Content({ close, studentUuid }: ContentProps) {
     if (!state.timestamp) return;
 
     if (state.success) {
-      toast.success(state.message ?? '수강권을 추가하였습니다', {
+      toast.success(state.message ?? '수강 등록했습니다', {
         timeout: 3000,
       });
       close();
@@ -70,7 +70,7 @@ function Content({ close, studentUuid }: ContentProps) {
   return (
     <>
       <Modal.Header>
-        <Modal.Heading>수강권 추가</Modal.Heading>
+        <Modal.Heading>수강 등록</Modal.Heading>
       </Modal.Header>
 
       <Modal.Body>
@@ -111,7 +111,7 @@ function Content({ close, studentUuid }: ContentProps) {
 
           <TextField name="notes">
             <Label>메모</Label>
-            <TextArea variant="secondary" rows={5} className="resize-none" placeholder="수강권 메모" />
+            <TextArea variant="secondary" rows={5} className="resize-none" placeholder="메모" />
             <Description>수강생에게는 보여지지 않습니다.</Description>
             <FieldError />
           </TextField>
