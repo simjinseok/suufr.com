@@ -2,7 +2,7 @@
 # apps/api — NestJS(Fastify) + Prisma 이미지
 # 빌드 컨텍스트는 모노레포 루트: docker build -f apps/api/Dockerfile .
 
-ARG NODE_VERSION=26
+ARG NODE_VERSION=26.12.1
 ARG PNPM_VERSION=12.11.2
 
 # ---------- base ----------
