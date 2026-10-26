@@ -9,6 +9,7 @@ import {
   IsArray,
   ValidateIf,
 } from 'class-validator';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 export class UpdateInvoiceDto {
   @IsString()
@@ -36,6 +37,7 @@ export class UpdateInvoiceDto {
   periodEnd?: string | null;
 
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   autoRenew?: boolean;
 

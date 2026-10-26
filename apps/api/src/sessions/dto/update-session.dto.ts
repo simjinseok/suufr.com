@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsDateString, IsInt, Min, IsBoolean, IsArray, IsUUID } from 'class-validator';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 export class UpdateSessionDto {
   @IsDateString()
@@ -15,6 +16,7 @@ export class UpdateSessionDto {
   notes?: string;
 
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   isDone?: boolean;
 

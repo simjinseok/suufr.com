@@ -10,6 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 export class CreateInvoiceSessionDto {
   @IsDateString()
@@ -66,6 +67,7 @@ export class CreateInvoiceDto {
   periodEnd?: string;
 
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   autoRenew?: boolean;
 

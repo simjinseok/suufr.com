@@ -1,4 +1,5 @@
 import { Equals, IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 const DOC_VERSION_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -9,10 +10,12 @@ const DOC_VERSION_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  */
 export class ConsentsDto {
   @IsBoolean()
+  @StrictBoolean()
   @Equals(true, { message: '이용약관에 동의해주세요' })
   terms!: boolean;
 
   @IsBoolean()
+  @StrictBoolean()
   @Equals(true, { message: '개인정보 수집·이용에 동의해주세요' })
   privacy!: boolean;
 
