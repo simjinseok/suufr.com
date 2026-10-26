@@ -81,8 +81,9 @@ describe('SignupDto', () => {
     await expectRejected({ ...validBody, consents: { ...validConsents, [key]: false } }, message);
   });
 
-  it('동의 값이 불리언이 아니면 거부된다', async () => {
-    await expectRejected({ ...validBody, consents: { ...validConsents, terms: 'yes' } });
+  it.each(['yes', 'true', 'false', 1])('동의 값이 불리언이 아니면 거부된다 (%j)', async (value) => {
+    await expectRejected({ ...validBody, consents: { ...validConsents, terms: value } });
+    await expectRejected({ ...validBody, consents: { ...validConsents, privacy: value } });
   });
 
   it('문서 버전이 YYYY-MM-DD 형식이 아니면 거부된다', async () => {

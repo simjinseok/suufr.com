@@ -1,8 +1,10 @@
 import { IsBoolean, IsOptional, IsInt, IsIn, IsTimeZone, Min, ValidateIf } from 'class-validator';
 import { PAYMENT_METHODS, type PaymentMethod } from '../payment-methods';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 export class UpdateSettingsDto {
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   use24HourFormat?: boolean;
 
@@ -12,6 +14,7 @@ export class UpdateSettingsDto {
   defaultDuration?: number;
 
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   autoUpdateNextPaymentAt?: boolean;
 

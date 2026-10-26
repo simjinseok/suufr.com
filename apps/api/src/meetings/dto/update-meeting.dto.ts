@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsDateString, IsBoolean } from 'class-validator';
+import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
 
 export class UpdateMeetingDto {
   @IsString()
@@ -18,6 +19,7 @@ export class UpdateMeetingDto {
   phone?: string;
 
   @IsBoolean()
+  @StrictBoolean()
   @IsOptional()
   isDone?: boolean;
 }
