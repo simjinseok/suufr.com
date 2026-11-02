@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import type { Subscription, Transaction } from '@paddle/paddle-node-sdk';
+import * as Sentry from '@sentry/nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaddleClient } from './paddle.client';
 import { PaddleWebhookService } from './paddle-webhook.service';
@@ -98,6 +99,12 @@ export class SubscriptionsReconciliationService {
       }
       catch (error) {
         this.logger.error(`Failed to recover missing paddle subscription ${remote.id}:`, error);
+        // 해결될 때까지 매시간 실패하므로 fingerprint 를 구독 id 로 묶어 Sentry 이슈 하나로 모은다 (새 이슈일 때만 알림)
+        Sentry.captureException(error, {
+          fingerprint: ['paddle-subscription-recovery-failed', remote.id],
+          tags: { provider: 'paddle' },
+          extra: { subscriptionId: remote.id },
+        });
       }
     }
   }
@@ -115,8 +122,8 @@ export class SubscriptionsReconciliationService {
     }
     const transactions: Transaction[] = await this.paddleClient.listCompletedTransactions(remote.id);
 
-    // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그로 남는다
-    await this.prisma.$transaction(async (tx) => {
+    // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그·Sentry 로 남는다
+    const recovered = await this.prisma.$transaction(async (tx) => {
       // 같은 사용자의 웹훅과 동시에 처리되지 않게 잠근다
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId}, 0))`;
       await this.sync.syncSubscription(tx, state);
@@ -126,11 +133,27 @@ export class SubscriptionsReconciliationService {
           await this.sync.recordTransaction(tx, record);
         }
       }
+      // 수동 부여 유지 등으로 syncSubscription 이 아무것도 바꾸지 않고 true 를 돌려줄 수 있다 — 행이 실제로 생겼는지 본다
+      const row = await tx.userSubscription.findUnique({
+        where: { provider_providerSubscriptionId: { provider: 'paddle', providerSubscriptionId: remote.id } },
+        select: { userId: true },
+      });
+      return row !== null;
     }, {
       // BillingSyncService.withEventDedup 과 같은 이유 (Neon 깨어나는 시간)
       maxWait: 5000,
       timeout: 10000,
     });
+    if (!recovered) {
+      return;
+    }
     this.logger.warn(`Recovered missing paddle subscription ${remote.id} for user ${userId} (${transactions.length} transaction(s))`);
+    // 복구는 웹훅이 닿지 않았다는 뜻이다. 웹훅이 아예 오지 않으면 웹훅 쪽 Sentry 기록도 없으므로 여기서 알린다
+    // (복구 뒤에도 해지·결제 실패·갱신은 웹훅에 의존한다)
+    Sentry.captureMessage('웹훅이 닿지 않은 Paddle 구독을 복구함', {
+      level: 'warning',
+      tags: { provider: 'paddle' },
+      extra: { subscriptionId: remote.id, userId, transactionCount: transactions.length },
+    });
   }
 }
