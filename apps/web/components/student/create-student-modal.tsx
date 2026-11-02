@@ -2,7 +2,7 @@
 import { ModalProps, toast } from '@heroui/react';
 
 import React from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Button,
@@ -20,6 +20,7 @@ import {
 import { Crown } from 'lucide-react';
 
 import { createStudent } from '@/actions/student';
+import { getSubscription } from '@/actions/subscription';
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -39,10 +40,125 @@ export default function StudentModal({ isOpen, onOpenChange }: Props) {
   );
 }
 
+// api students.service 의 STUDENT_LIMIT_EXCEEDED 메시지와 같은 문구
+function limitMessage(maxStudents: number) {
+  return `무료 플랜에서는 수강생을 최대 ${maxStudents}명까지 등록할 수 있어요. 프로 플랜으로 업그레이드하면 제한 없이 등록할 수 있습니다.`;
+}
+
+type LimitCheck
+  = | { status: 'loading' }
+    | { status: 'ok' }
+    | { status: 'exceeded'; message: string };
+
 interface ContentProps {
   close: () => void;
 }
 function Content({ close }: ContentProps) {
+  const [limitCheck, setLimitCheck] = React.useState<LimitCheck>({ status: 'loading' });
+
+  // 한도에 이미 걸렸으면 폼 대신 안내만 보여준다. 조회 실패는 폼을 열고 저장 시 서버 판정에 맡긴다
+  React.useEffect(() => {
+    let ignore = false;
+    getSubscription()
+      .then((subscription) => {
+        if (ignore) {
+          return;
+        }
+        const maxStudents = subscription?.limits.maxStudents ?? null;
+        const studentCount = subscription?.usage.studentCount ?? null;
+        if (maxStudents !== null && studentCount !== null && studentCount >= maxStudents) {
+          setLimitCheck({ status: 'exceeded', message: limitMessage(maxStudents) });
+        }
+        else {
+          setLimitCheck({ status: 'ok' });
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setLimitCheck({ status: 'ok' });
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  if (limitCheck.status === 'loading') {
+    return (
+      <React.Fragment>
+        <Modal.Header>
+          <Modal.Heading>수강생 추가</Modal.Heading>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="ghost" onPress={close}>
+            닫기
+          </Button>
+        </Modal.Footer>
+      </React.Fragment>
+    );
+  }
+
+  if (limitCheck.status === 'exceeded') {
+    return <LimitNotice message={limitCheck.message} close={close} />;
+  }
+
+  return (
+    <StudentForm
+      close={close}
+      onLimitExceeded={message => setLimitCheck({ status: 'exceeded', message })}
+    />
+  );
+}
+
+interface LimitNoticeProps {
+  message: string;
+  close: () => void;
+}
+function LimitNotice({ message, close }: LimitNoticeProps) {
+  const router = useRouter();
+
+  return (
+    <React.Fragment>
+      <Modal.Header>
+        <Modal.Heading>수강생 추가</Modal.Heading>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="p-4 rounded-lg bg-indigo-50 text-sm">
+          <p className="font-medium text-indigo-900 flex items-center gap-1.5">
+            <Crown className="w-4 h-4 text-indigo-600" />
+            프로 플랜이 필요해요
+          </p>
+          <p className="mt-1 text-indigo-800">{message}</p>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="ghost" onPress={close}>
+          닫기
+        </Button>
+        <Button
+          variant="primary"
+          onPress={() => {
+            close();
+            router.push('/settings/subscription');
+          }}
+        >
+          요금제 보기
+        </Button>
+      </Modal.Footer>
+    </React.Fragment>
+  );
+}
+
+interface StudentFormProps {
+  close: () => void;
+  onLimitExceeded: (message: string) => void;
+}
+function StudentForm({ close, onLimitExceeded }: StudentFormProps) {
   const formId = React.useId();
 
   const [state, formAction, isPending] = React.useActionState(createStudent, {
@@ -62,6 +178,12 @@ function Content({ close }: ContentProps) {
   });
 
   React.useEffect(() => {
+    // 폼을 연 뒤 다른 탭 등에서 한도가 찬 경우 — 서버 거부를 받으면 안내 화면으로 바꾼다
+    if (state.errorCode === 'STUDENT_LIMIT_EXCEEDED') {
+      onLimitExceeded(state.message ?? '');
+      return;
+    }
+
     if (typeof state.success !== 'boolean') {
       return;
     }
@@ -81,21 +203,6 @@ function Content({ close }: ContentProps) {
         <Modal.Heading>수강생 추가</Modal.Heading>
       </Modal.Header>
       <Modal.Body>
-        {state.errorCode === 'STUDENT_LIMIT_EXCEEDED' && (
-          <div className="mb-3 p-4 rounded-lg bg-indigo-50 text-sm">
-            <p className="font-medium text-indigo-900 flex items-center gap-1.5">
-              <Crown className="w-4 h-4 text-indigo-600" />
-              프로 플랜이 필요해요
-            </p>
-            <p className="mt-1 text-indigo-800">{state.message}</p>
-            <Link
-              href="/settings/subscription"
-              className="mt-2 inline-block font-medium text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
-            >
-              요금제 보기
-            </Link>
-          </div>
-        )}
         <Form
           className="p-1"
           id={formId}
