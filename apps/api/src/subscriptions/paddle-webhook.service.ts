@@ -8,7 +8,12 @@ import {
 } from '@paddle/paddle-node-sdk';
 import type { BillingEnvironmentValue, Prisma, SubscriptionStatusValue } from '@prisma/generated/client';
 import { BillingSyncService } from './billing-sync.service';
-import type { BillingSubscriptionState, BillingTransactionRecord, BillingWebhookEnvelope } from './billing.types';
+import {
+  BillingSyncRejectedError,
+  type BillingSubscriptionState,
+  type BillingTransactionRecord,
+  type BillingWebhookEnvelope,
+} from './billing.types';
 import { verifyCheckoutCustomData } from './checkout-custom-data';
 
 /**
@@ -46,6 +51,8 @@ export class PaddleWebhookService {
   }
 
   /**
+   * 사용자를 식별하지 못한 이벤트는 거부로 처리한다 — 롤백되어 멱등 행이 남지 않으므로, 행이 생긴 뒤
+   * 대시보드 재전송이나 보정 크론(누락 구독 찾기)으로 반영된다. 응답은 200 이라 Paddle 재시도는 없다.
    * @param payload raw body 를 JSON.parse 한 값 — 멱등 테이블에 원문으로 저장 (SDK 인스턴스가 아님)
    */
   async handleEvent(event: EventEntity, payload: Prisma.InputJsonValue): Promise<void> {
@@ -68,9 +75,8 @@ export class PaddleWebhookService {
         const state = this.toSubscriptionState(event.data as SubscriptionNotification, occurredAt);
         const lockKey = state.userId ?? `paddle:${state.subscriptionId}`;
         await this.sync.withEventDedup(envelope, lockKey, async (tx) => {
-          const applied = await this.sync.syncSubscription(tx, state);
-          if (!applied) {
-            this.logger.error(`Cannot resolve user for paddle subscription ${state.subscriptionId} (event ${event.eventId}, type ${event.eventType})`);
+          if (!await this.sync.syncSubscription(tx, state)) {
+            throw new BillingSyncRejectedError(`cannot resolve user for paddle subscription ${state.subscriptionId}`);
           }
         });
         return;
@@ -84,9 +90,8 @@ export class PaddleWebhookService {
         }
         const lockKey = record.userId ?? `paddle:${record.subscriptionId}`;
         await this.sync.withEventDedup(envelope, lockKey, async (tx) => {
-          const applied = await this.sync.recordTransaction(tx, record);
-          if (!applied) {
-            this.logger.error(`Cannot resolve user for paddle transaction ${record.transactionId} (event ${event.eventId}, type ${event.eventType})`);
+          if (!await this.sync.recordTransaction(tx, record)) {
+            throw new BillingSyncRejectedError(`cannot resolve user for paddle transaction ${record.transactionId}`);
           }
         });
         return;
