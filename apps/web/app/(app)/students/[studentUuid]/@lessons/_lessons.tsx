@@ -197,15 +197,45 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                     분
                   </span>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="shrink-0"
-                  onPress={() => setSettleSessionTarget(session)}
-                >
-                  <CreditCardIcon className="size-4" />
-                  입금 기록
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onPress={() => setSettleSessionTarget(session)}
+                  >
+                    <CreditCardIcon className="size-4" />
+                    입금 기록
+                  </Button>
+                  <Dropdown>
+                    <Button variant="ghost" size="sm" isIconOnly className="-mr-2">
+                      <MoreVerticalIcon className="size-4 text-gray-400" />
+                    </Button>
+                    <Dropdown.Popover placement="bottom end" className="min-w-36">
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          key="edit-session"
+                          onClick={() => setSelectedSession(session)}
+                        >
+                          수업 수정
+                        </Dropdown.Item>
+                        {getIsDone(session) && (
+                          <Dropdown.Item
+                            key="edit-feedback"
+                            onClick={() => setFeedbackSession(session)}
+                          >
+                            피드백 수정
+                          </Dropdown.Item>
+                        )}
+                        <Dropdown.Item
+                          key="edit-files"
+                          onClick={() => setFilesSession(session)}
+                        >
+                          파일 첨부
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown.Popover>
+                  </Dropdown>
+                </div>
               </li>
             ))}
           </ul>
