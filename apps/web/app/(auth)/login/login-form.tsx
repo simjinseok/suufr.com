@@ -35,6 +35,8 @@ export default function LoginForm() {
   const paramError = errorParam === 'unavailable' ? UNAVAILABLE_MESSAGE : errorParam ? SOCIAL_ERROR_MESSAGE : null;
   // 비밀번호 재설정 완료 후 (?reset=1)
   const resetDone = searchParams.get('reset') === '1';
+  // 계정 삭제 완료 후 (?deleted=1, 설정 > 보안의 계정 삭제)
+  const accountDeleted = searchParams.get('deleted') === '1';
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -232,6 +234,12 @@ export default function LoginForm() {
           {resetDone && !loginState.timestamp && (
             <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
               비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요.
+            </div>
+          )}
+
+          {accountDeleted && !loginState.timestamp && (
+            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+              계정이 삭제되었습니다. 그동안 스프를 이용해주셔서 감사합니다.
             </div>
           )}
 

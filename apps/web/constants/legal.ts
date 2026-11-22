@@ -3,8 +3,8 @@
  * apps/api/src/common/constants/legal.ts 와 값이 같아야 한다 (미러). 개정 시 두 파일의 값을 함께 올린다.
  * 개정해도 재동의를 요구하지 않는다 — 약관 제3조대로 시행 7일 전(불리한 변경은 30일 전) 이메일 공지로 갈음한다(운영 작업).
  */
-export const TERMS_VERSION = '2026-07-08';
-export const PRIVACY_POLICY_VERSION = '2026-07-08';
+export const TERMS_VERSION = '2026-11-22';
+export const PRIVACY_POLICY_VERSION = '2026-11-22';
 
 /** 'YYYY-MM-DD' → 'YYYY년 M월 D일' */
 export function formatLegalDate(version: string): string {

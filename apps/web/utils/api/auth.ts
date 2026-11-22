@@ -127,4 +127,13 @@ export const authApi = {
     regenerateBackupCodes: (data: { password: string }) =>
       apiClient<TwoFactorBackupCodesResponse>('/auth/two-factor/backup-codes', { method: 'POST', body: data, withSessionToken: true }),
   },
+
+  // 계정 삭제(회원 탈퇴). 비밀번호가 있는 계정(/auth/me user.hasPassword)은 password, 없는 계정은 이메일 코드(otp)로 재인증한다
+  account: {
+    // 계정 이메일로 6자리 코드 발송(10분 만료). 재요청 쿨다운 중이면 429
+    requestDeleteOtp: () =>
+      apiClient<{ success: boolean }>('/auth/account/delete-otp', { method: 'POST' }),
+    delete: (data: { password?: string; otp?: string }) =>
+      apiClient<{ success: boolean }>('/auth/account/delete', { method: 'POST', body: data }),
+  },
 };

@@ -78,3 +78,12 @@ export const twoFactorPasswordSchema = z.object({
 export const twoFactorCodeSchema = z.object({
   code: z.string().trim().length(6, { error: '인증 앱의 6자리 코드를 입력해주세요' }),
 });
+
+// 계정 삭제 재인증 — 비밀번호가 있는 계정은 비밀번호, 없는 계정(Google 전용 등)은 이메일로 받은 6자리 코드
+export const accountDeletePasswordSchema = z.object({
+  password: z.string().min(1, { error: '비밀번호를 입력해주세요' }),
+});
+
+export const accountDeleteOtpSchema = z.object({
+  otp: z.string().trim().regex(/^\d{6}$/, { error: '이메일로 받은 6자리 코드를 입력해주세요' }),
+});
