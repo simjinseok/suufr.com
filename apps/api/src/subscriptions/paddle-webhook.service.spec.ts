@@ -3,7 +3,7 @@ import type { ConfigService } from '@nestjs/config';
 import type { EventEntity, TransactionNotification } from '@paddle/paddle-node-sdk';
 import { PaddleWebhookService, type PaddleSubscriptionLike } from './paddle-webhook.service';
 import type { BillingSyncService } from './billing-sync.service';
-import type { BillingWebhookEnvelope } from './billing.types';
+import { BillingSyncRejectedError, type BillingWebhookEnvelope } from './billing.types';
 import { buildCheckoutCustomData } from './checkout-custom-data';
 
 const now = new Date('2026-10-07T00:00:00Z');
@@ -281,15 +281,14 @@ describe('PaddleWebhookService.handleEvent 라우팅', () => {
     expect(sync.recordTransaction).toHaveBeenCalledWith(TX, expect.objectContaining({ userId: null }));
   });
 
-  it('사용자를 찾지 못해 반영하지 못하면 구독·거래 id 로 오류 로그를 남긴다', async () => {
-    const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+  it('사용자를 찾지 못하면 거부(BillingSyncRejectedError)로 롤백한다 — 멱등 행이 남지 않아 재전송으로 복구 가능', async () => {
     const { service, sync } = makeServiceWithSync();
     sync.syncSubscription.mockResolvedValue(false);
     sync.recordTransaction.mockResolvedValue(false);
-    await service.handleEvent(event('subscription.updated', subscription()), {} as never);
-    await service.handleEvent(event('transaction.completed', transactionData()), {} as never);
-    expect(error).toHaveBeenCalledTimes(2);
-    expect(error.mock.calls[0][0]).toContain('sub_1');
-    expect(error.mock.calls[1][0]).toContain('txn_1');
+    // 테스트 대역의 withEventDedup 은 apply 예외를 그대로 전파한다 (실제는 롤백 후 rejected 반환 — billing-sync spec)
+    await expect(service.handleEvent(event('subscription.updated', subscription()), {} as never))
+      .rejects.toThrow(new BillingSyncRejectedError('cannot resolve user for paddle subscription sub_1'));
+    await expect(service.handleEvent(event('transaction.completed', transactionData()), {} as never))
+      .rejects.toThrow(new BillingSyncRejectedError('cannot resolve user for paddle transaction txn_1'));
   });
 });

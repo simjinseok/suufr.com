@@ -8,6 +8,7 @@ import {
   Webhooks,
   type EventEntity,
   type Subscription,
+  type Transaction,
 } from '@paddle/paddle-node-sdk';
 
 import { buildCheckoutCustomData } from './checkout-custom-data';
@@ -56,6 +57,28 @@ export class PaddleClient {
 
   async getSubscription(paddleSubscriptionId: string): Promise<Subscription> {
     return this.getSdk().subscriptions.get(paddleSubscriptionId);
+  }
+
+  /**
+   * 유료 접근이 살아 있는 구독 전체 (active·trialing·past_due). 페이지를 끝까지 읽는다
+   */
+  async listLiveSubscriptions(): Promise<Subscription[]> {
+    const subscriptions: Subscription[] = [];
+    for await (const subscription of this.getSdk().subscriptions.list({ status: ['active', 'trialing', 'past_due'] })) {
+      subscriptions.push(subscription);
+    }
+    return subscriptions;
+  }
+
+  /**
+   * 구독의 완료된 거래 전체. 페이지를 끝까지 읽는다
+   */
+  async listCompletedTransactions(paddleSubscriptionId: string): Promise<Transaction[]> {
+    const transactions: Transaction[] = [];
+    for await (const transaction of this.getSdk().transactions.list({ subscriptionId: [paddleSubscriptionId], status: ['completed'] })) {
+      transactions.push(transaction);
+    }
+    return transactions;
   }
 
   /**
