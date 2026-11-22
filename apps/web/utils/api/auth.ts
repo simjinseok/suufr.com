@@ -23,16 +23,18 @@ type MfaResponse = {
 type SignupResponse = {
   success: boolean;
   message: string;
-  // 실제로 가입됐으면 바로 로그인된 토큰이 온다. 중복 이메일(열거 방지 합성 응답)이면 없다
-  accessToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  userId?: string;
+  // 새 계정이면 true — 인증코드 화면으로 간다. 중복 이메일(열거 방지 합성 응답)이면 없다
+  requiresVerification?: boolean;
 };
 
 type VerifyEmailResponse = {
   success: boolean;
   message: string;
+  // 미인증이던 계정이면 바로 로그인된 토큰이 온다. 이미 인증됐거나 2단계 인증 계정이면 없다(로그인 화면으로)
+  accessToken?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  userId?: string;
 };
 
 type ForgotPasswordResponse = {

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Surface } from '@heroui/react';
 import { AlertTriangle, Crown, MailWarning, Sparkles } from 'lucide-react';
 
@@ -89,9 +88,6 @@ export default function CurrentPlanCard({
             <div className="mt-3 flex items-center gap-2 text-sm text-amber-900 p-3 rounded-lg border border-amber-200 bg-amber-50">
               <MailWarning className="w-4 h-4 shrink-0 text-amber-600" aria-hidden />
               <span className="grow">이메일 인증을 마치면 프로 플랜을 구독할 수 있어요.</span>
-              <Link href="/settings" className="shrink-0 font-medium underline underline-offset-2 hover:text-amber-950">
-                설정에서 인증하기
-              </Link>
             </div>
           )}
 

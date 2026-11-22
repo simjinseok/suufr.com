@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import { scrubEvent, scrubSpan } from './sentry-scrub';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -24,4 +25,7 @@ Sentry.init({
     queues: false,
     graphQL: { document: false, variables: false },
   },
+  // 공유 링크 주소의 shareId 를 보내기 전에 가린다
+  beforeSend: scrubEvent,
+  beforeSendSpan: scrubSpan,
 });

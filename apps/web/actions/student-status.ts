@@ -19,11 +19,7 @@ export type CreateStudentStatusState = {
 export async function createStudentStatus(prevState: CreateStudentStatusState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudentStatus',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       const { studentUuid, ...data } = Object.fromEntries(formData.entries());
@@ -79,11 +75,7 @@ export type UpdateStudentStatusState = {
 export async function updateStudentStatus(prevState: UpdateStudentStatusState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentStatus',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
 

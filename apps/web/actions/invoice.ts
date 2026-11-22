@@ -12,11 +12,7 @@ type CreateInvoiceState = ServerActionState<null>;
 export async function createInvoice(prevState: CreateInvoiceState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createInvoice',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       const { studentUuid } = Object.fromEntries(formData.entries());
@@ -60,11 +56,7 @@ type SettleSessionState = ServerActionState<null>;
 export async function settleSession(prevState: SettleSessionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'settleSession',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: SettleSessionState = {
         success: false,
@@ -127,11 +119,7 @@ const updateInvoiceSchema = z.object({
 export async function updateInvoice(state: UpdateInvoiceState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateInvoice',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const { invoiceUuid, ...data } = Object.fromEntries(formData.entries());
 
@@ -179,11 +167,7 @@ type RemoveInvoiceState = ServerActionState<null>;
 export async function removeInvoice(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeInvoice',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const invoiceUuid = formData.get('invoiceUuid') as string;
 

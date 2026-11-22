@@ -142,13 +142,6 @@ export type Organization = {
   address?: string;
 };
 
-export type TAppToken = {
-  uuid: string;
-  name: string;
-  lastUsedAt: Date | null;
-  createdAt: Date;
-};
-
 export type TFolder = {
   id: number;
   uuid: string;

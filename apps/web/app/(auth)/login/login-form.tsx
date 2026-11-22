@@ -37,6 +37,8 @@ export default function LoginForm() {
   const resetDone = searchParams.get('reset') === '1';
   // 계정 삭제 완료 후 (?deleted=1, 설정 > 보안의 계정 삭제)
   const accountDeleted = searchParams.get('deleted') === '1';
+  // 이메일 인증은 끝났지만 바로 로그인되지 않는 계정(2단계 인증 등)일 때 (?verified=1)
+  const verifiedDone = searchParams.get('verified') === '1';
 
   const [loginState, loginAction, isLoginPending] = React.useActionState(
     login,
@@ -74,7 +76,13 @@ export default function LoginForm() {
     else if (loginState.requiresMfa) {
       setShowMfa(true);
     }
-  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, router]);
+    else if (loginState.requiresVerification) {
+      // 이메일 미인증 — api 가 인증코드 메일을 보냈다(못 보냈으면 mailFailed). 인증하면 바로 앱으로 들어간다
+      const query = new URLSearchParams({ email: loginState.fields?.email ?? '' });
+      if (loginState.mailFailed) query.set('mailFailed', '1');
+      router.push(`/verify-email?${query}`);
+    }
+  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, loginState.requiresVerification, loginState.mailFailed, loginState.fields?.email, router]);
 
   React.useEffect(() => {
     if (!mfaState.timestamp) return;
@@ -240,6 +248,12 @@ export default function LoginForm() {
           {accountDeleted && !loginState.timestamp && (
             <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
               계정이 삭제되었습니다. 그동안 스프를 이용해주셔서 감사합니다.
+            </div>
+          )}
+
+          {verifiedDone && !loginState.timestamp && (
+            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+              이메일 인증이 완료되었습니다. 로그인해주세요.
             </div>
           )}
 

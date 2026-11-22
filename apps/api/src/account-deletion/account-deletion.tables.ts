@@ -29,7 +29,6 @@ export const DELETED_MODELS = [
   'SessionMediaFile',
   'UserSettings',
   'UserStorageQuota',
-  'AppToken',
   'ExternalServiceToken',
   'GoogleSyncToken',
   'SessionGoogleEvent',

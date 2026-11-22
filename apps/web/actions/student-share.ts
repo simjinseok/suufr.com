@@ -15,11 +15,7 @@ type CreateStudentShareState = {
 export async function createStudentShare(prevState: CreateStudentShareState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudentShare',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: CreateStudentShareState = {
         success: false,
@@ -50,11 +46,7 @@ type DeleteStudentShareState = {
 export async function deleteStudentShare(prevState: DeleteStudentShareState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'deleteStudentShare',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: DeleteStudentShareState = {
         success: false,

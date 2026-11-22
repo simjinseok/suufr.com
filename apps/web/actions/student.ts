@@ -18,11 +18,7 @@ const createStudentSchema = z.object({
 export async function createStudent(prevState: any, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudent',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
 
@@ -92,11 +88,7 @@ type UpdateStudentState = ServerActionState<{
 export async function updateStudent(prevState: UpdateStudentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudent',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
@@ -147,11 +139,7 @@ type UpdateStudentProfileImageState = ServerActionState<{
 export async function updateStudentProfileImage(prevState: UpdateStudentProfileImageState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentProfileImage',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
@@ -198,11 +186,7 @@ type UpdateStudentNextPaymentAtState = ServerActionState<{
 export async function updateStudentNextPaymentAt(prevState: UpdateStudentNextPaymentAtState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentNextPaymentAt',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       const formEntries = Object.fromEntries(formData.entries());
@@ -246,10 +230,7 @@ type RemoveStudentResult = {
 export async function removeStudent(studentUuid: string): Promise<RemoveStudentResult> {
   return await Sentry.withServerActionInstrumentation(
     'removeStudent',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {

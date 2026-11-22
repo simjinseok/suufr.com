@@ -33,7 +33,7 @@ const fileNameSchema = z.object({
 export async function getStorageQuota(): Promise<TStorageQuota | null> {
   return await Sentry.withServerActionInstrumentation(
     'getStorageQuota',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -55,7 +55,7 @@ export async function getStorageQuota(): Promise<TStorageQuota | null> {
 export async function getMyMediaFiles(params?: { folderId?: string; search?: string }): Promise<TMediaFile[]> {
   return await Sentry.withServerActionInstrumentation(
     'getMyMediaFiles',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -90,7 +90,7 @@ export type CreateMediaFileResult = {
 export async function createMediaFile(data: CreateMediaFileData): Promise<CreateMediaFileResult> {
   return await Sentry.withServerActionInstrumentation(
     'createMediaFile',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -122,7 +122,7 @@ export type DeleteMediaFileResult = {
 export async function deleteMediaFile(uuid: string): Promise<DeleteMediaFileResult> {
   return await Sentry.withServerActionInstrumentation(
     'deleteMediaFile',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -155,7 +155,7 @@ export type RenameFileState = {
 export async function renameFileAction(prevState: RenameFileState, formData: FormData): Promise<RenameFileState> {
   return await Sentry.withServerActionInstrumentation(
     'renameFile',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: RenameFileState = {
@@ -197,7 +197,7 @@ export async function renameFileAction(prevState: RenameFileState, formData: For
 export async function getMyFolders(): Promise<TFolder[]> {
   return await Sentry.withServerActionInstrumentation(
     'getMyFolders',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -219,7 +219,7 @@ export async function getMyFolders(): Promise<TFolder[]> {
 export async function getFolderBreadcrumb(uuid: string): Promise<TFolderBreadcrumb[]> {
   return await Sentry.withServerActionInstrumentation(
     'getFolderBreadcrumb',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -247,7 +247,7 @@ export type CreateFolderState = {
 export async function createFolderAction(prevState: CreateFolderState, formData: FormData): Promise<CreateFolderState> {
   return await Sentry.withServerActionInstrumentation(
     'createFolder',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: CreateFolderState = {
@@ -296,7 +296,7 @@ export type UpdateFolderState = {
 export async function updateFolderAction(prevState: UpdateFolderState, formData: FormData): Promise<UpdateFolderState> {
   return await Sentry.withServerActionInstrumentation(
     'updateFolder',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: UpdateFolderState = {
@@ -342,7 +342,7 @@ export type DeleteFolderResult = {
 export async function deleteFolder(uuid: string): Promise<DeleteFolderResult> {
   return await Sentry.withServerActionInstrumentation(
     'deleteFolder',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -375,7 +375,7 @@ export type MoveFileResult = {
 export async function moveFileToFolder(fileUuid: string, folderUuid: string | null): Promise<MoveFileResult> {
   return await Sentry.withServerActionInstrumentation(
     'moveFileToFolder',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {

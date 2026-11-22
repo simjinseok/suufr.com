@@ -39,14 +39,14 @@ model Student {
   name            String
   notes           String
   status          StudentStatusValue @default(pending)
-  profileImageUrl String?            @map("profile_image_url") // CardDAV 사진 동기화용
+  profileImageUrl String?            @map("profile_image_url")
   nextPaymentAt   DateTime?          @map("next_payment_at") @db.Date
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(0)
   deletedAt       DateTime?          @map("deleted_at") @db.Timestamptz(0)
   userId          String             @map("user_id") @db.Uuid // 유지 (추후 제거)
 
-  // 연락처 정보 (CardDAV)
+  // 연락처 정보
   phone String?
   email String?
 
@@ -314,22 +314,6 @@ model UserSettings {
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz(0)
 
   @@map("user_settings")
-}
-
-// 앱 토큰 (CalDAV/CardDAV 인증용)
-model AppToken {
-  id         Int       @id @default(autoincrement())
-  uuid       String    @unique @default(dbgenerated("uuidv7()")) @db.Uuid
-  name       String // "iPhone", "MacBook" 등
-  tokenHash  String    @map("token_hash")
-  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(0)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(0)
-  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(0)
-  userId     String    @map("user_id") @db.Uuid
-
-  @@index([userId, deletedAt])
-  @@index([tokenHash, deletedAt])
-  @@map("app_tokens")
 }
 
 // 외부 서비스 OAuth 토큰 (Google 등)

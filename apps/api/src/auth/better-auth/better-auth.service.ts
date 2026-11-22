@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import { decodeJwt } from 'jose';
 import type { AuthContext } from 'better-auth';
@@ -57,6 +57,12 @@ function bearerHeaders(sessionToken: string): Headers {
   return new Headers({ authorization: `Bearer ${sessionToken}` });
 }
 
+/** 메일 인증코드 실패 한도: 이메일마다 1시간에 10번. 6자리(100만 가지)라 하루 최대 240번 → 하루 성공 확률 약 0.024% */
+const OTP_FAILURE_LIMIT = 10;
+const OTP_FAILURE_WINDOW_MS = 60 * 60 * 1000;
+/** 틀린 코드로 세는 better-auth 에러 코드 (만료·코드당 시도 초과 포함) */
+const OTP_FAILURE_CODES = new Set(['INVALID_OTP', 'OTP_EXPIRED', 'TOO_MANY_ATTEMPTS']);
+
 function requestHeaders(meta?: RequestMeta): Headers {
   const headers = new Headers();
   if (meta?.ip) headers.set('x-forwarded-for', meta.ip);
@@ -81,6 +87,9 @@ function cookiePairsFromSetCookie(headers: Headers): string {
 export class BetterAuthService {
   /** appleTokens 는 Nest 에서는 항상 주입된다. 선택 인자인 것은 Apple 과 무관한 spec 이 auth 만으로 만들 수 있게 하려는 것 */
   constructor(@Inject(BETTER_AUTH) private readonly auth: Auth, private readonly appleTokens?: AppleTokenService) {}
+
+  /** '종류:이메일' → 최근 1시간 안의 인증코드 실패 시각들 (checkOtp) */
+  private readonly otpFailures = new Map<string, number[]>();
 
   /** auth.api 호출. APIError 는 한국어 HttpException 으로(messages 로 provider 별 문구 덮어쓰기), better-auth 가 삼킨 OTP 메일 실패는 503 으로 바꾼다 */
   private async run<T>(fn: () => Promise<T>, messages?: Readonly<Record<string, string>>): Promise<T> {
@@ -148,13 +157,42 @@ export class BetterAuthService {
   }
 
   /**
-   * 이메일 인증(OTP). 가입 즉시 로그인 정책상 소유권 증명 전에 발급된 세션이 있으므로, 증명이 끝나는 이 시점에
-   * 인증을 요청한 세션(callerSessionToken, 그 사용자의 것일 때만)만 남기고 나머지를 전부 폐기한다.
-   * 토큰이 없거나 다른 사용자·만료된 토큰이면 그 사용자의 세션을 모두 폐기한다.
+   * 이메일 인증(OTP). 인증이 끝나면 소유권 증명 전에 생긴 세션을 폐기한다 — 인증을 요청한 세션
+   * (callerSessionToken, 그 사용자의 것일 때만)만 남기고, 토큰이 없거나 다른 사용자·만료된 토큰이면 전부 폐기한다.
+   *
+   * 미인증이던 계정이면 바로 로그인 토큰을 돌려준다(가입·로그인 뒤 인증코드 화면 → 바로 앱).
+   * 이미 인증된 계정이나 2단계 인증을 켠 계정은 null 이다 — 메일 코드만으로 비밀번호·2단계 인증을 건너뛰게 되기 때문.
+   * 이때 호출자는 로그인 화면으로 보낸다.
    */
-  async verifyEmail(email: string, otp: string, callerSessionToken?: string): Promise<void> {
-    const { user } = await this.run(() => this.auth.api.verifyEmailOTP({ body: { email, otp } }));
-    await this.revokeUnprovenSessions(user.id, callerSessionToken);
+  async verifyEmail(email: string, otp: string, callerSessionToken?: string, meta?: RequestMeta): Promise<IssuedTokens | null> {
+    const ctx = await this.auth.$context;
+    const before = await ctx.internalAdapter.findUserByEmail(email.toLowerCase());
+    const { user } = await this.checkOtp('email-verification', email, () => this.auth.api.verifyEmailOTP({ body: { email, otp } }));
+
+    const wasUnverified = before?.user.id === user.id && !before.user.emailVerified;
+    // 이미 인증된 계정이면 '소유권 증명 전 세션'이 없으니 지우지 않는다(코드를 다시 받아 넣어도 다른 기기 로그인이 풀리지 않게)
+    if (wasUnverified) await this.revokeUnprovenSessions(user.id, callerSessionToken);
+
+    const twoFactorEnabled = (before?.user as { twoFactorEnabled?: boolean | null } | undefined)?.twoFactorEnabled === true;
+    if (!wasUnverified || twoFactorEnabled) return null;
+
+    const session = await this.run(() => ctx.internalAdapter.createSession(user.id, false, {
+      ...(meta?.ip ? { ipAddress: meta.ip } : {}),
+      ...(meta?.userAgent ? { userAgent: meta.userAgent } : {}),
+    }));
+    return this.issueTokens(session.token, user.id);
+  }
+
+  /**
+   * 비밀번호 계정이 있는데 이메일이 미인증인 사용자인지. 2단계 인증 설정·Google 연동을 막는 데 쓴다(방어용).
+   * 비밀번호 없이 Google 로만 가입한 사용자는 인증 여부와 관계없이 false 다.
+   */
+  async isUnverifiedPasswordUser(userId: string): Promise<boolean> {
+    const { internalAdapter } = await this.auth.$context;
+    const user = await internalAdapter.findUserById(userId);
+    if (!user || user.emailVerified) return false;
+    const accounts = await internalAdapter.findAccounts(userId);
+    return accounts.some(account => account.providerId === 'credential');
   }
 
   private async revokeUnprovenSessions(userId: string, keepSessionToken?: string): Promise<void> {
@@ -178,7 +216,43 @@ export class BetterAuthService {
   }
 
   async resetPassword(email: string, otp: string, password: string): Promise<void> {
-    await this.run(() => this.auth.api.resetPasswordEmailOTP({ body: { email, otp, password } }));
+    await this.checkOtp('password-reset', email, () => this.auth.api.resetPasswordEmailOTP({ body: { email, otp, password } }));
+  }
+
+  /**
+   * 메일 인증코드 확인. 이메일마다 1시간에 OTP_FAILURE_LIMIT 번 틀리면 코드를 확인하지 않고 429 로 거부한다.
+   * better-auth 의 시도 제한(코드 하나당 5번)은 코드를 다시 받으면 처음부터라서, 재발송을 반복하며 6자리를 맞히는 것을 막지 못한다.
+   * 이 카운터는 재발송해도 줄지 않고, 맞히면 비운다. 프로세스 메모리에 두므로 api 가 한 프로세스라는 전제다.
+   */
+  private async checkOtp<T>(kind: 'email-verification' | 'password-reset', email: string, fn: () => Promise<T>): Promise<T> {
+    const key = `${kind}:${email.trim().toLowerCase()}`;
+    const now = Date.now();
+    const recent = (this.otpFailures.get(key) ?? []).filter(at => now - at < OTP_FAILURE_WINDOW_MS);
+    if (recent.length >= OTP_FAILURE_LIMIT) {
+      this.otpFailures.set(key, recent);
+      throw new HttpException(
+        { message: '인증코드를 너무 많이 틀렸습니다. 1시간 뒤에 다시 시도해주세요.', error: 'TOO_MANY_OTP_FAILURES' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    try {
+      const result = await this.run(fn);
+      this.otpFailures.delete(key);
+      return result;
+    }
+    catch (error) {
+      const code = error instanceof HttpException ? (error.getResponse() as { error?: string }).error : undefined;
+      if (code && OTP_FAILURE_CODES.has(code)) {
+        this.otpFailures.set(key, [...recent, now]);
+      }
+      else if (recent.length) {
+        this.otpFailures.set(key, recent);
+      }
+      else {
+        this.otpFailures.delete(key);
+      }
+      throw error;
+    }
   }
 
   // ---- 2단계 인증 관리 (로그인 상태, 세션 토큰 필요) ----

@@ -6,9 +6,10 @@ import { GoogleCalendarService } from './services/google-calendar.service';
 import { GoogleContactsService } from './services/google-contacts.service';
 import { GoogleSchedulerService } from './google-scheduler.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, ConfigModule],
+  imports: [PrismaModule, ConfigModule, AuthModule],
   controllers: [GoogleController],
   providers: [
     GoogleService,

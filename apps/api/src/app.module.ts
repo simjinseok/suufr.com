@@ -7,8 +7,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
-import { CarddavModule } from './carddav/carddav.module';
-import { CaldavModule } from './caldav/caldav.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { StudentsModule } from './students/students.module';
 import { InvoicesModule } from './invoices/invoices.module';
@@ -20,7 +18,6 @@ import { MeetingsModule } from './meetings/meetings.module';
 import { StudentStatusesModule } from './student-statuses/student-statuses.module';
 import { StudentCommentsModule } from './student-comments/student-comments.module';
 import { SettingsModule } from './settings/settings.module';
-import { AppTokensModule } from './app-tokens/app-tokens.module';
 import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
 import { CurriculumsModule } from './curriculums/curriculums.module';
@@ -51,9 +48,6 @@ import { AccountDeletionModule } from './account-deletion/account-deletion.modul
     StudentStatusesModule,
     StudentCommentsModule,
     SettingsModule,
-    AppTokensModule,
-    CarddavModule,
-    CaldavModule,
     GoogleModule,
     StorageModule,
     CurriculumsModule,

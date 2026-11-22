@@ -51,7 +51,7 @@ export class ProfileImageService {
     }
 
     // 미변경(기존 URL 재전송) — 신규 검증보다 먼저 와야 레거시 URL(구 공개 경로,
-    // Bunny CDN, CardDAV 업로드 경로)을 그대로 재전송하는 폼 저장이 깨지지 않는다.
+    // Bunny CDN 등)을 그대로 재전송하는 폼 저장이 깨지지 않는다.
     if (incoming === current) {
       return { url: undefined, previousUrlToDelete: null };
     }

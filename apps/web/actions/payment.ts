@@ -41,11 +41,7 @@ type UpdatePaymentState = ServerActionState<{
 export async function updatePayment(prevState: UpdatePaymentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updatePayment',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const { studentUuid, paymentUuid, ...data } = Object.fromEntries(formData.entries());
 
@@ -117,11 +113,7 @@ type RemovePaymentState = {
 export async function removePayment(prevState: RemovePaymentState, formData: FormData): Promise<RemovePaymentState> {
   return await Sentry.withServerActionInstrumentation(
     'removePayment',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const paymentUuid = formData.get('paymentUuid') as string;
 

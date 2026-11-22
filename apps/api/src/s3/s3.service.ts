@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import {
   S3Client,
@@ -17,8 +18,6 @@ import {
   getSignedUrl as getCloudFrontSignedUrl,
   getSignedCookies as getCloudFrontSignedCookies,
 } from '@aws-sdk/cloudfront-signer';
-import { randomUUID } from 'crypto';
-import { folderByContentType } from '../common/utils/content-type';
 
 /**
  * 등록 전 업로드 객체에 붙는 태그.
@@ -164,63 +163,6 @@ export class S3Service {
     }
     catch (error) {
       console.error('S3 headObject error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Upload file directly to S3 (server-side)
-   * Used for CardDAV base64 uploads
-   * @param key - S3 object key
-   * @param body - File content as Buffer
-   * @param contentType - MIME type
-   * @returns S3 object URL or null on error
-   */
-  async uploadFile(
-    key: string,
-    body: Buffer,
-    contentType: string,
-  ): Promise<string | null> {
-    try {
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: body,
-        ContentType: contentType,
-      });
-
-      await this.s3Client.send(command);
-
-      // Return the S3 URL (will be served via Bunny CDN)
-      return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-    }
-    catch (error) {
-      console.error('S3 upload error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Upload base64 image data to S3
-   * @param base64Data - base64 encoded image data
-   * @param mediaType - image MIME type (default: image/jpeg)
-   * @returns Uploaded image URL or null
-   */
-  async uploadPhoto(
-    base64Data: string,
-    mediaType = 'image/jpeg',
-  ): Promise<string | null> {
-    try {
-      const key = randomUUID();
-      const folder = folderByContentType(mediaType);
-      const s3Key = `${folder}/${key}`;
-
-      const buffer = Buffer.from(base64Data, 'base64');
-
-      return await this.uploadFile(s3Key, buffer, mediaType);
-    }
-    catch (error) {
-      console.error('S3 photo upload error:', error);
       return null;
     }
   }

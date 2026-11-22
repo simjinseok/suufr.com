@@ -2,8 +2,6 @@ import Link from 'next/link';
 import { ChevronRight, CreditCard, Link2, Shield } from 'lucide-react';
 
 import { getUserSettings } from '@/utils/user-settings';
-import { getSession } from '@/utils/auth';
-import EmailVerificationSection from '@/components/settings/email-verification-section';
 
 import SettingsForm from './_settings-form';
 
@@ -11,16 +9,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const settings = await getUserSettings();
-  const session = await getSession();
 
   return (
     <div>
       <h1 className="text-2xl font-bold">설정</h1>
       <div className="mt-6 flex flex-col gap-6">
-        {/* 가입 직후 미인증 계정 — 여기서 인증코드를 입력한다. 인증되면 섹션이 사라진다 */}
-        {session?.user.emailVerified === false && session.user.email && (
-          <EmailVerificationSection email={session.user.email} />
-        )}
         <SettingsForm settings={settings} />
 
         <Link
@@ -65,7 +58,7 @@ export default async function Page() {
             </div>
             <div>
               <h2 className="text-lg font-semibold">보안 설정</h2>
-              <p className="text-sm text-gray-500">2단계 인증, 앱 토큰 관리, 계정 삭제</p>
+              <p className="text-sm text-gray-500">2단계 인증, 계정 삭제</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />

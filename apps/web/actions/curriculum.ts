@@ -27,11 +27,7 @@ const createCurriculumSchema = z.object({
 export async function createCurriculum(prevState: CreateCurriculumState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createCurriculum',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
 
@@ -81,11 +77,7 @@ const updateCurriculumSchema = z.object({
 export async function updateCurriculum(prevState: UpdateCurriculumState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateCurriculum',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const { curriculumUuid, ...data } = Object.fromEntries(formData.entries());
 
@@ -128,11 +120,7 @@ type RemoveCurriculumState = ServerActionState<null>;
 export async function removeCurriculum(prevState: RemoveCurriculumState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeCurriculum',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const curriculumUuid = formData.get('curriculumUuid') as string;
 
@@ -169,11 +157,7 @@ const createCurriculumItemSchema = z.object({
 export async function createCurriculumItem(prevState: CreateCurriculumItemState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createCurriculumItem',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
       const curriculumUuid = data.curriculumUuid as string;
@@ -232,11 +216,7 @@ const updateCurriculumItemSchema = z.object({
 export async function updateCurriculumItem(prevState: UpdateCurriculumItemState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateCurriculumItem',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
       const itemUuid = data.itemUuid as string;
@@ -293,11 +273,7 @@ type RemoveCurriculumItemState = ServerActionState<null>;
 export async function removeCurriculumItem(prevState: RemoveCurriculumItemState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeCurriculumItem',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const itemUuid = formData.get('itemUuid') as string;
       const curriculumUuid = formData.get('curriculumUuid') as string;
@@ -336,7 +312,7 @@ const curriculumSectionSchema = z.object({
 export async function createCurriculumSection(prevState: CurriculumSectionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createCurriculumSection',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
       const curriculumUuid = data.curriculumUuid as string;
@@ -374,7 +350,7 @@ export async function createCurriculumSection(prevState: CurriculumSectionState,
 export async function updateCurriculumSection(prevState: CurriculumSectionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateCurriculumSection',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
       const sectionUuid = data.sectionUuid as string;
@@ -414,7 +390,7 @@ type RemoveCurriculumSectionState = ServerActionState<null>;
 export async function removeCurriculumSection(prevState: RemoveCurriculumSectionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeCurriculumSection',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const sectionUuid = formData.get('sectionUuid') as string;
       const curriculumUuid = formData.get('curriculumUuid') as string;
@@ -462,7 +438,7 @@ type MoveItemToSectionState = ServerActionState<{ sectionUuid: string }>;
 export async function moveCurriculumItemToSection(prevState: MoveItemToSectionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'moveCurriculumItemToSection',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const itemUuid = formData.get('itemUuid') as string;
       const curriculumUuid = formData.get('curriculumUuid') as string;

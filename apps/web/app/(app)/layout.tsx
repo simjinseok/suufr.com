@@ -7,7 +7,6 @@ import { DEFAULT_TIMEZONE } from '@/utils/timezone';
 import { ModalManagerProvider } from '@/contexts/modal-manager';
 import { CloudFrontCookiesInitializer } from '@/components/cloudfront-cookies-initializer';
 import { TimezoneInitializer } from '@/components/timezone-initializer';
-import EmailVerificationBanner from '@/components/auth/email-verification-banner';
 import { Sidebar } from './_sidebar';
 
 export default async function AuthenticatedLayout({
@@ -49,8 +48,6 @@ export default async function AuthenticatedLayout({
               <div className="h-full">
                 {/* 기본 폭은 3xl. 넓은 표가 필요한 페이지는 루트에 data-wide-page를 달아 1380px까지 쓴다(메인) */}
                 <div className="max-w-3xl has-[[data-wide-page]]:max-w-[1380px] mx-auto py-6 px-4 sm:px-2">
-                  {/* 가입 직후 로그인된 미인증 계정 — 인증을 마칠 때까지 안내 (차단하지 않음) */}
-                  {session.user.emailVerified === false && <EmailVerificationBanner />}
                   {children}
                 </div>
               </div>
