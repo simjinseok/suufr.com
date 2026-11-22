@@ -3,8 +3,10 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   DeleteObjectTaggingCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import {
   CloudFrontClient,
@@ -24,6 +26,9 @@ import { folderByContentType } from '../common/utils/content-type';
  * 룰 설정은 docs/s3-pending-lifecycle.md 참고.
  */
 export const PENDING_UPLOAD_TAG = 'status=pending';
+
+/** 일괄 삭제를 허용하는 prefix 형식 — 사용자 단위 prefix 만 (`users/{uuid}/`, `images/profiles/{uuid}/`). 버킷 전체·상위 폴더 삭제 방지 */
+const DELETABLE_PREFIX_PATTERN = /^(users|images\/profiles)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/$/;
 
 @Injectable()
 export class S3Service {
@@ -242,6 +247,40 @@ export class S3Service {
   }
 
   /**
+   * prefix 아래 객체 전체 삭제 (계정 삭제). ListObjectsV2 한 페이지(최대 1000개)씩 DeleteObjects 로 지운다.
+   * 사용자 단위 prefix(DELETABLE_PREFIX_PATTERN)만 받는다. 실패(일부 키 실패 포함)는 던진다 — 호출자가 재시도 여부를 정한다.
+   * @returns 삭제한 객체 수
+   */
+  async deleteByPrefix(prefix: string): Promise<number> {
+    if (!DELETABLE_PREFIX_PATTERN.test(prefix)) {
+      throw new Error(`Refusing to delete by prefix: ${prefix}`);
+    }
+
+    let deleted = 0;
+    let continuationToken: string | undefined;
+    do {
+      const page = await this.s3Client.send(new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }));
+      const keys = (page.Contents ?? []).map(object => object.Key).filter((key): key is string => Boolean(key));
+      if (keys.length > 0) {
+        const result = await this.s3Client.send(new DeleteObjectsCommand({
+          Bucket: this.bucketName,
+          Delete: { Objects: keys.map(Key => ({ Key })), Quiet: true },
+        }));
+        if (result.Errors?.length) {
+          throw new Error(`S3 deleteByPrefix failed for ${result.Errors.length} key(s) under ${prefix}: ${result.Errors[0]?.Code} ${result.Errors[0]?.Message}`);
+        }
+        deleted += keys.length;
+      }
+      continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (continuationToken);
+    return deleted;
+  }
+
+  /**
    * Delete file by URL
    * @param url - S3 URL to delete
    * @returns true on success, false on error
@@ -308,6 +347,32 @@ export class S3Service {
         },
       });
       await this.cloudFrontClient.send(command);
+      return true;
+    }
+    catch (error) {
+      console.error('CloudFront cache invalidation failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * CloudFront 경로 여러 개 무효화. 와일드카드(`/images/profiles/{userId}/*`)를 쓸 수 있다
+   * @returns true on success, false on error (or if not configured)
+   */
+  async invalidateCloudFrontPaths(paths: string[]): Promise<boolean> {
+    if (!this.distributionId) {
+      console.warn('CLOUDFRONT_DISTRIBUTION_ID not configured, skipping cache invalidation');
+      return true;
+    }
+
+    try {
+      await this.cloudFrontClient.send(new CreateInvalidationCommand({
+        DistributionId: this.distributionId,
+        InvalidationBatch: {
+          CallerReference: `paths-${Date.now()}-${randomUUID()}`,
+          Paths: { Quantity: paths.length, Items: paths },
+        },
+      }));
       return true;
     }
     catch (error) {

@@ -4,8 +4,12 @@ import { Reflector } from '@nestjs/core';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { BetterAuthService } from '../better-auth/better-auth.service';
+import type { UserExistenceService } from './user-existence.service';
 
 const ISSUER = 'https://api.example.test';
+
+/** 사용자 존재 확인은 항상 통과 (JWT 검증 자체를 보는 테스트용) */
+const allUsersExist = { exists: async () => true } as unknown as UserExistenceService;
 
 function makeConfig(values: Record<string, string | undefined>) {
   return { get: (key: string) => values[key] } as unknown as ConfigService;
@@ -46,13 +50,13 @@ async function signToken(privateKey: PrivateKey, claims: Record<string, unknown>
 describe('JwtAuthGuard', () => {
   it('@Public() 라우트는 토큰 없이 통과한다', async () => {
     const { context, reflector } = makeContext(undefined, true);
-    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService);
+    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService, allUsersExist);
     await expect(guard.canActivate(context)).resolves.toBe(true);
   });
 
   it('토큰이 없으면 401', async () => {
     const { context, reflector } = makeContext(undefined);
-    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService);
+    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), {} as BetterAuthService, allUsersExist);
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -61,7 +65,7 @@ describe('JwtAuthGuard', () => {
     const getJwks = vi.fn().mockResolvedValue(jwks);
     const token = await signToken(privateKey, { sub: '11111111-1111-4111-8111-111111111111', email: 'a@example.com', name: '가나' });
     const { context, request, reflector } = makeContext(`Bearer ${token}`);
-    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService);
+    const guard = new JwtAuthGuard(reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService, allUsersExist);
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(request.user).toEqual({ userId: '11111111-1111-4111-8111-111111111111', email: 'a@example.com', username: '가나' });
@@ -80,7 +84,7 @@ describe('JwtAuthGuard', () => {
       const getJwks = vi.fn()
         .mockResolvedValueOnce(first.jwks)
         .mockResolvedValue({ keys: [...first.jwks.keys, ...second.jwks.keys] });
-      const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService);
+      const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks } as unknown as BetterAuthService, allUsersExist);
 
       await guard.canActivate(makeContext(`Bearer ${await signToken(first.privateKey, {})}`).context);
       expect(getJwks).toHaveBeenCalledTimes(1);
@@ -102,7 +106,7 @@ describe('JwtAuthGuard', () => {
 
   it('aud 가 다르거나 만료된 better-auth JWT 는 401', async () => {
     const { privateKey, jwks } = await makeKeys();
-    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService);
+    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService, allUsersExist);
 
     const wrongAud = await signToken(privateKey, {}, { aud: 'https://other.example.test' });
     await expect(guard.canActivate(makeContext(`Bearer ${wrongAud}`).context)).rejects.toBeInstanceOf(UnauthorizedException);
@@ -114,7 +118,25 @@ describe('JwtAuthGuard', () => {
   it('iss 가 다른 JWT 는 401', async () => {
     const { privateKey, jwks } = await makeKeys();
     const token = await signToken(privateKey, {}, { iss: 'https://other-issuer.example.test' });
-    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService);
+    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService, allUsersExist);
     await expect(guard.canActivate(makeContext(`Bearer ${token}`).context)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+  it('서명이 맞아도 sub 사용자가 없으면(탈퇴) 401 이고 request.user 를 넣지 않는다', async () => {
+    const { privateKey, jwks } = await makeKeys();
+    const token = await signToken(privateKey, { sub: '11111111-1111-4111-8111-111111111111' });
+    const exists = vi.fn().mockResolvedValue(false);
+    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService, { exists } as unknown as UserExistenceService);
+    const { context, request } = makeContext(`Bearer ${token}`);
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(exists).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111111');
+    expect(request.user).toBeUndefined();
+  });
+
+  it('사용자 존재 확인의 DB 오류는 401 로 바꾸지 않는다', async () => {
+    const { privateKey, jwks } = await makeKeys();
+    const token = await signToken(privateKey, {});
+    const exists = vi.fn().mockRejectedValue(new Error('db down'));
+    const guard = new JwtAuthGuard(makeContext().reflector, makeConfig({ BETTER_AUTH_URL: ISSUER }), { getJwks: async () => jwks } as unknown as BetterAuthService, { exists } as unknown as UserExistenceService);
+    await expect(guard.canActivate(makeContext(`Bearer ${token}`).context)).rejects.toThrow('db down');
   });
 });

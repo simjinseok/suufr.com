@@ -5,7 +5,7 @@ import { BillingSyncRejectedError, type BillingSubscriptionState, type BillingTr
 import { SubscriptionsService } from './subscriptions.service';
 import type { PrismaService } from '../prisma/prisma.service';
 
-vi.mock('@sentry/nestjs', () => ({ captureException: vi.fn() }));
+vi.mock('@sentry/nestjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }));
 
 const DAY = 86_400_000;
 const now = new Date('2026-10-07T00:00:00Z');
@@ -43,7 +43,13 @@ function row(overrides: Partial<Row> & Pick<Row, 'userId' | 'provider'>): Row {
 }
 
 /** userId 또는 (provider, providerSubscriptionId) 로 찾는 in-memory tx mock */
-function makeTx(rows: Row[], orders: Array<{ provider: string; providerTransactionId: string; status: string }> = []) {
+function makeTx(
+  rows: Row[],
+  orders: Array<{ provider: string; providerTransactionId: string; status: string }> = [],
+  deletedUserIds: string[] = [],
+  /** account_deletions 는 있지만 users 도 남아 있는(탈퇴 진행 중) 사용자 */
+  aliveUserIds: string[] = [],
+) {
   const findUnique = vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
     if (typeof where.userId === 'string') {
       return rows.find(r => r.userId === where.userId) ?? null;
@@ -60,8 +66,14 @@ function makeTx(rows: Row[], orders: Array<{ provider: string; providerTransacti
   const orderUpsert = vi.fn().mockResolvedValue({});
   const createMany = vi.fn().mockResolvedValue({ count: 1 });
   const executeRaw = vi.fn().mockResolvedValue(1);
+  const deletionFindUnique = vi.fn(async ({ where }: { where: { userId: string } }) =>
+    deletedUserIds.includes(where.userId) ? { userId: where.userId } : null);
+  const userFindUnique = vi.fn(async ({ where }: { where: { id: string } }) =>
+    deletedUserIds.includes(where.id) && !aliveUserIds.includes(where.id) ? null : { id: where.id });
   const tx = {
     $executeRaw: executeRaw,
+    accountDeletion: { findUnique: deletionFindUnique },
+    user: { findUnique: userFindUnique },
     userSubscription: { findUnique, upsert, deleteMany },
     subscriptionOrder: { findUnique: orderFindUnique, upsert: orderUpsert },
     billingWebhookEvent: { createMany },
@@ -223,6 +235,69 @@ describe('BillingSyncService.syncSubscription — 식별과 가드', () => {
     await makeService(tx).syncSubscription(tx as never, state({ provider: 'google', subscriptionId: 'T2', replacesSubscriptionId: 'T1', userId: null, environment: 'production' }));
     expect(upsert.mock.calls[0][0].where).toEqual({ userId: USER_A });
     expect(upsert.mock.calls[0][0].update.providerSubscriptionId).toBe('T2');
+  });
+});
+
+describe('BillingSyncService — 탈퇴한 사용자', () => {
+  it('account_deletions 에 있는 사용자의 구독 이벤트는 행을 만들지 않고 true (거부·재시도 없음)', async () => {
+    const { tx, upsert, del } = makeTx([], [], [USER_A]);
+    const ok = await makeService(tx).syncSubscription(tx as never, state({ status: 'expired', currentPeriodEnd: past }));
+    expect(ok).toBe(true);
+    expect(upsert).not.toHaveBeenCalled();
+    expect(del).not.toHaveBeenCalled();
+  });
+
+  it('웹훅 경로: 탈퇴한 사용자의 subscription.canceled 는 applied 로 끝나 멱등 행이 남고 구독 행은 생기지 않는다', async () => {
+    const { tx, upsert, createMany } = makeTx([], [], [USER_A]);
+    const service = makeService(tx);
+    const outcome = await service.withEventDedup(
+      { provider: 'paddle', eventId: 'evt_del', eventType: 'subscription.canceled', occurredAt: now, payload: {} },
+      USER_A,
+      async (t) => {
+        if (!await service.syncSubscription(t, state({ status: 'expired' }))) throw new BillingSyncRejectedError('unresolved');
+      },
+    );
+    expect(outcome).toBe('applied');
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it('결제 기록(subscription_orders)은 보존 대상이라 탈퇴한 사용자여도 그대로 기록한다', async () => {
+    const { tx, orderUpsert } = makeTx([], [], [USER_A]);
+    const ok = await makeService(tx).recordTransaction(tx as never, {
+      provider: 'paddle', environment: 'sandbox', transactionId: 'txn_del', subscriptionId: 'sub_1', userId: USER_A,
+      amount: 6900, currency: 'KRW', periodType: 'normal', periodStart: past, periodEnd: future,
+      status: 'done', failReason: null, approvedAt: now, occurredAt: now,
+    });
+    expect(ok).toBe(true);
+    expect(orderUpsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('탈퇴를 끝낸 계정의 살아 있는 구독 이벤트는 반영하지 않고 Sentry 로 알린다 (해지는 매시 크론)', async () => {
+    vi.mocked(Sentry.captureMessage).mockClear();
+    const { tx, upsert } = makeTx([], [], [USER_A]);
+    const ok = await makeService(tx).syncSubscription(tx as never, state({ status: 'active' }));
+    expect(ok).toBe(true);
+    expect(upsert).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).toHaveBeenCalledWith('탈퇴한 계정의 살아 있는 구독 이벤트', expect.objectContaining({
+      extra: { subscriptionId: 'sub_1', userId: USER_A, status: 'active' },
+    }));
+  });
+
+  it('종료(expired) 이벤트나 탈퇴 진행 중(users 남음)이면 알리지 않는다', async () => {
+    vi.mocked(Sentry.captureMessage).mockClear();
+    const ended = makeTx([], [], [USER_A]);
+    await makeService(ended.tx).syncSubscription(ended.tx as never, state({ status: 'expired', currentPeriodEnd: past }));
+    const inProgress = makeTx([], [], [USER_A], [USER_A]);
+    await makeService(inProgress.tx).syncSubscription(inProgress.tx as never, state({ status: 'active' }));
+    expect(inProgress.upsert).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+  });
+
+  it('탈퇴하지 않은 다른 사용자의 이벤트는 그대로 반영한다', async () => {
+    const { tx, upsert } = makeTx([], [], [USER_B]);
+    await makeService(tx).syncSubscription(tx as never, state());
+    expect(upsert).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -97,6 +97,25 @@ export class BillingSyncService {
     if (!userId) {
       return false;
     }
+
+    // 2-1. 탈퇴한 사용자 (account_deletions, 탈퇴 진행 중 선점 포함): 구독 행을 되살리지 않는다.
+    // 식별은 된 이벤트라 거부(롤백)가 아니라 처리 완료로 돌려준다 — 멱등 행이 남고 200 이라 재전송·재시도 루프가 없다.
+    // 결제 기록(recordTransaction)은 보존 대상이라 여기와 무관하게 그대로 남긴다
+    const deletion = await tx.accountDeletion.findUnique({ where: { userId }, select: { userId: true } });
+    if (deletion) {
+      this.logger.warn(`Ignoring ${state.provider}/${state.subscriptionId} event for deleted user ${userId}`);
+      // 탈퇴를 끝낸 계정(users 없음)에 아직 청구가 이어질 수 있는 구독 — 탈퇴가 로컬 행이 없어 해지하지 못한 경우다.
+      // Paddle 은 매시 누락 구독 크론(SubscriptionsReconciliationService)이 즉시 해지한다. 여기서는 알리기만 한다 (트랜잭션 안에서 외부 호출 금지)
+      if (state.status && state.status !== 'expired' && !await tx.user.findUnique({ where: { id: userId }, select: { id: true } })) {
+        Sentry.captureMessage('탈퇴한 계정의 살아 있는 구독 이벤트', {
+          level: 'warning',
+          tags: { provider: state.provider, feature: 'account-deletion' },
+          extra: { subscriptionId: state.subscriptionId, userId, status: state.status },
+        });
+      }
+      return true;
+    }
+
     let current: UserSubscription | null = existing ?? await tx.userSubscription.findUnique({ where: { userId } });
 
     // 3. 환경 가드 (TestFlight sandbox 구매가 production 행을 덮지 않게)

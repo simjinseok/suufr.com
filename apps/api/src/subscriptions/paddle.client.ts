@@ -91,6 +91,15 @@ export class PaddleClient {
   }
 
   /**
+   * 즉시 해지 (계정 삭제). 남은 기간 환불 없이 바로 canceled 가 된다
+   */
+  async cancelImmediately(paddleSubscriptionId: string): Promise<Subscription> {
+    return this.getSdk().subscriptions.cancel(paddleSubscriptionId, {
+      effectiveFrom: 'immediately',
+    });
+  }
+
+  /**
    * 해지 예약 취소 (scheduled_change 제거 → 갱신 재개)
    */
   async removeScheduledChange(paddleSubscriptionId: string): Promise<Subscription> {

@@ -175,6 +175,17 @@ export class BetterAuthService {
     return result.backupCodes;
   }
 
+  /**
+   * 비밀번호 재확인 (계정 삭제). better-auth deleteUser 와 같은 방식 — credential 계정의 해시를 better-auth 의 password.verify 로 대조한다.
+   * 비밀번호가 없는 계정(Google 전용 등)이면 false.
+   */
+  async verifyPassword(userId: string, password: string): Promise<boolean> {
+    const ctx = await this.auth.$context;
+    const account = await ctx.internalAdapter.findCredentialAccount(userId);
+    if (!account?.password) return false;
+    return ctx.password.verify({ hash: account.password, password });
+  }
+
   /** JWKS 공개키 (가드가 로컬 검증에 사용) */
   async getJwks() {
     return this.auth.api.getJwks();

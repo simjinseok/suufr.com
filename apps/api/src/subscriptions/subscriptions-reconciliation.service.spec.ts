@@ -48,16 +48,31 @@ function completedTransaction(id: string, subscriptionId: string) {
   } as unknown as Transaction;
 }
 
-function build({ remotes, knownIds = [] }: { remotes: Subscription[]; knownIds?: string[] }) {
+function build({ remotes, knownIds = [], deletedUserIds = [], aliveUserIds = [] }: {
+  remotes: Subscription[];
+  knownIds?: string[];
+  /** account_deletions 행이 있는 사용자 */
+  deletedUserIds?: string[];
+  /** 그중 users 가 남아 있는(탈퇴 진행 중) 사용자 */
+  aliveUserIds?: string[];
+}) {
   const prisma = {
     userSubscription: {
       findMany: vi.fn().mockResolvedValue(knownIds.map(providerSubscriptionId => ({ providerSubscriptionId }))),
+    },
+    accountDeletion: {
+      findUnique: vi.fn(async ({ where }: { where: { userId: string } }) => (deletedUserIds.includes(where.userId) ? { userId: where.userId } : null)),
+    },
+    user: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => (deletedUserIds.includes(where.id) && !aliveUserIds.includes(where.id) ? null : { id: where.id })),
     },
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<void>) => fn(TX)),
   };
   const paddleClient = {
     listLiveSubscriptions: vi.fn().mockResolvedValue(remotes),
     listCompletedTransactions: vi.fn(async (subscriptionId: string) => [completedTransaction('txn_1', subscriptionId)]),
+    cancelImmediately: vi.fn().mockResolvedValue({}),
+    getSubscription: vi.fn().mockResolvedValue({ status: 'active' }),
   };
   const sync = {
     syncSubscription: vi.fn().mockResolvedValue(true),
@@ -133,6 +148,43 @@ describe('SubscriptionsReconciliationService.discoverMissingSubscriptions', () =
     expect(paddleClient.listCompletedTransactions).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(sync.syncSubscription).not.toHaveBeenCalled();
+  });
+
+  it('탈퇴를 끝낸 계정의 누락 구독은 되살리지 않고 Paddle 에서 즉시 해지한다', async () => {
+    const { service, paddleClient, prisma, sync } = build({ remotes: [remoteSubscription('sub_orphan')], deletedUserIds: [USER_A] });
+    await service.discoverMissingSubscriptions();
+    expect(paddleClient.cancelImmediately).toHaveBeenCalledWith('sub_orphan');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(sync.syncSubscription).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).toHaveBeenCalledWith('탈퇴한 계정에 남아 있던 Paddle 구독을 즉시 해지함', expect.objectContaining({
+      extra: { subscriptionId: 'sub_orphan', userId: USER_A },
+    }));
+  });
+
+  it('지운 계정의 구독 해지가 실패하면 fingerprint 로 Sentry 에 남긴다 (다음 시간에 재시도)', async () => {
+    const { service, paddleClient } = build({ remotes: [remoteSubscription('sub_orphan')], deletedUserIds: [USER_A] });
+    const error = new Error('paddle down');
+    paddleClient.cancelImmediately.mockRejectedValue(error);
+    await service.discoverMissingSubscriptions();
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({
+      fingerprint: ['paddle-subscription-recovery-failed', 'sub_orphan'],
+    }));
+  });
+
+  it('해지 요청이 거부됐어도 원격이 이미 canceled 면 실패로 보지 않는다', async () => {
+    const { service, paddleClient } = build({ remotes: [remoteSubscription('sub_orphan')], deletedUserIds: [USER_A] });
+    paddleClient.cancelImmediately.mockRejectedValue(new Error('already canceled'));
+    paddleClient.getSubscription.mockResolvedValue({ status: 'canceled' });
+    await service.discoverMissingSubscriptions();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it('탈퇴 진행 중(users 남음)인 사용자의 구독은 해지하지 않는다 — 탈퇴가 실패하면 계정이 남으므로', async () => {
+    const { service, paddleClient, sync } = build({ remotes: [remoteSubscription('sub_lost')], deletedUserIds: [USER_A], aliveUserIds: [USER_A] });
+    await service.discoverMissingSubscriptions();
+    expect(paddleClient.cancelImmediately).not.toHaveBeenCalled();
+    // 반영은 syncSubscription 의 탈퇴 분기가 건너뛴다
+    expect(sync.syncSubscription).toHaveBeenCalledTimes(1);
   });
 
   it('살아 있는 구독이 없으면 DB 를 조회하지 않는다', async () => {

@@ -41,13 +41,26 @@ export class AuthService {
     return null;
   }
 
-  /** /me 의 user 에 실리는 2FA 상태 */
-  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean; emailVerified: boolean }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { twoFactorEnabled: true, emailVerified: true },
-    });
-    return { twoFactorEnabled: user?.twoFactorEnabled ?? false, emailVerified: user?.emailVerified ?? false };
+  /**
+   * /me 의 user 에 실리는 보안 상태.
+   * hasPassword: credential 계정에 비밀번호가 있으면 true — 클라이언트가 계정 삭제 재인증 방식(비밀번호 / 이메일 코드)을 고른다
+   */
+  async getSecurityStatus(userId: string): Promise<{ twoFactorEnabled: boolean; emailVerified: boolean; hasPassword: boolean }> {
+    const [user, credential] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { twoFactorEnabled: true, emailVerified: true },
+      }),
+      this.prisma.account.findFirst({
+        where: { userId, providerId: 'credential', password: { not: null } },
+        select: { id: true },
+      }),
+    ]);
+    return {
+      twoFactorEnabled: user?.twoFactorEnabled ?? false,
+      emailVerified: user?.emailVerified ?? false,
+      hasPassword: credential !== null,
+    };
   }
 
   async findUserByEmail(email: string) {
