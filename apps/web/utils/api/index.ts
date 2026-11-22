@@ -5,7 +5,6 @@ export { invoicesApi } from './invoices';
 export { studentSharesApi } from './student-shares';
 export { sessionsApi } from './sessions';
 export { settingsApi } from './settings';
-export { appTokensApi } from './app-tokens';
 export { paymentsApi } from './payments';
 export { dashboardApi } from './dashboard';
 export { organizationsApi } from './organizations';
