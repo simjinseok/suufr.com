@@ -169,3 +169,117 @@ describe('BetterAuthService.verifyEmail — 인증 즉시 로그인', () => {
     expect(signedIn).toMatchObject({ success: true, userId });
   });
 });
+
+describe('BetterAuthService.verifyEmail — 이미 인증된 계정의 세션', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('이미 인증된 계정에 코드를 다시 넣어도 기존 세션을 폐기하지 않는다', async () => {
+    const ctx = makeAuth();
+    const { userId, tokens: [session] } = await signUpWithSessions(ctx, EMAIL, 1);
+    userRow(ctx.db, EMAIL).emailVerified = true;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 1000);
+    await ctx.service.resendVerification(EMAIL);
+
+    await expect(ctx.service.verifyEmail(EMAIL, ctx.otps.get(EMAIL)!)).resolves.toBeNull();
+
+    expect(liveTokens(ctx.db, userId)).toEqual([session]);
+  });
+});
+
+/**
+ * better-auth 는 코드 하나당 5번까지만 틀릴 수 있지만 코드를 다시 받으면 처음부터다.
+ * 재발송을 반복하며 6자리를 맞히지 못하게 이메일마다 1시간에 10번 틀리면 코드를 확인하지 않고 거부한다.
+ */
+describe('BetterAuthService — 인증코드 실패 한도 (이메일당 1시간 10회)', () => {
+  const WRONG = '000000';
+  let now = 0;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    now = Date.now();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  /** 재발송이 이전 코드와 같은 밀리초에 생기지 않게 시간을 1초 흘린다 */
+  function tick(ms = 1000) {
+    now += ms;
+    vi.setSystemTime(now);
+  }
+
+  /** 틀린 코드를 n번 넣는다. 5번마다 코드를 다시 받는다(공격자처럼 코드당 시도 제한을 초기화) */
+  async function failVerify(ctx: Ctx, email: string, n: number) {
+    for (let i = 0; i < n; i++) {
+      if (i > 0 && i % 5 === 0) {
+        tick();
+        await ctx.service.resendVerification(email);
+      }
+      const wrong = ctx.otps.get(email) === WRONG ? '111111' : WRONG;
+      await expect(ctx.service.verifyEmail(email, wrong)).rejects.toMatchObject({ status: 400 });
+    }
+  }
+
+  it('재발송을 섞어 10번 틀리면 맞는 코드도 429 로 거부하고 인증되지 않는다', async () => {
+    const ctx = makeAuth();
+    await ctx.service.signUp('선생님', EMAIL, PASSWORD);
+    await failVerify(ctx, EMAIL, 10);
+    tick();
+    await ctx.service.resendVerification(EMAIL);
+
+    await expect(ctx.service.verifyEmail(EMAIL, ctx.otps.get(EMAIL)!)).rejects.toMatchObject({
+      status: 429,
+      response: { error: 'TOO_MANY_OTP_FAILURES' },
+    });
+    expect(userRow(ctx.db, EMAIL).emailVerified).toBe(false);
+  });
+
+  it('9번까지는 맞는 코드로 인증되고, 맞히면 실패 기록이 지워진다', async () => {
+    const ctx = makeAuth();
+    await ctx.service.signUp('선생님', EMAIL, PASSWORD);
+    await failVerify(ctx, EMAIL, 9);
+    tick();
+    await ctx.service.resendVerification(EMAIL);
+
+    await expect(ctx.service.verifyEmail(EMAIL, ctx.otps.get(EMAIL)!)).resolves.not.toBeNull();
+    expect(userRow(ctx.db, EMAIL).emailVerified).toBe(true);
+  });
+
+  it('첫 실패에서 1시간이 지나면 다시 시도할 수 있다', async () => {
+    const ctx = makeAuth();
+    await ctx.service.signUp('선생님', EMAIL, PASSWORD);
+    await failVerify(ctx, EMAIL, 10);
+    tick(60 * 60 * 1000);
+    await ctx.service.resendVerification(EMAIL);
+
+    await expect(ctx.service.verifyEmail(EMAIL, ctx.otps.get(EMAIL)!)).resolves.not.toBeNull();
+  });
+
+  it('한도는 이메일마다 따로다 (대소문자·공백은 같은 이메일)', async () => {
+    const ctx = makeAuth();
+    await ctx.service.signUp('선생님', EMAIL, PASSWORD);
+    await ctx.service.signUp('다른 사람', 'other@example.com', PASSWORD);
+    await failVerify(ctx, EMAIL, 10);
+
+    await expect(ctx.service.verifyEmail(` ${EMAIL.toUpperCase()} `, WRONG)).rejects.toMatchObject({ status: 429 });
+    await expect(ctx.service.verifyEmail('other@example.com', ctx.otps.get('other@example.com')!)).resolves.not.toBeNull();
+  });
+
+  it('비밀번호 재설정 코드도 이메일당 10번 틀리면 코드를 확인하지 않고 429 로 거부한다', async () => {
+    const ctx = makeAuth();
+    await ctx.service.signUp('선생님', EMAIL, PASSWORD);
+    for (let i = 0; i < 10; i++) {
+      if (i % 5 === 0) {
+        tick();
+        await ctx.service.requestPasswordReset(EMAIL);
+      }
+      await expect(ctx.service.resetPassword(EMAIL, WRONG, 'NewPassw0rd!x')).rejects.toMatchObject({ status: 400 });
+    }
+
+    await expect(ctx.service.resetPassword(EMAIL, WRONG, 'NewPassw0rd!x')).rejects.toMatchObject({
+      status: 429,
+      response: { error: 'TOO_MANY_OTP_FAILURES' },
+    });
+    // 이메일 인증 한도와는 따로 센다
+    await expect(ctx.service.verifyEmail(EMAIL, ctx.otps.get(EMAIL)!)).resolves.not.toBeNull();
+  });
+});
