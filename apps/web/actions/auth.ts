@@ -33,6 +33,8 @@ type LoginFields = { email: string; password: string };
 type LoginState = ServerActionState<LoginFields> & {
   requiresMfa?: boolean;
   challengeName?: string;
+  /** 비밀번호는 맞지만 이메일 미인증 — api 가 인증코드 메일을 보냈다. 인증코드 화면으로 간다 */
+  requiresVerification?: boolean;
 };
 
 export async function login(
@@ -89,6 +91,10 @@ export async function login(
         }
       }
       catch (error: any) {
+        if (error instanceof ApiError && error.code === 'EMAIL_NOT_VERIFIED') {
+          state.requiresVerification = true;
+          return state;
+        }
         state.message = error.message || '로그인 중 오류가 발생했습니다';
       }
 
@@ -163,8 +169,10 @@ type SignupFields = {
   agreePrivacy: boolean;
 };
 type SignupState = ServerActionState<SignupFields> & {
-  /** 가입과 동시에 로그인됨 — 바로 앱으로 들어간다. 이메일 인증은 설정(회원정보)에서 나중에 */
-  loggedIn?: boolean;
+  /** 새 계정이 만들어짐 — 인증코드 화면으로 간다(가입의 필수 단계). 인증하면 바로 앱으로 들어간다 */
+  requiresVerification?: boolean;
+  /** 계정은 만들어졌지만 인증코드 메일을 못 보냄 — 인증코드 화면에서 다시 받게 안내한다 */
+  mailFailed?: boolean;
 };
 
 export async function signup(
@@ -204,25 +212,20 @@ export async function signup(
           recaptchaToken: validation.data.recaptchaToken,
         });
 
-        // 실제 가입이면 api 가 바로 로그인시킨다 — 인증 화면을 거치지 않고 앱으로 들어간다 (중복 이메일 합성 응답이면 토큰 없음)
-        if (response.accessToken && response.refreshToken) {
-          await setTokenCookies({
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
-            expiresIn: response.expiresIn,
-          });
-          state.loggedIn = true;
-        }
-
+        // 새 계정이면 인증코드 화면으로 (중복 이메일 합성 응답이면 로그인 안내만)
+        state.requiresVerification = response.requiresVerification === true;
         state.success = true;
         state.message = response.message;
       }
       catch (error: any) {
-        state.message = error.message || '회원가입 중 오류가 발생했습니다';
-        // 계정은 만들어졌지만 인증코드 메일을 못 보낸 경우(MAIL_DELIVERY_FAILED) — 로그인 뒤 설정에서 다시 받을 수 있다
+        // 계정은 만들어졌지만 인증코드 메일을 못 보낸 경우 — 인증코드 화면에서 다시 받을 수 있다
         if (error instanceof ApiError && error.code === 'MAIL_DELIVERY_FAILED') {
-          state.message = '계정은 만들어졌지만 인증코드 메일을 보내지 못했습니다. 로그인한 뒤 설정에서 다시 받아주세요.';
+          state.success = true;
+          state.requiresVerification = true;
+          state.mailFailed = true;
+          return state;
         }
+        state.message = error.message || '회원가입 중 오류가 발생했습니다';
       }
 
       return state;
@@ -232,7 +235,10 @@ export async function signup(
 
 // Verify email action
 type VerifyEmailFields = { email: string; code: string };
-type VerifyEmailState = ServerActionState<VerifyEmailFields>;
+type VerifyEmailState = ServerActionState<VerifyEmailFields> & {
+  /** 인증과 함께 로그인됨 — 바로 앱으로. 아니면(이미 인증됐거나 2단계 인증 계정) 로그인 화면으로 */
+  loggedIn?: boolean;
+};
 
 export async function verifyEmail(
   prevState: VerifyEmailState,
@@ -263,6 +269,15 @@ export async function verifyEmail(
           email: validation.data.email,
           code: validation.data.code,
         });
+
+        if (response.accessToken && response.refreshToken) {
+          await setTokenCookies({
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+          });
+          state.loggedIn = true;
+        }
 
         state.success = true;
         state.message = response.message;

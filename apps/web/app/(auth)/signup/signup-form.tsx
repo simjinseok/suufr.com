@@ -52,9 +52,13 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
     if (!state.timestamp) return;
     submitting.current = false;
 
-    // 가입 즉시 로그인 → 바로 앱으로. 이메일 인증은 설정(회원정보)에서 나중에 한다. 인증 화면으로는 보내지 않는다
-    if (state.loggedIn) router.push('/dashboard');
-  }, [state.timestamp, state.loggedIn, router]);
+    // 새 계정 → 인증코드 화면(가입의 필수 단계). 인증하면 바로 앱으로 들어간다
+    if (state.requiresVerification) {
+      const query = new URLSearchParams({ email: state.fields?.email ?? '' });
+      if (state.mailFailed) query.set('mailFailed', '1');
+      router.push(`/verify-email?${query}`);
+    }
+  }, [state.timestamp, state.requiresVerification, state.mailFailed, state.fields?.email, router]);
 
   // HeroUI Form 의 action= 대신 onSubmit 으로 가로채, reCAPTCHA 토큰을 받은 뒤 서버 액션을 transition 안에서 호출한다.
   // 토큰을 못 받아도 제출은 진행한다 — 막을지는 api 의 RECAPTCHA_MODE 가 정한다
@@ -98,8 +102,8 @@ export default function SignupForm({ recaptchaSiteKey }: { recaptchaSiteKey: str
               {state.message}
             </div>
           )}
-          {/* 토큰 없는 200 = 이미 가입된 이메일. 가입 즉시 로그인(토큰 유무)으로 가입 여부가 드러나는 건 확정된 사항이라 돌려 말하지 않는다 */}
-          {state.success && !state.loggedIn && (
+          {/* 인증 필요 표시 없는 200 = 이미 가입된 이메일. 가입 여부가 드러나는 건 확정된 사항(2026-10-07)이라 돌려 말하지 않는다 */}
+          {state.success && !state.requiresVerification && (
             <div className="p-3 bg-amber-50 text-amber-800 rounded-lg text-sm">
               {state.message}
               {' '}
