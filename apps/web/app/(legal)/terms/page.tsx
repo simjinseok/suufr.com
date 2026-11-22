@@ -47,7 +47,7 @@ export default function TermsPage() {
         <LegalList
           items={[
             '수강생 정보 및 수업 이력 관리',
-            '수업 일정 관리 및 외부 캘린더·연락처 앱 연동(Google 캘린더, CalDAV/CardDAV)',
+            '수업 일정 관리 및 외부 캘린더 연동(Google 캘린더)',
             '수업 기록·피드백 작성 및 공유 링크 제공',
             '수강료·입금 내역 관리',
             '파일 저장 공간 제공',
