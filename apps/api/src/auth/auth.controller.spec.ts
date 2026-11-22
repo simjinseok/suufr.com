@@ -133,13 +133,24 @@ describe('AuthController', () => {
     expect(consents.recordSafely).not.toHaveBeenCalled();
   });
 
-  it('signup: 인증 메일 발송 실패(503 MAIL_DELIVERY_FAILED)는 그대로 전달한다 (계정은 만들어졌고 클라이언트가 인증 화면에서 재발송을 안내)', async () => {
-    const { controller, betterAuth } = build();
+  it('signup: 인증 메일 발송 실패(503 MAIL_DELIVERY_FAILED)는 만들어진 계정에 동의를 기록한 뒤 그대로 전달한다 (클라이언트가 인증 화면에서 재발송을 안내)', async () => {
+    const { controller, betterAuth, consents } = build();
     const mailFailure = new ServiceUnavailableException({ message: '인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요', error: 'MAIL_DELIVERY_FAILED' });
     betterAuth.signUp.mockRejectedValue(mailFailure);
-    await expect(controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } }))
+    const dtoConsents = { ...consentsDto, ipAddress: '203.0.113.5', userAgent: 'ua' };
+    await expect(controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: dtoConsents }))
       .rejects.toBe(mailFailure);
+    expect(consents.recordSafely).toHaveBeenCalledWith('u1', expect.objectContaining(consentsDto), { ipAddress: '203.0.113.5', userAgent: 'ua' });
     expect(betterAuth.signIn).not.toHaveBeenCalled();
+  });
+
+  it('signup: 메일 실패가 아닌 가입 실패면 동의를 기록하지 않고 그대로 전달한다', async () => {
+    const { controller, betterAuth, consents } = build();
+    const failure = new ServiceUnavailableException({ message: 'x', error: 'OTHER' });
+    betterAuth.signUp.mockRejectedValue(failure);
+    await expect(controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } }))
+      .rejects.toBe(failure);
+    expect(consents.recordSafely).not.toHaveBeenCalled();
   });
 
   it('verify-email 은 X-Session-Token 이 있으면 그 세션을 유지 대상으로 넘기고, 없으면 undefined 를 넘긴다. 요청 IP·UA 도 넘긴다', async () => {

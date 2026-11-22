@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Headers, Ip, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Headers, Ip, UnauthorizedException, ForbiddenException, HttpException } from '@nestjs/common';
 import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -6,6 +6,7 @@ import { AuthenticatedUser } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { ConsentsService } from './consents.service';
 import { BetterAuthService, type RequestMeta } from './better-auth/better-auth.service';
+import { MAIL_DELIVERY_FAILED } from './better-auth/better-auth-error.map';
 import { S3Service } from '../s3/s3.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { RecaptchaService } from '../recaptcha/recaptcha.service';
@@ -156,16 +157,26 @@ export class AuthController {
       userAgent: dto.consents.userAgent,
     });
 
-    const { userId } = await this.betterAuth.signUp(dto.name?.trim() ?? '', dto.email, dto.password);
+    const consentMeta = { ipAddress: dto.consents.ipAddress, userAgent: dto.consents.userAgent };
+    let userId: string;
+    try {
+      ({ userId } = await this.betterAuth.signUp(dto.name?.trim() ?? '', dto.email, dto.password));
+    }
+    catch (error) {
+      // 인증 메일만 못 보낸 경우 계정은 이미 만들어졌다. 클라이언트는 인증 화면으로 가고 인증하면 바로 앱에 들어가므로,
+      // 동의 이력을 먼저 남기고 같은 에러를 돌려준다 (중복 이메일에는 인증 메일을 보내지 않으므로 찾은 계정은 이번에 만든 것이다)
+      if (error instanceof HttpException && (error.getResponse() as { error?: string }).error === MAIL_DELIVERY_FAILED) {
+        const created = await this.authService.findUserByEmail(dto.email);
+        if (created) await this.consentsService.recordSafely(created.id, dto.consents, consentMeta);
+      }
+      throw error;
+    }
 
     const created = await this.authService.findUserByEmail(dto.email);
     // 중복 이메일(합성 사용자)
     if (!created || created.id !== userId) return { success: true, message: '이미 가입된 이메일입니다. 로그인해주세요.' };
 
-    await this.consentsService.recordSafely(userId, dto.consents, {
-      ipAddress: dto.consents.ipAddress,
-      userAgent: dto.consents.userAgent,
-    });
+    await this.consentsService.recordSafely(userId, dto.consents, consentMeta);
 
     return { success: true, requiresVerification: true, message: '인증 이메일이 발송되었습니다' };
   }
