@@ -1,10 +1,13 @@
 import { apiClient } from '../api-client';
 
-// 미수 학생 — 학생 단위 잔액 파생 (미수액 = Σ청구액 − Σ양수입금, 환불은 미수를 만들지 않음)
-type UnpaidStudent = {
+// 미납 = 연결된 입금이 1건도 없는 수강권 (docs/schema-redesign.md §6-22). 서버가 오래된 순으로 정렬해 준다.
+export type UnpaidInvoice = {
   uuid: string;
-  name: string;
-  outstandingAmount: number;
+  title: string | null;
+  price: number;
+  periodStart: string;
+  periodEnd: string | null;
+  student: { uuid: string; name: string };
 };
 
 type UncheckedMeeting = {
@@ -15,13 +18,24 @@ type UncheckedMeeting = {
   meetingAt: string;
 };
 
+// 유저 타임존의 오늘 수업 (시작 시각 순). 완료 여부는 시간이 아니라 isDone
+export type TodaySession = {
+  uuid: string;
+  sessionAt: string;
+  duration: number; // 분
+  isDone: boolean;
+  student: { uuid: string; name: string };
+};
+
 type DashboardData = {
   activeStudentCount: number;
-  unpaidStudents: UnpaidStudent[];
-  unpaidStudentsCount: number;
+  unpaidInvoices: UnpaidInvoice[];
+  unpaidInvoicesCount: number;
   leftStudentsCount: number;
   uncheckedMeetings: UncheckedMeeting[];
   uncheckedMeetingsCount: number;
+  todayRemainingSessionCount: number;
+  todaySessions: TodaySession[];
 };
 
 type DashboardResponse = {
@@ -33,7 +47,33 @@ type DashboardParams = {
   organizationId?: number;
 };
 
+export type MatrixRow = {
+  student: { uuid: string; name: string };
+  // 키 = 일(1..daysInMonth)
+  days: Record<number, { count: number; done: number }>;
+  // 0 = 지난달부터, daysInMonth+1 = 다음 달까지(무기한 포함)
+  periods: { startDay: number; endDay: number }[];
+};
+
+export type MonthMatrix = {
+  month: string; // 'YYYY-MM'
+  daysInMonth: number;
+  today: string | null; // 그 달에 오늘이 있으면 'YYYY-MM-DD'
+  rows: MatrixRow[];
+};
+
+type MonthMatrixResponse = {
+  success: boolean;
+  data: MonthMatrix;
+};
+
+type MonthMatrixParams = {
+  month?: string;
+};
+
 export const dashboardApi = {
   get: (params?: DashboardParams) =>
     apiClient<DashboardResponse>('/api/dashboard', { params }),
+  getMonth: (params: MonthMatrixParams) =>
+    apiClient<MonthMatrixResponse>('/api/dashboard/month', { params }),
 };
