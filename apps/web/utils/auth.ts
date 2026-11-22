@@ -11,6 +11,8 @@ export type Session = {
     twoFactorEnabled?: boolean;
     // 이메일 인증 여부. false 면 앱 레이아웃이 인증 안내 배너를 띄운다 (api 배포 시차로 없으면 인증된 것으로 간주)
     emailVerified?: boolean;
+    // credential 계정에 비밀번호가 있는지. 계정 삭제 재인증 방식(비밀번호 / 이메일 코드)을 고른다
+    hasPassword?: boolean;
   };
   organization: {
     id: number;

@@ -65,7 +65,7 @@ export default async function Page() {
             </div>
             <div>
               <h2 className="text-lg font-semibold">보안 설정</h2>
-              <p className="text-sm text-gray-500">앱 토큰 관리 및 외부 앱 연동</p>
+              <p className="text-sm text-gray-500">2단계 인증, 앱 토큰 관리, 계정 삭제</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
