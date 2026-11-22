@@ -1,140 +1,39 @@
-import Link from 'next/link';
-import { Calendar, Clock, CreditCard, Users } from 'lucide-react';
+import type { Metadata } from 'next';
 
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 
+import Hero from './_landing/hero';
+import Origin from './_landing/origin';
+import InvoiceSteps from './_landing/invoice-steps';
+import ScheduleFeature from './_landing/schedule-feature';
+import SalesFeature from './_landing/sales-feature';
+import Extras from './_landing/extras';
+import PricingSummary from './_landing/pricing-summary';
+import Faq from './_landing/faq';
+import FinalCta from './_landing/final-cta';
+
+export const metadata: Metadata = {
+  title: '스프 - 과외·레슨 관리',
+  description: '수강권, 수업 일정, 입금·미납을 한곳에. 과외·레슨 선생님을 위한 수업 관리 도구입니다.',
+};
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-site-ink text-[16px] md:text-[17px] leading-[1.65] break-keep">
       <SiteHeader />
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
-            과외 관리,
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
-              더 간편하게
-            </span>
-          </h1>
-          <p className="mt-6 text-lg text-gray-500 leading-relaxed">
-            수업 일정부터 정산까지
-            <br className="sm:hidden" />
-            {' '}
-            한 곳에서 관리하세요
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
-            >
-              무료로 시작하기
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
-            >
-              로그인
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">
-            이런 기능을 제공해요
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <FeatureCard
-              icon={<Users className="w-6 h-6" />}
-              title="학생 관리"
-              description="학생별 정보와 수업 이력을 한눈에 확인하세요"
-            />
-            <FeatureCard
-              icon={<Calendar className="w-6 h-6" />}
-              title="일정 관리"
-              description="캘린더로 수업 일정을 쉽게 관리하세요"
-            />
-            <FeatureCard
-              icon={<Clock className="w-6 h-6" />}
-              title="수업 기록"
-              description="수업 내용과 진도를 체계적으로 기록하세요"
-            />
-            <FeatureCard
-              icon={<CreditCard className="w-6 h-6" />}
-              title="정산 관리"
-              description="월별 수업료와 입금 내역을 관리하세요"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Summary */}
-      <section className="py-20 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900">요금제</h2>
-          <p className="mt-4 text-gray-500">
-            무료 플랜으로 수강생 5명까지 관리하고, 필요할 때 업그레이드하세요
-          </p>
-          <p className="mt-8 text-3xl sm:text-4xl font-bold text-gray-900">
-            프로 월 ₩6,900
-            <span className="ml-2 text-base font-medium text-gray-400">(부가세 포함)</span>
-          </p>
-          <p className="mt-3 text-sm text-gray-500">
-            수강생 무제한 · 저장 공간 5GB · 언제든 해지 가능
-          </p>
-          <Link
-            href="/pricing"
-            className="mt-8 inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
-          >
-            요금제 자세히 보기
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
-            지금 바로 시작하세요
-          </h2>
-          <p className="mt-4 text-gray-500">
-            복잡한 과외 관리, 스프로 간편하게
-          </p>
-          <Link
-            href="/signup"
-            className="mt-8 inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
-          >
-            무료로 시작하기
-          </Link>
-        </div>
-      </section>
-
+      <main className="pt-16">
+        <Hero />
+        <Origin />
+        <InvoiceSteps />
+        <ScheduleFeature />
+        <SalesFeature />
+        <Extras />
+        <PricingSummary />
+        <Faq />
+        <FinalCta />
+      </main>
       <SiteFooter />
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="p-6 bg-white rounded-2xl border border-gray-100">
-      <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-        {icon}
-      </div>
-      <h3 className="mt-4 text-lg font-semibold text-gray-900">{title}</h3>
-      <p className="mt-2 text-gray-500 text-sm leading-relaxed">{description}</p>
     </div>
   );
 }

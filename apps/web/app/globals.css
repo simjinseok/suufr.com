@@ -3,6 +3,21 @@
 
 @theme {
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+
+  --color-brand: #0672E4;
+  --color-brand-strong: #055CBB;
+  --color-brand-soft: #E8F1FD;
+  --color-brand-soft-text: #0553A8;
+  --color-brand-navy: #082F5B;
+  --color-brand-sky: #3EA1FF;
+  --color-site-ink: #33475B;
+  --color-site-muted: #5E6F82;
+  --color-site-line: #DFE6EE;
+  --color-site-band: #F3F6FA;
+  --color-unpaid-soft: #FCF2E1;
+  --color-unpaid-text: #8F5303;
+  --color-paid-soft: #E6F5EC;
+  --color-paid-text: #0E6B37;
 }
 
 html, body {
