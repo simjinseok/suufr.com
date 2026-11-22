@@ -1,4 +1,4 @@
-import { H2, StatusTag, WRAP } from './product-ui';
+import { H2, PANEL, PANEL_HEAD, StatusTag, WRAP } from './product-ui';
 
 const SESSIONS = [
   { date: '11.12 수', time: '17:00', done: true },
@@ -17,10 +17,11 @@ export default function ScheduleFeature() {
           <p className="mt-4 max-w-[28em]">정규 수업과 체험 수업, 무료로 해 준 수업은 따로 구분해 둘 수 있습니다.</p>
         </div>
         <div
+          role="figure"
           aria-label="수업 일정 화면 예시"
-          className="min-w-0 bg-white border border-site-line rounded-[14px] overflow-hidden text-[15px] leading-[1.45]"
+          className={PANEL}
         >
-          <div className="flex items-baseline justify-between px-5 pt-4 pb-[13px] border-b border-site-line">
+          <div className={PANEL_HEAD}>
             <b className="text-[17px] font-bold text-brand-navy">김서연</b>
             <span className="text-[14px] text-site-muted">11월 8회권</span>
           </div>

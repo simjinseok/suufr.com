@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { WRAP } from './product-ui';
+import { FOCUS, WRAP } from './product-ui';
 
 export default function FinalCta() {
   return (
@@ -13,7 +13,7 @@ export default function FinalCta() {
         </div>
         <Link
           href="/signup"
-          className="inline-flex w-full md:w-auto items-center justify-center bg-white hover:bg-brand-soft text-brand-navy font-semibold px-[26px] py-[15px] text-[17px] rounded-[10px] focus-visible:outline-3 focus-visible:outline-brand-sky focus-visible:outline-offset-3"
+          className={`inline-flex w-full md:w-auto items-center justify-center bg-white hover:bg-brand-soft text-brand-navy font-semibold px-[26px] py-[15px] text-[17px] rounded-[10px] ${FOCUS}`}
         >
           무료로 시작하기
         </Link>

@@ -1,4 +1,4 @@
-import { H2, WRAP } from './product-ui';
+import { H2, PANEL, PANEL_HEAD, WRAP } from './product-ui';
 
 const MONTHS = [
   { month: '8월', width: 'w-[78%]', amount: '1,240,000원', current: false },
@@ -16,10 +16,11 @@ export default function SalesFeature() {
           <p className="mt-4 max-w-[28em]">받은 수업료가 월별, 연도별로 모입니다. 통장 내역을 하나씩 더해 볼 필요가 없습니다.</p>
         </div>
         <div
+          role="figure"
           aria-label="입금 내역 화면 예시"
-          className="min-w-0 bg-white border border-site-line rounded-[14px] overflow-hidden text-[15px] leading-[1.45]"
+          className={PANEL}
         >
-          <div className="flex items-baseline justify-between px-5 pt-4 pb-[13px] border-b border-site-line">
+          <div className={PANEL_HEAD}>
             <b className="text-[17px] font-bold text-brand-navy">받은 수업료</b>
             <div className="flex gap-1">
               <span className="text-[13.5px] px-2.5 py-[3px] rounded-md bg-site-band text-brand-navy font-semibold">월별</span>

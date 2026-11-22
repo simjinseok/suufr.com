@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { H2, WRAP } from './product-ui';
+import { FOCUS, H2, WRAP } from './product-ui';
 
 const PLANS = [
   {
@@ -53,7 +53,7 @@ export default function PricingSummary() {
         <p className="mt-[18px] text-[15.5px]">
           <Link
             href="/pricing"
-            className="text-brand font-semibold underline underline-offset-3 focus-visible:outline-3 focus-visible:outline-brand-sky focus-visible:outline-offset-3 focus-visible:rounded-md"
+            className={`text-brand font-semibold underline underline-offset-3 ${FOCUS} focus-visible:rounded-md`}
           >
             요금제 자세히 보기
           </Link>

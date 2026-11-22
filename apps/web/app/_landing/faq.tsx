@@ -1,4 +1,4 @@
-import { H2, WRAP } from './product-ui';
+import { FOCUS, H2, WRAP } from './product-ui';
 
 const QUESTIONS = [
   {
@@ -31,7 +31,7 @@ export default function Faq() {
         <div className="min-w-0">
           {QUESTIONS.map((item, i) => (
             <details key={item.q} open={i === 0} className="group border-t border-site-line last:border-b">
-              <summary className="relative cursor-pointer list-none py-5 pr-9 text-[18px] font-semibold text-brand-navy [&::-webkit-details-marker]:hidden focus-visible:outline-3 focus-visible:outline-brand-sky focus-visible:outline-offset-3 focus-visible:rounded-md">
+              <summary className={`relative cursor-pointer list-none py-5 pr-9 text-[18px] font-semibold text-brand-navy [&::-webkit-details-marker]:hidden ${FOCUS} focus-visible:rounded-md`}>
                 {item.q}
                 <span aria-hidden="true" className="absolute right-1 top-4 text-[24px] font-normal leading-[1.65] text-site-muted">
                   <span className="group-open:hidden">+</span>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { StatusTag, WRAP } from './product-ui';
+import { FOCUS, StatusTag, WRAP } from './product-ui';
 
 const UNPAID = [
   { who: '김서연', what: '11월 8회권', amount: '320,000원' },
@@ -25,14 +25,14 @@ export default function Hero() {
           <div className="mt-[34px] flex flex-wrap items-center gap-x-[18px] gap-y-3.5">
             <Link
               href="/signup"
-              className="inline-flex w-full md:w-auto items-center justify-center bg-brand hover:bg-brand-strong text-white font-semibold px-[26px] py-[15px] text-[17px] rounded-[10px] focus-visible:outline-3 focus-visible:outline-brand-sky focus-visible:outline-offset-3"
+              className={`inline-flex w-full md:w-auto items-center justify-center bg-brand hover:bg-brand-strong text-white font-semibold px-[26px] py-[15px] text-[17px] rounded-[10px] ${FOCUS}`}
             >
               무료로 시작하기
             </Link>
           </div>
         </div>
 
-        <div className="min-w-0 bg-brand-navy rounded-2xl p-4 md:rounded-[20px] md:p-7" aria-label="미납 목록 화면 예시">
+        <div className="min-w-0 bg-brand-navy rounded-2xl p-4 md:rounded-[20px] md:p-7" role="figure" aria-label="미납 목록 화면 예시">
           <div className="bg-white rounded-xl overflow-hidden text-[15px] leading-[1.45] text-site-ink">
             <div className="flex items-baseline justify-between px-5 pt-[18px] pb-3.5 border-b border-site-line">
               <b className="text-[17px] text-brand-navy font-bold">미납</b>

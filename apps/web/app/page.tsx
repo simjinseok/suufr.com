@@ -22,7 +22,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-site-ink text-[16px] md:text-[17px] leading-[1.65] break-keep">
       <SiteHeader />
-      <main className="pt-16">
+      <main className="pt-[65px]">
         <Hero />
         <Origin />
         <InvoiceSteps />
