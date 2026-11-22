@@ -46,6 +46,20 @@ const MESSAGES: Record<string, string> = {
   OAUTH_LINK_ERROR: 'Google 로그인에 실패했습니다. 다시 시도해주세요.',
 };
 
+export const APPLE_SIGN_IN_FAILED_MESSAGE = 'Apple 로그인에 실패했습니다. 다시 시도해주세요.';
+
+/**
+ * iOS Apple 로그인(BetterAuthService.signInWithAppleIdToken)은 이 맵으로 MESSAGES 를 덮어써 같은 코드를 Apple 문구로 안내한다.
+ * PROVIDER_NOT_FOUND: APPLE_APP_BUNDLE_ID 가 없어 apple provider 가 등록되지 않은 경우 (400)
+ */
+export const APPLE_SIGN_IN_MESSAGES: Readonly<Record<string, string>> = {
+  INVALID_TOKEN: APPLE_SIGN_IN_FAILED_MESSAGE,
+  OAUTH_LINK_ERROR: APPLE_SIGN_IN_FAILED_MESSAGE,
+  USER_EMAIL_NOT_FOUND: APPLE_SIGN_IN_FAILED_MESSAGE,
+  FAILED_TO_GET_USER_INFO: APPLE_SIGN_IN_FAILED_MESSAGE,
+  PROVIDER_NOT_FOUND: APPLE_SIGN_IN_FAILED_MESSAGE,
+};
+
 export function isBetterAuthError(error: unknown): error is APIError {
   return error instanceof APIError;
 }
@@ -62,7 +76,8 @@ export function betterAuthErrorCode(error: unknown): string | undefined {
  */
 export const MAIL_DELIVERY_FAILED = 'MAIL_DELIVERY_FAILED';
 
-export function toHttpException(error: unknown): HttpException {
+export function toHttpException(error: unknown, overrides?: Readonly<Record<string, string>>): HttpException {
+  const messages: Readonly<Record<string, string>> = overrides ? { ...MESSAGES, ...overrides } : MESSAGES;
   if (error instanceof HttpException) return error;
 
   // 인증코드·재설정코드 메일을 못 보냈다. 사용자가 그 메일을 기다리므로 성공처럼 응답하면 안 된다
@@ -76,19 +91,19 @@ export function toHttpException(error: unknown): HttpException {
   }
 
   const code = betterAuthErrorCode(error);
-  const message = (code && MESSAGES[code]) || '요청을 처리할 수 없습니다';
+  const message = (code && messages[code]) || '요청을 처리할 수 없습니다';
   const payload = { message, error: code ?? 'AUTH_ERROR' };
 
   // 코드 없는 401 은 세션 미들웨어가 만료·폐기된 세션 토큰에 던지는 정상 경로(refresh, signOut 등)라 경고 대상이 아니다
   const isSessionExpired = error.statusCode === HttpStatus.UNAUTHORIZED && !code;
-  if (!isSessionExpired && (!code || !MESSAGES[code])) {
+  if (!isSessionExpired && (!code || !messages[code])) {
     logger.warn(`매핑되지 않은 better-auth 에러: ${error.statusCode} ${code ?? error.message}`);
   }
 
   switch (error.statusCode) {
     case HttpStatus.UNAUTHORIZED:
       // 코드 없는 401 은 세션 토큰 만료/폐기 (getToken, signOut 등)
-      return new UnauthorizedException(code && MESSAGES[code] ? payload : { message: MESSAGES.SESSION_EXPIRED, error: code ?? 'SESSION_EXPIRED' });
+      return new UnauthorizedException(code && messages[code] ? payload : { message: messages.SESSION_EXPIRED, error: code ?? 'SESSION_EXPIRED' });
     case HttpStatus.FORBIDDEN:
       return new ForbiddenException(payload);
     case HttpStatus.CONFLICT:

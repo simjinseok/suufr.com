@@ -23,6 +23,7 @@ import {
   TwoFactorPasswordDto,
   TwoFactorCodeDto,
   GoogleNativeLoginDto,
+  AppleNativeLoginDto,
 } from './dto';
 
 /** web 이 2FA 관리·로그아웃처럼 세션이 필요한 요청에 refresh_token 쿠키(=세션 토큰)를 담아 보내는 헤더 */
@@ -106,6 +107,24 @@ export class AuthController {
   @Post('google/native')
   async googleNativeLogin(@Body() dto: GoogleNativeLoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
     const tokens = await this.betterAuth.signInWithGoogleIdToken(dto.idToken, { ip, userAgent });
+    await this.consentsService.recordIfAbsent(
+      tokens.userId,
+      { terms: true, privacy: true, termsVersion: TERMS_VERSION, privacyVersion: PRIVACY_POLICY_VERSION },
+      { ipAddress: ip, userAgent },
+    );
+    return tokens;
+  }
+
+  /**
+   * iOS 네이티브 Sign in with Apple. identity token(+ 원문 nonce)을 세션으로 바꾼다. 응답은 login 성공 응답과 같다(토큰).
+   * 소셜 로그인이라 2단계 인증은 묻지 않는다. 기존 계정이면 로그인, 없으면 가입이다. authorizationCode 가 있으면 탈퇴 시 revoke 용
+   * refresh token 을 저장한다. Apple 시트에는 약관 링크가 없지만 기존 소셜 로그인 정책대로 고지 문구 없이, 동의 이력이 없는 사용자에게
+   * 현재 문서 버전으로 이력을 남긴다. 브라우저 방식은 없다(SUPPORTED_SOCIAL_PROVIDERS 에 apple 없음).
+   */
+  @Public()
+  @Post('apple/native')
+  async appleNativeLogin(@Body() dto: AppleNativeLoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
+    const tokens = await this.betterAuth.signInWithAppleIdToken(dto, { ip, userAgent });
     await this.consentsService.recordIfAbsent(
       tokens.userId,
       { terms: true, privacy: true, termsVersion: TERMS_VERSION, privacyVersion: PRIVACY_POLICY_VERSION },

@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { APIError } from 'better-auth/api';
-import { betterAuthErrorCode, toHttpException } from './better-auth-error.map';
+import { APPLE_SIGN_IN_MESSAGES, betterAuthErrorCode, toHttpException } from './better-auth-error.map';
 import { MailDeliveryError } from '../../mail/mail.service';
 
 function body(e: HttpException) {
@@ -47,6 +47,31 @@ describe('toHttpException', () => {
     expect(body(e)).toEqual({ message: 'Google 로그인에 실패했습니다. 다시 시도해주세요.', error: code });
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it.each(['INVALID_TOKEN', 'OAUTH_LINK_ERROR', 'USER_EMAIL_NOT_FOUND', 'FAILED_TO_GET_USER_INFO'])(
+    'Apple 문구 맵을 넘기면 401 %s 는 Apple 로그인 실패로 안내하고 경고를 남기지 않는다',
+    (code) => {
+      const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+      const e = toHttpException(new APIError('UNAUTHORIZED', { code, message: 'x' }), APPLE_SIGN_IN_MESSAGES);
+      expect(e).toBeInstanceOf(UnauthorizedException);
+      expect(body(e)).toEqual({ message: 'Apple 로그인에 실패했습니다. 다시 시도해주세요.', error: code });
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    },
+  );
+
+  it('Apple provider 가 설정되지 않았으면(404 PROVIDER_NOT_FOUND) 400 과 Apple 로그인 실패 안내', () => {
+    const e = toHttpException(new APIError('NOT_FOUND', { code: 'PROVIDER_NOT_FOUND', message: 'Provider not found' }), APPLE_SIGN_IN_MESSAGES);
+    expect(e).toBeInstanceOf(BadRequestException);
+    expect(body(e)).toEqual({ message: 'Apple 로그인에 실패했습니다. 다시 시도해주세요.', error: 'PROVIDER_NOT_FOUND' });
+  });
+
+  it('문구 맵에 없는 코드는 기본 문구를 쓰고, 맵 없이 부르면 기존 Google 문구 그대로다', () => {
+    const other = toHttpException(new APIError('UNAUTHORIZED', { code: 'INVALID_EMAIL_OR_PASSWORD', message: 'x' }), APPLE_SIGN_IN_MESSAGES);
+    expect(body(other).message).toBe('이메일 또는 비밀번호가 올바르지 않습니다');
+    const google = toHttpException(new APIError('UNAUTHORIZED', { code: 'INVALID_TOKEN', message: 'x' }));
+    expect(body(google).message).toBe('Google 로그인에 실패했습니다. 다시 시도해주세요.');
   });
 
   it('422/409 → ConflictException, 429 → 429, 알 수 없는 4xx → BadRequest 일반 메시지', () => {

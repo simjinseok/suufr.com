@@ -8,6 +8,7 @@ import { BetterAuthService } from './better-auth/better-auth.service';
 import { SocialLoginController } from './social-login.controller';
 import { SocialAuthController } from './social-auth.controller';
 import { SocialHandoffService } from './social-handoff.service';
+import { AppleTokenService } from './apple-token.service';
 import { betterAuthProvider } from './better-auth/better-auth.provider';
 import { MailModule } from '../mail/mail.module';
 import { S3Module } from '../s3/s3.module';
@@ -24,6 +25,7 @@ import { RecaptchaModule } from '../recaptcha/recaptcha.module';
     UserProvisioningService,
     betterAuthProvider,
     BetterAuthService,
+    AppleTokenService,
     SocialHandoffService,
   ],
   exports: [JwtAuthGuard, AuthService, BetterAuthService],
