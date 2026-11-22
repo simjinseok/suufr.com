@@ -16,7 +16,7 @@ type BillingActionResult = {
 export async function getSubscription(): Promise<TSubscription | null> {
   return await Sentry.withServerActionInstrumentation(
     'getSubscription',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session) {
@@ -42,7 +42,7 @@ export async function getSubscription(): Promise<TSubscription | null> {
 export async function createCheckout(): Promise<BillingActionResult & { code?: string; transactionId?: string }> {
   return await Sentry.withServerActionInstrumentation(
     'createCheckout',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session) {
@@ -66,7 +66,7 @@ export async function createCheckout(): Promise<BillingActionResult & { code?: s
 export async function getInvoiceUrl(transactionId: string): Promise<BillingActionResult & { url?: string }> {
   return await Sentry.withServerActionInstrumentation(
     'getInvoiceUrl',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session) {
@@ -90,7 +90,7 @@ export async function getInvoiceUrl(transactionId: string): Promise<BillingActio
 export async function cancelSubscription(): Promise<BillingActionResult> {
   return await Sentry.withServerActionInstrumentation(
     'cancelSubscription',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session) {
@@ -115,7 +115,7 @@ export async function cancelSubscription(): Promise<BillingActionResult> {
 export async function resumeSubscription(): Promise<BillingActionResult> {
   return await Sentry.withServerActionInstrumentation(
     'resumeSubscription',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session) {

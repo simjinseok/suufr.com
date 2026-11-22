@@ -35,11 +35,7 @@ export async function createAppToken(
 ): Promise<CreateAppTokenState> {
   return await Sentry.withServerActionInstrumentation(
     'createAppToken',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
 
@@ -86,10 +82,7 @@ type RevokeAppTokenState = ServerActionState<Record<string, never>>;
 export async function revokeAppToken(uuid: string): Promise<RevokeAppTokenState> {
   return await Sentry.withServerActionInstrumentation(
     'revokeAppToken',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: RevokeAppTokenState = {
         success: false,

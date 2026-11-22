@@ -41,7 +41,7 @@ export async function login(
 ): Promise<LoginState> {
   return await Sentry.withServerActionInstrumentation(
     'login',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: LoginState = {
@@ -107,7 +107,7 @@ export async function respondToMfa(
 ): Promise<MfaState> {
   return await Sentry.withServerActionInstrumentation(
     'respondToMfa',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: MfaState = {
@@ -173,7 +173,7 @@ export async function signup(
 ): Promise<SignupState> {
   return await Sentry.withServerActionInstrumentation(
     'signup',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: SignupState = {
@@ -240,7 +240,7 @@ export async function verifyEmail(
 ): Promise<VerifyEmailState> {
   return await Sentry.withServerActionInstrumentation(
     'verifyEmail',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: VerifyEmailState = {
@@ -286,7 +286,7 @@ export async function resendVerification(
 ): Promise<ResendVerificationState> {
   return await Sentry.withServerActionInstrumentation(
     'resendVerification',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: ResendVerificationState = {
@@ -328,7 +328,7 @@ export async function forgotPassword(
 ): Promise<ForgotPasswordState> {
   return await Sentry.withServerActionInstrumentation(
     'forgotPassword',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: ForgotPasswordState = {
@@ -377,7 +377,7 @@ export async function resetPassword(
 ): Promise<ResetPasswordState> {
   return await Sentry.withServerActionInstrumentation(
     'resetPassword',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: ResetPasswordState = {

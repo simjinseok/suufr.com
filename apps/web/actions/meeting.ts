@@ -26,11 +26,7 @@ const createMeetingSchema = z.object({
 export async function createMeeting(prevState: CreateMeetingState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createMeeting',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
 
@@ -96,11 +92,7 @@ const updateMeetingSchema = z.object({
 export async function updateMeeting(prevState: UpdateMeetingState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateMeeting',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const meetingUuid = formData.get('meetingUuid') as string;
       const data = Object.fromEntries(formData.entries());

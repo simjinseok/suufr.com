@@ -32,11 +32,7 @@ type CreateSessionState = {
 export async function createSession(prevState: CreateSessionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createSession',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const { studentUuid, invoiceUuid, ...data } = Object.fromEntries(formData.entries());
       const state: CreateSessionState = {
@@ -78,11 +74,7 @@ type CreateSessionsBulkState = ServerActionState<null>;
 export async function createSessionsBulk(prevState: CreateSessionsBulkState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createSessionsBulk',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: CreateSessionsBulkState = {
         success: false,
@@ -154,11 +146,7 @@ const updateSessionSchema = (timeZone: string) => z.object({
 export async function updateSession(prevState: UpdateSessionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateSession',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const { sessionUuid, ...data } = Object.fromEntries(formData.entries());
 
@@ -221,11 +209,7 @@ type RemoveSessionState = {
 export async function removeSession(prevState: RemoveSessionState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeSession',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: RemoveSessionState = {
         success: false,
@@ -259,11 +243,7 @@ type UpdateFeedbackState = {
 export async function updateFeedback(prevState: UpdateFeedbackState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateFeedback',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: UpdateFeedbackState = {
         success: false,
@@ -323,7 +303,7 @@ type SessionDetailData = {
 export async function toggleSessionDone(sessionUuid: string, isDone: boolean): Promise<boolean> {
   return await Sentry.withServerActionInstrumentation(
     'toggleSessionDone',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -343,7 +323,7 @@ export async function toggleSessionDone(sessionUuid: string, isDone: boolean): P
 export async function addSessionFiles(sessionUuid: string, mediaFileUuids: string[]): Promise<boolean> {
   return await Sentry.withServerActionInstrumentation(
     'addSessionFiles',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {
@@ -369,7 +349,7 @@ export async function updateSessionFiles(
 ): Promise<boolean> {
   return await Sentry.withServerActionInstrumentation(
     'updateSessionFiles',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
       if (!session?.organization) {

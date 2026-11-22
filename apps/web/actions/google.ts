@@ -58,10 +58,7 @@ type DisconnectGoogleState = ServerActionState<Record<string, never>>;
 export async function disconnectGoogle(): Promise<DisconnectGoogleState> {
   return await Sentry.withServerActionInstrumentation(
     'disconnectGoogle',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: DisconnectGoogleState = {
         success: false,
@@ -97,10 +94,7 @@ type SyncGoogleState = ServerActionState<Record<string, never>> & {
 export async function syncGoogleCalendar(): Promise<SyncGoogleState> {
   return await Sentry.withServerActionInstrumentation(
     'syncGoogleCalendar',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: SyncGoogleState = {
         success: false,
@@ -130,10 +124,7 @@ export async function syncGoogleCalendar(): Promise<SyncGoogleState> {
 export async function syncGoogleContacts(): Promise<SyncGoogleState> {
   return await Sentry.withServerActionInstrumentation(
     'syncGoogleContacts',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: SyncGoogleState = {
         success: false,
@@ -163,10 +154,7 @@ export async function syncGoogleContacts(): Promise<SyncGoogleState> {
 export async function syncGoogleAll(): Promise<SyncGoogleState> {
   return await Sentry.withServerActionInstrumentation(
     'syncGoogleAll',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: SyncGoogleState = {
         success: false,

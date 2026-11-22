@@ -23,7 +23,7 @@ export async function enableTwoFactor(
 ): Promise<EnableTwoFactorState> {
   return await Sentry.withServerActionInstrumentation(
     'enableTwoFactor',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: EnableTwoFactorState = { success: false, fields: { password: '' }, timestamp: Date.now() };
@@ -55,7 +55,7 @@ export async function verifyTwoFactorSetup(
 ): Promise<ServerActionState<CodeFields>> {
   return await Sentry.withServerActionInstrumentation(
     'verifyTwoFactorSetup',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: ServerActionState<CodeFields> = { success: false, fields: { code: '' }, timestamp: Date.now() };
@@ -86,7 +86,7 @@ export async function disableTwoFactor(
 ): Promise<ServerActionState<PasswordFields>> {
   return await Sentry.withServerActionInstrumentation(
     'disableTwoFactor',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: ServerActionState<PasswordFields> = { success: false, fields: { password: '' }, timestamp: Date.now() };
@@ -120,7 +120,7 @@ export async function regenerateBackupCodes(
 ): Promise<BackupCodesState> {
   return await Sentry.withServerActionInstrumentation(
     'regenerateBackupCodes',
-    { formData, headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const state: BackupCodesState = { success: false, fields: { password: '' }, timestamp: Date.now() };

@@ -14,11 +14,7 @@ type CreateStudentCommentState = ServerActionState<{
 export async function createStudentComment(prevState: CreateStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'createStudentComment',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
 
@@ -52,11 +48,7 @@ type UpdateStudentCommentState = ServerActionState<{
 export async function updateStudentComment(prevState: UpdateStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateStudentComment',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const session = await getSession();
 
@@ -87,10 +79,7 @@ type RemoveStudentCommentState = ServerActionState<undefined>;
 export async function removeStudentComment(prevState: RemoveStudentCommentState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'removeStudentComment',
-    {
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const state: RemoveStudentCommentState = {
         success: false,

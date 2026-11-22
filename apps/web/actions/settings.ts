@@ -16,7 +16,7 @@ import { PAYMENT_METHODS, type PaymentMethod } from '@/constants/payment-method'
 export async function initializeTimezone(timezone: string): Promise<void> {
   return await Sentry.withServerActionInstrumentation(
     'initializeTimezone',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       if (!isValidTimeZone(timezone)) return;
 
@@ -52,11 +52,7 @@ const updateSettingsSchema = z.object({
 export async function updateSettings(prevState: UpdateSettingsState, formData: FormData) {
   return await Sentry.withServerActionInstrumentation(
     'updateSettings',
-    {
-      formData,
-      headers: await headers(),
-      recordResponse: true,
-    },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData.entries());
 
