@@ -1,31 +1,41 @@
 import * as Sentry from '@sentry/nextjs';
 import { sentryDataCollection } from './sentry.data-collection';
+import { scrubEvent, scrubSpan } from './sentry.scrub';
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+// 공유 페이지(/sl)는 주소에 열람 토큰이 들어 있어 브라우저 Sentry 를 켜지 않는다
+const isSharePage = /^\/sl(\/|$)/.test(window.location.pathname);
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+if (!isSharePage) {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+    // Adjust this value in production, or use tracesSampler for greater control
+    tracesSampleRate: 1,
 
-  dataCollection: sentryDataCollection,
+    // Setting this option to true will print useful information to the console while you're setting up Sentry.
+    debug: false,
 
-  replaysOnErrorSampleRate: 1.0,
+    dataCollection: sentryDataCollection,
 
-  // 오류가 발생한 세션만 리플레이를 수집한다 (개인정보처리방침 "오류 발생 시" 고지와 일치).
-  // 상시 샘플링은 오류 분석 목적을 넘어서는 수집이라 0으로 둔다.
-  replaysSessionSampleRate: 0,
+    // 앱 안에서 공유 페이지로 이동한 경우를 위해 주소는 한 번 더 가린다
+    beforeSend: scrubEvent,
+    beforeSendSpan: scrubSpan,
 
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
-  integrations: [
-    Sentry.replayIntegration({
-      // Additional Replay configuration goes in here, for example:
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
-});
+    replaysOnErrorSampleRate: 1.0,
+
+    // 오류가 발생한 세션만 리플레이를 수집한다 (개인정보처리방침 "오류 발생 시" 고지와 일치).
+    // 상시 샘플링은 오류 분석 목적을 넘어서는 수집이라 0으로 둔다.
+    replaysSessionSampleRate: 0,
+
+    // You can remove this option if you're not planning to use the Sentry Session Replay feature:
+    integrations: [
+      Sentry.replayIntegration({
+        // Additional Replay configuration goes in here, for example:
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
+  });
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
