@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import type { PrismaClient } from '@prisma/generated/client';
@@ -68,6 +68,20 @@ describe('BetterAuthService — OTP 메일 발송 실패 전파', () => {
     const before = calls;
     await expect(service.requestPasswordReset('nobody@example.com')).resolves.toBeUndefined();
     expect(calls).toBe(before);
+  });
+
+  it('미인증 계정 로그인: 인증 메일 실패는 403 EMAIL_NOT_VERIFIED 대신 503 으로 돌아온다 (메일이 정상이면 403)', async () => {
+    let fail = false;
+    const { auth } = makeAuth(async () => {
+      if (fail) throw new MailDeliveryError('SES down');
+    });
+    const service = new BetterAuthService(auth as never);
+    await service.signUp('선생님', 'owner@example.com', 'Passw0rd!x');
+
+    await expect(service.signIn('owner@example.com', 'Passw0rd!x')).rejects.toSatisfy((e: unknown) =>
+      e instanceof ForbiddenException && (e.getResponse() as { error: string }).error === 'EMAIL_NOT_VERIFIED');
+    fail = true;
+    await expect503(service.signIn('owner@example.com', 'Passw0rd!x'));
   });
 
   it('메일이 정상이면 그대로 성공한다 — 가입·재발송은 인증 코드 메일, 비밀번호 찾기는 재설정 코드 메일', async () => {

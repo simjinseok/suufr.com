@@ -17,7 +17,14 @@ export function recordOtpMailFailure(error: unknown): void {
 
 export async function rethrowOtpMailFailure<T>(fn: () => Promise<T>): Promise<T> {
   const store: Store = {};
-  const result = await storage.run(store, fn);
-  if (store.error !== undefined) throw store.error;
-  return result;
+  try {
+    const result = await storage.run(store, fn);
+    if (store.error !== undefined) throw store.error;
+    return result;
+  }
+  catch (error) {
+    // 미인증 계정의 로그인은 메일을 보낸 뒤 항상 EMAIL_NOT_VERIFIED 를 던진다.
+    // 이때도 메일 실패를 먼저 알려야 사용자가 오지 않는 메일을 기다리지 않는다
+    throw store.error !== undefined ? store.error : error;
+  }
 }

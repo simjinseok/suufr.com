@@ -35,6 +35,8 @@ type LoginState = ServerActionState<LoginFields> & {
   challengeName?: string;
   /** 비밀번호는 맞지만 이메일 미인증 — api 가 인증코드 메일을 보냈다. 인증코드 화면으로 간다 */
   requiresVerification?: boolean;
+  /** 미인증이라 인증코드 메일을 보내려 했지만 실패함 — 인증코드 화면에서 다시 받게 안내한다 */
+  mailFailed?: boolean;
 };
 
 export async function login(
@@ -93,6 +95,12 @@ export async function login(
       catch (error: any) {
         if (error instanceof ApiError && error.code === 'EMAIL_NOT_VERIFIED') {
           state.requiresVerification = true;
+          return state;
+        }
+        // 비밀번호는 맞고 미인증인데 인증코드 메일만 못 보낸 경우 (이 에러는 그때만 온다)
+        if (error instanceof ApiError && error.code === 'MAIL_DELIVERY_FAILED') {
+          state.requiresVerification = true;
+          state.mailFailed = true;
           return state;
         }
         state.message = error.message || '로그인 중 오류가 발생했습니다';

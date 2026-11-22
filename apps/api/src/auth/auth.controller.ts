@@ -86,6 +86,7 @@ export class AuthController {
   /**
    * 비밀번호 로그인. 이메일 미인증 계정은 비밀번호가 맞으면 403 EMAIL_NOT_VERIFIED 로 거부되고 인증코드 메일이 간다
    * (better-auth requireEmailVerification + sendOnSignIn). 클라이언트는 인증코드 화면으로 보낸다.
+   * 그 메일을 못 보내면 403 대신 503 MAIL_DELIVERY_FAILED 다 — 클라이언트는 이때도 인증 화면에서 다시 받게 안내한다.
    * 비밀번호가 틀리면 인증 여부와 관계없이 같은 401 이다. 이 판정은 2단계 인증보다 먼저다.
    */
   @Public()

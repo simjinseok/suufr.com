@@ -77,10 +77,12 @@ export default function LoginForm() {
       setShowMfa(true);
     }
     else if (loginState.requiresVerification) {
-      // 이메일 미인증 — api 가 인증코드 메일을 보냈다. 인증하면 바로 앱으로 들어간다
-      router.push(`/verify-email?email=${encodeURIComponent(loginState.fields?.email ?? '')}`);
+      // 이메일 미인증 — api 가 인증코드 메일을 보냈다(못 보냈으면 mailFailed). 인증하면 바로 앱으로 들어간다
+      const query = new URLSearchParams({ email: loginState.fields?.email ?? '' });
+      if (loginState.mailFailed) query.set('mailFailed', '1');
+      router.push(`/verify-email?${query}`);
     }
-  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, loginState.requiresVerification, loginState.fields?.email, router]);
+  }, [loginState.timestamp, loginState.success, loginState.requiresMfa, loginState.requiresVerification, loginState.mailFailed, loginState.fields?.email, router]);
 
   React.useEffect(() => {
     if (!mfaState.timestamp) return;
