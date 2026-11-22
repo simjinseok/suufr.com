@@ -114,6 +114,10 @@ describe('BetterAuthService.verifyEmail — 인증 시 미증명 세션 폐기',
 });
 
 describe('BetterAuthService.verifyEmail — 인증 즉시 로그인', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('미인증이던 계정이면 세션을 새로 만들어 토큰을 주고(요청 IP·UA 기록), 그 토큰으로 refresh 된다', async () => {
     const ctx = makeAuth();
     const { userId } = await ctx.service.signUp('선생님', EMAIL, PASSWORD);
@@ -131,6 +135,10 @@ describe('BetterAuthService.verifyEmail — 인증 즉시 로그인', () => {
     const ctx = makeAuth();
     const { userId } = await ctx.service.signUp('선생님', EMAIL, PASSWORD);
     userRow(ctx.db, EMAIL).emailVerified = true;
+    // 재발송은 가입 때 코드를 지우지 않고 새 행을 더한다. 두 행의 생성 시각이 같은 밀리초면 어느 쪽이 '최신'인지
+    // 정해지지 않아 테스트가 흔들리므로, 실제처럼 재발송 전에 시간이 흐르게 한다
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 1000);
     // 인증된 사용자에게도 재발송은 코드를 보낸다
     await ctx.service.resendVerification(EMAIL);
 
