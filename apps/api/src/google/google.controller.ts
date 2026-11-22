@@ -8,6 +8,7 @@ import {
   Res,
   Logger,
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
@@ -16,6 +17,7 @@ import { GoogleCalendarService } from './services/google-calendar.service';
 import { GoogleContactsService } from './services/google-contacts.service';
 import { CurrentUser, Public } from '../common';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
+import { BetterAuthService } from '../auth/better-auth/better-auth.service';
 import type { SyncResult } from './dto';
 import * as crypto from 'crypto';
 
@@ -40,6 +42,7 @@ export class GoogleController {
     private readonly googleService: GoogleService,
     private readonly calendarService: GoogleCalendarService,
     private readonly contactsService: GoogleContactsService,
+    private readonly betterAuth: BetterAuthService,
   ) {}
 
   /**
@@ -47,7 +50,12 @@ export class GoogleController {
    * Returns OAuth authorization URL
    */
   @Get('connect')
-  connect(@CurrentUser() user: AuthenticatedUser) {
+  async connect(@CurrentUser() user: AuthenticatedUser) {
+    // 미인증 비밀번호 계정은 로그인이 막혀 여기 올 수 없지만, 혹시 남은 세션이 있어도 막는다(Google 전용 사용자는 통과)
+    if (await this.betterAuth.isUnverifiedPasswordUser(user.userId)) {
+      throw new ForbiddenException({ message: '이메일 인증을 마친 뒤 Google 캘린더를 연동할 수 있습니다', error: 'EMAIL_NOT_VERIFIED' });
+    }
+
     // Generate secure state token
     const state = crypto.randomBytes(32).toString('hex');
 

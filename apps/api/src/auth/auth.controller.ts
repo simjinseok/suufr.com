@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Headers, Ip, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Headers, Ip, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { ThrottlerGuard, Throttle, SkipThrottle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -83,6 +83,11 @@ export class AuthController {
     };
   }
 
+  /**
+   * 비밀번호 로그인. 이메일 미인증 계정은 비밀번호가 맞으면 403 EMAIL_NOT_VERIFIED 로 거부되고 인증코드 메일이 간다
+   * (better-auth requireEmailVerification + sendOnSignIn). 클라이언트는 인증코드 화면으로 보낸다.
+   * 비밀번호가 틀리면 인증 여부와 관계없이 같은 401 이다. 이 판정은 2단계 인증보다 먼저다.
+   */
   @Public()
   @Post('login')
   async login(@Body() dto: LoginDto, @Ip() ip: string, @Headers('user-agent') userAgent?: string) {
@@ -138,8 +143,9 @@ export class AuthController {
    * 평가에 쓰는 IP·UA 는 web 이 동의 페이로드로 전달한 실제 클라이언트 값이다 (api 가 보는 IP 는 web 서버).
    * 동의 이력은 생성된 users.id 로 기록한다.
    * 중복 이메일이면 better-auth 가 열거 방지용 합성 사용자(무작위 id)를 돌려주므로, users 에 그 id 가 실제로 있을 때만 기록한다.
-   * 실제로 생성됐으면 바로 로그인해 토큰까지 돌려준다 (이메일 인증은 나중에). 중복이면 토큰 없이 메시지만 — 응답 모양으로
-   * 가입 여부가 드러나지만, reCAPTCHA·레이트리밋을 믿고 가입 즉시 로그인을 택했다 (2026-10-07 확정).
+   * 가입만으로는 로그인되지 않는다. 새 계정이면 requiresVerification 을 돌려주고, 클라이언트는 인증코드 화면으로 간다
+   * (인증하면 verify-email 이 토큰을 준다). 중복 이메일이면 인증 화면으로 보내지 않고 로그인 안내만 한다 —
+   * 응답으로 가입 여부가 드러나는 것은 2026-10-07 확정 사항이다.
    */
   @Public()
   @Post('signup')
@@ -151,9 +157,8 @@ export class AuthController {
 
     const { userId } = await this.betterAuth.signUp(dto.name?.trim() ?? '', dto.email, dto.password);
 
-    const message = '인증 이메일이 발송되었습니다';
     const created = await this.authService.findUserByEmail(dto.email);
-    // 중복 이메일(합성 사용자). 가입 즉시 로그인이라 토큰 유무로 가입 여부가 드러나므로(2026-10-07 확정) 안내도 사실대로 한다
+    // 중복 이메일(합성 사용자)
     if (!created || created.id !== userId) return { success: true, message: '이미 가입된 이메일입니다. 로그인해주세요.' };
 
     await this.consentsService.recordSafely(userId, dto.consents, {
@@ -161,21 +166,28 @@ export class AuthController {
       userAgent: dto.consents.userAgent,
     });
 
-    // 새 계정이라 2FA 챌린지는 나올 수 없지만, 타입상 토큰 응답일 때만 싣는다
-    const signedIn = await this.betterAuth.signIn(dto.email, dto.password, {
-      ip: dto.consents.ipAddress,
-      userAgent: dto.consents.userAgent,
-    });
-    if ('requiresMfa' in signedIn) return { success: true, message };
-    return { ...signedIn, message };
+    return { success: true, requiresVerification: true, message: '인증 이메일이 발송되었습니다' };
   }
 
-  /** 인증 시 소유권 증명 전 세션을 폐기한다. 로그인 상태의 호출자는 X-Session-Token 을 보내야 자기 세션이 유지된다 */
+  /**
+   * 이메일 인증. 소유권 증명 전 세션을 폐기한다(로그인 상태의 호출자는 X-Session-Token 을 보내야 자기 세션이 유지된다).
+   * 미인증이던 계정이면 토큰까지 돌려준다(인증 즉시 로그인). 이미 인증됐거나 2단계 인증을 켠 계정은 토큰 없이
+   * 성공만 알리고, 클라이언트는 로그인 화면으로 보낸다.
+   */
   @Public()
   @Post('verify-email')
-  async verifyEmail(@Body() dto: VerifyEmailDto, @Headers() headers: Record<string, string | string[] | undefined>) {
-    await this.betterAuth.verifyEmail(dto.email, dto.code, this.optionalSessionToken(headers));
-    return { success: true, message: '이메일 인증이 완료되었습니다' };
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Ip() ip: string,
+  ) {
+    const userAgent = headers['user-agent'];
+    const tokens = await this.betterAuth.verifyEmail(dto.email, dto.code, this.optionalSessionToken(headers), {
+      ip,
+      userAgent: Array.isArray(userAgent) ? userAgent[0] : userAgent,
+    });
+    const message = '이메일 인증이 완료되었습니다';
+    return tokens ? { ...tokens, message } : { success: true, message };
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -221,7 +233,15 @@ export class AuthController {
   // ---- 2단계 인증 (TOTP) 관리: JWT 로 인증된 사용자 + X-Session-Token 헤더(세션 토큰) ----
 
   @Post('two-factor/enable')
-  async enableTwoFactor(@Body() dto: TwoFactorPasswordDto, @Headers() headers: Record<string, string | undefined>) {
+  async enableTwoFactor(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: TwoFactorPasswordDto,
+    @Headers() headers: Record<string, string | undefined>,
+  ) {
+    // 미인증 비밀번호 계정은 로그인이 막혀 여기 올 수 없지만, 혹시 남은 세션이 있어도 막는다(Google 전용 사용자는 통과)
+    if (await this.betterAuth.isUnverifiedPasswordUser(user.userId)) {
+      throw new ForbiddenException({ message: '이메일 인증을 마친 뒤 2단계 인증을 설정할 수 있습니다', error: 'EMAIL_NOT_VERIFIED' });
+    }
     const result = await this.betterAuth.enableTwoFactor(this.requireSessionToken(headers), dto.password);
     return { success: true, ...result };
   }

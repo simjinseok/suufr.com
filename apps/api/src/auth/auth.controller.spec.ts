@@ -8,7 +8,9 @@ function build() {
     refresh: vi.fn().mockResolvedValue({ success: true, accessToken: 'ba', expiresIn: 3600 }),
     verifySecondFactor: vi.fn().mockResolvedValue({ success: true }),
     signOut: vi.fn().mockResolvedValue(undefined),
-    verifyEmail: vi.fn().mockResolvedValue(undefined),
+    verifyEmail: vi.fn().mockResolvedValue(null),
+    isUnverifiedPasswordUser: vi.fn().mockResolvedValue(false),
+    enableTwoFactor: vi.fn().mockResolvedValue({ totpURI: 'otpauth://totp/x', backupCodes: ['a'] }),
     signUp: vi.fn().mockResolvedValue({ userId: 'u1' }),
     signIn: vi.fn().mockResolvedValue({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' }),
     signInWithGoogleIdToken: vi.fn().mockResolvedValue({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' }),
@@ -87,17 +89,17 @@ describe('AuthController', () => {
     expect(consents.recordSafely).toHaveBeenCalledTimes(1);
   });
 
-  it('signup: 실제로 생성됐으면 바로 로그인해 토큰을 돌려준다 (이메일 인증은 나중에)', async () => {
+  it('signup: 실제로 생성돼도 로그인하지 않고 토큰 없이 인증 필요 상태를 돌려준다', async () => {
     const { controller, betterAuth } = build();
     const result = await controller.signup({
       name: 'n', email: 'a@b.c', password: 'Passw0rd!x',
       consents: { ...consentsDto, ipAddress: '203.0.113.5', userAgent: 'ua' },
     });
-    expect(betterAuth.signIn).toHaveBeenCalledWith('a@b.c', 'Passw0rd!x', { ip: '203.0.113.5', userAgent: 'ua' });
-    expect(result).toMatchObject({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' });
+    expect(betterAuth.signIn).not.toHaveBeenCalled();
+    expect(result).toEqual({ success: true, requiresVerification: true, message: '인증 이메일이 발송되었습니다' });
   });
 
-  it('signup: 중복 이메일(합성 응답)이면 로그인하지 않고 토큰 없이 200 을 돌려준다', async () => {
+  it('signup: 중복 이메일(합성 응답)이면 인증 화면으로 보내지 않고 로그인 안내만 돌려준다', async () => {
     const { controller, betterAuth, authService } = build();
     authService.findUserByEmail.mockResolvedValue({ id: 'existing-user' });
     const result = await controller.signup({ name: 'n', email: 'a@b.c', password: 'Passw0rd!x', consents: { ...consentsDto } });
@@ -131,7 +133,7 @@ describe('AuthController', () => {
     expect(consents.recordSafely).not.toHaveBeenCalled();
   });
 
-  it('signup: 인증 메일 발송 실패(503 MAIL_DELIVERY_FAILED)는 로그인하지 않고 그대로 전달한다 (계정은 만들어졌고 web 이 로그인 후 재발송을 안내)', async () => {
+  it('signup: 인증 메일 발송 실패(503 MAIL_DELIVERY_FAILED)는 그대로 전달한다 (계정은 만들어졌고 클라이언트가 인증 화면에서 재발송을 안내)', async () => {
     const { controller, betterAuth } = build();
     const mailFailure = new ServiceUnavailableException({ message: '인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요', error: 'MAIL_DELIVERY_FAILED' });
     betterAuth.signUp.mockRejectedValue(mailFailure);
@@ -140,11 +142,36 @@ describe('AuthController', () => {
     expect(betterAuth.signIn).not.toHaveBeenCalled();
   });
 
-  it('verify-email 은 X-Session-Token 이 있으면 그 세션을 유지 대상으로 넘기고, 없으면 undefined 를 넘긴다', async () => {
+  it('verify-email 은 X-Session-Token 이 있으면 그 세션을 유지 대상으로 넘기고, 없으면 undefined 를 넘긴다. 요청 IP·UA 도 넘긴다', async () => {
     const { controller, betterAuth } = build();
-    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, { 'x-session-token': 'sess' });
-    expect(betterAuth.verifyEmail).toHaveBeenCalledWith('a@b.c', '123456', 'sess');
-    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, {});
-    expect(betterAuth.verifyEmail).toHaveBeenLastCalledWith('a@b.c', '123456', undefined);
+    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, { 'x-session-token': 'sess', 'user-agent': 'ua' }, '1.1.1.1');
+    expect(betterAuth.verifyEmail).toHaveBeenCalledWith('a@b.c', '123456', 'sess', { ip: '1.1.1.1', userAgent: 'ua' });
+    await controller.verifyEmail({ email: 'a@b.c', code: '123456' }, {}, '1.1.1.1');
+    expect(betterAuth.verifyEmail).toHaveBeenLastCalledWith('a@b.c', '123456', undefined, { ip: '1.1.1.1', userAgent: undefined });
+  });
+
+  it('verify-email: 토큰이 발급되면(미인증이던 계정) 토큰과 안내를 함께, 아니면 성공 안내만 돌려준다', async () => {
+    const { controller, betterAuth } = build();
+    betterAuth.verifyEmail.mockResolvedValueOnce({ success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1' });
+    await expect(controller.verifyEmail({ email: 'a@b.c', code: '123456' }, {}, '1.1.1.1')).resolves.toEqual({
+      success: true, accessToken: 'jwt', refreshToken: 'sess', expiresIn: 3600, userId: 'u1', message: '이메일 인증이 완료되었습니다',
+    });
+    await expect(controller.verifyEmail({ email: 'a@b.c', code: '123456' }, {}, '1.1.1.1')).resolves.toEqual({
+      success: true, message: '이메일 인증이 완료되었습니다',
+    });
+  });
+
+  it('two-factor/enable: 미인증 비밀번호 계정이면 403 EMAIL_NOT_VERIFIED 로 거부하고, 아니면(Google 전용 포함) 위임한다', async () => {
+    const { controller, betterAuth } = build();
+    const user = { userId: 'u1' };
+    betterAuth.isUnverifiedPasswordUser.mockResolvedValueOnce(true);
+    await expect(controller.enableTwoFactor(user, { password: 'Passw0rd!x' }, { 'x-session-token': 'sess' })).rejects.toSatisfy(
+      (e: unknown) => e instanceof ForbiddenException && (e.getResponse() as { error: string }).error === 'EMAIL_NOT_VERIFIED',
+    );
+    expect(betterAuth.enableTwoFactor).not.toHaveBeenCalled();
+
+    await expect(controller.enableTwoFactor(user, { password: 'Passw0rd!x' }, { 'x-session-token': 'sess' })).resolves.toMatchObject({ success: true });
+    expect(betterAuth.isUnverifiedPasswordUser).toHaveBeenLastCalledWith('u1');
+    expect(betterAuth.enableTwoFactor).toHaveBeenCalledWith('sess', 'Passw0rd!x');
   });
 });

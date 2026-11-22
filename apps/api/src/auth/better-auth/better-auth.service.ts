@@ -148,13 +148,40 @@ export class BetterAuthService {
   }
 
   /**
-   * 이메일 인증(OTP). 가입 즉시 로그인 정책상 소유권 증명 전에 발급된 세션이 있으므로, 증명이 끝나는 이 시점에
-   * 인증을 요청한 세션(callerSessionToken, 그 사용자의 것일 때만)만 남기고 나머지를 전부 폐기한다.
-   * 토큰이 없거나 다른 사용자·만료된 토큰이면 그 사용자의 세션을 모두 폐기한다.
+   * 이메일 인증(OTP). 인증이 끝나면 소유권 증명 전에 생긴 세션을 폐기한다 — 인증을 요청한 세션
+   * (callerSessionToken, 그 사용자의 것일 때만)만 남기고, 토큰이 없거나 다른 사용자·만료된 토큰이면 전부 폐기한다.
+   *
+   * 미인증이던 계정이면 바로 로그인 토큰을 돌려준다(가입·로그인 뒤 인증코드 화면 → 바로 앱).
+   * 이미 인증된 계정이나 2단계 인증을 켠 계정은 null 이다 — 메일 코드만으로 비밀번호·2단계 인증을 건너뛰게 되기 때문.
+   * 이때 호출자는 로그인 화면으로 보낸다.
    */
-  async verifyEmail(email: string, otp: string, callerSessionToken?: string): Promise<void> {
+  async verifyEmail(email: string, otp: string, callerSessionToken?: string, meta?: RequestMeta): Promise<IssuedTokens | null> {
+    const ctx = await this.auth.$context;
+    const before = await ctx.internalAdapter.findUserByEmail(email.toLowerCase());
     const { user } = await this.run(() => this.auth.api.verifyEmailOTP({ body: { email, otp } }));
     await this.revokeUnprovenSessions(user.id, callerSessionToken);
+
+    const wasUnverified = before?.user.id === user.id && !before.user.emailVerified;
+    const twoFactorEnabled = (before?.user as { twoFactorEnabled?: boolean | null } | undefined)?.twoFactorEnabled === true;
+    if (!wasUnverified || twoFactorEnabled) return null;
+
+    const session = await this.run(() => ctx.internalAdapter.createSession(user.id, false, {
+      ...(meta?.ip ? { ipAddress: meta.ip } : {}),
+      ...(meta?.userAgent ? { userAgent: meta.userAgent } : {}),
+    }));
+    return this.issueTokens(session.token, user.id);
+  }
+
+  /**
+   * 비밀번호 계정이 있는데 이메일이 미인증인 사용자인지. 2단계 인증 설정·Google 연동을 막는 데 쓴다(방어용).
+   * 비밀번호 없이 Google 로만 가입한 사용자는 인증 여부와 관계없이 false 다.
+   */
+  async isUnverifiedPasswordUser(userId: string): Promise<boolean> {
+    const { internalAdapter } = await this.auth.$context;
+    const user = await internalAdapter.findUserById(userId);
+    if (!user || user.emailVerified) return false;
+    const accounts = await internalAdapter.findAccounts(userId);
+    return accounts.some(account => account.providerId === 'credential');
   }
 
   private async revokeUnprovenSessions(userId: string, keepSessionToken?: string): Promise<void> {

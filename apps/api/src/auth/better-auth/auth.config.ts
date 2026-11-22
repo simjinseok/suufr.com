@@ -83,13 +83,14 @@ export function createAuthOptions(deps: AuthConfigDeps) {
 
     emailAndPassword: {
       enabled: true,
-      // 이메일 인증은 나중에 해도 된다 — 미인증 계정도 로그인되고, 인증 전까지 web 이 배너로 안내한다.
-      // autoSignIn 은 끈다: better-auth 는 requireEmailVerification 이나 autoSignIn:false 일 때만 중복 이메일을
-      // 열거 방지용 200(합성 사용자)으로 응답한다. 가입 직후 로그인은 AuthController.signup 이 signIn 으로 처리한다
-      requireEmailVerification: false,
+      // 이메일을 인증하기 전에는 비밀번호로 로그인할 수 없다(남의 이메일로 미리 가입해 두는 계정 탈취 방지).
+      // 비밀번호가 맞으면 403 EMAIL_NOT_VERIFIED 로 거부하고 인증코드 메일을 보낸다(emailVerification.sendOnSignIn).
+      // 비밀번호가 틀리면 인증 여부와 관계없이 일반 실패(401)다 — better-auth 가 비밀번호를 먼저 확인한다.
+      // 이 설정은 이메일·비밀번호 로그인에만 걸린다. Google 로그인·refresh 에는 영향이 없다.
+      // 가입 직후에도 세션은 없다. 인증코드를 확인하면 AuthController.verifyEmail 이 로그인 토큰을 준다
+      requireEmailVerification: true,
       autoSignIn: false,
-      // 미인증 상태로 가입하면 소유권 증명 없이 세션이 발급된다. 진짜 소유자가 비밀번호 재설정으로 계정을 되찾을 때
-      // 그 세션(가입자가 쥔 refreshToken 포함)이 살아남지 않도록 재설정 시 모든 세션을 폐기한다
+      // 진짜 소유자가 비밀번호 재설정으로 계정을 되찾을 때 이전 세션이 살아남지 않도록 재설정 시 모든 세션을 폐기한다
       revokeSessionsOnPasswordReset: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
@@ -105,8 +106,10 @@ export function createAuthOptions(deps: AuthConfigDeps) {
       }),
     },
     emailVerification: {
-      // requireEmailVerification 이 꺼져도 가입 시 인증코드(OTP) 메일은 보낸다
+      // 가입 시, 그리고 미인증 계정이 맞는 비밀번호로 로그인할 때 인증코드(OTP) 메일을 보낸다
       sendOnSignUp: true,
+      sendOnSignIn: true,
+      // 인증 직후 로그인은 BetterAuthService.verifyEmail 이 조건(미인증이었고 2단계 인증이 꺼진 계정)을 보고 직접 한다
       autoSignInAfterVerification: false,
     },
 

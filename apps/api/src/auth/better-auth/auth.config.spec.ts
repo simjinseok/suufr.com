@@ -3,10 +3,11 @@ import { betterAuth } from 'better-auth';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
-import { existingUserSignupAttemptMail } from '../../mail/templates/auth-mails';
+import { existingUserSignupAttemptMail, verifyEmailMail } from '../../mail/templates/auth-mails';
 import { createAuthOptions, type AuthConfigDeps } from './auth.config';
 import { BETTER_AUTH_BASE_PATH } from './auth.constants';
 import { EMAIL_LINKED_SOCIAL_PROVIDERS } from './social-link-policy';
+import { BetterAuthService } from './better-auth.service';
 
 function makeDeps(overrides: Partial<AuthConfigDeps> = {}): AuthConfigDeps {
   return {
@@ -37,14 +38,14 @@ describe('createAuthOptions', () => {
     expect(options.emailAndPassword.revokeSessionsOnPasswordReset).toBe(true);
   });
 
-  it('이메일 인증 전이라도 가입한 비밀번호로 바로 로그인된다 (가입 즉시 로그인)', async () => {
-    const { auth } = makeAuth();
-    await auth.api.signUpEmail({ body: signUpBody });
+  it('가입해도 세션은 만들지 않고 인증코드 메일만 보낸다', async () => {
+    const { auth, db, mail } = makeAuth();
 
-    const signedIn = await auth.api.signInEmail({ body: { email: signUpBody.email, password: signUpBody.password } });
+    const signedUp = await auth.api.signUpEmail({ body: signUpBody });
 
-    expect(signedIn.token).toEqual(expect.any(String));
-    expect(signedIn.user.emailVerified).toBe(false);
+    expect(signedUp.token).toBeNull();
+    expect(db.authSession).toHaveLength(0);
+    expect(mail.sendOrThrow).toHaveBeenCalledWith(expect.objectContaining({ to: signUpBody.email, subject: verifyEmailMail(signUpBody.email, '000000').subject }));
   });
 
   it('이미 가입된 이메일로 다시 가입하면 에러 없이 합성 사용자(다른 id)를 돌려주고 기존 사용자에게 알림 메일을 보낸다', async () => {
@@ -116,5 +117,67 @@ describe('createAuthOptions — Apple', () => {
     // ID 토큰 경로는 secret 을 쓰지 않는다(성공은 better-auth.service.apple-native.spec 이 검증). 인증 URL 생성만 secret 을 요구한다
     await expect(auth.api.signInSocial({ body: { provider: 'apple', callbackURL: '/', disableRedirect: true } }))
       .rejects.toThrow('CLIENT_ID_AND_SECRET_REQUIRED');
+  });
+});
+
+/** 운영 옵션 + 컨트롤러가 쓰는 래퍼(BetterAuthService)로, 클라이언트가 받는 예외까지 확인한다 */
+describe('미인증 계정의 비밀번호 로그인 차단', () => {
+  function setup() {
+    const { auth, db, mail } = makeAuth();
+    return { auth, db, mail, service: new BetterAuthService(auth as never) };
+  }
+
+  /** 클라이언트가 받는 상태 코드와 본문 */
+  async function failure(p: Promise<unknown>) {
+    const error = await p.then(() => null, (e: unknown) => e as { getStatus: () => number; getResponse: () => unknown });
+    expect(error).not.toBeNull();
+    return { status: error!.getStatus(), body: error!.getResponse() };
+  }
+
+  it('비밀번호가 맞아도 미인증이면 403 EMAIL_NOT_VERIFIED 로 거부하고, 세션 없이 인증코드 메일을 다시 보낸다', async () => {
+    const { db, mail, service } = setup();
+    await service.signUp('', signUpBody.email, signUpBody.password);
+    mail.sendOrThrow.mockClear();
+
+    expect(await failure(service.signIn(signUpBody.email, signUpBody.password))).toEqual({
+      status: 403,
+      body: { message: '이메일 인증이 필요합니다', error: 'EMAIL_NOT_VERIFIED' },
+    });
+    expect(db.authSession).toHaveLength(0);
+    expect(mail.sendOrThrow).toHaveBeenCalledTimes(1);
+    expect(mail.sendOrThrow).toHaveBeenCalledWith(expect.objectContaining({ to: signUpBody.email, subject: verifyEmailMail(signUpBody.email, '000000').subject }));
+  });
+
+  it('비밀번호가 틀리면 미인증·인증·없는 계정 모두 같은 401 이고 메일을 보내지 않는다 (인증 여부를 드러내지 않는다)', async () => {
+    const { db, mail, service } = setup();
+    await service.signUp('', 'unverified@example.com', signUpBody.password);
+    await service.signUp('', 'verified@example.com', signUpBody.password);
+    (db.user as { email: string; emailVerified: boolean }[]).find(u => u.email === 'verified@example.com')!.emailVerified = true;
+    mail.sendOrThrow.mockClear();
+
+    const unverified = await failure(service.signIn('unverified@example.com', 'Wrong-Passw0rd'));
+    const verified = await failure(service.signIn('verified@example.com', 'Wrong-Passw0rd'));
+    const missing = await failure(service.signIn('nobody@example.com', 'Wrong-Passw0rd'));
+
+    expect(unverified).toEqual({ status: 401, body: { message: '이메일 또는 비밀번호가 올바르지 않습니다', error: 'INVALID_EMAIL_OR_PASSWORD' } });
+    expect(verified).toEqual(unverified);
+    expect(missing).toEqual(unverified);
+    expect(mail.sendOrThrow).not.toHaveBeenCalled();
+  });
+
+  it('2단계 인증을 켠 미인증 계정도 2단계 인증 챌린지보다 EMAIL_NOT_VERIFIED 가 먼저다', async () => {
+    const { db, service } = setup();
+    await service.signUp('', signUpBody.email, signUpBody.password);
+    Object.assign(db.user[0] as object, { twoFactorEnabled: true });
+
+    expect((await failure(service.signIn(signUpBody.email, signUpBody.password))).body).toMatchObject({ error: 'EMAIL_NOT_VERIFIED' });
+  });
+
+  it('인증된 계정은 비밀번호로 로그인된다', async () => {
+    const { db, service } = setup();
+    const { userId } = await service.signUp('', signUpBody.email, signUpBody.password);
+    (db.user[0] as { emailVerified: boolean }).emailVerified = true;
+
+    await expect(service.signIn(signUpBody.email, signUpBody.password)).resolves.toMatchObject({ success: true, userId });
   });
 });

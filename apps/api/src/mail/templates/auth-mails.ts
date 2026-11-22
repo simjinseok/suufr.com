@@ -9,7 +9,7 @@ export function verifyEmailMail(to: string, otp: string) {
     subject: '이메일 인증 코드',
     title: '이메일 인증을 완료해주세요',
     paragraphs: [
-      '아래 6자리 인증 코드를 가입 화면에 입력하면 이메일 인증이 완료됩니다.',
+      '아래 6자리 인증 코드를 인증 화면에 입력하면 이메일 인증이 완료됩니다.',
       `코드는 ${OTP_MINUTES}분 동안만 유효합니다.`,
     ],
     highlight: otp,

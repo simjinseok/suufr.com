@@ -114,11 +114,12 @@ describe('BetterAuthService.signInWithGoogleIdToken', () => {
   });
 
   it('같은 이메일의 미인증 비밀번호 사용자에 Google 을 연결하면 비밀번호를 지우고 옛 세션을 폐기한다 (새 Google 세션만 유효)', async () => {
-    const { db, service } = makeAuth();
+    const { db, auth, service } = makeAuth();
     // 소유권이 증명되지 않은 계정 — 남의 이메일로 먼저 가입해 둔 사람일 수 있다
     const { userId } = await service.signUp('선생님', EMAIL, PASSWORD);
     expect(db.user[0]).toMatchObject({ id: userId, emailVerified: false });
-    const before = (await service.signIn(EMAIL, PASSWORD)) as IssuedTokens;
+    // 미인증 로그인 차단 이전에 만들어진 세션을 흉내 낸다(지금은 미인증 계정이 비밀번호로 로그인할 수 없다)
+    const before = { refreshToken: (await (await auth.$context).internalAdapter.createSession(userId)).token };
 
     const result = await service.signInWithGoogleIdToken(googleIdToken());
 
@@ -146,6 +147,7 @@ describe('BetterAuthService.signInWithGoogleIdToken', () => {
   it('Google 신규 가입은 연결 정책과 무관하다 — 새 세션이 유효하고 다른 사용자의 비밀번호·세션도 그대로다', async () => {
     const { db, service } = makeAuth();
     const other = await service.signUp('다른 사람', 'other@example.com', PASSWORD);
+    db.user[0].emailVerified = true; // 미인증이면 비밀번호 로그인이 막힌다
     const otherSession = (await service.signIn('other@example.com', PASSWORD)) as IssuedTokens;
 
     const result = await service.signInWithGoogleIdToken(googleIdToken());
