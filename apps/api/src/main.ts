@@ -17,23 +17,6 @@ async function bootstrap() {
     trustProxy: true,
   });
 
-  // Register WebDAV HTTP methods for CardDAV/CalDAV
-  // @see RFC 4918 (WebDAV), RFC 4791 (CalDAV)
-  const fastifyInstance = fastifyAdapter.getInstance();
-  fastifyInstance.addHttpMethod('PROPFIND', { hasBody: true });
-  fastifyInstance.addHttpMethod('PROPPATCH', { hasBody: true });
-  fastifyInstance.addHttpMethod('REPORT', { hasBody: true });
-  fastifyInstance.addHttpMethod('MKCALENDAR', { hasBody: true });
-
-  // Add content type parser for XML, vCard, and iCalendar (CardDAV/CalDAV)
-  fastifyInstance.addContentTypeParser(
-    ['text/xml', 'application/xml', 'text/vcard', 'text/calendar'],
-    { parseAs: 'buffer' },
-    (_req: unknown, body: Buffer, done: (err: null, body: Buffer) => void) => {
-      done(null, body);
-    },
-  );
-
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
@@ -43,13 +26,7 @@ async function bootstrap() {
     },
   );
 
-  // Skip CORS for CardDAV/CalDAV routes
   app.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const path = req.url || '';
-    if (path.startsWith('/carddav') || path.startsWith('/.well-known/carddav')
-      || path.startsWith('/caldav') || path.startsWith('/.well-known/caldav')) {
-      return next();
-    }
     const origin = process.env.WEB_URL || 'http://localhost:3000';
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
