@@ -9,10 +9,16 @@ export function maskSharePath(value: string): string {
 }
 
 // 객체의 문자열 값만 골라 가린다 (헤더, 스팬 속성, 브레드크럼 data)
+// 스팬의 요청 헤더 속성(http.request.header.referer 등)은 문자열 배열로 온다
 function maskStringValues(values: Record<string, unknown> | undefined) {
   if (!values) return;
   for (const [key, value] of Object.entries(values)) {
-    if (typeof value === 'string') values[key] = maskSharePath(value);
+    if (typeof value === 'string') {
+      values[key] = maskSharePath(value);
+    }
+    else if (Array.isArray(value)) {
+      values[key] = value.map((item) => (typeof item === 'string' ? maskSharePath(item) : item));
+    }
   }
 }
 

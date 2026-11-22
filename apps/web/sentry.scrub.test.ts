@@ -64,12 +64,18 @@ describe('scrubSpan', () => {
   it('스팬 이름과 문자열 속성의 공유 링크 주소를 가린다', () => {
     const span = scrubSpan({
       name: 'GET /sl/abcd1234',
-      attributes: { 'url.full': 'https://suufr.com/sl/abcd1234', 'http.target': '/sl/abcd1234', 'status': 200 },
+      attributes: {
+        'url.full': 'https://suufr.com/sl/abcd1234',
+        'http.target': '/sl/abcd1234',
+        'http.request.header.referer': ['https://suufr.com/sl/abcd1234'],
+        'status': 200,
+      },
     });
     expect(span.name).toBe('GET /sl/[redacted]');
     expect(span.attributes).toEqual({
       'url.full': 'https://suufr.com/sl/[redacted]',
       'http.target': '/sl/[redacted]',
+      'http.request.header.referer': ['https://suufr.com/sl/[redacted]'],
       'status': 200,
     });
   });
