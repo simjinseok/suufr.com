@@ -342,7 +342,7 @@ export class AccountDeletionService {
   }
 
   /**
-   * 사용자 prefix 밖에 있는 이 계정의 S3 키 — CardDAV 사진 업로드(`{folder}/{uuid}`, DAV 제거 전까지는 새로 생긴다), 구 공개 경로 등.
+   * 사용자 prefix 밖에 있는 이 계정의 S3 키 — CardDAV 사진 업로드(`{folder}/{uuid}`, DAV 는 제거됐지만 그 전에 올라간 키가 남아 있을 수 있다), 구 공개 경로 등.
    * 우리 버킷·CDN 을 가리키지 않는 URL 과 다른 사용자의 prefix 는 제외한다.
    */
   private async collectLegacyKeys(userId: string): Promise<string[]> {

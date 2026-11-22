@@ -25,7 +25,7 @@ export type DeleteAccountState = ServerActionState<DeleteAccountFields> & {
 export async function requestAccountDeletionOtp(): Promise<{ success: boolean; message?: string; code?: string }> {
   return await Sentry.withServerActionInstrumentation(
     'requestAccountDeletionOtp',
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       try {
         await authApi.account.requestDeleteOtp();
@@ -55,7 +55,7 @@ export async function deleteAccount(
   const state = await Sentry.withServerActionInstrumentation(
     'deleteAccount',
     // 비밀번호·코드가 Sentry 로 가지 않도록 formData 는 넘기지 않는다
-    { headers: await headers(), recordResponse: true },
+    { headers: await headers() },
     async () => {
       const data = Object.fromEntries(formData);
       const method: AccountDeletionMethod = data.method === 'otp' ? 'otp' : 'password';
