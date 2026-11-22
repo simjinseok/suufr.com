@@ -7,7 +7,7 @@ import { decryptOAuthToken } from 'better-auth/oauth2';
 import type { ConfigService } from '@nestjs/config';
 import type { PrismaClient } from '@prisma/generated/client';
 import type { MailService } from '../../mail/mail.service';
-import { APPLE_TOKEN_URL, AppleTokenRequestError, AppleTokenService } from '../apple-token.service';
+import { APPLE_REVOKE_URL, APPLE_TOKEN_URL, AppleTokenRequestError, AppleTokenService } from '../apple-token.service';
 import { createAuthOptions } from './auth.config';
 import { BetterAuthService, type AppleIdTokenSignIn, type IssuedTokens } from './better-auth.service';
 
@@ -88,9 +88,13 @@ const appleAccount = (db: Record<string, Record<string, unknown>[]>) =>
 
 let tokenEndpoint: () => Response | Promise<Response>;
 let tokenRequests: URLSearchParams[];
+let revokeEndpoint: (form: URLSearchParams) => Response | Promise<Response>;
+let revokeRequests: URLSearchParams[];
 
 beforeEach(() => {
   tokenRequests = [];
+  revokeRequests = [];
+  revokeEndpoint = () => new Response(null, { status: 200 });
   tokenEndpoint = () => Response.json({ access_token: 'apple-access', refresh_token: 'apple-refresh-1', id_token: 'unused', token_type: 'Bearer', expires_in: 3600 });
   const jwk = { ...appleSigningKey.publicKey.export({ format: 'jwk' }), kid: APPLE_KID, alg: 'RS256', use: 'sig' };
   vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -99,6 +103,11 @@ beforeEach(() => {
     if (url === APPLE_TOKEN_URL) {
       tokenRequests.push(new URLSearchParams(String(init?.body)));
       return tokenEndpoint();
+    }
+    if (url === APPLE_REVOKE_URL) {
+      const form = new URLSearchParams(String(init?.body));
+      revokeRequests.push(form);
+      return revokeEndpoint(form);
     }
     throw new Error(`예상하지 못한 외부 요청: ${url}`);
   }));
@@ -427,5 +436,77 @@ describe('BetterAuthService.signInWithAppleIdToken — revoke 용 refresh token'
     await expect(login(service, { authorizationCode: 'code-1' })).resolves.toMatchObject({ success: true });
     expect(tokenRequests).toHaveLength(0);
     expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+});
+
+describe('BetterAuthService.revokeAppleAccount — 탈퇴 시 토큰 폐기', () => {
+  it('로그인 때 저장한 refresh token 을 복호화해 그 토큰을 받은 번들 ID 로 폐기한다', async () => {
+    const { service } = makeAuth();
+    await login(service, { idToken: appleIdToken({ aud: 'com.suufr.ios.dev' }), authorizationCode: 'code-1' });
+
+    await expect(service.revokeAppleAccount(APPLE_SUB)).resolves.toBe('revoked');
+
+    expect(revokeRequests).toHaveLength(1);
+    expect(revokeRequests[0].get('token')).toBe('apple-refresh-1');
+    expect(revokeRequests[0].get('token_type_hint')).toBe('refresh_token');
+    expect(revokeRequests[0].get('client_id')).toBe('com.suufr.ios.dev');
+    expect(revokeRequests[0].get('client_secret')?.split('.')).toHaveLength(3);
+  });
+
+  it('authorization code 가 오면 저장된 토큰 대신 code 를 교환해 받은 refresh token 을 폐기한다', async () => {
+    const { service } = makeAuth();
+    await login(service, { authorizationCode: 'code-1' });
+    tokenEndpoint = () => Response.json({ access_token: 'a2', refresh_token: 'apple-refresh-2' });
+
+    await expect(service.revokeAppleAccount(APPLE_SUB, 'code-for-delete')).resolves.toBe('revoked');
+
+    expect(tokenRequests.at(-1)?.get('code')).toBe('code-for-delete');
+    expect(revokeRequests.map(r => r.get('token'))).toEqual(['apple-refresh-2']);
+  });
+
+  it('교환 응답에 refresh token 이 없으면 access token 을 폐기한다', async () => {
+    const { service } = makeAuth();
+    await login(service);
+    tokenEndpoint = () => Response.json({ access_token: 'only-access' });
+
+    await expect(service.revokeAppleAccount(APPLE_SUB, 'code')).resolves.toBe('revoked');
+    expect(revokeRequests[0].get('token')).toBe('only-access');
+    expect(revokeRequests[0].get('token_type_hint')).toBe('access_token');
+  });
+
+  it('저장된 토큰도 code 도 없으면 Apple 을 부르지 않고 no-token', async () => {
+    const { service } = makeAuth();
+    await login(service);
+
+    await expect(service.revokeAppleAccount(APPLE_SUB)).resolves.toBe('no-token');
+    expect(revokeRequests).toHaveLength(0);
+  });
+
+  it('Apple 이 client 불일치(invalid_client)로 거부하면 허용 목록의 다른 번들 ID 로 다시 시도한다', async () => {
+    const { db, service } = makeAuth();
+    await login(service, { authorizationCode: 'code-1' });
+    // 저장된 identity token 이 없는 행(예: 이전 버전에서 만든 행)은 허용 목록 순서대로 시도한다
+    (appleAccount(db) as Record<string, unknown>).idToken = null;
+    revokeEndpoint = form => (form.get('client_id') === 'com.suufr.ios'
+      ? Response.json({ error: 'invalid_client' }, { status: 400 })
+      : new Response(null, { status: 200 }));
+
+    await expect(service.revokeAppleAccount(APPLE_SUB)).resolves.toBe('revoked');
+    expect(revokeRequests.map(r => r.get('client_id'))).toEqual(['com.suufr.ios', 'com.suufr.ios.dev']);
+  });
+
+  it('그 밖의 Apple 오류는 다른 번들 ID 로 넘어가지 않고 던진다', async () => {
+    const { service } = makeAuth();
+    await login(service, { authorizationCode: 'code-1' });
+    revokeEndpoint = () => Response.json({ error: 'server_error' }, { status: 503 });
+
+    await expect(service.revokeAppleAccount(APPLE_SUB)).rejects.toBeInstanceOf(AppleTokenRequestError);
+    expect(revokeRequests).toHaveLength(1);
+  });
+
+  it('Apple 키 설정이 없으면 폐기할 수 없으므로 던진다', async () => {
+    const { service } = makeAuth({ appleKeys: false });
+    await login(service);
+    await expect(service.revokeAppleAccount(APPLE_SUB, 'code')).rejects.toThrow('Apple 키 설정');
   });
 });

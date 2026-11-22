@@ -15,32 +15,25 @@ import { AccountDeletionOtpService, accountDeletionOtpIdentifier } from './accou
 import { accountDeleteError } from './account-deletion.errors';
 
 /**
- * 탈퇴가 처리할 줄 아는 로그인 수단(accounts.provider_id)과 각 수단의 외부 정리.
+ * 탈퇴가 처리할 줄 아는 로그인 수단(accounts.provider_id). 외부 정리는 revokeLoginProviders 가 한다.
  * 목록 밖 제공자의 연결 계정이 있으면 삭제를 거부한다(ACCOUNT_DELETE_UNSUPPORTED_PROVIDER) — 새 로그인 수단을 넣을 때
  * 외부 토큰 폐기를 빠뜨린 채 계정이 지워지지 않게 하는 장치다 (account-deletion.service.spec.ts 가 목록을 고정한다).
- *
- * Apple 로그인을 넣을 때: 여기에 'apple' 을 추가하고 AppleTokenService.revoke 를 연결한다. 저장된 refresh token 이 없으면
- * 요청 body 의 appleAuthorizationCode(iOS 가 Apple 재로그인으로 받은 값)를 교환해 폐기한다. accounts 행은 users 삭제 때
- * Cascade 로 사라지므로 이 정리는 반드시 DB 트랜잭션 앞(revokeLoginProviders)에서 실행된다.
  * - credential: 외부 상태 없음
  * - google: 로그인용 accounts 행의 토큰은 앱이 쓰지 않으므로 행 삭제로 충분하다 (캘린더 연동 토큰은 cleanupGoogle 이 폐기)
+ * - apple: Apple 토큰 폐기(가이드라인 5.1.1(v)). 로그인 때 저장한 refresh token, 없으면 요청의 appleAuthorizationCode 를 교환해 폐기한다.
+ *   폐기하지 못하면 탈퇴를 중단한다. accounts 행은 users 삭제 때 Cascade 로 사라지므로 DB 트랜잭션 앞에서 실행된다
  */
-type LoginProviderCleanup = (context: { userId: string; accountId: string; input: DeleteAccountInput }) => Promise<void>;
-export const SUPPORTED_LOGIN_PROVIDERS = ['credential', 'google'] as const;
-export type SupportedLoginProvider = typeof SUPPORTED_LOGIN_PROVIDERS[number];
-const LOGIN_PROVIDER_CLEANUPS: Record<SupportedLoginProvider, LoginProviderCleanup | null> = {
-  credential: null,
-  google: null,
-};
+export const SUPPORTED_LOGIN_PROVIDERS = ['credential', 'google', 'apple'] as const;
 
 /** 이 시간이 지나도록 users 가 남아 있는 선점 행은 끝나지 못한 시도(프로세스 중단 등)로 보고 넘겨받는다 */
 export const STALE_CLAIM_MS = 15 * 60_000;
 /** 되돌릴 수 없는 단계(구독 해지 등) 뒤의 트랜잭션 시도 횟수 — 동시 쓰기로 인한 FK 위반·직렬화 실패 같은 일시적 실패를 한 번 더 시도한다 */
 const DELETE_TRANSACTION_ATTEMPTS = 2;
 
-export type DeleteAccountInput = { password?: string; otp?: string };
+/** appleAuthorizationCode: 저장된 Apple refresh token 이 없을 때 iOS 가 Apple 재인증으로 받아 보내는 값 (ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED) */
+export type DeleteAccountInput = { password?: string; otp?: string; appleAuthorizationCode?: string };
 
-type UserAccount = { providerId: string; accountId: string; password: string | null };
+type UserAccount = { providerId: string; accountId: string; password: string | null; refreshToken: string | null };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -54,7 +47,7 @@ export function storagePrefixes(userId: string): string[] {
  * 계정 삭제 (회원 탈퇴). 계획: docs/superpowers/plans/2026-11-22-account-deletion.md
  * better-auth deleteUser 는 쓰지 않는다 — 도메인 삭제가 users 삭제와 한 트랜잭션이 아니고, 재인증 규칙(비밀번호/freshAge)이 맞지 않는다.
  *
- * 순서: 재인증 → 탈퇴 기록 선점 → Paddle 즉시 해지 → Google 연동 정리 → 로그인 수단 외부 정리 → S3 키 수집
+ * 순서: 재인증 → 탈퇴 기록 선점 → 로그인 수단 외부 정리(Apple 토큰 폐기) → Paddle 즉시 해지 → Google 연동 정리 → S3 키 수집
  *       → 트랜잭션(도메인 행 + users, legacy 키 저장) → S3 일괄 삭제·CloudFront 무효화 → 가드 캐시 무효화 → 완료 메일.
  * 트랜잭션 커밋 전에 실패하면 이 요청의 선점 행만 지우고 오류를 낸다(아무것도 지우지 않음).
  * 단 users 가 이미 없으면(커밋은 됐는데 응답이 끊긴 경우, 넘겨받은 다른 요청이 끝낸 경우) 탈퇴는 끝난 것이라 선점을 남긴다.
@@ -99,8 +92,9 @@ export class AccountDeletionService {
   async deleteAccount(userId: string, input: DeleteAccountInput): Promise<void> {
     const { user, accounts } = await this.loadUser(userId);
 
-    // 1. 로그인 수단 가드 + 재인증 (아무것도 바꾸기 전에)
+    // 1. 로그인 수단 가드 + 재인증 (아무것도 바꾸기 전에). Apple 폐기 수단이 없으면 코드를 소진하기 전에 알린다
     this.assertSupportedProviders(accounts);
+    this.assertAppleRevocable(accounts, input);
     await this.reauthenticate(userId, accounts, input);
 
     // 2. 탈퇴 기록 선점 — 동시 요청 방지. 이 행이 있는 동안 웹훅은 구독 행을 만들지 않는다
@@ -108,12 +102,13 @@ export class AccountDeletionService {
 
     let canceledSubscription = false;
     try {
-      // 3. Paddle 즉시 해지. 실패하면 중단 (지운 계정에 계속 청구되지 않게)
-      canceledSubscription = await this.cancelSubscription(userId);
-      // 4. Google 캘린더 연동 정리 (best-effort)
-      await this.cleanupGoogle(userId);
-      // 5. 로그인 수단 외부 정리 — accounts 가 Cascade 로 지워지기 전이어야 한다
+      // 3. 로그인 수단 외부 정리(Apple 토큰 폐기). 실패하면 중단 — accounts 가 Cascade 로 지워지기 전이어야 하고,
+      //    되돌릴 수 없는 구독 해지보다 앞에 둔다 (폐기 후 탈퇴가 멈춰도 다음 Apple 로그인이 다시 승인받는다)
       await this.revokeLoginProviders(userId, accounts, input);
+      // 4. Paddle 즉시 해지. 실패하면 중단 (지운 계정에 계속 청구되지 않게)
+      canceledSubscription = await this.cancelSubscription(userId);
+      // 5. Google 캘린더 연동 정리 (best-effort)
+      await this.cleanupGoogle(userId);
       // 6. 커밋 뒤 지울 S3 키 수집 (행이 지워지면 알 수 없다). 트랜잭션이 탈퇴 기록에 저장해 크론 재시도도 같은 키를 지운다
       const legacyKeys = await this.collectLegacyKeys(userId);
       // 7. 도메인 행 + users 를 한 트랜잭션으로
@@ -218,7 +213,7 @@ export class AccountDeletionService {
   private async loadUser(userId: string): Promise<{ user: { id: string; email: string }; accounts: UserAccount[] }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, accounts: { select: { providerId: true, accountId: true, password: true } } },
+      select: { id: true, email: true, accounts: { select: { providerId: true, accountId: true, password: true, refreshToken: true } } },
     });
     // 가드가 사용자 존재를 확인하므로 정상 경로에서는 나오지 않는다 (확인 직후 다른 요청이 지운 경우)
     if (!user) throw accountDeleteError('ACCOUNT_DELETE_IN_PROGRESS');
@@ -235,6 +230,12 @@ export class AccountDeletionService {
       this.logger.warn(`Account deletion refused: unsupported login provider(s) ${unsupported.map(a => a.providerId).join(',')}`);
       throw accountDeleteError('ACCOUNT_DELETE_UNSUPPORTED_PROVIDER');
     }
+  }
+
+  /** Apple 계정인데 저장된 refresh token 도, 요청의 authorization code 도 없으면 폐기할 수 없다 — iOS 가 Apple 재인증 후 다시 보낸다 */
+  private assertAppleRevocable(accounts: UserAccount[], input: DeleteAccountInput): void {
+    const missing = accounts.some(account => account.providerId === 'apple' && !account.refreshToken);
+    if (missing && !input.appleAuthorizationCode) throw accountDeleteError('ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED');
   }
 
   /** 비밀번호가 있으면 비밀번호(2FA 사용자도 비밀번호만), 없으면 이메일 코드 */
@@ -333,12 +334,25 @@ export class AccountDeletionService {
     }
   }
 
-  /** 로그인 수단별 외부 토큰 폐기 (LOGIN_PROVIDER_CLEANUPS). 던지면 탈퇴를 중단한다 */
+  /** 로그인 수단별 외부 토큰 폐기 (SUPPORTED_LOGIN_PROVIDERS 주석). 던지면 탈퇴를 중단한다 */
   private async revokeLoginProviders(userId: string, accounts: UserAccount[], input: DeleteAccountInput): Promise<void> {
     for (const account of accounts) {
-      const cleanup = LOGIN_PROVIDER_CLEANUPS[account.providerId as SupportedLoginProvider];
-      if (cleanup) await cleanup({ userId, accountId: account.accountId, input });
+      if (account.providerId === 'apple') await this.revokeApple(userId, account, input);
     }
+  }
+
+  private async revokeApple(userId: string, account: UserAccount, input: DeleteAccountInput): Promise<void> {
+    let result: 'revoked' | 'no-token';
+    try {
+      // 저장된 토큰이 있어도 code 가 오면 code 를 쓴다 — 기기 설정에서 연결을 끊었다 다시 승인했다면 저장된 토큰은 이미 무효다
+      result = await this.betterAuth.revokeAppleAccount(account.accountId, input.appleAuthorizationCode);
+    }
+    catch (error) {
+      this.logger.error(`Apple 토큰 폐기 실패 (user ${userId})`, error instanceof Error ? error.stack : String(error));
+      Sentry.captureException(error, { tags: { feature: 'account-deletion', provider: 'apple' }, extra: { userId } });
+      throw accountDeleteError('ACCOUNT_DELETE_APPLE_REVOKE_FAILED');
+    }
+    if (result === 'no-token') throw accountDeleteError('ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED');
   }
 
   /**
