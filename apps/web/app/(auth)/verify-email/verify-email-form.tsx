@@ -27,7 +27,7 @@ export default function VerifyEmailForm() {
 
   const [resendState, resendAction, isResending] = React.useActionState(resendVerification, { fields: { email: emailFromQuery } });
 
-  const { control } = useForm({
+  const { control, watch } = useForm({
     values: {
       email: state.fields?.email || emailFromQuery,
       code: '',
@@ -35,6 +35,8 @@ export default function VerifyEmailForm() {
   });
 
   const currentEmail = state.fields?.email || emailFromQuery;
+  // 재발송은 지금 입력칸의 이메일로 보낸다(주소창에 ?email 없이 들어와 직접 입력한 경우)
+  const typedEmail = watch('email') || currentEmail;
 
   React.useEffect(() => {
     if (!state.timestamp || !state.success) return;
@@ -56,9 +58,10 @@ export default function VerifyEmailForm() {
           </div>
         )}
 
-        {currentEmail && !mailFailed && !resendState.timestamp && (
+        {/* 가입·로그인에서 넘어온 경우(?email)에만 이미 보냈다고 안내한다 */}
+        {emailFromQuery && !mailFailed && !resendState.timestamp && (
           <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-            {currentEmail}
+            {emailFromQuery}
             {' '}
             로 6자리 인증코드를 보냈습니다.
           </div>
@@ -130,7 +133,7 @@ export default function VerifyEmailForm() {
 
       <div className="mt-4">
         <Form action={resendAction}>
-          <input type="hidden" name="email" value={currentEmail} />
+          <input type="hidden" name="email" value={typedEmail} />
           <Button type="submit" variant="ghost" isPending={isResending} className="w-full">
             인증코드 다시 받기
           </Button>
