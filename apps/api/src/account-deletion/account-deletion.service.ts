@@ -446,7 +446,6 @@ export class AccountDeletionService {
     // 사용자 단위 행
     await tx.userSettings.deleteMany({ where: { userId } });
     await tx.userStorageQuota.deleteMany({ where: { userId } });
-    await tx.appToken.deleteMany({ where: { userId } });
     await tx.externalServiceToken.deleteMany({ where: { userId } });
     await tx.googleSyncToken.deleteMany({ where: { userId } });
     await tx.userSubscription.deleteMany({ where: { userId } });
