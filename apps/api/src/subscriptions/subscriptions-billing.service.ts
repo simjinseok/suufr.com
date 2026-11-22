@@ -35,7 +35,7 @@ export class SubscriptionsBillingService {
 
     if (blockers.includes('email_unverified')) {
       throw new BadRequestException({
-        message: '이메일 인증을 마친 뒤 구독할 수 있어요. 설정에서 인증코드를 입력해주세요.',
+        message: '이메일 인증을 마친 뒤 구독할 수 있어요.',
         error: 'EMAIL_NOT_VERIFIED',
       });
     }
