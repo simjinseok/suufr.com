@@ -13,6 +13,8 @@ export const ACCOUNT_DELETE_ERRORS = {
   ACCOUNT_DELETE_REAUTH_REQUIRED: { status: HttpStatus.BAD_REQUEST, message: '본인 확인이 필요합니다' },
   ACCOUNT_DELETE_IN_PROGRESS: { status: HttpStatus.CONFLICT, message: '계정 삭제가 이미 진행 중입니다. 잠시 후 다시 확인해주세요.' },
   ACCOUNT_DELETE_SUBSCRIPTION_CANCEL_FAILED: { status: HttpStatus.BAD_GATEWAY, message: '구독을 해지하지 못해 계정을 삭제하지 않았습니다. 잠시 후 다시 시도해주세요.' },
+  ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED: { status: HttpStatus.BAD_REQUEST, message: 'Apple 계정 연결을 해제하려면 Apple로 한 번 더 확인해야 합니다. 앱에서 탈퇴를 진행해주세요.' },
+  ACCOUNT_DELETE_APPLE_REVOKE_FAILED: { status: HttpStatus.BAD_GATEWAY, message: 'Apple 계정 연결을 해제하지 못해 계정을 삭제하지 않았습니다. 잠시 후 다시 시도해주세요.' },
   ACCOUNT_DELETE_UNSUPPORTED_PROVIDER: { status: HttpStatus.BAD_REQUEST, message: '이 로그인 방식으로 연결된 계정은 앱에서 삭제할 수 없습니다. support@suufr.com으로 요청해주세요.' },
 } as const;
 

@@ -25,7 +25,7 @@ export class AccountDeletionController {
   /** 즉시·영구 삭제. 성공하면 이 사용자의 JWT·세션은 더 이상 통하지 않는다 */
   @Post('delete')
   async deleteAccount(@CurrentUser() user: AuthenticatedUser, @Body() dto: DeleteAccountDto) {
-    await this.accountDeletion.deleteAccount(user.userId, { password: dto.password, otp: dto.otp });
+    await this.accountDeletion.deleteAccount(user.userId, { password: dto.password, otp: dto.otp, appleAuthorizationCode: dto.appleAuthorizationCode });
     return { success: true };
   }
 }

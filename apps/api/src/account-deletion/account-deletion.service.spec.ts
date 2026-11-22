@@ -10,9 +10,11 @@ const USER = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
 const EMAIL = 'teacher@example.com';
 
-type Account = { providerId: string; accountId: string; password: string | null };
+type Account = { providerId: string; accountId: string; password: string | null; refreshToken?: string | null };
 const credential: Account = { providerId: 'credential', accountId: USER, password: 'scrypt-hash' };
 const googleLogin: Account = { providerId: 'google', accountId: 'g-1', password: null };
+const appleWithToken: Account = { providerId: 'apple', accountId: 'apple-sub', password: null, refreshToken: 'encrypted-refresh' };
+const appleWithoutToken: Account = { providerId: 'apple', accountId: 'apple-sub', password: null, refreshToken: null };
 
 function p2002() {
   return new Prisma.PrismaClientKnownRequestError('Unique constraint failed', { code: 'P2002', clientVersion: '7.10.1' });
@@ -49,7 +51,7 @@ function build(options: {
     student: { findMany: vi.fn().mockResolvedValue((options.studentImages ?? []).map(profileImageUrl => ({ profileImageUrl }))) },
     $transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) => fn(tx)),
   };
-  const betterAuth = { verifyPassword: vi.fn().mockResolvedValue(true) };
+  const betterAuth = { verifyPassword: vi.fn().mockResolvedValue(true), revokeAppleAccount: vi.fn().mockResolvedValue('revoked') };
   const otp = { send: vi.fn().mockResolvedValue(undefined), verify: vi.fn().mockResolvedValue(undefined) };
   const userExistence = { invalidate: vi.fn() };
   const paddle = {
@@ -107,19 +109,19 @@ afterAll(() => {
 });
 
 describe('AccountDeletionService — 로그인 수단 가드', () => {
-  it('처리할 줄 아는 로그인 수단은 credential·google 뿐이다 (Apple 을 넣으면 revoke 연결과 함께 이 목록을 고친다)', () => {
-    expect([...SUPPORTED_LOGIN_PROVIDERS]).toEqual(['credential', 'google']);
+  it('처리할 줄 아는 로그인 수단은 credential·google·apple 뿐이다 (새 수단은 외부 토큰 폐기와 함께 이 목록을 고친다)', () => {
+    expect([...SUPPORTED_LOGIN_PROVIDERS]).toEqual(['credential', 'google', 'apple']);
   });
 
-  it('목록 밖 제공자(apple 등)의 연결 계정이 있으면 재인증 전에 거부하고 아무것도 하지 않는다', async () => {
-    const ctx = build({ accounts: [credential, { providerId: 'apple', accountId: 'a-1', password: null }] });
+  it('목록 밖 제공자의 연결 계정이 있으면 재인증 전에 거부하고 아무것도 하지 않는다', async () => {
+    const ctx = build({ accounts: [credential, { providerId: 'kakao', accountId: 'k-1', password: null }] });
     await expectCode(ctx.service.deleteAccount(USER, { password: 'pw' }), 'ACCOUNT_DELETE_UNSUPPORTED_PROVIDER', 400);
     expect(ctx.betterAuth.verifyPassword).not.toHaveBeenCalled();
     expectNothingTouched(ctx);
   });
 
   it('코드 발송도 같은 기준으로 거부한다', async () => {
-    const ctx = build({ accounts: [{ providerId: 'apple', accountId: 'a-1', password: null }] });
+    const ctx = build({ accounts: [{ providerId: 'kakao', accountId: 'k-1', password: null }] });
     await expectCode(ctx.service.sendOtp(USER), 'ACCOUNT_DELETE_UNSUPPORTED_PROVIDER');
     expect(ctx.otp.send).not.toHaveBeenCalled();
   });
@@ -376,5 +378,60 @@ describe('AccountDeletionService — 삭제', () => {
     ctx.s3.deleteFile.mockResolvedValue(false);
     await expect(ctx.service.purgeStorage(USER)).resolves.toBe(false);
     expect(ctx.prisma.accountDeletion.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('AccountDeletionService — Apple 토큰 폐기', () => {
+  it('저장된 refresh token 을 구독 해지·DB 삭제보다 먼저 폐기하고 탈퇴를 끝낸다', async () => {
+    const ctx = build({ accounts: [appleWithToken], subscription: { provider: 'paddle', providerSubscriptionId: 'sub_1', status: 'active', canceledAt: null } });
+    await ctx.service.deleteAccount(USER, { otp: '123456' });
+
+    expect(ctx.betterAuth.revokeAppleAccount).toHaveBeenCalledWith('apple-sub', undefined);
+    const revokeOrder = ctx.betterAuth.revokeAppleAccount.mock.invocationCallOrder[0];
+    expect(revokeOrder).toBeLessThan(ctx.paddle.cancelImmediately.mock.invocationCallOrder[0]);
+    expect(revokeOrder).toBeLessThan(ctx.prisma.$transaction.mock.invocationCallOrder[0]);
+    expect(ctx.deleteUserRows).toHaveBeenCalled();
+  });
+
+  it('저장된 토큰이 없고 authorization code 도 없으면 코드를 확인(소진)하기 전에 APPLE_REAUTH_REQUIRED 이고 아무것도 하지 않는다', async () => {
+    const ctx = build({ accounts: [appleWithoutToken] });
+    await expectCode(ctx.service.deleteAccount(USER, { otp: '123456' }), 'ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED', 400);
+    expect(ctx.otp.verify).not.toHaveBeenCalled();
+    expect(ctx.betterAuth.revokeAppleAccount).not.toHaveBeenCalled();
+    expectNothingTouched(ctx);
+  });
+
+  it('저장된 토큰이 없어도 authorization code 가 오면 그 code 로 폐기한다', async () => {
+    const ctx = build({ accounts: [appleWithoutToken] });
+    await ctx.service.deleteAccount(USER, { otp: '123456', appleAuthorizationCode: 'apple-code' });
+    expect(ctx.betterAuth.revokeAppleAccount).toHaveBeenCalledWith('apple-sub', 'apple-code');
+    expect(ctx.deleteUserRows).toHaveBeenCalled();
+  });
+
+  it('폐기가 실패하면 구독을 해지하지 않고 아무것도 지우지 않으며 선점을 풀고 502 (Sentry 기록)', async () => {
+    const ctx = build({ accounts: [credential, appleWithToken], subscription: { provider: 'paddle', providerSubscriptionId: 'sub_1', status: 'active', canceledAt: null } });
+    ctx.betterAuth.revokeAppleAccount.mockRejectedValue(new Error('Apple revoke 요청 실패: 503'));
+
+    await expectCode(ctx.service.deleteAccount(USER, { password: 'pw' }), 'ACCOUNT_DELETE_APPLE_REVOKE_FAILED', 502);
+    expect(ctx.paddle.cancelImmediately).not.toHaveBeenCalled();
+    expect(ctx.google.disconnect).not.toHaveBeenCalled();
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+    expect(ctx.prisma.accountDeletion.deleteMany).toHaveBeenCalledWith({ where: { userId: USER, deletedAt: expect.any(Date) } });
+    expect(Sentry.captureException).toHaveBeenCalled();
+  });
+
+  it('저장된 토큰을 쓸 수 없으면(no-token) APPLE_REAUTH_REQUIRED 로 알리고 선점을 푼다', async () => {
+    const ctx = build({ accounts: [appleWithToken] });
+    ctx.betterAuth.revokeAppleAccount.mockResolvedValue('no-token');
+
+    await expectCode(ctx.service.deleteAccount(USER, { otp: '123456' }), 'ACCOUNT_DELETE_APPLE_REAUTH_REQUIRED', 400);
+    expect(ctx.prisma.$transaction).not.toHaveBeenCalled();
+    expect(ctx.prisma.accountDeletion.deleteMany).toHaveBeenCalled();
+  });
+
+  it('Apple 이 아닌 계정은 Apple 폐기를 부르지 않는다', async () => {
+    const ctx = build({ accounts: [credential, googleLogin] });
+    await ctx.service.deleteAccount(USER, { password: 'pw' });
+    expect(ctx.betterAuth.revokeAppleAccount).not.toHaveBeenCalled();
   });
 });

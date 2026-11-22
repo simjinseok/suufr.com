@@ -3,8 +3,8 @@ import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedExce
 import * as Sentry from '@sentry/nestjs';
 import { decodeJwt } from 'jose';
 import type { AuthContext } from 'better-auth';
-import { setTokenUtil } from 'better-auth/oauth2';
-import { AppleTokenService } from '../apple-token.service';
+import { decryptOAuthToken, setTokenUtil } from 'better-auth/oauth2';
+import { AppleTokenRequestError, AppleTokenService } from '../apple-token.service';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
 import { APPLE_SIGN_IN_FAILED_MESSAGE, APPLE_SIGN_IN_MESSAGES, toHttpException } from './better-auth-error.map';
@@ -387,6 +387,63 @@ export class BetterAuthService {
       logger.warn(`Apple authorization code 교환 실패 (userId=${userId})`);
       Sentry.captureException(error, { extra: { stage: 'apple-code-exchange', userId } });
     }
+  }
+
+  /**
+   * 탈퇴 시 Apple 토큰 폐기 (App Store 심사 가이드라인 5.1.1(v)). accounts 행이 Cascade 로 지워지기 전에 부른다.
+   * authorizationCode(iOS 가 Apple 재인증으로 받은 값)가 있으면 교환한 토큰을, 없으면 로그인 때 저장한 refresh token 을 폐기한다.
+   * client_id 는 저장된 identity token 의 aud(허용 목록 안)를 먼저 쓰고, Apple 이 client 불일치로 거부하면 허용 목록의 나머지를 시도한다.
+   * @returns 'revoked', 또는 폐기할 토큰이 없으면 'no-token' (호출부가 Apple 재인증을 요구한다). Apple 키 미설정·요청 실패는 던진다
+   */
+  async revokeAppleAccount(appleSub: string, authorizationCode?: string): Promise<'revoked' | 'no-token'> {
+    if (!this.appleTokens?.isConfigured()) {
+      throw new Error('Apple 키 설정(APPLE_TEAM_ID·APPLE_KEY_ID·APPLE_PRIVATE_KEY)이 없어 Apple 토큰을 폐기할 수 없습니다');
+    }
+    const ctx = await this.auth.$context;
+    const account = await ctx.internalAdapter.findAccountByKey({ providerId: 'apple', accountId: appleSub });
+    if (!account) return 'no-token';
+    const storedRefreshToken = authorizationCode ? null : await decryptOAuthToken(account.refreshToken ?? '', ctx as unknown as AuthContext);
+    if (!authorizationCode && !storedRefreshToken) return 'no-token';
+
+    let lastClientError: unknown;
+    for (const clientId of this.appleClientIdCandidates(account.idToken)) {
+      try {
+        if (authorizationCode) {
+          const { refreshToken, accessToken } = await this.appleTokens.exchangeAuthorizationCode(authorizationCode, clientId);
+          if (refreshToken) await this.appleTokens.revoke(refreshToken, clientId, 'refresh_token');
+          else if (accessToken) await this.appleTokens.revoke(accessToken, clientId, 'access_token');
+          else return 'no-token';
+        }
+        else if (storedRefreshToken) {
+          await this.appleTokens.revoke(storedRefreshToken, clientId, 'refresh_token');
+        }
+        return 'revoked';
+      }
+      catch (error) {
+        // 토큰·code 를 다른 번들 ID 로 받은 경우 Apple 은 invalid_client/invalid_grant(400) 로 거부한다 — 다음 후보로
+        if (error instanceof AppleTokenRequestError && error.status === 400 && (error.appleError === 'invalid_client' || error.appleError === 'invalid_grant')) {
+          lastClientError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastClientError ?? new Error('Apple client_id 후보가 없습니다');
+  }
+
+  /** 저장된 identity token 의 aud(허용 목록 안인 것)를 앞에, 나머지 허용 audience 를 뒤에 */
+  private appleClientIdCandidates(storedIdToken: string | null | undefined): string[] {
+    const allowed = this.auth.options.socialProviders.apple?.audience ?? [];
+    let stored: string[] = [];
+    if (storedIdToken) {
+      try {
+        stored = [decodeJwt(storedIdToken).aud ?? []].flat().filter(value => allowed.includes(value));
+      }
+      catch {
+        stored = [];
+      }
+    }
+    return [...new Set([...stored, ...allowed])];
   }
 
   /**
