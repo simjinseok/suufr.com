@@ -58,6 +58,17 @@ describe('scrubEvent', () => {
     expect(event.breadcrumbs?.[0].message).toBe('GET /api/lessons/share/[redacted]');
     expect(event.breadcrumbs?.[0].data?.url).toBe('/api/lessons/share/[redacted]');
   });
+
+  it('서버 렌더 오류의 nextjs 컨텍스트에서 실제 경로만 가리고 라우트 이름은 남긴다', () => {
+    const event = scrubEvent({
+      contexts: { nextjs: { request_path: '/sl/abcd1234', router_path: '/sl/[shareId]', route_type: 'render' } },
+    } as Event);
+    expect(event.contexts?.nextjs).toEqual({
+      request_path: '/sl/[redacted]',
+      router_path: '/sl/[shareId]',
+      route_type: 'render',
+    });
+  });
 });
 
 describe('scrubSpan', () => {

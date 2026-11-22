@@ -27,6 +27,10 @@ export function scrubEvent<T extends Event>(event: T): T {
   if (event.request?.url) event.request.url = maskSharePath(event.request.url);
   maskStringValues(event.request?.headers);
   if (event.transaction) event.transaction = maskSharePath(event.transaction);
+  // 컨텍스트 값에도 실제 요청 경로가 들어올 수 있어 함께 훑는다
+  for (const context of Object.values(event.contexts ?? {})) {
+    maskStringValues(context as Record<string, unknown> | undefined);
+  }
   maskStringValues(event.contexts?.trace?.data);
 
   for (const span of event.spans ?? []) {

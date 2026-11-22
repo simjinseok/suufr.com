@@ -33,6 +33,17 @@ describe('scrubEvent', () => {
     expect(event.breadcrumbs?.[0].message).toBe('GET /api/student-shares/[redacted]');
     expect(event.breadcrumbs?.[0].data?.url).toBe('/api/student-shares/[redacted]');
   });
+
+  it('다른 컨텍스트의 문자열 값도 가린다', () => {
+    const event = scrubEvent({
+      contexts: { request_info: { path: '/api/lessons/share/abcd1234', route: '/api/lessons/share/:shareId', count: 1 } },
+    } as Event);
+    expect(event.contexts?.request_info).toEqual({
+      path: '/api/lessons/share/[redacted]',
+      route: '/api/lessons/share/:shareId',
+      count: 1,
+    });
+  });
 });
 
 describe('scrubSpan', () => {

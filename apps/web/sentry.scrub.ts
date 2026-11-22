@@ -36,6 +36,10 @@ export function scrubEvent<T extends Event>(event: T): T {
   if (event.request?.url) event.request.url = maskSharePath(event.request.url);
   maskStringValues(event.request?.headers);
   if (event.transaction) event.transaction = maskSharePath(event.transaction);
+  // 컨텍스트 값도 훑는다. nextjs 컨텍스트의 request_path 에 실제 경로(/sl/<shareId>)가 들어온다
+  for (const context of Object.values(event.contexts ?? {})) {
+    maskStringValues(context as Record<string, unknown> | undefined);
+  }
   maskStringValues(event.contexts?.trace?.data);
 
   for (const span of event.spans ?? []) {
