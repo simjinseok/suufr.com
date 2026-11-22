@@ -25,6 +25,7 @@ import { GoogleModule } from './google/google.module';
 import { StorageModule } from './storage/storage.module';
 import { CurriculumsModule } from './curriculums/curriculums.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { AccountDeletionModule } from './account-deletion/account-deletion.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     StorageModule,
     CurriculumsModule,
     SubscriptionsModule,
+    AccountDeletionModule,
   ],
 })
 export class AppModule {}

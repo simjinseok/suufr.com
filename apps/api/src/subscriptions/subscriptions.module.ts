@@ -18,6 +18,6 @@ import { BillingSyncService } from './billing-sync.service';
     PaddleClient,
     PaddleWebhookService,
   ],
-  exports: [SubscriptionsService],
+  exports: [SubscriptionsService, PaddleClient],
 })
 export class SubscriptionsModule {}

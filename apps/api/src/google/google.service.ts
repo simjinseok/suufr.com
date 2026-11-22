@@ -7,6 +7,7 @@ import type { GoogleTokenResponse, GoogleUserInfo, GoogleConnectionStatus } from
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
+const GOOGLE_REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
 const CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
 
 // OAuth Scopes
@@ -283,6 +284,34 @@ export class GoogleService {
       await this.deleteCalendar(syncToken.calendarId, accessToken)
         .catch(err => this.logger.error('Failed to delete calendar:', err));
     }
+  }
+
+  /**
+   * 캘린더 연동 OAuth 토큰 폐기 (계정 삭제). disconnect 가 행을 soft delete 한 뒤에도 쓸 수 있게 deletedAt 과 무관하게 읽는다.
+   * refresh token 을 폐기하면 그 grant(같은 동의로 발급된 access token 포함)가 함께 끊긴다. 없으면 access token 을 폐기한다.
+   * 실패하면 던진다 — 호출자(AccountDeletionService)가 best-effort 로 삼킨다.
+   * @returns 폐기 요청을 보냈으면 true, 저장된 토큰이 없으면 false
+   */
+  async revokeToken(userId: string): Promise<boolean> {
+    const token = await this.prisma.externalServiceToken.findUnique({
+      where: { userId_provider: { userId, provider: 'google' } },
+      select: { accessToken: true, refreshToken: true },
+    });
+    if (!token) {
+      return false;
+    }
+
+    const raw = this.decrypt(token.refreshToken ?? token.accessToken);
+    const response = await fetch(GOOGLE_REVOKE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ token: raw }),
+    });
+    // 400 invalid_token = 이미 만료·폐기된 토큰. 목적(더는 쓸 수 없음)은 달성된 상태다
+    if (!response.ok && response.status !== 400) {
+      throw new Error(`Failed to revoke google token: ${response.status} ${await response.text()}`);
+    }
+    return true;
   }
 
   /**

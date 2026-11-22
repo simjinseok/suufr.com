@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UserExistenceService } from './guards/user-existence.service';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { ConsentsService } from './consents.service';
@@ -20,6 +21,7 @@ import { RecaptchaModule } from '../recaptcha/recaptcha.module';
   controllers: [AuthController, SocialAuthController, SocialLoginController],
   providers: [
     JwtAuthGuard,
+    UserExistenceService,
     AuthService,
     ConsentsService,
     UserProvisioningService,
@@ -28,6 +30,6 @@ import { RecaptchaModule } from '../recaptcha/recaptcha.module';
     AppleTokenService,
     SocialHandoffService,
   ],
-  exports: [JwtAuthGuard, AuthService, BetterAuthService],
+  exports: [JwtAuthGuard, UserExistenceService, AuthService, BetterAuthService],
 })
 export class AuthModule {}

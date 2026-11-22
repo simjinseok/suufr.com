@@ -120,6 +120,11 @@ export class SubscriptionsReconciliationService {
       this.logger.warn(`Skipping missing paddle subscription ${remote.id}: no signed custom_data.userId`);
       return;
     }
+    // 탈퇴를 끝낸 사용자의 구독: 로컬 행이 없어(웹훅 유실 중 탈퇴 등) 탈퇴가 해지하지 못한 것이다. 되살리지 않고 즉시 해지한다
+    if (await this.isDeletedAccount(userId)) {
+      await this.cancelOrphanOfDeletedAccount(remote.id, userId);
+      return;
+    }
     const transactions: Transaction[] = await this.paddleClient.listCompletedTransactions(remote.id);
 
     // 거부(BillingSyncRejectedError)는 호출부 catch 에서 로그·Sentry 로 남는다
@@ -154,6 +159,43 @@ export class SubscriptionsReconciliationService {
       level: 'warning',
       tags: { provider: 'paddle' },
       extra: { subscriptionId: remote.id, userId, transactionCount: transactions.length },
+    });
+  }
+
+  /** 탈퇴 기록이 있고 users 행이 없음 = 탈퇴 완료. 선점만 있는(진행 중·중단된) 시도는 제외한다 — 실패하면 계정이 남으므로 */
+  private async isDeletedAccount(userId: string): Promise<boolean> {
+    const deletion = await this.prisma.accountDeletion.findUnique({ where: { userId }, select: { userId: true } });
+    if (!deletion) {
+      return false;
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    return user === null;
+  }
+
+  /**
+   * 지운 계정의 살아 있는 Paddle 구독을 즉시 해지한다 (계정 삭제와 같은 방식, 환불 없음).
+   * 실패는 호출부 catch 가 구독 id fingerprint 로 Sentry 에 남기고, 다음 시간에 다시 시도한다.
+   * 해지 뒤 오는 웹훅은 BillingSyncService 의 탈퇴 사용자 분기가 무시한다
+   */
+  private async cancelOrphanOfDeletedAccount(subscriptionId: string, userId: string) {
+    try {
+      await this.paddleClient.cancelImmediately(subscriptionId);
+    }
+    catch (error) {
+      // 목록 조회와 해지 사이에 이미 끝났으면 목적은 달성된 것 (AccountDeletionService.cancelSubscription 과 같은 판정)
+      const alreadyCanceled = await this.paddleClient.getSubscription(subscriptionId)
+        .then(remote => remote.status === 'canceled')
+        .catch(() => false);
+      if (!alreadyCanceled) {
+        throw error;
+      }
+      return;
+    }
+    this.logger.warn(`Canceled live paddle subscription ${subscriptionId} of deleted account ${userId}`);
+    Sentry.captureMessage('탈퇴한 계정에 남아 있던 Paddle 구독을 즉시 해지함', {
+      level: 'warning',
+      tags: { provider: 'paddle', feature: 'account-deletion' },
+      extra: { subscriptionId, userId },
     });
   }
 }

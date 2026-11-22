@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { createLocalJWKSet, decodeProtectedHeader, jwtVerify, type JSONWebKeySet, type JWTPayload } from 'jose';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import { BetterAuthService } from '../better-auth/better-auth.service';
+import { UserExistenceService } from './user-existence.service';
 
 export interface AuthenticatedUser {
   userId: string;
@@ -19,6 +20,7 @@ const JWKS_RELOAD_COOLDOWN_MS = 60_000;
 /**
  * 전역 가드. Authorization: Bearer <better-auth JWT> 를 jose + JWKS(DB, 프로세스 캐시) 로 로컬 검증해 request.user 를 주입한다.
  * iss/aud 는 BETTER_AUTH_URL. 공개 라우트는 @Public().
+ * 서명이 맞아도 sub 사용자가 users 에 없으면(탈퇴) 401 — UserExistenceService 참고.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -31,6 +33,7 @@ export class JwtAuthGuard implements CanActivate {
     private reflector: Reflector,
     private configService: ConfigService,
     private betterAuth: BetterAuthService,
+    private userExistence: UserExistenceService,
   ) {}
 
   private get issuer(): string {
@@ -82,14 +85,21 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('No token provided');
     }
 
+    let user: AuthenticatedUser;
     try {
-      request.user = await this.verify(token);
-      return true;
+      user = await this.verify(token);
     }
     catch (error) {
       this.logger.debug(`토큰 검증 실패: ${error instanceof Error ? error.message : String(error)}`);
       throw new UnauthorizedException('Invalid token');
     }
+
+    // 탈퇴한 사용자의 남은 JWT. DB 오류는 401 로 바꾸지 않는다(일시 장애로 클라이언트가 로그아웃되지 않게)
+    if (!await this.userExistence.exists(user.userId)) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    request.user = user;
+    return true;
   }
 
   async verify(token: string): Promise<AuthenticatedUser> {
