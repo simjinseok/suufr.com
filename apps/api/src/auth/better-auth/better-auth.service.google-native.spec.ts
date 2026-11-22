@@ -52,7 +52,7 @@ function makeAuth() {
     google: { clientId: 'primary-client', clientSecret: 'secret', idTokenAudiences: ['ios-server-client'] },
   });
   const auth = betterAuth({ ...options, database: memoryAdapter(db) });
-  return { db, service: new BetterAuthService(auth as never) };
+  return { db, auth, service: new BetterAuthService(auth as never) };
 }
 
 beforeEach(() => {
@@ -113,35 +113,62 @@ describe('BetterAuthService.signInWithGoogleIdToken', () => {
     expect(db.authSession).toHaveLength(2);
   });
 
-  it('같은 이메일의 미인증 비밀번호 사용자에 Google 계정을 연결하고 이메일을 인증 처리한다', async () => {
+  it('같은 이메일의 미인증 비밀번호 사용자에 Google 을 연결하면 비밀번호를 지우고 옛 세션을 폐기한다 (새 Google 세션만 유효)', async () => {
     const { db, service } = makeAuth();
-    // 가입 즉시 로그인(#53)이라 이메일 인증 전인 계정이 흔하다
+    // 소유권이 증명되지 않은 계정 — 남의 이메일로 먼저 가입해 둔 사람일 수 있다
     const { userId } = await service.signUp('선생님', EMAIL, PASSWORD);
     expect(db.user[0]).toMatchObject({ id: userId, emailVerified: false });
+    const before = (await service.signIn(EMAIL, PASSWORD)) as IssuedTokens;
 
     const result = await service.signInWithGoogleIdToken(googleIdToken());
 
     expect(result).toMatchObject({ success: true, userId });
-    expect(result.accessToken.split('.')).toHaveLength(3);
     expect(db.user).toHaveLength(1);
     expect(db.user[0]).toMatchObject({ id: userId, emailVerified: true });
-    expect(db.account).toHaveLength(2);
-    expect(db.account).toEqual(expect.arrayContaining([
-      expect.objectContaining({ userId, providerId: 'credential' }),
-      expect.objectContaining({ userId, providerId: 'google', accountId: 'google-sub-1' }),
-    ]));
+    expect(db.account).toEqual([expect.objectContaining({ userId, providerId: 'google', accountId: 'google-sub-1' })]);
+    await expect(service.refresh(before.refreshToken)).rejects.toMatchObject({ status: 401 });
+    await expect(service.signIn(EMAIL, PASSWORD)).rejects.toMatchObject({ status: 401 });
+    await expect(service.refresh(result.refreshToken)).resolves.toMatchObject({ success: true });
   });
 
-  it('Google 계정을 연결해도 기존 비밀번호 로그인과 세션은 그대로 유지된다', async () => {
-    const { service } = makeAuth();
+  it('인증된 비밀번호 사용자에 Google 을 연결하면 비밀번호 로그인과 기존 세션을 그대로 둔다', async () => {
+    const { db, service } = makeAuth();
     const { userId } = await service.signUp('선생님', EMAIL, PASSWORD);
-    // 가입 직후 로그인으로 받은 세션
+    db.user[0].emailVerified = true;
     const before = (await service.signIn(EMAIL, PASSWORD)) as IssuedTokens;
 
     await service.signInWithGoogleIdToken(googleIdToken());
 
     await expect(service.refresh(before.refreshToken)).resolves.toMatchObject({ success: true });
     await expect(service.signIn(EMAIL, PASSWORD)).resolves.toMatchObject({ success: true, userId });
+  });
+
+  it('Google 신규 가입은 연결 정책과 무관하다 — 새 세션이 유효하고 다른 사용자의 비밀번호·세션도 그대로다', async () => {
+    const { db, service } = makeAuth();
+    const other = await service.signUp('다른 사람', 'other@example.com', PASSWORD);
+    const otherSession = (await service.signIn('other@example.com', PASSWORD)) as IssuedTokens;
+
+    const result = await service.signInWithGoogleIdToken(googleIdToken());
+
+    expect(result.userId).not.toBe(other.userId);
+    await expect(service.refresh(result.refreshToken)).resolves.toMatchObject({ success: true });
+    await expect(service.refresh(otherSession.refreshToken)).resolves.toMatchObject({ success: true });
+    expect(db.account).toEqual(expect.arrayContaining([expect.objectContaining({ userId: other.userId, providerId: 'credential' })]));
+  });
+
+  it('비밀번호 계정이 없는 사용자에 Google 을 두 번째 소셜 계정으로 연결하면 미인증이어도 세션을 건드리지 않는다', async () => {
+    const { db, auth, service } = makeAuth();
+    const ctx = await auth.$context;
+    // 다른 소셜 provider 로만 가입한 사용자(엔드포인트 밖에서 만들어 훅 context 가 없다 — 연결 시점의 판정만 본다)
+    const user = await ctx.internalAdapter.createUser({ email: EMAIL, name: '선생님', emailVerified: false }, { method: 'oauth', oauth: { providerId: 'apple' } });
+    await ctx.internalAdapter.createAccount({ userId: user.id, providerId: 'apple', accountId: 'apple-sub-1' });
+    const existing = await ctx.internalAdapter.createSession(user.id);
+
+    const result = await service.signInWithGoogleIdToken(googleIdToken());
+
+    expect(result.userId).toBe(user.id);
+    expect(db.account).toHaveLength(2);
+    await expect(service.refresh(existing.token)).resolves.toMatchObject({ success: true });
   });
 
   it('같은 이메일의 인증된 비밀번호 사용자에도 Google 계정을 연결한다', async () => {

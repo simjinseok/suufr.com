@@ -6,6 +6,7 @@ import type { MailService } from '../../mail/mail.service';
 import { existingUserSignupAttemptMail } from '../../mail/templates/auth-mails';
 import { createAuthOptions, type AuthConfigDeps } from './auth.config';
 import { BETTER_AUTH_BASE_PATH } from './auth.constants';
+import { EMAIL_LINKED_SOCIAL_PROVIDERS } from './social-link-policy';
 
 function makeDeps(overrides: Partial<AuthConfigDeps> = {}): AuthConfigDeps {
   return {
@@ -76,7 +77,44 @@ describe('createAuthOptions', () => {
     const withoutExtra = createAuthOptions(makeDeps({ google: { ...google, idTokenAudiences: [] } }));
 
     // 배열이면 첫 번째가 OAuth(인증 URL·코드 교환)에 쓰이므로 순서도 계약이다
-    expect([withExtra.socialProviders?.google.clientId].flat()).toEqual(['web-client', 'ios-server-client']);
-    expect([withoutExtra.socialProviders?.google.clientId].flat()).toEqual(['web-client']);
+    expect([withExtra.socialProviders.google?.clientId].flat()).toEqual(['web-client', 'ios-server-client']);
+    expect([withoutExtra.socialProviders.google?.clientId].flat()).toEqual(['web-client']);
+  });
+});
+
+describe('createAuthOptions — Apple', () => {
+  const apple = { bundleId: 'com.suufr.ios', idTokenAudiences: ['com.suufr.ios.dev', 'com.suufr.ios'] };
+
+  it('Apple 설정이 없으면 apple provider 를 등록하지 않는다', () => {
+    expect(createAuthOptions(makeDeps()).socialProviders).not.toHaveProperty('apple');
+  });
+
+  it('번들 ID 를 clientId 로, 번들 ID 와 추가 번들 ID 를 중복 없이 ID 토큰 audience 로 쓰고 clientSecret 은 비운다', () => {
+    const options = createAuthOptions(makeDeps({ apple }));
+    expect(options.socialProviders.apple).toEqual({
+      clientId: 'com.suufr.ios',
+      clientSecret: '',
+      appBundleIdentifier: 'com.suufr.ios',
+      audience: ['com.suufr.ios', 'com.suufr.ios.dev'],
+    });
+  });
+
+  it('apple 을 trustedProviders 에 넣고 소셜 토큰 암호화를 켠다', () => {
+    const options = createAuthOptions(makeDeps({ apple }));
+    expect(options.account.accountLinking.trustedProviders).toEqual(['google', 'apple']);
+    // 자동 연결 provider 와 미인증 연결 정책(social-link-policy) 대상이 어긋나면 선점 가입자의 비밀번호·세션이 남는다
+    expect(options.account.accountLinking.trustedProviders).toEqual([...EMAIL_LINKED_SOCIAL_PROVIDERS]);
+    expect(options.account.encryptOAuthTokens).toBe(true);
+  });
+
+  it('clientSecret 이 비어도 초기화되고, 브라우저 OAuth(인증 URL 생성)는 열리지 않는다', async () => {
+    const db: Record<string, unknown[]> = { user: [], authSession: [], account: [], verification: [], jwks: [], twoFactor: [] };
+    const auth = betterAuth({ ...createAuthOptions(makeDeps({ apple })), database: memoryAdapter(db) });
+
+    const ctx = await auth.$context;
+    expect(ctx.socialProviders.map(p => p.id)).toContain('apple');
+    // ID 토큰 경로는 secret 을 쓰지 않는다(성공은 better-auth.service.apple-native.spec 이 검증). 인증 URL 생성만 secret 을 요구한다
+    await expect(auth.api.signInSocial({ body: { provider: 'apple', callbackURL: '/', disableRedirect: true } }))
+      .rejects.toThrow('CLIENT_ID_AND_SECRET_REQUIRED');
   });
 });

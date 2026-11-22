@@ -1,8 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
+import { decodeJwt } from 'jose';
+import type { AuthContext } from 'better-auth';
+import { setTokenUtil } from 'better-auth/oauth2';
+import { AppleTokenService } from '../apple-token.service';
 import type { Auth } from './better-auth.provider';
 import { BETTER_AUTH, JWT_TTL_SECONDS } from './auth.constants';
-import { toHttpException } from './better-auth-error.map';
+import { APPLE_SIGN_IN_FAILED_MESSAGE, APPLE_SIGN_IN_MESSAGES, toHttpException } from './better-auth-error.map';
 import { rethrowOtpMailFailure } from './otp-mail-failure';
+
+const logger = new Logger('BetterAuthService');
 
 export type SocialSignInUrls = {
   callbackURL: string;
@@ -25,6 +33,25 @@ export type SignInResult
     | { success: true; requiresMfa: true; challengeName: 'TOTP'; session: string };
 
 export type RequestMeta = { ip?: string; userAgent?: string };
+
+/** iOS Sign in with Apple 결과. nonce 는 원문(iOS 는 그 SHA-256 을 Apple 요청에 넣었다) */
+export type AppleIdTokenSignIn = { idToken: string; nonce: string; authorizationCode?: string; name?: string };
+
+const sha256Hex = (value: string) => createHash('sha256').update(value).digest('hex');
+
+/**
+ * identity token 의 nonce 클레임이 원문 nonce 의 SHA-256 인지. better-auth 는 원문과 클레임이 같아도 통과시키므로
+ * (verify-id-token.mjs exact-or-sha256), 토큰에서 읽은 클레임 값을 그대로 보내는 재전송을 여기서 막는다. 서명 검증은 better-auth 가 한다
+ */
+function appleNonceMatches(idToken: string, nonce: string): boolean {
+  if (!nonce) return false;
+  try {
+    return decodeJwt(idToken).nonce === sha256Hex(nonce);
+  }
+  catch {
+    return false;
+  }
+}
 
 function bearerHeaders(sessionToken: string): Headers {
   return new Headers({ authorization: `Bearer ${sessionToken}` });
@@ -52,15 +79,16 @@ function cookiePairsFromSetCookie(headers: Headers): string {
  */
 @Injectable()
 export class BetterAuthService {
-  constructor(@Inject(BETTER_AUTH) private readonly auth: Auth) {}
+  /** appleTokens 는 Nest 에서는 항상 주입된다. 선택 인자인 것은 Apple 과 무관한 spec 이 auth 만으로 만들 수 있게 하려는 것 */
+  constructor(@Inject(BETTER_AUTH) private readonly auth: Auth, private readonly appleTokens?: AppleTokenService) {}
 
-  /** auth.api 호출. APIError 는 한국어 HttpException 으로, better-auth 가 삼킨 OTP 메일 실패는 503 으로 바꾼다 */
-  private async run<T>(fn: () => Promise<T>): Promise<T> {
+  /** auth.api 호출. APIError 는 한국어 HttpException 으로(messages 로 provider 별 문구 덮어쓰기), better-auth 가 삼킨 OTP 메일 실패는 503 으로 바꾼다 */
+  private async run<T>(fn: () => Promise<T>, messages?: Readonly<Record<string, string>>): Promise<T> {
     try {
       return await rethrowOtpMailFailure(fn);
     }
     catch (error) {
-      throw toHttpException(error);
+      throw toHttpException(error, messages);
     }
   }
 
@@ -218,6 +246,62 @@ export class BetterAuthService {
       throw toHttpException(new Error('Google 로그인 후 세션이 생성되지 않았습니다'));
     }
     return this.issueTokens(response.token, response.user.id);
+  }
+
+  /**
+   * Apple identity token 로그인 (iOS AuthenticationServices).
+   * better-auth 가 Apple 공개키로 서명·issuer·audience(APPLE_APP_BUNDLE_ID + APPLE_ID_TOKEN_AUDIENCES)·만료·nonce 를 검증하고,
+   * 이메일 기준으로 기존 사용자에 연결하거나 새로 만든 뒤 세션을 발급한다. 소셜 로그인은 2단계 인증을 묻지 않는다.
+   * authorizationCode 가 있으면 탈퇴 시 revoke 용 refresh token 을 받아 암호화 저장한다(실패해도 로그인은 성공).
+   * 검증 실패는 Apple 로그인 실패 안내(401 INVALID_TOKEN 등)로 끝난다.
+   */
+  async signInWithAppleIdToken(input: AppleIdTokenSignIn, meta?: RequestMeta): Promise<IssuedTokens> {
+    // better-auth 는 nonce 가 비면 검사를 건너뛰고, 원문 일치도 허용한다 — 둘 다 여기서 막는다
+    if (!appleNonceMatches(input.idToken, input.nonce)) {
+      throw new UnauthorizedException({ message: APPLE_SIGN_IN_FAILED_MESSAGE, error: 'INVALID_TOKEN' });
+    }
+    // iOS 가 기기 로캘 순서로 조합한 전체 이름을 firstName 하나로 보낸다 (better-auth 는 "first last" 순서로 붙인다). 가입 때만 반영된다
+    const name = input.name?.trim();
+    const response = await this.run(() => this.auth.api.signInSocial({
+      body: {
+        provider: 'apple',
+        idToken: { token: input.idToken, nonce: input.nonce, ...(name ? { user: { name: { firstName: name } } } : {}) },
+      },
+      headers: requestHeaders(meta),
+    }), APPLE_SIGN_IN_MESSAGES);
+    if (!('token' in response) || !response.token || !response.user) {
+      throw toHttpException(new Error('Apple 로그인 후 세션이 생성되지 않았습니다'));
+    }
+    if (input.authorizationCode) await this.storeAppleRefreshToken(response.user.id, input.idToken, input.authorizationCode);
+    return this.issueTokens(response.token, response.user.id);
+  }
+
+  /** authorization code → refresh token 을 apple 계정 행에 better-auth 암호화로 저장. 절대 던지지 않는다 */
+  private async storeAppleRefreshToken(userId: string, idToken: string, code: string): Promise<void> {
+    if (!this.appleTokens?.isConfigured()) return;
+    try {
+      // better-auth 가 방금 서명·audience 를 검증한 토큰이라 디코드만 한다. client_id 는 토큰을 받은 앱의 번들 ID(허용 목록 안의 aud)
+      const { sub, aud } = decodeJwt(idToken);
+      const allowed = this.auth.options.socialProviders.apple?.audience ?? [];
+      const clientId = [aud ?? []].flat().find(value => allowed.includes(value));
+      if (!sub || !clientId) {
+        logger.warn(`Apple identity token 의 aud 가 허용 목록에 없어 code 교환을 건너뜁니다 (userId=${userId})`);
+        return;
+      }
+      const ctx = await this.auth.$context;
+      const account = await ctx.internalAdapter.findAccountByKey({ providerId: 'apple', accountId: sub });
+      if (!account) return;
+      // code 가 오면 저장된 토큰이 있어도 교환해 덮어쓴다. 사용자가 기기 설정에서 'Apple로 로그인 사용 중단' 후 재승인하면
+      // 저장된 토큰은 무효라 탈퇴 때 폐기할 수 없기 때문이다. 교환이 실패하거나 응답에 토큰이 없으면 저장된 값을 그대로 둔다
+      const { refreshToken } = await this.appleTokens.exchangeAuthorizationCode(code, clientId);
+      if (!refreshToken) return;
+      await ctx.internalAdapter.updateAccount(account.id, { refreshToken: (await setTokenUtil(refreshToken, ctx as unknown as AuthContext)) ?? undefined });
+    }
+    catch (error) {
+      // revoke 용일 뿐이라 로그인은 성공시킨다. 다음 로그인(code 포함)에 다시 시도된다. code·토큰 값은 싣지 않는다
+      logger.warn(`Apple authorization code 교환 실패 (userId=${userId})`);
+      Sentry.captureException(error, { extra: { stage: 'apple-code-exchange', userId } });
+    }
   }
 
   /**
