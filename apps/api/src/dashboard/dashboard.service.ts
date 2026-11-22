@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { zonedDayStart, zonedMonthStart, zonedParts } from '../common/utils/timezone';
 import { SettingsService } from '../settings/settings.service';
+import { buildMonthMatrix } from './month-matrix';
 
 @Injectable()
 export class DashboardService {
@@ -32,6 +33,7 @@ export class DashboardService {
           uncheckedMeetings: [],
           uncheckedMeetingsCount: 0,
           todayRemainingSessionCount: 0,
+          todaySessions: [],
         },
       };
     }
@@ -45,7 +47,14 @@ export class DashboardService {
     const startOfToday = zonedDayStart(year, month, day, timezone);
     const endOfToday = zonedDayStart(year, month, day + 1, timezone);
 
-    const [activeStudentCount, unpaidInvoices, leftStudentsCount, uncheckedMeetings, todayRemainingSessionCount] = await Promise.all([
+    const [
+      activeStudentCount,
+      unpaidInvoices,
+      leftStudentsCount,
+      uncheckedMeetings,
+      todayRemainingSessionCount,
+      todaySessions,
+    ] = await Promise.all([
       // 1. Active student count
       this.prisma.student.count({
         where: {
@@ -131,6 +140,29 @@ export class DashboardService {
           },
         },
       }),
+
+      // 6. 오늘 수업 목록 — 메인 "오늘 수업" 막대용. 완료 여부는 시각이 아니라 isDone으로 판단
+      this.prisma.session.findMany({
+        where: {
+          deletedAt: null,
+          sessionAt: {
+            gte: startOfToday,
+            lt: endOfToday,
+          },
+          student: {
+            deletedAt: null,
+            organizationId: { in: organizationIds },
+          },
+        },
+        select: {
+          uuid: true,
+          sessionAt: true,
+          duration: true,
+          isDone: true,
+          student: { select: { uuid: true, name: true } },
+        },
+        orderBy: { sessionAt: 'asc' },
+      }),
     ]);
 
     return {
@@ -143,7 +175,97 @@ export class DashboardService {
         uncheckedMeetings,
         uncheckedMeetingsCount: uncheckedMeetings.length,
         todayRemainingSessionCount,
+        todaySessions,
       },
+    };
+  }
+
+  /**
+   * 메인 월 매트릭스. 행은 active 이거나 그 달에 수업이 있는 미삭제 학생
+   * (그만둔 학생도 그 달 수업이 있으면 남는다).
+   * @param monthParam 'YYYY-MM'. 없으면 유저 타임존의 이번 달
+   */
+  async getMonthMatrix(userId: string, monthParam?: string, explicitTimezone?: string) {
+    const timezone = await this.settingsService.resolveTimezone(userId, explicitTimezone);
+    const now = new Date();
+
+    const { year, month } = monthParam
+      ? { year: Number(monthParam.slice(0, 4)), month: Number(monthParam.slice(5, 7)) }
+      : zonedParts(now, timezone);
+
+    const organizations = await this.prisma.organization.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true },
+    });
+    const organizationIds = organizations.map(o => o.id);
+
+    if (organizationIds.length === 0) {
+      return {
+        success: true,
+        data: buildMonthMatrix({ year, month, timezone, now, students: [], sessions: [], invoices: [] }),
+      };
+    }
+
+    // 세션 범위 (유저 타임존 기준, 다음 달 시작을 exclusive 상한으로)
+    const sessionAtRange = {
+      gte: zonedMonthStart(year, month, timezone),
+      lt: zonedMonthStart(year, month + 1, timezone),
+    };
+    // 수강권 기간은 date-only(UTC 자정 고정)라 UTC 날짜로 비교
+    const firstDay = new Date(Date.UTC(year, month - 1, 1));
+    const lastDay = new Date(Date.UTC(year, month, 0));
+    const studentScope = { deletedAt: null, organizationId: { in: organizationIds } };
+
+    const [students, sessions, invoices] = await Promise.all([
+      this.prisma.student.findMany({
+        where: {
+          ...studentScope,
+          OR: [
+            { status: 'active' },
+            { sessions: { some: { deletedAt: null, sessionAt: sessionAtRange } } },
+          ],
+        },
+        select: { uuid: true, name: true },
+      }),
+      this.prisma.session.findMany({
+        where: {
+          deletedAt: null,
+          sessionAt: sessionAtRange,
+          student: studentScope,
+        },
+        select: {
+          sessionAt: true,
+          isDone: true,
+          student: { select: { uuid: true } },
+        },
+      }),
+      this.prisma.invoice.findMany({
+        where: {
+          deletedAt: null,
+          student: studentScope,
+          periodStart: { lte: lastDay },
+          OR: [{ periodEnd: null }, { periodEnd: { gte: firstDay } }],
+        },
+        select: {
+          periodStart: true,
+          periodEnd: true,
+          student: { select: { uuid: true } },
+        },
+        orderBy: { periodStart: 'asc' },
+      }),
+    ]);
+
+    return {
+      success: true,
+      data: buildMonthMatrix({
+        year,
+        month,
+        timezone,
+        now,
+        students,
+        sessions: sessions.map(s => ({ studentUuid: s.student.uuid, sessionAt: s.sessionAt, isDone: s.isDone })),
+        invoices: invoices.map(i => ({ studentUuid: i.student.uuid, periodStart: i.periodStart, periodEnd: i.periodEnd })),
+      }),
     };
   }
 }

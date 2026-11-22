@@ -47,7 +47,8 @@ export default async function AuthenticatedLayout({
 
             <main className="flex-1 overflow-auto pt-14 sm:pt-0">
               <div className="h-full">
-                <div className="max-w-3xl mx-auto py-6 px-4 sm:px-2">
+                {/* 기본 폭은 3xl. 넓은 표가 필요한 페이지는 루트에 data-wide-page를 달아 1380px까지 쓴다(메인) */}
+                <div className="max-w-3xl has-[[data-wide-page]]:max-w-[1380px] mx-auto py-6 px-4 sm:px-2">
                   {/* 가입 직후 로그인된 미인증 계정 — 인증을 마칠 때까지 안내 (차단하지 않음) */}
                   {session.user.emailVerified === false && <EmailVerificationBanner />}
                   {children}
