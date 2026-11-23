@@ -24,9 +24,9 @@ describe('buildMonthMatrix', () => {
     const result = buildMonthMatrix(input({
       sessions: [
         // KST 11/30 23:30
-        { studentUuid: 'a', sessionAt: new Date('2026-11-30T14:30:00Z'), isDone: false, isAbsent: false },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-30T14:30:00Z'), status: 'scheduled' },
         // KST 11/1 00:30 (UTC로는 10/31)
-        { studentUuid: 'a', sessionAt: new Date('2026-10-31T15:30:00Z'), isDone: true, isAbsent: false },
+        { studentUuid: 'a', sessionAt: new Date('2026-10-31T15:30:00Z'), status: 'done' },
       ],
     }));
 
@@ -41,7 +41,7 @@ describe('buildMonthMatrix', () => {
     const result = buildMonthMatrix(input({
       sessions: [
         // KST 12/1 00:30 — 12월
-        { studentUuid: 'a', sessionAt: new Date('2026-11-30T15:30:00Z'), isDone: false, isAbsent: false },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-30T15:30:00Z'), status: 'scheduled' },
       ],
     }));
 
@@ -51,8 +51,8 @@ describe('buildMonthMatrix', () => {
   it('같은 날 여러 수업은 count/done으로 합친다', () => {
     const result = buildMonthMatrix(input({
       sessions: [
-        { studentUuid: 'a', sessionAt: new Date('2026-11-10T01:00:00Z'), isDone: true, isAbsent: false },
-        { studentUuid: 'a', sessionAt: new Date('2026-11-10T05:00:00Z'), isDone: false, isAbsent: false },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-10T01:00:00Z'), status: 'done' },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-10T05:00:00Z'), status: 'scheduled' },
       ],
     }));
 
@@ -62,8 +62,8 @@ describe('buildMonthMatrix', () => {
   it('결석은 done과 absent에 모두 센다', () => {
     const result = buildMonthMatrix(input({
       sessions: [
-        { studentUuid: 'a', sessionAt: new Date('2026-11-10T01:00:00Z'), isDone: true, isAbsent: true },
-        { studentUuid: 'a', sessionAt: new Date('2026-11-10T05:00:00Z'), isDone: true, isAbsent: false },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-10T01:00:00Z'), status: 'absent' },
+        { studentUuid: 'a', sessionAt: new Date('2026-11-10T05:00:00Z'), status: 'done' },
       ],
     }));
 
@@ -131,7 +131,7 @@ describe('buildMonthMatrix', () => {
         { uuid: 'b', name: '나래' },
       ],
       sessions: [
-        { studentUuid: 'b', sessionAt: new Date('2026-11-10T01:00:00Z'), isDone: false, isAbsent: false },
+        { studentUuid: 'b', sessionAt: new Date('2026-11-10T01:00:00Z'), status: 'scheduled' },
       ],
     }));
 
@@ -147,7 +147,7 @@ describe('buildMonthMatrix', () => {
 
   it('대상 학생 목록에 없는 학생의 세션·수강권은 무시한다', () => {
     const result = buildMonthMatrix(input({
-      sessions: [{ studentUuid: 'x', sessionAt: new Date('2026-11-10T01:00:00Z'), isDone: false, isAbsent: false }],
+      sessions: [{ studentUuid: 'x', sessionAt: new Date('2026-11-10T01:00:00Z'), status: 'scheduled' }],
       invoices: [{ studentUuid: 'x', periodStart: d(2026, 11, 1), periodEnd: null }],
     }));
 

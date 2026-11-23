@@ -125,10 +125,10 @@ export class DashboardService {
         orderBy: { meetingAt: 'asc' },
       }),
 
-      // 5. 오늘 남은 수업 수 — 요청 타임존의 오늘 범위에서 완료 처리(isDone)되지 않은 세션
+      // 5. 오늘 남은 수업 수 — 요청 타임존의 오늘 범위에서 아직 예정인 세션
       this.prisma.session.count({
         where: {
-          isDone: false,
+          status: 'scheduled',
           deletedAt: null,
           sessionAt: {
             gte: startOfToday,
@@ -141,7 +141,7 @@ export class DashboardService {
         },
       }),
 
-      // 6. 오늘 수업 목록 — 메인 "오늘 수업" 막대용. 완료 여부는 시각이 아니라 isDone으로 판단
+      // 6. 오늘 수업 목록 — 메인 "오늘 수업" 막대용. 완료 여부는 시각이 아니라 status로 판단
       this.prisma.session.findMany({
         where: {
           deletedAt: null,
@@ -158,8 +158,7 @@ export class DashboardService {
           uuid: true,
           sessionAt: true,
           duration: true,
-          isDone: true,
-          isAbsent: true,
+          status: true,
           student: { select: { uuid: true, name: true } },
         },
         orderBy: { sessionAt: 'asc' },
@@ -236,8 +235,7 @@ export class DashboardService {
         },
         select: {
           sessionAt: true,
-          isDone: true,
-          isAbsent: true,
+          status: true,
           student: { select: { uuid: true } },
         },
       }),
@@ -265,7 +263,7 @@ export class DashboardService {
         timezone,
         now,
         students,
-        sessions: sessions.map(s => ({ studentUuid: s.student.uuid, sessionAt: s.sessionAt, isDone: s.isDone, isAbsent: s.isAbsent })),
+        sessions: sessions.map(s => ({ studentUuid: s.student.uuid, sessionAt: s.sessionAt, status: s.status })),
         invoices: invoices.map(i => ({ studentUuid: i.student.uuid, periodStart: i.periodStart, periodEnd: i.periodEnd })),
       }),
     };

@@ -6,6 +6,7 @@ import type { SettingsService } from '../settings/settings.service';
 // 대시보드 조회 조건만 검증한다 (DB 는 모킹)
 function makeService(organizations: { id: number }[] = [{ id: 1 }]) {
   const sessionFindMany = vi.fn().mockResolvedValue([]);
+  const sessionCount = vi.fn().mockResolvedValue(0);
   const studentFindMany = vi.fn().mockResolvedValue([]);
   const invoiceFindMany = vi.fn().mockResolvedValue([]);
   const prisma = {
@@ -14,12 +15,12 @@ function makeService(organizations: { id: number }[] = [{ id: 1 }]) {
     invoice: { findMany: invoiceFindMany },
     studentStatus: { count: vi.fn().mockResolvedValue(0) },
     meeting: { findMany: vi.fn().mockResolvedValue([]) },
-    session: { count: vi.fn().mockResolvedValue(0), findMany: sessionFindMany },
+    session: { count: sessionCount, findMany: sessionFindMany },
   } as unknown as PrismaService;
   const settings = { resolveTimezone: vi.fn().mockResolvedValue('Asia/Seoul') } as unknown as SettingsService;
 
   const service = new DashboardService(prisma, settings);
-  return { service, sessionFindMany, studentFindMany, invoiceFindMany };
+  return { service, sessionFindMany, sessionCount, studentFindMany, invoiceFindMany };
 }
 
 describe('DashboardService.getDashboardData 오늘 수업', () => {
@@ -36,7 +37,7 @@ describe('DashboardService.getDashboardData 오늘 수업', () => {
   it('오늘 수업은 유저 타임존의 오늘 범위에서 삭제되지 않은 세션을 시작 시각 순으로 가져온다', async () => {
     const { service, sessionFindMany } = makeService();
     const rows = [
-      { uuid: 's1', sessionAt: new Date('2026-11-22T01:00:00Z'), duration: 60, isDone: true, student: { uuid: 'st1', name: '김' } },
+      { uuid: 's1', sessionAt: new Date('2026-11-22T01:00:00Z'), duration: 60, status: 'done', student: { uuid: 'st1', name: '김' } },
     ];
     sessionFindMany.mockResolvedValue(rows);
 
@@ -57,11 +58,27 @@ describe('DashboardService.getDashboardData 오늘 수업', () => {
       uuid: true,
       sessionAt: true,
       duration: true,
-      isDone: true,
-      isAbsent: true,
+      status: true,
       student: { select: { uuid: true, name: true } },
     });
     expect(result.data.todaySessions).toEqual(rows);
+  });
+
+  it('오늘 남은 수업 수는 예정인 수업만 센다', async () => {
+    const { service, sessionCount } = makeService();
+
+    await service.getDashboardData('user');
+
+    expect(sessionCount).toHaveBeenCalledTimes(1);
+    const { where } = sessionCount.mock.calls[0][0];
+    expect(where).toMatchObject({
+      status: 'scheduled',
+      deletedAt: null,
+      sessionAt: {
+        gte: zonedDayStart(2026, 11, 22, 'Asia/Seoul'),
+        lt: zonedDayStart(2026, 11, 23, 'Asia/Seoul'),
+      },
+    });
   });
 
   it('조직이 없으면 todaySessions는 빈 배열', async () => {
