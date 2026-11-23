@@ -11,7 +11,7 @@ export type TimeBlock = {
   studentUuid: string;
   leftPct: number; // 0~24시 기준 %
   widthPct: number;
-  state: 'done' | 'next' | 'later';
+  state: 'done' | 'absent' | 'next' | 'later';
   timeLabel: string; // 2시간 이상이면 '14:00–16:00', 아니면 '10:00'
   rangeLabel: string; // 툴팁용 '14:00–15:30'
   lane: number; // 겹침 처리
@@ -43,7 +43,7 @@ export function layoutTimeBar(sessions: TodaySession[], now: Date, timezone: str
 
   // 다음 수업 = 아직 끝나지 않은 첫 미완료 수업
   const nextIndex = sorted.findIndex(s =>
-    !s.isDone && Date.parse(s.sessionAt) + s.duration * 60_000 > nowMs);
+    s.status === 'scheduled' && Date.parse(s.sessionAt) + s.duration * 60_000 > nowMs);
 
   const items = sorted.map((s, index) => {
     const startAt = new Date(s.sessionAt);
@@ -60,7 +60,7 @@ export function layoutTimeBar(sessions: TodaySession[], now: Date, timezone: str
       studentUuid: s.student.uuid,
       leftPct: start / DAY_MINUTES * 100,
       widthPct: (end - start) / DAY_MINUTES * 100,
-      state: s.isDone ? 'done' : index === nextIndex ? 'next' : 'later',
+      state: s.status === 'absent' ? 'absent' : s.status === 'done' ? 'done' : index === nextIndex ? 'next' : 'later',
       timeLabel: s.duration >= LONG_SESSION_MINUTES ? rangeLabel : startLabel,
       rangeLabel,
       lane: 0,

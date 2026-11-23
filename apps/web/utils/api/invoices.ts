@@ -1,4 +1,5 @@
 import { apiClient } from '../api-client';
+import type { SessionStatus } from '../session-status';
 
 type Session = {
   id: number;
@@ -6,7 +7,7 @@ type Session = {
   sessionAt: string;
   duration: number;
   notes: string;
-  isDone: boolean;
+  status: SessionStatus;
   type: 'regular' | 'trial' | 'comp';
   sessionMediaFiles?: Array<{
     mediaFile: {

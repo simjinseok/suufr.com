@@ -1,4 +1,5 @@
 import { apiClient } from '../api-client';
+import type { SessionStatus } from '../session-status';
 
 // 미납 = 연결된 입금이 1건도 없는 수강권 (docs/schema-redesign.md §6-22). 서버가 오래된 순으로 정렬해 준다.
 export type UnpaidInvoice = {
@@ -18,12 +19,12 @@ type UncheckedMeeting = {
   meetingAt: string;
 };
 
-// 유저 타임존의 오늘 수업 (시작 시각 순). 완료 여부는 시간이 아니라 isDone
+// 유저 타임존의 오늘 수업 (시작 시각 순). 완료 여부는 시간이 아니라 status
 export type TodaySession = {
   uuid: string;
   sessionAt: string;
   duration: number; // 분
-  isDone: boolean;
+  status: SessionStatus;
   student: { uuid: string; name: string };
 };
 
@@ -50,7 +51,8 @@ type DashboardParams = {
 export type MatrixRow = {
   student: { uuid: string; name: string };
   // 키 = 일(1..daysInMonth)
-  days: Record<number, { count: number; done: number }>;
+  // done은 결석을 포함한다
+  days: Record<number, { count: number; done: number; absent: number }>;
   // 0 = 지난달부터, daysInMonth+1 = 다음 달까지(무기한 포함)
   periods: { startDay: number; endDay: number }[];
 };

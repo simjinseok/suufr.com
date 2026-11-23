@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { useTimeZone } from '@/contexts/timezone';
+import { isFinished, SESSION_STATUS_LABEL, type SessionStatus } from '@/utils/session-status';
 
-import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, CircleXIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
 
 type MediaFile = {
   uuid: string;
@@ -20,7 +21,7 @@ interface Props {
     notes: string;
     sessionAt: Date | string;
     duration: number;
-    isDone: boolean;
+    status: SessionStatus;
     sessionMediaFiles?: Array<{
       mediaFile: MediaFile;
     }>;
@@ -69,21 +70,29 @@ export default function StudentView({ studentName, sessions, showPayments, hasUn
                 {sessions.map(session => (
                   <li key={session.uuid} className="flex items-start gap-2">
                     <div className="size-6 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {session.isDone
+                      {session.status === 'absent'
                         ? (
-                            <CircleCheckBigIcon
+                            <CircleXIcon
                               width={20}
                               height={20}
-                              className="text-green-600"
+                              className="text-gray-400"
                             />
                           )
-                        : (
-                            <CircleIcon
-                              width={20}
-                              height={20}
-                              className="text-amber-500"
-                            />
-                          )}
+                        : isFinished(session.status)
+                          ? (
+                              <CircleCheckBigIcon
+                                width={20}
+                                height={20}
+                                className="text-green-600"
+                              />
+                            )
+                          : (
+                              <CircleIcon
+                                width={20}
+                                height={20}
+                                className="text-amber-500"
+                              />
+                            )}
                     </div>
                     <div className="flex-1">
                       {/* 날짜/시간 표시 */}
@@ -105,6 +114,9 @@ export default function StudentView({ studentName, sessions, showPayments, hasUn
                           {session.duration}
                           분
                         </span>
+                        {session.status === 'absent' && (
+                          <span className="text-sm text-gray-500">{SESSION_STATUS_LABEL.absent}</span>
+                        )}
                       </div>
 
                       {/* 세션 노트 */}

@@ -7,13 +7,14 @@ import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 
 import { useTimeZone } from '@/contexts/timezone';
+import { isFinished, SESSION_STATUS_LABEL, type SessionStatus } from '@/utils/session-status';
 
 type SessionItem = {
   uuid: string;
   sessionAt: string;
   duration: number;
   notes: string;
-  isDone: boolean;
+  status: SessionStatus;
   invoiceTitle: string | null;
   student: {
     uuid: string;
@@ -80,13 +81,17 @@ export default function SessionsList({ sessions, use24HourFormat }: Props) {
                   )}
                 </div>
                 <div className="shrink-0">
-                  {session.isDone
+                  {session.status === 'absent'
                     ? (
-                        <Chip size="sm" color="success" variant="soft">완료</Chip>
+                        <Chip size="sm" color="default" variant="soft">{SESSION_STATUS_LABEL.absent}</Chip>
                       )
-                    : (
-                        <Chip size="sm" color="warning" variant="soft">예정</Chip>
-                      )}
+                    : isFinished(session.status)
+                      ? (
+                          <Chip size="sm" color="success" variant="soft">완료</Chip>
+                        )
+                      : (
+                          <Chip size="sm" color="warning" variant="soft">예정</Chip>
+                        )}
                 </div>
               </div>
             </li>

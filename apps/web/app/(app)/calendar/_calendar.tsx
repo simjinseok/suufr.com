@@ -18,6 +18,7 @@ import { tz, TZDate } from '@date-fns/tz';
 import { Button, Tabs } from '@heroui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTimeZone } from '@/contexts/timezone';
+import type { SessionStatus } from '@/utils/session-status';
 import type { CalendarView } from './page';
 import MonthView from './_month-view';
 import WeekView from './_week-view';
@@ -28,7 +29,7 @@ interface Lesson {
   id: number;
   uuid: string;
   sessionAt: string;
-  isDone: boolean;
+  status: SessionStatus;
   notes: string | null;
   student: {
     name: string;

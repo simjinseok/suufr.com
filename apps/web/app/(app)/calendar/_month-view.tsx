@@ -15,12 +15,19 @@ import {
 import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
 import { useTimeZone } from '@/contexts/timezone';
+import type { SessionStatus } from '@/utils/session-status';
+
+const CHIP_CLASS: Record<SessionStatus, string> = {
+  scheduled: 'bg-blue-100 text-blue-700',
+  done: 'bg-emerald-100 text-emerald-700',
+  absent: 'bg-gray-100 text-gray-500',
+};
 
 interface Lesson {
   id: number;
   uuid: string;
   sessionAt: string;
-  isDone: boolean;
+  status: SessionStatus;
   notes: string | null;
   student: {
     name: string;
@@ -127,9 +134,7 @@ export default function MonthView({ lessons, selectedDate, onSessionClick }: Mon
                     }}
                     className={`
                       block text-xs px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:opacity-80 transition-opacity
-                      ${lesson.isDone
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-blue-100 text-blue-700'}
+                      ${CHIP_CLASS[lesson.status]}
                     `}
                   >
                     {lesson.student.name}

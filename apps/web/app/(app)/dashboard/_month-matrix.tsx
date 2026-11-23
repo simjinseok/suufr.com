@@ -3,9 +3,9 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Card } from '@heroui/react';
 import clsx from 'clsx';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react';
 import type { MonthMatrix as MonthMatrixData } from '@/utils/api/dashboard';
-import { formatMonthTitle, matrixCellTitle, periodLinesOnDay, shiftMonth, weekdayLabel, weekdayOf } from '@/utils/dashboard/month-param';
+import { formatMonthTitle, matrixCellState, matrixCellTitle, periodLinesOnDay, shiftMonth, weekdayLabel, weekdayOf } from '@/utils/dashboard/month-param';
 
 interface Props {
   data: MonthMatrixData;
@@ -64,12 +64,16 @@ export default function MonthMatrix({ data, month }: Props) {
         </div>
         <ul className="ml-auto hidden flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted @3xl:flex" aria-label="표식 설명">
           <li className="flex items-center gap-1.5 whitespace-nowrap">
-            <Mark done />
+            <Mark state="done" />
             완료
           </li>
           <li className="flex items-center gap-1.5 whitespace-nowrap">
-            <Mark done={false} />
+            <Mark state="scheduled" />
             예정
+          </li>
+          <li className="flex items-center gap-1.5 whitespace-nowrap">
+            <Mark state="absent" />
+            결석
           </li>
           <li className="flex items-center gap-1.5 whitespace-nowrap">
             <i className="h-0.5 w-4 bg-accent-soft" />
@@ -133,7 +137,7 @@ export default function MonthMatrix({ data, month }: Props) {
                         )}
                       />
                     ))}
-                    {cell && cell.count > 0 && <Mark done={cell.done === cell.count} />}
+                    {cell && cell.count > 0 && <Mark state={matrixCellState(cell)} />}
                   </div>
                 );
               })}
@@ -145,12 +149,16 @@ export default function MonthMatrix({ data, month }: Props) {
   );
 }
 
-function Mark({ done }: { done: boolean }) {
+function Mark({ state }: { state: 'scheduled' | 'done' | 'absent' }) {
+  // 결석을 채운 원(bg-default)으로 그리면 너무 밝아 빈 칸처럼 보여 X로 그린다
+  if (state === 'absent') {
+    return <XIcon aria-hidden="true" strokeWidth={3} className="relative z-[1] block size-3 text-muted" />;
+  }
   return (
     <i
       className={clsx(
         'relative z-[1] block size-3 rounded-full',
-        done ? 'bg-accent' : 'bg-surface shadow-[inset_0_0_0_1.6px_var(--color-accent)]',
+        state === 'done' ? 'bg-accent' : 'bg-surface shadow-[inset_0_0_0_1.6px_var(--color-accent)]',
       )}
     />
   );

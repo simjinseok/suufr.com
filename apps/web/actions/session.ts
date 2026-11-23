@@ -11,6 +11,7 @@ import { ServerActionState } from '@/types/index';
 import { z } from 'zod';
 import { sessionsApi } from '@/utils/api';
 import { ApiError } from '@/utils/api-client';
+import type { SessionStatus } from '@/utils/session-status';
 
 // 폼의 벽시계 문자열("YYYY-MM-DDTHH:mm")을 instant로 바꿀 기준 = 유저 설정 타임존
 async function getUserTimeZone(): Promise<string> {
@@ -21,7 +22,6 @@ async function getUserTimeZone(): Promise<string> {
 type CreateSessionState = {
   success: boolean;
   fields?: {
-    isDone: boolean;
     sessionAt: string;
     duration: number;
     notes: string;
@@ -38,7 +38,6 @@ export async function createSession(prevState: CreateSessionState, formData: For
       const state: CreateSessionState = {
         success: false,
         fields: {
-          isDone: data.isDone === 'on',
           sessionAt: data.sessionAt as string,
           duration: Number(data.duration) || 60,
           notes: data.notes as string,
@@ -132,13 +131,14 @@ export async function createSessionsBulk(prevState: CreateSessionsBulkState, for
 }
 
 type UpdateSessionState = ServerActionState<{
-  isDone: boolean;
+  status: SessionStatus;
   sessionAt: string;
   duration: number;
   notes: string;
 }>;
 const updateSessionSchema = (timeZone: string) => z.object({
-  isDone: z.preprocess(val => val === 'on', z.boolean()),
+  status: z.enum(['scheduled', 'done', 'absent']),
+  initialStatus: z.enum(['scheduled', 'done', 'absent']),
   sessionAt: z.string().transform(val => parseDateTime(val).toDate(timeZone).toISOString()),
   duration: z.coerce.number().int().min(1).default(60),
   notes: z.string().trim(),
@@ -154,7 +154,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       const state: UpdateSessionState = {
         success: false,
         fields: {
-          isDone: data.isDone === 'on',
+          status: data.status as SessionStatus,
           sessionAt: data.sessionAt as string,
           duration: Number(data.duration) || 60,
           notes: data.notes as string,
@@ -173,7 +173,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      const { isDone, sessionAt, duration, notes } = validationResult.data;
+      const { status, initialStatus, sessionAt, duration, notes } = validationResult.data;
 
       // 세션 미디어 파일 데이터 파싱
       const addMediaFileUuidsStr = formData.get('addMediaFileUuids') as string;
@@ -183,7 +183,8 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       const removeMediaFileUuids = removeMediaFileUuidsStr ? JSON.parse(removeMediaFileUuidsStr) : undefined;
 
       await sessionsApi.update(sessionUuid as string, {
-        isDone,
+        // 상태를 바꾼 저장만 상태를 싣는다. 안 바꾼 저장이 다른 기기에서 바꾼 상태를 덮어쓰지 않게
+        ...(status !== initialStatus && { status }),
         sessionAt,
         duration,
         notes,
@@ -283,7 +284,7 @@ type SessionDetailData = {
     id: number;
     uuid: string;
     sessionAt: string;
-    isDone: boolean;
+    status: SessionStatus;
     notes: string;
     feedback: string | null;
     invoiceTitle: string | null;
@@ -294,15 +295,15 @@ type SessionDetailData = {
     id: number;
     uuid: string;
     sessionAt: string;
-    isDone: boolean;
+    status: SessionStatus;
     notes: string;
     feedback: string | null;
   }[];
 };
 
-export async function toggleSessionDone(sessionUuid: string, isDone: boolean): Promise<boolean> {
+export async function setSessionStatus(sessionUuid: string, status: SessionStatus): Promise<boolean> {
   return await Sentry.withServerActionInstrumentation(
-    'toggleSessionDone',
+    'setSessionStatus',
     { headers: await headers() },
     async () => {
       const session = await getSession();
@@ -310,7 +311,7 @@ export async function toggleSessionDone(sessionUuid: string, isDone: boolean): P
         return false;
       }
 
-      await sessionsApi.markDone(sessionUuid, isDone);
+      await sessionsApi.setStatus(sessionUuid, status);
 
       revalidatePath('/sessions', 'page');
       revalidatePath('/students', 'page');
@@ -398,7 +399,7 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
       id: currentSession.id,
       uuid: currentSession.uuid,
       sessionAt: currentSession.sessionAt,
-      isDone: currentSession.isDone,
+      status: currentSession.status,
       notes: currentSession.notes,
       feedback: currentSession.feedback?.notes || null,
       invoiceTitle: currentSession.invoice?.title ?? null,
@@ -409,7 +410,7 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
       id: s.id,
       uuid: s.uuid,
       sessionAt: s.sessionAt,
-      isDone: s.isDone,
+      status: s.status,
       notes: s.notes,
       feedback: s.feedback?.notes || null,
     })),

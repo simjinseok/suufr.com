@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMonthTitle, isNewDay, matrixCellTitle, parseMonthParam, periodLinesOnDay, shiftMonth, todayString, weekdayOf } from './month-param';
+import { formatMonthTitle, isNewDay, matrixCellState, matrixCellTitle, parseMonthParam, periodLinesOnDay, shiftMonth, todayString, weekdayOf } from './month-param';
 
 const SEOUL = 'Asia/Seoul';
 // KST 2026-11-22 13:20
@@ -61,12 +61,25 @@ describe('weekdayOf', () => {
 
 describe('matrixCellTitle', () => {
   it('모두 완료면 수업 완료, 아니면 수업 예정', () => {
-    expect(matrixCellTitle('2026-11', 3, { count: 1, done: 1 })).toBe('11월 3일 (화) 수업 완료');
-    expect(matrixCellTitle('2026-11', 25, { count: 1, done: 0 })).toBe('11월 25일 (수) 수업 예정');
+    expect(matrixCellTitle('2026-11', 3, { count: 1, done: 1, absent: 0 })).toBe('11월 3일 (화) 수업 완료');
+    expect(matrixCellTitle('2026-11', 25, { count: 1, done: 0, absent: 0 })).toBe('11월 25일 (수) 수업 예정');
+  });
+
+  it('하루 1건이 결석이면 수업 결석', () => {
+    expect(matrixCellTitle('2026-11', 10, { count: 1, done: 1, absent: 1 })).toBe('11월 10일 (화) 수업 결석');
+    expect(matrixCellTitle('2026-11', 10, { count: 1, done: 1, absent: 0 })).toBe('11월 10일 (화) 수업 완료');
   });
 
   it('하루 여러 회면 횟수를 쓴다', () => {
-    expect(matrixCellTitle('2026-11', 22, { count: 2, done: 1 })).toBe('11월 22일 (일) 수업 2회');
+    expect(matrixCellTitle('2026-11', 22, { count: 2, done: 1, absent: 0 })).toBe('11월 22일 (일) 수업 2회');
+  });
+});
+
+describe('matrixCellState', () => {
+  it('예정이 남았으면 예정, 다 끝났고 결석이 있으면 결석, 아니면 완료', () => {
+    expect(matrixCellState({ count: 2, done: 1, absent: 1 })).toBe('scheduled');
+    expect(matrixCellState({ count: 2, done: 2, absent: 1 })).toBe('absent');
+    expect(matrixCellState({ count: 2, done: 2, absent: 0 })).toBe('done');
   });
 });
 

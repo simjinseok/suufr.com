@@ -60,7 +60,7 @@ export default async function Page(props: PageProps<'/sessions'>) {
           sessionAt: item.sessionAt,
           duration: item.duration,
           notes: item.notes,
-          isDone: item.isDone,
+          status: item.status,
           // 삭제된 수강권 귀속은 표시하지 않는다
           invoiceTitle: item.invoice && !item.invoice.deletedAt
             ? (item.invoice.title || null)

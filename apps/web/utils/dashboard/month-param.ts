@@ -45,12 +45,23 @@ export function weekdayLabel(month: string, day: number): string {
   return WEEKDAYS[weekdayOf(month, day)];
 }
 
-// 매트릭스 칸 툴팁 — 'M월 D일 (요일) 수업 완료/예정', 하루 여러 회면 '수업 N회'
-export function matrixCellTitle(month: string, day: number, cell: { count: number; done: number }): string {
+// 월 매트릭스 한 칸. done은 결석을 포함한다
+export type MatrixCell = { count: number; done: number; absent: number };
+
+const CELL_STATE_TITLE = { scheduled: '수업 예정', done: '수업 완료', absent: '수업 결석' } as const;
+
+// 예정이 하나라도 남았으면 예정, 다 끝났고 결석이 섞였으면 결석
+export function matrixCellState(cell: MatrixCell): 'scheduled' | 'done' | 'absent' {
+  if (cell.done < cell.count) return 'scheduled';
+  return cell.absent > 0 ? 'absent' : 'done';
+}
+
+// 매트릭스 칸 툴팁 — 'M월 D일 (요일) 수업 완료/예정/결석', 하루 여러 회면 '수업 N회'
+export function matrixCellTitle(month: string, day: number, cell: MatrixCell): string {
   const { mon } = splitMonth(month);
   const what = cell.count > 1
     ? `수업 ${cell.count}회`
-    : cell.done === cell.count ? '수업 완료' : '수업 예정';
+    : CELL_STATE_TITLE[matrixCellState(cell)];
   return `${mon}월 ${day}일 (${weekdayLabel(month, day)}) ${what}`;
 }
 

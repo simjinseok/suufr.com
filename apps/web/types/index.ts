@@ -1,4 +1,5 @@
 import type { PaymentMethod } from '@/constants/payment-method';
+import type { SessionStatus } from '@/utils/session-status';
 
 export type TUserSettings = {
   userId: string;
@@ -55,7 +56,7 @@ export type TSession = {
   id: number;
   uuid: string;
   notes: string;
-  isDone: boolean;
+  status: SessionStatus;
   sessionAt: Date;
   duration: number;
   type?: 'regular' | 'trial' | 'comp';
