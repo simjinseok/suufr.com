@@ -221,12 +221,12 @@ export class StudentsService {
     // 파생 계산: 잔여 세션 수 + 학생 잔액 + 청구 완료 수 (docs/schema-redesign.md §3)
     const [remainingSessionsCount, invoices, balances] = await Promise.all([
       this.prisma.session.count({
-        where: { studentId: student.id, isDone: false, deletedAt: null },
+        where: { studentId: student.id, status: 'scheduled', deletedAt: null },
       }),
       this.prisma.invoice.findMany({
         where: { studentId: student.id, deletedAt: null },
         select: {
-          sessions: { where: { deletedAt: null }, select: { isDone: true } },
+          sessions: { where: { deletedAt: null }, select: { status: true } },
         },
       }),
       getStudentBalances(this.prisma, [student.id]),
@@ -234,7 +234,7 @@ export class StudentsService {
 
     let completedInvoiceCount = 0;
     for (const invoice of invoices) {
-      if (invoice.sessions.every(s => s.isDone)) {
+      if (invoice.sessions.every(s => s.status !== 'scheduled')) {
         completedInvoiceCount += 1;
       }
     }

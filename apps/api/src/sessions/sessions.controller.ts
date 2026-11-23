@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
-import { CreateSessionDto, CreateSessionsBulkDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQueryDto } from './dto';
+import { CreateSessionDto, CreateSessionsBulkDto, UpdateSessionDto, UpsertFeedbackDto, ListSessionsQueryDto, UpdateSessionStatusDto } from './dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 
@@ -58,13 +58,13 @@ export class SessionsController {
     return this.sessionsService.remove(uuid, user.userId);
   }
 
-  @Patch(':uuid/done')
-  markDone(
+  @Patch(':uuid/status')
+  setStatus(
     @Param('uuid') uuid: string,
-    @Body('isDone') isDone: boolean,
+    @Body() dto: UpdateSessionStatusDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.sessionsService.markDone(uuid, isDone ?? true, user.userId);
+    return this.sessionsService.setStatus(uuid, dto.status, user.userId);
   }
 
   @Post(':uuid/feedback')

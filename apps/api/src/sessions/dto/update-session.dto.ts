@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsDateString, IsInt, Min, IsBoolean, IsArray, IsUUID } from 'class-validator';
-import { StrictBoolean } from '../../common/decorators/strict-boolean.decorator';
+import { IsString, IsOptional, IsDateString, IsInt, Min, IsArray, IsUUID, IsEnum } from 'class-validator';
+import { SessionStatusValue } from '@prisma/generated/client';
 
 export class UpdateSessionDto {
   @IsDateString()
@@ -15,10 +15,9 @@ export class UpdateSessionDto {
   @IsOptional()
   notes?: string;
 
-  @IsBoolean()
-  @StrictBoolean()
+  @IsEnum(SessionStatusValue)
   @IsOptional()
-  isDone?: boolean;
+  status?: SessionStatusValue;
 
   // 청구 재귀속 (해제는 invoices PATCH의 removeSessionUuids 사용)
   @IsUUID()

@@ -66,3 +66,52 @@ describe('SessionsService.create 자동 귀속', () => {
     expect(sessionCreate.mock.calls[0][0].data.invoiceId).toBe(7);
   });
 });
+
+// 완료·결석 쓰기 경로 — 실제로 쓰는 data만 검증한다 (DB 는 모킹)
+function makeStatusService() {
+  const found = { id: 1, uuid: 's', studentId: 10, status: 'scheduled', sessionMediaFiles: [] };
+  const sessionUpdate = vi.fn().mockResolvedValue(found);
+  const txSessionUpdate = vi.fn().mockResolvedValue(found);
+  const transaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn({
+    session: { update: txSessionUpdate },
+    sessionMediaFile: { create: vi.fn(), delete: vi.fn(), findFirst: vi.fn() },
+  }));
+  const prisma = {
+    session: { findFirst: vi.fn().mockResolvedValue(found), update: sessionUpdate },
+    $transaction: transaction,
+  } as unknown as PrismaService;
+  const google = {
+    pushSession: vi.fn().mockResolvedValue(undefined),
+    deleteSession: vi.fn().mockResolvedValue(undefined),
+  } as unknown as GoogleCalendarService;
+  const settings = { resolveTimezone: vi.fn().mockResolvedValue('Asia/Seoul') } as unknown as SettingsService;
+
+  const service = new SessionsService(prisma, google, settings);
+  vi.spyOn(service, 'findOne').mockResolvedValue({} as never);
+  return { service, sessionUpdate, txSessionUpdate, transaction };
+}
+
+describe('SessionsService 결석', () => {
+  it.each(['scheduled', 'done', 'absent'] as const)('setStatus는 %s를 status로 쓴다', async (status) => {
+    const { service, sessionUpdate } = makeStatusService();
+    await service.setStatus('s', status, 'u');
+
+    expect(sessionUpdate.mock.calls[0][0].data).toStrictEqual({ status });
+  });
+
+  it('update는 status가 오면 status를 쓴다', async () => {
+    const { service, txSessionUpdate } = makeStatusService();
+    await service.update('s', { status: 'absent', notes: 'x' }, 'u');
+
+    expect(txSessionUpdate.mock.calls[0][0].data).toMatchObject({ status: 'absent', notes: 'x' });
+  });
+
+  it('update는 status가 없으면 상태를 건드리지 않는다', async () => {
+    const { service, txSessionUpdate } = makeStatusService();
+    await service.update('s', { notes: 'x' }, 'u');
+
+    const { data } = txSessionUpdate.mock.calls[0][0];
+    expect(data).toMatchObject({ notes: 'x' });
+    expect('status' in data).toBe(false);
+  });
+});

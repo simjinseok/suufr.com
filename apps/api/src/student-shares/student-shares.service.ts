@@ -148,7 +148,7 @@ export class StudentSharesService {
         sessionAt: true,
         duration: true,
         notes: true,
-        isDone: true,
+        status: true,
         type: true,
         feedback: {
           where: { deletedAt: null },
@@ -318,7 +318,7 @@ export class StudentSharesService {
                 sessionAt: true,
                 duration: true,
                 notes: true,
-                isDone: true,
+                status: true,
                 feedback: {
                   where: { deletedAt: null },
                   select: { notes: true },

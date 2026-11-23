@@ -1,3 +1,4 @@
+import type { SessionStatusValue } from '@prisma/generated/client';
 import { zonedParts } from '../common/utils/timezone';
 
 /** 메인 월 매트릭스 응답. 웹 메인(`/dashboard`)의 "YYYY년 M월 수업 현황" 표가 그린다. */
@@ -14,8 +15,8 @@ export type MonthMatrix = {
 
 export type MatrixRow = {
   student: { uuid: string; name: string };
-  /** 키 = 일(1..daysInMonth). 수업이 있는 날만 들어간다 */
-  days: Record<number, { count: number; done: number }>;
+  /** 키 = 일(1..daysInMonth). 수업이 있는 날만 들어간다. 결석은 수업한 것이라 done에도 센다 */
+  days: Record<number, { count: number; done: number; absent: number }>;
   /** 0 = 지난달부터 이어짐, daysInMonth+1 = 다음 달까지 이어짐(무기한 포함) */
   periods: { startDay: number; endDay: number }[];
 };
@@ -27,7 +28,7 @@ export type MonthMatrixInput = {
   timezone: string;
   now: Date;
   students: { uuid: string; name: string }[];
-  sessions: { studentUuid: string; sessionAt: Date; isDone: boolean }[];
+  sessions: { studentUuid: string; sessionAt: Date; status: SessionStatusValue }[];
   invoices: { studentUuid: string; periodStart: Date; periodEnd: Date | null }[];
 };
 
@@ -65,9 +66,10 @@ export function buildMonthMatrix(input: MonthMatrixInput): MonthMatrix {
     if (!row) continue;
     const parts = zonedParts(session.sessionAt, timezone);
     if (parts.year !== year || parts.month !== month) continue;
-    const cell = row.days[parts.day] ?? { count: 0, done: 0 };
+    const cell = row.days[parts.day] ?? { count: 0, done: 0, absent: 0 };
     cell.count += 1;
-    if (session.isDone) cell.done += 1;
+    if (session.status !== 'scheduled') cell.done += 1;
+    if (session.status === 'absent') cell.absent += 1;
     row.days[parts.day] = cell;
   }
 

@@ -228,7 +228,7 @@ model Session {
   notes     String
   sessionAt DateTime         @map("session_at") @db.Timestamptz(0)
   duration  Int              @default(60)
-  isDone    Boolean          @default(false) @map("is_done")
+  status    SessionStatusValue @default(scheduled) // 예정/완료/결석. 결석은 수업한 것으로 처리(남은 수업에서 빠진다)
   type      SessionTypeValue @default(regular) // trial/comp는 미연결 알림에서 제외
   createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(0)
@@ -293,6 +293,14 @@ enum StudentStatusValue {
   leave
 
   @@map("StudentStatus")
+}
+
+enum SessionStatusValue {
+  scheduled // 예정
+  done // 완료
+  absent // 결석 — 수업한 것으로 처리
+
+  @@map("SessionStatus")
 }
 
 enum SessionTypeValue {
