@@ -1,18 +1,21 @@
 'use client';
 import type { ModalProps } from '@heroui/react';
 import type { TSession } from '@/types/index';
+import type { SessionOutcome } from '@/utils/session-outcome';
 
 import * as React from 'react';
 import {
   Button,
-  Checkbox,
   DateField,
   DatePicker,
+  Description,
   Form,
   Label,
+  ListBox,
   Modal,
   NumberField,
   Popover,
+  Select,
   TextArea,
   TextField,
 } from '@heroui/react';
@@ -23,6 +26,9 @@ import { useHourCycle } from '@/contexts/time-format';
 import { useTimeZone } from '@/contexts/timezone';
 
 import { updateSession, removeSession } from '@/actions/session';
+import { getSessionOutcome, OUTCOME_LABEL } from '@/utils/session-outcome';
+
+const OUTCOMES: SessionOutcome[] = ['scheduled', 'done', 'absent'];
 
 interface Props {
   isOpen: ModalProps['isOpen'];
@@ -51,10 +57,11 @@ function Content({ session, close }: ContentProps) {
   const timeZone = useTimeZone();
   const formId = React.useId();
   const hourCycle = useHourCycle();
+  const initialOutcome = getSessionOutcome(session);
 
   const [state, formAction, isPending] = React.useActionState(updateSession, {
     fields: {
-      isDone: session?.isDone,
+      outcome: initialOutcome,
       sessionAt: session.sessionAt,
       duration: session?.duration,
       notes: session?.notes,
@@ -62,7 +69,7 @@ function Content({ session, close }: ContentProps) {
   });
   const { control } = useForm({
     values: {
-      isDone: state.fields?.isDone,
+      outcome: state.fields?.outcome,
       sessionAt: state.fields?.sessionAt,
       duration: state.fields?.duration,
       notes: state.fields?.notes,
@@ -94,27 +101,40 @@ function Content({ session, close }: ContentProps) {
           validationErrors={state.fieldErrors}
         >
           <input type="hidden" name="sessionUuid" value={session.uuid} />
+          {/* 상태를 안 건드린 저장이 다른 곳에서 바꾼 상태를 덮어쓰지 않도록, 연 시점의 상태를 같이 보낸다 */}
+          <input type="hidden" name="initialOutcome" value={initialOutcome} />
 
           <div className="flex flex-col gap-3">
             <Controller
               control={control}
-              name="isDone"
+              name="outcome"
               render={({ field: { name, value, onChange } }) => (
-                // Checkbox.Content(클릭 영역)가 Control과 Label을 모두 감싸야 한다 — HeroUI v3 소스 주석 참조
-                <Checkbox
-                  name={name}
-                  isSelected={value}
-                  onChange={onChange}
-                  value="on"
+                <Select
                   variant="secondary"
+                  isRequired
+                  name={name}
+                  value={value}
+                  onChange={onChange}
                 >
-                  <Checkbox.Content>
-                    <Checkbox.Control className="size-5">
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                    <Label>완료여부</Label>
-                  </Checkbox.Content>
-                </Checkbox>
+                  <Label>상태</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  {value === 'absent' && (
+                    <Description>수업한 것으로 처리돼 남은 수업에서 빠집니다.</Description>
+                  )}
+                  <Select.Popover>
+                    <ListBox>
+                      {OUTCOMES.map(outcome => (
+                        <ListBox.Item key={outcome} id={outcome} textValue={OUTCOME_LABEL[outcome]}>
+                          <Label>{OUTCOME_LABEL[outcome]}</Label>
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
               )}
             />
             <Controller

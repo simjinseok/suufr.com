@@ -56,6 +56,7 @@ export type TSession = {
   uuid: string;
   notes: string;
   isDone: boolean;
+  isAbsent: boolean;
   sessionAt: Date;
   duration: number;
   type?: 'regular' | 'trial' | 'comp';

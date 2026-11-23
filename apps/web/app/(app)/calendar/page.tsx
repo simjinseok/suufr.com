@@ -51,6 +51,7 @@ export default async function Page(props: PageProps<'/calendar'>) {
     id: lesson.id,
     uuid: lesson.uuid,
     isDone: lesson.isDone,
+    isAbsent: lesson.isAbsent,
     sessionAt: lesson.sessionAt,
     duration: lesson.duration,
     notes: lesson.notes,

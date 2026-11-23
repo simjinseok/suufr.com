@@ -61,6 +61,7 @@ export default async function Page(props: PageProps<'/sessions'>) {
           duration: item.duration,
           notes: item.notes,
           isDone: item.isDone,
+          isAbsent: item.isAbsent,
           // 삭제된 수강권 귀속은 표시하지 않는다
           invoiceTitle: item.invoice && !item.invoice.deletedAt
             ? (item.invoice.title || null)

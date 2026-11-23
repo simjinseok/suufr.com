@@ -13,12 +13,20 @@ import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
 import { formatTime } from '@/utils/time-format';
 import { useTimeZone } from '@/contexts/timezone';
+import { getSessionOutcome, type SessionOutcome } from '@/utils/session-outcome';
+
+const CHIP_CLASS: Record<SessionOutcome, string> = {
+  scheduled: 'bg-blue-100 text-blue-700',
+  done: 'bg-emerald-100 text-emerald-700',
+  absent: 'bg-gray-100 text-gray-500',
+};
 
 interface Lesson {
   id: number;
   uuid: string;
   sessionAt: string;
   isDone: boolean;
+  isAbsent: boolean;
   notes: string | null;
   student: {
     name: string;
@@ -103,11 +111,7 @@ export default function WeekView({ lessons, selectedDate, onSessionClick, use24H
                         e.stopPropagation();
                         onSessionClick?.(lesson.uuid);
                       }}
-                      className={`text-sm px-3 py-1.5 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity ${
-                        lesson.isDone
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
+                      className={`text-sm px-3 py-1.5 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity ${CHIP_CLASS[getSessionOutcome(lesson)]}`}
                     >
                       <span>{lesson.student.name}</span>
                       <span className="text-xs ml-2 opacity-70">

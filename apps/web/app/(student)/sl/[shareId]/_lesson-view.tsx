@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { useTimeZone } from '@/contexts/timezone';
+import { getSessionOutcome, OUTCOME_LABEL } from '@/utils/session-outcome';
 
-import { CircleIcon, CircleCheckBigIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
+import { CircleIcon, CircleCheckBigIcon, CircleXIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
 
 type MediaFile = {
   uuid: string;
@@ -26,6 +27,7 @@ interface Props {
       sessionAt: Date | string;
       duration: number;
       isDone: boolean;
+      isAbsent: boolean;
       sessionMediaFiles?: Array<{
         mediaFile: MediaFile;
       }>;
@@ -69,21 +71,29 @@ export default function LessonView({ lesson, teacher }: Props) {
                 {lesson.sessions.map(session => (
                   <li key={session.uuid} className="flex items-start gap-2">
                     <div className="size-6 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {session.isDone
+                      {getSessionOutcome(session) === 'absent'
                         ? (
-                            <CircleCheckBigIcon
+                            <CircleXIcon
                               width={20}
                               height={20}
-                              className="text-green-600"
+                              className="text-gray-400"
                             />
                           )
-                        : (
-                            <CircleIcon
-                              width={20}
-                              height={20}
-                              className="text-amber-500"
-                            />
-                          )}
+                        : session.isDone
+                          ? (
+                              <CircleCheckBigIcon
+                                width={20}
+                                height={20}
+                                className="text-green-600"
+                              />
+                            )
+                          : (
+                              <CircleIcon
+                                width={20}
+                                height={20}
+                                className="text-amber-500"
+                              />
+                            )}
                     </div>
                     <div className="flex-1">
                       {/* 날짜/시간 표시 */}
@@ -98,6 +108,9 @@ export default function LessonView({ lesson, teacher }: Props) {
                           {format(new Date(session.sessionAt), 'HH:mm', { locale: ko, in: tz(timeZone) })}
                         </span>
                         <span className="text-xs text-gray-400">· {session.duration}분</span>
+                        {getSessionOutcome(session) === 'absent' && (
+                          <span className="text-sm text-gray-500">{OUTCOME_LABEL.absent}</span>
+                        )}
                       </div>
 
                       {/* 세션 노트 */}

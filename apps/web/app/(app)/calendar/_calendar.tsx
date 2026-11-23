@@ -29,6 +29,7 @@ interface Lesson {
   uuid: string;
   sessionAt: string;
   isDone: boolean;
+  isAbsent: boolean;
   notes: string | null;
   student: {
     name: string;

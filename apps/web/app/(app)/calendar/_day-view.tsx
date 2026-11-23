@@ -2,12 +2,27 @@
 import React from 'react';
 import { formatTime } from '@/utils/time-format';
 import { useTimeZone } from '@/contexts/timezone';
+import { getSessionOutcome, OUTCOME_LABEL, type SessionOutcome } from '@/utils/session-outcome';
+
+const BAR_CLASS: Record<SessionOutcome, string> = {
+  scheduled: 'bg-blue-500',
+  done: 'bg-emerald-500',
+  absent: 'bg-gray-300',
+};
+
+// 예정 배지가 회색 채움이라 결석은 테두리형으로 구분한다
+const BADGE_CLASS: Record<SessionOutcome, string> = {
+  scheduled: 'bg-zinc-100 text-zinc-600',
+  done: 'bg-emerald-100 text-emerald-700',
+  absent: 'bg-white text-gray-500 ring-1 ring-inset ring-gray-300',
+};
 
 interface Lesson {
   id: number;
   uuid: string;
   sessionAt: string;
   isDone: boolean;
+  isAbsent: boolean;
   notes: string | null;
   student: {
     name: string;
@@ -47,9 +62,7 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
 
           {/* Status indicator */}
           <div
-            className={`w-1 h-10 rounded-full flex-shrink-0 ${
-              lesson.isDone ? 'bg-emerald-500' : 'bg-blue-500'
-            }`}
+            className={`w-1 h-10 rounded-full flex-shrink-0 ${BAR_CLASS[getSessionOutcome(lesson)]}`}
           />
 
           {/* Content */}
@@ -66,13 +79,9 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
 
           {/* Status badge */}
           <div
-            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${
-              lesson.isDone
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-zinc-100 text-zinc-600'
-            }`}
+            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${BADGE_CLASS[getSessionOutcome(lesson)]}`}
           >
-            {lesson.isDone ? '완료' : '예정'}
+            {OUTCOME_LABEL[getSessionOutcome(lesson)]}
           </div>
         </button>
       ))}

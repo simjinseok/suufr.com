@@ -4,15 +4,23 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { tz } from '@date-fns/tz';
 import { Button, Modal, Spinner } from '@heroui/react';
-import { CheckCircle, Circle, MessageSquare } from 'lucide-react';
+import { CheckCircle, Circle, CircleX, MessageSquare } from 'lucide-react';
 import { getSessionDetail } from '@/actions/session';
 import { useTimeZone } from '@/contexts/timezone';
+import { getSessionOutcome, OUTCOME_LABEL, type SessionOutcome } from '@/utils/session-outcome';
+
+const BADGE_CLASS: Record<SessionOutcome, string> = {
+  scheduled: 'bg-amber-100 text-amber-700',
+  done: 'bg-emerald-100 text-emerald-700',
+  absent: 'bg-gray-100 text-gray-600',
+};
 
 type SessionData = {
   id: number;
   uuid: string;
   sessionAt: string;
   isDone: boolean;
+  isAbsent: boolean;
   notes: string;
   feedback: string | null;
 };
@@ -100,12 +108,8 @@ function Content({ data, isLoading, error, close }: ContentProps) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg font-bold">{data.current.studentName}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  data.current.isDone
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-amber-100 text-amber-700'
-                }`}>
-                  {data.current.isDone ? '완료' : '예정'}
+                <span className={`text-xs px-2 py-0.5 rounded-full ${BADGE_CLASS[getSessionOutcome(data.current)]}`}>
+                  {OUTCOME_LABEL[getSessionOutcome(data.current)]}
                 </span>
               </div>
               <p className="text-sm text-zinc-500 mb-2">
@@ -139,9 +143,11 @@ function Content({ data, isLoading, error, close }: ContentProps) {
                   {data.previousSessions.map(session => (
                     <div key={session.id} className="p-3 border border-zinc-200 rounded-lg">
                       <div className="flex items-center gap-2 mb-1">
-                        {session.isDone
-                          ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                          : <Circle className="w-4 h-4 text-amber-500" />
+                        {getSessionOutcome(session) === 'absent'
+                          ? <CircleX className="w-4 h-4 text-gray-400" />
+                          : session.isDone
+                            ? <CheckCircle className="w-4 h-4 text-emerald-500" />
+                            : <Circle className="w-4 h-4 text-amber-500" />
                         }
                         <span className="text-sm font-medium">
                           {format(new Date(session.sessionAt), 'M월 d일 (E) HH:mm', {

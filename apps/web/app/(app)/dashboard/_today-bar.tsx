@@ -120,7 +120,7 @@ export default function TodayBar({ sessions, unpaidStudentUuids, timezone, rende
             >
               {blocks.map((block) => {
                 const isUnpaid = unpaid.has(block.studentUuid);
-                const tip = `${block.rangeLabel} ${block.name}${isUnpaid ? ', 미납 있음' : ''}${block.state === 'done' ? ', 완료' : ''}`;
+                const tip = `${block.rangeLabel} ${block.name}${isUnpaid ? ', 미납 있음' : ''}${block.state === 'done' ? ', 완료' : ''}${block.state === 'absent' ? ', 결석' : ''}`;
                 const laneHeight = (LANE_HEIGHT * laneCount + LANE_GAP * (laneCount - 1) - LANE_GAP * (block.laneCount - 1)) / block.laneCount;
                 return (
                   <Link
@@ -131,6 +131,7 @@ export default function TodayBar({ sessions, unpaidStudentUuids, timezone, rende
                     className={clsx(
                       'absolute flex min-w-0 flex-col justify-center gap-px overflow-hidden rounded-[5px] px-[7px] py-1 leading-tight',
                       block.state === 'done' && 'bg-accent text-accent-foreground',
+                      block.state === 'absent' && 'bg-default text-muted',
                       block.state === 'next' && 'bg-warning text-warning-foreground shadow-[inset_0_0_0_1.6px_var(--color-foreground)]',
                       block.state === 'later' && 'bg-surface text-foreground shadow-[inset_0_0_0_1.6px_var(--color-accent)] hover:bg-accent-soft',
                     )}
@@ -146,7 +147,7 @@ export default function TodayBar({ sessions, unpaidStudentUuids, timezone, rende
                       {isUnpaid && (
                         <i
                           aria-hidden="true"
-                          className={clsx('size-1.5 shrink-0 rounded-full bg-danger', block.state === 'done' && 'ring-[1.5px] ring-accent-foreground')}
+                          className={clsx('size-1.5 shrink-0 rounded-full bg-danger', (block.state === 'done' || block.state === 'absent') && 'ring-[1.5px] ring-accent-foreground')}
                         />
                       )}
                     </b>

@@ -7,6 +7,7 @@ type Session = {
   duration: number;
   notes: string;
   isDone: boolean;
+  isAbsent: boolean;
   type: 'regular' | 'trial' | 'comp';
   sessionMediaFiles?: Array<{
     mediaFile: {

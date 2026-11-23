@@ -24,6 +24,7 @@ export type TodaySession = {
   sessionAt: string;
   duration: number; // 분
   isDone: boolean;
+  isAbsent: boolean;
   student: { uuid: string; name: string };
 };
 
@@ -50,7 +51,8 @@ type DashboardParams = {
 export type MatrixRow = {
   student: { uuid: string; name: string };
   // 키 = 일(1..daysInMonth)
-  days: Record<number, { count: number; done: number }>;
+  // done은 결석을 포함한다
+  days: Record<number, { count: number; done: number; absent: number }>;
   // 0 = 지난달부터, daysInMonth+1 = 다음 달까지(무기한 포함)
   periods: { startDay: number; endDay: number }[];
 };

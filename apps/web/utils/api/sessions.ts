@@ -1,4 +1,5 @@
 import { apiClient } from '../api-client';
+import { outcomeToFlags, type SessionOutcome } from '../session-outcome';
 
 type Feedback = {
   id: number;
@@ -43,6 +44,7 @@ type Session = {
   duration: number;
   notes: string;
   isDone: boolean;
+  isAbsent: boolean;
   type: 'regular' | 'trial' | 'comp';
   student: Student;
   invoice: SessionInvoice | null;
@@ -108,6 +110,7 @@ type UpdateSessionData = {
   duration?: number;
   notes?: string;
   isDone?: boolean;
+  isAbsent?: boolean;
   invoiceUuid?: string;
   addMediaFileUuids?: string[];
   removeMediaFileUuids?: string[];
@@ -141,8 +144,8 @@ export const sessionsApi = {
   remove: (uuid: string) =>
     apiClient<{ success: boolean }>(`/api/sessions/${uuid}`, { method: 'DELETE' }),
 
-  markDone: (uuid: string, isDone: boolean) =>
-    apiClient<SessionResponse>(`/api/sessions/${uuid}/done`, { method: 'PATCH', body: { isDone } }),
+  setOutcome: (uuid: string, outcome: SessionOutcome) =>
+    apiClient<SessionResponse>(`/api/sessions/${uuid}/done`, { method: 'PATCH', body: outcomeToFlags(outcome) }),
 
   upsertFeedback: (uuid: string, data: UpsertFeedbackData) =>
     apiClient<FeedbackResponse>(`/api/sessions/${uuid}/feedback`, { method: 'POST', body: data }),

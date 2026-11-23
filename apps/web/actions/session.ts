@@ -11,6 +11,8 @@ import { ServerActionState } from '@/types/index';
 import { z } from 'zod';
 import { sessionsApi } from '@/utils/api';
 import { ApiError } from '@/utils/api-client';
+import type { SessionOutcome } from '@/utils/session-outcome';
+import { outcomeToFlags } from '@/utils/session-outcome';
 
 // 폼의 벽시계 문자열("YYYY-MM-DDTHH:mm")을 instant로 바꿀 기준 = 유저 설정 타임존
 async function getUserTimeZone(): Promise<string> {
@@ -132,13 +134,14 @@ export async function createSessionsBulk(prevState: CreateSessionsBulkState, for
 }
 
 type UpdateSessionState = ServerActionState<{
-  isDone: boolean;
+  outcome: SessionOutcome;
   sessionAt: string;
   duration: number;
   notes: string;
 }>;
 const updateSessionSchema = (timeZone: string) => z.object({
-  isDone: z.preprocess(val => val === 'on', z.boolean()),
+  outcome: z.enum(['scheduled', 'done', 'absent']),
+  initialOutcome: z.enum(['scheduled', 'done', 'absent']),
   sessionAt: z.string().transform(val => parseDateTime(val).toDate(timeZone).toISOString()),
   duration: z.coerce.number().int().min(1).default(60),
   notes: z.string().trim(),
@@ -154,7 +157,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       const state: UpdateSessionState = {
         success: false,
         fields: {
-          isDone: data.isDone === 'on',
+          outcome: data.outcome as SessionOutcome,
           sessionAt: data.sessionAt as string,
           duration: Number(data.duration) || 60,
           notes: data.notes as string,
@@ -173,7 +176,7 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
         return state;
       }
 
-      const { isDone, sessionAt, duration, notes } = validationResult.data;
+      const { outcome, initialOutcome, sessionAt, duration, notes } = validationResult.data;
 
       // 세션 미디어 파일 데이터 파싱
       const addMediaFileUuidsStr = formData.get('addMediaFileUuids') as string;
@@ -183,7 +186,8 @@ export async function updateSession(prevState: UpdateSessionState, formData: For
       const removeMediaFileUuids = removeMediaFileUuidsStr ? JSON.parse(removeMediaFileUuidsStr) : undefined;
 
       await sessionsApi.update(sessionUuid as string, {
-        isDone,
+        // 상태를 바꾼 저장만 상태를 싣는다. 안 바꾼 저장이 다른 기기에서 바꾼 상태를 덮어쓰지 않게
+        ...(outcome !== initialOutcome && outcomeToFlags(outcome)),
         sessionAt,
         duration,
         notes,
@@ -284,6 +288,7 @@ type SessionDetailData = {
     uuid: string;
     sessionAt: string;
     isDone: boolean;
+    isAbsent: boolean;
     notes: string;
     feedback: string | null;
     invoiceTitle: string | null;
@@ -295,14 +300,15 @@ type SessionDetailData = {
     uuid: string;
     sessionAt: string;
     isDone: boolean;
+    isAbsent: boolean;
     notes: string;
     feedback: string | null;
   }[];
 };
 
-export async function toggleSessionDone(sessionUuid: string, isDone: boolean): Promise<boolean> {
+export async function setSessionOutcome(sessionUuid: string, outcome: SessionOutcome): Promise<boolean> {
   return await Sentry.withServerActionInstrumentation(
-    'toggleSessionDone',
+    'setSessionOutcome',
     { headers: await headers() },
     async () => {
       const session = await getSession();
@@ -310,7 +316,7 @@ export async function toggleSessionDone(sessionUuid: string, isDone: boolean): P
         return false;
       }
 
-      await sessionsApi.markDone(sessionUuid, isDone);
+      await sessionsApi.setOutcome(sessionUuid, outcome);
 
       revalidatePath('/sessions', 'page');
       revalidatePath('/students', 'page');
@@ -399,6 +405,7 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
       uuid: currentSession.uuid,
       sessionAt: currentSession.sessionAt,
       isDone: currentSession.isDone,
+      isAbsent: currentSession.isAbsent,
       notes: currentSession.notes,
       feedback: currentSession.feedback?.notes || null,
       invoiceTitle: currentSession.invoice?.title ?? null,
@@ -410,6 +417,7 @@ export async function getSessionDetail(sessionUuid: string): Promise<SessionDeta
       uuid: s.uuid,
       sessionAt: s.sessionAt,
       isDone: s.isDone,
+      isAbsent: s.isAbsent,
       notes: s.notes,
       feedback: s.feedback?.notes || null,
     })),
