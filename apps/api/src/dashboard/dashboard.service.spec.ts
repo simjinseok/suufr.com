@@ -58,6 +58,7 @@ describe('DashboardService.getDashboardData 오늘 수업', () => {
       sessionAt: true,
       duration: true,
       isDone: true,
+      isAbsent: true,
       student: { select: { uuid: true, name: true } },
     });
     expect(result.data.todaySessions).toEqual(rows);

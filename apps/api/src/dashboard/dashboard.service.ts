@@ -159,6 +159,7 @@ export class DashboardService {
           sessionAt: true,
           duration: true,
           isDone: true,
+          isAbsent: true,
           student: { select: { uuid: true, name: true } },
         },
         orderBy: { sessionAt: 'asc' },
@@ -236,6 +237,7 @@ export class DashboardService {
         select: {
           sessionAt: true,
           isDone: true,
+          isAbsent: true,
           student: { select: { uuid: true } },
         },
       }),
@@ -263,7 +265,7 @@ export class DashboardService {
         timezone,
         now,
         students,
-        sessions: sessions.map(s => ({ studentUuid: s.student.uuid, sessionAt: s.sessionAt, isDone: s.isDone })),
+        sessions: sessions.map(s => ({ studentUuid: s.student.uuid, sessionAt: s.sessionAt, isDone: s.isDone, isAbsent: s.isAbsent })),
         invoices: invoices.map(i => ({ studentUuid: i.student.uuid, periodStart: i.periodStart, periodEnd: i.periodEnd })),
       }),
     };

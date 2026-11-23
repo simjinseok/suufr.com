@@ -229,6 +229,7 @@ model Session {
   sessionAt DateTime         @map("session_at") @db.Timestamptz(0)
   duration  Int              @default(60)
   isDone    Boolean          @default(false) @map("is_done")
+  isAbsent  Boolean          @default(false) @map("is_absent") // 결석(수업한 것으로 처리). isAbsent ⇒ isDone, DB CHECK로 강제
   type      SessionTypeValue @default(regular) // trial/comp는 미연결 알림에서 제외
   createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(0)
   updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(0)

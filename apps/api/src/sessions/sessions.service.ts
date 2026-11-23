@@ -5,6 +5,8 @@ import { CreateSessionsBulkDto } from './dto/create-sessions-bulk.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { UpsertFeedbackDto } from './dto/feedback.dto';
 import { ListSessionsQueryDto } from './dto/list-sessions-query.dto';
+import { MarkDoneDto } from './dto/mark-done.dto';
+import { resolveOutcome } from './session-outcome';
 import { Prisma } from '@prisma/generated/client';
 import { GoogleCalendarService } from '../google/services/google-calendar.service';
 import { SettingsService } from '../settings/settings.service';
@@ -399,6 +401,8 @@ export class SessionsService {
       throw new NotFoundException(`Session with UUID ${uuid} not found`);
     }
 
+    const outcome = resolveOutcome({ isDone: dto.isDone, isAbsent: dto.isAbsent });
+
     // 청구 재귀속: 같은 학생 소유인지 검증
     let invoiceId: number | undefined;
     if (dto.invoiceUuid) {
@@ -462,7 +466,7 @@ export class SessionsService {
           ...(dto.sessionAt !== undefined && { sessionAt: new Date(dto.sessionAt) }),
           ...(dto.duration !== undefined && { duration: dto.duration }),
           ...(dto.notes !== undefined && { notes: dto.notes }),
-          ...(dto.isDone !== undefined && { isDone: dto.isDone }),
+          ...outcome,
           ...(invoiceId !== undefined && { invoiceId }),
         },
       });
@@ -525,7 +529,7 @@ export class SessionsService {
     return { success: true };
   }
 
-  async markDone(uuid: string, isDone: boolean, userId: string) {
+  async markDone(uuid: string, dto: MarkDoneDto, userId: string) {
     const session = await this.prisma.session.findFirst({
       where: {
         uuid,
@@ -540,7 +544,8 @@ export class SessionsService {
 
     const updatedSession = await this.prisma.session.update({
       where: { uuid },
-      data: { isDone },
+      // 본문 없이 오던 기존 호출은 완료 처리였다
+      data: resolveOutcome({ isDone: dto.isDone ?? true, isAbsent: dto.isAbsent }),
       include: SESSION_INCLUDE,
     });
 

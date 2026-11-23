@@ -20,6 +20,11 @@ export class UpdateSessionDto {
   @IsOptional()
   isDone?: boolean;
 
+  @IsBoolean()
+  @StrictBoolean()
+  @IsOptional()
+  isAbsent?: boolean;
+
   // 청구 재귀속 (해제는 invoices PATCH의 removeSessionUuids 사용)
   @IsUUID()
   @IsOptional()

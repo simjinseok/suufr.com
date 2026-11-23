@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { GoogleCalendarService } from '../google/services/google-calendar.service';
@@ -64,5 +65,91 @@ describe('SessionsService.create 자동 귀속', () => {
     expect(invoiceFindFirst).toHaveBeenCalledTimes(1);
     expect(invoiceFindFirst.mock.calls[0][0].where).toMatchObject({ uuid: 'inv', studentId: 10 });
     expect(sessionCreate.mock.calls[0][0].data.invoiceId).toBe(7);
+  });
+});
+
+// 완료·결석 쓰기 경로 — 실제로 쓰는 data만 검증한다 (DB 는 모킹)
+function makeOutcomeService() {
+  const found = { id: 1, uuid: 's', studentId: 10, isDone: false, isAbsent: false, sessionMediaFiles: [] };
+  const sessionUpdate = vi.fn().mockResolvedValue(found);
+  const txSessionUpdate = vi.fn().mockResolvedValue(found);
+  const transaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn({
+    session: { update: txSessionUpdate },
+    sessionMediaFile: { create: vi.fn(), delete: vi.fn(), findFirst: vi.fn() },
+  }));
+  const prisma = {
+    session: { findFirst: vi.fn().mockResolvedValue(found), update: sessionUpdate },
+    $transaction: transaction,
+  } as unknown as PrismaService;
+  const google = {
+    pushSession: vi.fn().mockResolvedValue(undefined),
+    deleteSession: vi.fn().mockResolvedValue(undefined),
+  } as unknown as GoogleCalendarService;
+  const settings = { resolveTimezone: vi.fn().mockResolvedValue('Asia/Seoul') } as unknown as SettingsService;
+
+  const service = new SessionsService(prisma, google, settings);
+  vi.spyOn(service, 'findOne').mockResolvedValue({} as never);
+  return { service, sessionUpdate, txSessionUpdate, transaction };
+}
+
+describe('SessionsService 결석', () => {
+  it('markDone은 isAbsent true를 받으면 isDone과 isAbsent를 함께 켠다', async () => {
+    const { service, sessionUpdate } = makeOutcomeService();
+    await service.markDone('s', { isAbsent: true }, 'u');
+
+    expect(sessionUpdate.mock.calls[0][0].data).toStrictEqual({ isDone: true, isAbsent: true });
+  });
+
+  it('markDone은 isDone false를 받으면 결석도 끈다', async () => {
+    const { service, sessionUpdate } = makeOutcomeService();
+    await service.markDone('s', { isDone: false }, 'u');
+
+    expect(sessionUpdate.mock.calls[0][0].data).toStrictEqual({ isDone: false, isAbsent: false });
+  });
+
+  it('markDone은 본문이 비면 완료로 처리하고 결석 여부는 두지 않는다', async () => {
+    const { service, sessionUpdate } = makeOutcomeService();
+    await service.markDone('s', {}, 'u');
+
+    expect(sessionUpdate.mock.calls[0][0].data).toStrictEqual({ isDone: true });
+  });
+
+  it('markDone은 isDone true와 isAbsent false를 받으면 결석을 끈다', async () => {
+    const { service, sessionUpdate } = makeOutcomeService();
+    await service.markDone('s', { isDone: true, isAbsent: false }, 'u');
+
+    expect(sessionUpdate.mock.calls[0][0].data).toStrictEqual({ isDone: true, isAbsent: false });
+  });
+
+  it('update는 isDone true만 오면 isAbsent를 건드리지 않는다', async () => {
+    const { service, txSessionUpdate } = makeOutcomeService();
+    await service.update('s', { isDone: true, notes: 'x' }, 'u');
+
+    const { data } = txSessionUpdate.mock.calls[0][0];
+    expect(data).toMatchObject({ isDone: true, notes: 'x' });
+    expect('isAbsent' in data).toBe(false);
+  });
+
+  it('update는 isDone true와 isAbsent true가 오면 결석으로 쓴다', async () => {
+    const { service, txSessionUpdate } = makeOutcomeService();
+    await service.update('s', { isDone: true, isAbsent: true }, 'u');
+
+    expect(txSessionUpdate.mock.calls[0][0].data).toMatchObject({ isDone: true, isAbsent: true });
+  });
+
+  it('update는 isDone false만 와도 결석을 함께 끈다', async () => {
+    const { service, txSessionUpdate } = makeOutcomeService();
+    await service.update('s', { isDone: false }, 'u');
+
+    expect(txSessionUpdate.mock.calls[0][0].data).toMatchObject({ isDone: false, isAbsent: false });
+  });
+
+  it('update는 isDone false와 isAbsent true가 같이 오면 400이고 아무것도 쓰지 않는다', async () => {
+    const { service, transaction } = makeOutcomeService();
+
+    await expect(
+      service.update('s', { isDone: false, isAbsent: true }, 'u'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(transaction).not.toHaveBeenCalled();
   });
 });

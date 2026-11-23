@@ -3,3 +3,4 @@ export * from './create-sessions-bulk.dto';
 export * from './update-session.dto';
 export * from './feedback.dto';
 export * from './list-sessions-query.dto';
+export * from './mark-done.dto';
