@@ -2,16 +2,16 @@
 import React from 'react';
 import { formatTime } from '@/utils/time-format';
 import { useTimeZone } from '@/contexts/timezone';
-import { getSessionOutcome, OUTCOME_LABEL, type SessionOutcome } from '@/utils/session-outcome';
+import { SESSION_STATUS_LABEL, type SessionStatus } from '@/utils/session-status';
 
-const BAR_CLASS: Record<SessionOutcome, string> = {
+const BAR_CLASS: Record<SessionStatus, string> = {
   scheduled: 'bg-blue-500',
   done: 'bg-emerald-500',
   absent: 'bg-gray-300',
 };
 
 // 예정 배지가 회색 채움이라 결석은 테두리형으로 구분한다
-const BADGE_CLASS: Record<SessionOutcome, string> = {
+const BADGE_CLASS: Record<SessionStatus, string> = {
   scheduled: 'bg-zinc-100 text-zinc-600',
   done: 'bg-emerald-100 text-emerald-700',
   absent: 'bg-white text-gray-500 ring-1 ring-inset ring-gray-300',
@@ -21,8 +21,7 @@ interface Lesson {
   id: number;
   uuid: string;
   sessionAt: string;
-  isDone: boolean;
-  isAbsent: boolean;
+  status: SessionStatus;
   notes: string | null;
   student: {
     name: string;
@@ -62,7 +61,7 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
 
           {/* Status indicator */}
           <div
-            className={`w-1 h-10 rounded-full flex-shrink-0 ${BAR_CLASS[getSessionOutcome(lesson)]}`}
+            className={`w-1 h-10 rounded-full flex-shrink-0 ${BAR_CLASS[lesson.status]}`}
           />
 
           {/* Content */}
@@ -79,9 +78,9 @@ export default function DayView({ lessons, onSessionClick, use24HourFormat }: Da
 
           {/* Status badge */}
           <div
-            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${BADGE_CLASS[getSessionOutcome(lesson)]}`}
+            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${BADGE_CLASS[lesson.status]}`}
           >
-            {OUTCOME_LABEL[getSessionOutcome(lesson)]}
+            {SESSION_STATUS_LABEL[lesson.status]}
           </div>
         </button>
       ))}

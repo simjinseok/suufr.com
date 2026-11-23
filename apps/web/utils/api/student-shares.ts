@@ -1,4 +1,5 @@
 import { apiClient } from '../api-client';
+import type { SessionStatus } from '../session-status';
 
 type StudentShare = {
   shareId: string;
@@ -33,8 +34,7 @@ type SharedSession = {
   sessionAt: string;
   duration: number;
   notes: string;
-  isDone: boolean;
-  isAbsent: boolean;
+  status: SessionStatus;
   type: 'regular' | 'trial' | 'comp';
   sessionMediaFiles?: Array<{
     mediaFile: {

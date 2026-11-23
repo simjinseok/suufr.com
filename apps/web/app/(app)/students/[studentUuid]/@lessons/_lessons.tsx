@@ -1,6 +1,6 @@
 'use client';
 import type { TInvoice, TSession, TStudentShare } from '@/types/index';
-import type { SessionOutcome } from '@/utils/session-outcome';
+import type { SessionStatus } from '@/utils/session-status';
 
 import { format } from 'date-fns/format';
 import { ko } from 'date-fns/locale/ko';
@@ -36,8 +36,8 @@ import PaymentModal from '@/components/invoice/payment-modal';
 import ShareModal from '@/components/invoice/share-modal';
 import CreateInvoiceModal from '@/components/invoice/create-invoice-modal';
 import { useParams, useRouter } from 'next/navigation';
-import { setSessionOutcome } from '@/actions/session';
-import { getSessionOutcome, outcomeToFlags } from '@/utils/session-outcome';
+import { setSessionStatus } from '@/actions/session';
+import { isFinished } from '@/utils/session-status';
 import DeleteInvoiceModal from '@/components/invoice/delete-invoice-modal';
 import { useTimeZone } from '@/contexts/timezone';
 
@@ -116,18 +116,18 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
 
   // 체크 토글 애니메이션 상태
   const [togglingSessionUuid, setTogglingSessionUuid] = React.useState<string | null>(null);
-  const [optimisticOutcome, setOptimisticOutcome] = React.useState<Record<string, SessionOutcome>>({});
+  const [optimisticStatus, setOptimisticStatus] = React.useState<Record<string, SessionStatus>>({});
 
   // 실제 표시할 상태 (낙관적 업데이트 우선)
-  const getOutcome = (session: TSession) => optimisticOutcome[session.uuid] ?? getSessionOutcome(session);
+  const getStatus = (session: TSession) => optimisticStatus[session.uuid] ?? session.status;
 
   // 새 props가 오기 전에 열어도 화면에 보이는 상태로 시작하도록, 연 시점의 표시 상태를 덮어 넘긴다
   const openEditSession = (session: TSession) => {
-    setSelectedSession({ ...session, ...outcomeToFlags(getOutcome(session)) });
+    setSelectedSession({ ...session, status: getStatus(session) });
   };
 
-  const clearOptimisticOutcome = (sessionUuid: string) => {
-    setOptimisticOutcome((prev) => {
+  const clearOptimisticStatus = (sessionUuid: string) => {
+    setOptimisticStatus((prev) => {
       const next = { ...prev };
       delete next[sessionUuid];
       return next;
@@ -137,28 +137,28 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
   const handleToggleDone = async (session: TSession, e: React.MouseEvent) => {
     e.stopPropagation();
     // 낙관적 값이 남아 있으면 아직 반영 중이다. 이때 다시 누르면 옛 서버 값을 기준으로 엉뚱한 상태를 보낸다
-    if (optimisticOutcome[session.uuid] !== undefined) return;
-    const currentOutcome = getOutcome(session);
+    if (optimisticStatus[session.uuid] !== undefined) return;
+    const currentStatus = getStatus(session);
     // 완료·결석은 눌러서 예정으로 되돌리고, 예정은 완료로 바꾼다
-    const nextOutcome: SessionOutcome = currentOutcome === 'scheduled' ? 'done' : 'scheduled';
+    const nextStatus: SessionStatus = currentStatus === 'scheduled' ? 'done' : 'scheduled';
 
     // 해제 시 확인창
-    if (currentOutcome === 'done') {
+    if (currentStatus === 'done') {
       const confirmed = window.confirm('수업 완료를 해제하시겠습니까?');
       if (!confirmed) return;
     }
-    if (currentOutcome === 'absent') {
+    if (currentStatus === 'absent') {
       const confirmed = window.confirm('결석을 해제하시겠습니까?');
       if (!confirmed) return;
     }
 
     // 낙관적 업데이트 + 애니메이션 트리거
-    setOptimisticOutcome(prev => ({ ...prev, [session.uuid]: nextOutcome }));
+    setOptimisticStatus(prev => ({ ...prev, [session.uuid]: nextStatus }));
     setTogglingSessionUuid(session.uuid);
 
     let saved = false;
     try {
-      saved = await setSessionOutcome(session.uuid, nextOutcome);
+      saved = await setSessionStatus(session.uuid, nextStatus);
     }
     catch (error) {
       console.error(error);
@@ -169,12 +169,12 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
       // refresh는 기다릴 수 없어 같은 트랜지션에 넣어, 새 props와 함께 지워지게 한다(옛 값 깜빡임 방지)
       React.startTransition(() => {
         router.refresh();
-        clearOptimisticOutcome(session.uuid);
+        clearOptimisticStatus(session.uuid);
       });
     }
     else {
       // 저장되지 않은 표식을 남기지 않는다
-      clearOptimisticOutcome(session.uuid);
+      clearOptimisticStatus(session.uuid);
     }
 
     // 애니메이션 완료 후 상태 정리
@@ -259,7 +259,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                         >
                           수업 수정
                         </Dropdown.Item>
-                        {getOutcome(session) !== 'scheduled' && (
+                        {isFinished(getStatus(session)) && (
                           <Dropdown.Item
                             key="edit-feedback"
                             onClick={() => setFeedbackSession(session)}
@@ -357,11 +357,11 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                                 onTouchStart={() => {}}
                                 onClick={(e) => handleToggleDone(session, e)}
                               >
-                                {getOutcome(session) === 'absent'
+                                {getStatus(session) === 'absent'
                                   ? <CircleXIcon className="size-5 text-gray-400" />
                                   : (
                                       <AnimatedCheckIcon
-                                        checked={getOutcome(session) === 'done'}
+                                        checked={getStatus(session) === 'done'}
                                         animating={togglingSessionUuid === session.uuid}
                                       />
                                     )}
@@ -396,7 +396,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                                 </div>
 
                                 {/* 피드백 영역 */}
-                                {getOutcome(session) !== 'scheduled' && session.feedback && (
+                                {isFinished(getStatus(session)) && session.feedback && (
                                   <div className="mt-2.5 p-2.5 bg-gray-50 rounded-lg">
                                     <p className="text-xs font-semibold text-indigo-600 mb-1">
                                       피드백
@@ -442,7 +442,7 @@ export default function Invoices({ invoices, shares, unattachedSessions, use24Ho
                                     >
                                       수업 수정
                                     </Dropdown.Item>
-                                    {getOutcome(session) !== 'scheduled' && (
+                                    {isFinished(getStatus(session)) && (
                                       <Dropdown.Item
                                         key="edit-feedback"
                                         onClick={() => setFeedbackSession(session)}

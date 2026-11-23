@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TodaySession } from '@/utils/api/dashboard';
+import type { SessionStatus } from '@/utils/session-status';
 import { layoutTimeBar, nowPct } from './time-bar';
 
 const SEOUL = 'Asia/Seoul';
@@ -8,7 +9,7 @@ const NOW = new Date('2026-11-22T04:20:00Z');
 
 let seq = 0;
 // KST 시각(HH:mm)으로 오늘 수업을 만든다
-function session(hhmm: string, duration: number, isDone = false, isAbsent = false, name = `학생${seq}`): TodaySession {
+function session(hhmm: string, duration: number, status: SessionStatus = 'scheduled', name = `학생${seq}`): TodaySession {
   seq += 1;
   const [h, m] = hhmm.split(':').map(Number);
   const sessionAt = new Date(Date.UTC(2026, 10, 22, h - 9, m)).toISOString();
@@ -16,16 +17,15 @@ function session(hhmm: string, duration: number, isDone = false, isAbsent = fals
     uuid: `s${seq}`,
     sessionAt,
     duration,
-    isDone,
-    isAbsent,
+    status,
     student: { uuid: `st-${name}`, name },
   };
 }
 
 describe('layoutTimeBar', () => {
-  it('isDone이면 done, 아직 안 끝난 첫 미완료가 next, 나머지 later', () => {
+  it('완료면 done, 아직 안 끝난 첫 예정이 next, 나머지 later', () => {
     const blocks = layoutTimeBar([
-      session('10:00', 90, true),
+      session('10:00', 90, 'done'),
       session('14:00', 120),
       session('16:30', 90),
     ], NOW, SEOUL);
@@ -34,7 +34,7 @@ describe('layoutTimeBar', () => {
 
   it('결석은 absent 상태이고 다음 수업으로 뽑히지 않는다', () => {
     const blocks = layoutTimeBar([
-      session('14:00', 60, true, true),
+      session('14:00', 60, 'absent'),
       session('16:30', 90),
     ], NOW, SEOUL);
     expect(blocks.map(b => b.state)).toEqual(['absent', 'next']);
@@ -99,7 +99,7 @@ describe('layoutTimeBar', () => {
   });
 
   it('학생 정보를 블록에 싣는다', () => {
-    const [block] = layoutTimeBar([session('10:00', 60, false, false, '한지우')], NOW, SEOUL);
+    const [block] = layoutTimeBar([session('10:00', 60, 'scheduled', '한지우')], NOW, SEOUL);
     expect(block.name).toBe('한지우');
     expect(block.studentUuid).toBe('st-한지우');
   });

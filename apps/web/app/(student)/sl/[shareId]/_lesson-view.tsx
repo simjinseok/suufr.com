@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 import { tz } from '@date-fns/tz';
 import { useTimeZone } from '@/contexts/timezone';
-import { getSessionOutcome, OUTCOME_LABEL } from '@/utils/session-outcome';
+import { isFinished, SESSION_STATUS_LABEL, type SessionStatus } from '@/utils/session-status';
 
 import { CircleIcon, CircleCheckBigIcon, CircleXIcon, UserIcon, ImageIcon, Video, FileTextIcon } from 'lucide-react';
 
@@ -26,8 +26,7 @@ interface Props {
       notes: string;
       sessionAt: Date | string;
       duration: number;
-      isDone: boolean;
-      isAbsent: boolean;
+      status: SessionStatus;
       sessionMediaFiles?: Array<{
         mediaFile: MediaFile;
       }>;
@@ -71,7 +70,7 @@ export default function LessonView({ lesson, teacher }: Props) {
                 {lesson.sessions.map(session => (
                   <li key={session.uuid} className="flex items-start gap-2">
                     <div className="size-6 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {getSessionOutcome(session) === 'absent'
+                      {session.status === 'absent'
                         ? (
                             <CircleXIcon
                               width={20}
@@ -79,7 +78,7 @@ export default function LessonView({ lesson, teacher }: Props) {
                               className="text-gray-400"
                             />
                           )
-                        : session.isDone
+                        : isFinished(session.status)
                           ? (
                               <CircleCheckBigIcon
                                 width={20}
@@ -108,8 +107,8 @@ export default function LessonView({ lesson, teacher }: Props) {
                           {format(new Date(session.sessionAt), 'HH:mm', { locale: ko, in: tz(timeZone) })}
                         </span>
                         <span className="text-xs text-gray-400">· {session.duration}분</span>
-                        {getSessionOutcome(session) === 'absent' && (
-                          <span className="text-sm text-gray-500">{OUTCOME_LABEL.absent}</span>
+                        {session.status === 'absent' && (
+                          <span className="text-sm text-gray-500">{SESSION_STATUS_LABEL.absent}</span>
                         )}
                       </div>
 

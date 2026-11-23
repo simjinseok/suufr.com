@@ -43,7 +43,7 @@ export function layoutTimeBar(sessions: TodaySession[], now: Date, timezone: str
 
   // 다음 수업 = 아직 끝나지 않은 첫 미완료 수업
   const nextIndex = sorted.findIndex(s =>
-    !s.isDone && Date.parse(s.sessionAt) + s.duration * 60_000 > nowMs);
+    s.status === 'scheduled' && Date.parse(s.sessionAt) + s.duration * 60_000 > nowMs);
 
   const items = sorted.map((s, index) => {
     const startAt = new Date(s.sessionAt);
@@ -60,7 +60,7 @@ export function layoutTimeBar(sessions: TodaySession[], now: Date, timezone: str
       studentUuid: s.student.uuid,
       leftPct: start / DAY_MINUTES * 100,
       widthPct: (end - start) / DAY_MINUTES * 100,
-      state: s.isAbsent ? 'absent' : s.isDone ? 'done' : index === nextIndex ? 'next' : 'later',
+      state: s.status === 'absent' ? 'absent' : s.status === 'done' ? 'done' : index === nextIndex ? 'next' : 'later',
       timeLabel: s.duration >= LONG_SESSION_MINUTES ? rangeLabel : startLabel,
       rangeLabel,
       lane: 0,
